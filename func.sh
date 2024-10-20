@@ -56,19 +56,19 @@ dir=/opt/Beacon-tally
 
 function dependencies_script() {
 msg_info  "Installing dependencies: git"
-sudo apt install git -y &>/dev/null
+sudo apt install git -y &>/dev/null || echo "Error: Unable to install git" && exit
 msg_ok    "Done - Installing dependencies: git"
 
 msg_info  "Installing dependencies: nodejs"
-sudo apt install nodejs -y &>/dev/null
+sudo apt install nodejs -y &>/dev/null  || echo "Error: Unable to install nodejs" && exit
 msg_ok    "Done - Installing dependencies: nodejs"
 
 msg_info  "Installing dependencies: npm"
-sudo apt install npm -y &>/dev/null
+sudo apt install npm -y &>/dev/null || echo "Error: Unable to install npm" && exit
 msg_ok    "Done - Installing dependencies: npm"
 
 msg_info  "Installing dependencies: yarn"
-sudo npm install --global yarn &>/dev/null
+sudo npm install --global yarn &>/dev/null || echo "Error: Unable to install yarn" && exit
 msg_ok    "Done - Installing dependencies: yarn"
 
 }
