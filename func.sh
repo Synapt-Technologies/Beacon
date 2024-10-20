@@ -98,8 +98,7 @@ function foldercreate_script() {
 
 function clonegit_script(){
   msg_info  "Cloning repository"
-  cd $dir
-  git clone https://github.com/IJIJI/Beacon.git &>/dev/null
+  sudo git clone https://github.com/IJIJI/Beacon.git $dir &>/dev/null
   msg_ok    "Done - Cloning repository"
 }
 
