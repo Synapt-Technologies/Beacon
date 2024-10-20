@@ -9,7 +9,7 @@ Find the light in your darkness. Highly configurable Tally for Blackmagic Atem s
 * Outputs that can show multiple Atem sources.
 * Web view of tally.
 
-<p float="left" style="width:100%; box-sizing: border-box; display: flex; gap: 10px;">
+<p float="left" style="width:100%; box-sizing: border-box; display: flex; gap: 10px; flex-wrap: nowrap">
   <img style="border-radius: 5px" alt="BEACON CONTROL HOME" src="https://github.com/IJIJI/Beacon/blob/main/assets/Main-Page.png?raw=true" />
   <img style="border-radius: 5px" alt="BEACON PHONE TALLY" src="https://github.com/IJIJI/Beacon/blob/main/assets/Phone-Tally.png?raw=true" /> 
 </p>
@@ -51,7 +51,7 @@ I am currently in the development of a wireless version of the lighthouses and b
 
 Update your Raspberry pi:
 
-```shell
+```bash
 sudo apt-get update &&
 sudo apt-get upgrade
 ```
