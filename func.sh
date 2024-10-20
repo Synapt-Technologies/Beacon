@@ -56,7 +56,7 @@ dir=/opt/Beacon-tally
 
 function dependencies_script() {
 msg_info  "Installing dependencies: nodejs"
-sudo apt install nodejs &>/dev/null
+sudo apt install nodejs -y &>/dev/null
 msg_ok    "Done - Installing dependencies: nodejs"
 
 msg_info  "Installing dependencies: yarn"
