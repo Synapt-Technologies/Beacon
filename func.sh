@@ -104,7 +104,8 @@ function clonegit_script(){
 
 function yarninit_script(){
   msg_info  "Installing dependencies: yarn init"
-  sudo yarn install $dir &>/dev/null
+  cd $dir
+  sudo yarn install &>/dev/null
   msg_ok    "Done - Installing dependencies: yarn init"
 }
 
