@@ -59,10 +59,6 @@ msg_info  "Installing dependencies: git"
 sudo apt install git -y &>/dev/null
 msg_ok    "Done - Installing dependencies: git"
 
-msg_info  "Installing dependencies: fnm"
-sudo apt install fnm -y &>/dev/null
-msg_ok    "Done - Installing dependencies: fnm"
-
 msg_info  "Installing dependencies: nodejs"
 sudo apt install nodejs -y &>/dev/null
 msg_ok    "Done - Installing dependencies: nodejs"
