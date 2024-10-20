@@ -9,6 +9,11 @@ Find the light in your darkness. Highly configurable Tally for Blackmagic Atem s
 * Outputs that can show multiple Atem sources.
 * Web view of tally.
 
+<p float="left" style="width:100%; box-sizing: border-box; display: flex; gap: 10px;">
+  <img style="border-radius: 5px" alt="BEACON CONTROL HOME" src="https://github.com/IJIJI/Beacon/blob/main/assets/Main-Page.png?raw=true" />
+  <img style="border-radius: 5px" alt="BEACON PHONE TALLY" src="https://github.com/IJIJI/Beacon/blob/main/assets/Phone-Tally.png?raw=true" /> 
+</p>
+
 # Hardware
 
 Beacon runs on Raspberry pi's. It has been tested a lot on a pi 2, but also wordks on newer features. It uses the gpio os hardware tally outputs. The pins are:
