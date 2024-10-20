@@ -10,10 +10,12 @@ Find the light in your darkness. Highly configurable Tally for Blackmagic Atem s
 * Web view of tally.
 
 <p float="left" style="width:100%; box-sizing: border-box; display: flex; gap: 10px; flex-wrap: nowrap">
-  <img style="border-radius: 5px" alt="BEACON CONTROL HOME" src="https://github.com/IJIJI/Beacon/blob/main/assets/Main-Page.png?raw=true" />
-  <img style="border-radius: 5px" alt="BEACON PHONE TALLY" src="https://github.com/IJIJI/Beacon/blob/main/assets/Phone-Tally.png?raw=true" /> 
+  <img style="border-radius: 5px" alt="BEACON CONTROL HOME" src="" />
+  <img style="border-radius: 5px" alt="BEACON PHONE TALLY" src="" /> 
 </p>
-
+Solarized dark             |  Solarized Ocean
+:-------------------------:|:-------------------------:
+![BEACON CONTROL HOME](https://github.com/IJIJI/Beacon/blob/main/assets/Main-Page.png?raw=true)  |  [BEACON PHONE TALLY](https://github.com/IJIJI/Beacon/blob/main/assets/Phone-Tally.png?raw=true)
 # Hardware
 
 Beacon runs on Raspberry pi's. It has been tested a lot on a pi 2, but also wordks on newer features. It uses the gpio os hardware tally outputs. The pins are:
@@ -110,7 +112,7 @@ WantedBy=multi-user.target
 
 Enable and start service:
 
-```yaml
+```bash
 sudo systemctl daemon-reload &&
 sudo systemctl enable beacon &&
 sudo systemctl start beacon
@@ -118,7 +120,7 @@ sudo systemctl start beacon
 
 Congratulations, you can now access your Beacon tally via the browser! To see your ip address you can use this command:
 
-```yaml
+```bash
 ifconfig | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*'
 ```
 
