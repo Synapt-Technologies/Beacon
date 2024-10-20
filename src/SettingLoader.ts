@@ -157,9 +157,9 @@ export namespace SettingLoader
       new HardwareTally({'program': 'P1-11', 'preview': 'P1-22'}, 6, 6),
       new HardwareTally({'program': 'P1-12', 'preview': 'P1-23'}, 7, 7),
       new HardwareTally({'program': 'P1-13', 'preview': 'P1-24'}, 8, 8),
-      new Tally([1,2,3,4,5,6]),
-      new Tally([7,8]),
-      new Tally([3010,3020]),
+      new Tally([1,2,3,4]),
+      new Tally([6,7]),
+      new Tally([3010]),
       new Tally([1000]),
     ];
 
