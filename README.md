@@ -15,8 +15,10 @@ Find the light in your darkness. Highly configurable Tally for Blackmagic Atem s
 </p>
 Solarized dark             |  Solarized Ocean
 :-------------------------:|:-------------------------:
-![BEACON CONTROL HOME](https://github.com/IJIJI/Beacon/blob/main/assets/Main-Page.png?raw=true)  |  ![BEACON PHONE TALLY](https://github.com/IJIJI/Beacon/blob/main/assets/Phone-Tally.png?raw=true)
+![BEACON CONTROL HOME]()  |  ![BEACON PHONE TALLY](https://github.com/IJIJI/Beacon/blob/main/assets/Phone-Tally.png?raw=true)
 # Hardware
+
+![BEACON CONTROLHOME](https://github.com/IJIJI/Beacon/blob/main/assets/Main-Page.png?raw=true)
 
 Beacon runs on Raspberry pi's. It has been tested a lot on a pi 2, but also wordks on newer features. It uses the gpio os hardware tally outputs. The pins are:
 
