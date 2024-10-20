@@ -55,6 +55,10 @@ msg_ok    "Done - Updating operating system: apt-get upgrade"
 dir=/opt/Beacon-tally
 
 function dependencies_script() {
+msg_info  "Installing dependencies: git"
+sudo apt install git -y &>/dev/null
+msg_ok    "Done - Installing dependencies: git"
+
 msg_info  "Installing dependencies: nodejs"
 sudo apt install nodejs -y &>/dev/null
 msg_ok    "Done - Installing dependencies: nodejs"
@@ -116,7 +120,7 @@ EOF
 
 function enable_service(){
   msg_info  "Reloading daemon"
-  sudo systemctl daemon-reload
+  sudo systemctl daemon-reload &>/dev/null
   msg_ok    "Done - Reloading daemon"
   
   msg_info  "Enabeling service"
