@@ -4,6 +4,11 @@ Find the light in your darkness. Highly configurable Tally for Blackmagic Atem s
 
 # Features
 
+* Hardware tally output.
+* Online settings configuration.
+* Outputs that can show multiple Atem sources.
+* Web view of tally.
+
 # Hardware
 
 Beacon runs on Raspberry pi's. It has been tested a lot on a pi 2, but also wordks on newer features. It uses the gpio os hardware tally outputs. The pins are:
@@ -18,6 +23,24 @@ Beacon runs on Raspberry pi's. It has been tested a lot on a pi 2, but also word
 | **6** |   11   | 22      |
 | **7** |   12   | 23      |
 | **8** |   13   | 24      |
+
+### Beacon Hardware
+
+I have developed hardware for this system. The base Beacon Hardware consist of the Base and the Lighthouses. The Base is a rack mount device that has 8 XLR outputs. The Lighthouses are the lamps that you connect to the base. They have 4-pin mini xlr connectors and a switch to toggle the front leds. [I sell them on my site beacon.synapt.net](https://beacon.synapt.net/).
+
+##### Beacon Base:
+
+[link]()
+
+##### Beacon Lighthouse:
+
+[link]()
+
+##### Live Sign (WIP):
+
+##### Work in Progress:
+
+I am currently in the development of a wireless version of the lighthouses and battery packs to make the current lighthouses wireless. They will communicate over 2.4ghz in a mesh network, with a POE base station.
 
 # Installation
 

@@ -1,7 +1,7 @@
 
 
 import { Tally } from "./Tally";
-import { HardwareTally } from "./HardwareTally";
+import { HardwareTally } from "./SoftHardwareTally";
 
 import { EventEmitter } from "events";
 
