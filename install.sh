@@ -4,7 +4,7 @@
 # License: GNU GPLv3
 # https://github.com/IJIJI/Beacon/raw/main/LICENSE
 
-source <(curl -s https://raw.githubusercontent.com/IJIJI/Beacon/main/func.sh)
+source <(curl -s https://raw.githubusercontent.com/IJIJI/Beacon/refs/heads/main/func.sh)
 
 textred=$(tput sgr0 setaf 196)
 textdimred=$(tput sgr0 setaf 9)
