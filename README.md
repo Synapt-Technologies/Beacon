@@ -9,7 +9,7 @@ Find the light in your darkness. Highly configurable Tally for Blackmagic Atem s
 * Outputs that can show multiple Atem sources.
 * Web view of tally.
 
-<p style="width:100%; box-sizing: border-box; display: flex; gap: 10px; flex-wrap: nowrap">
+<p style="width:100%; box-sizing: border-box; display: flex; gap: 0; flex-wrap: nowrap">
   <img style="flex-grow:3; border-radius: 5px" alt="BEACON CONTROL HOME" src="https://raw.githubusercontent.com/IJIJI/Beacon/refs/heads/main/assets/Main-Page.png" />
   <img style="flex-grow:1; border-radius: 5px" alt="BEACON PHONE TALLY" src="https://raw.githubusercontent.com/IJIJI/Beacon/refs/heads/main/assets/Phone-Tally.png" /> 
 </p>
