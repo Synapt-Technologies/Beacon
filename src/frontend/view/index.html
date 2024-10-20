@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BEACON PORTAL 2.0</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="stylesheet" href="/css/fonts.css">
+  <link rel="stylesheet" href="/css/config.css">
+  <link rel="stylesheet" href="/css/tallyview.css">
+  <link rel="stylesheet" href="/css/material-icons.css">
+
+</head>
+<body>
+
+  <aside>
+    <!-- <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Synapt Technologies Logo"> -->
+    <h1>BEACON</h1>
+    <p>V2.0 <b>Beta</b></p>
+  </aside>
+
+  <main class="tally" id="mainTally">
+    <div class="info">
+      <p><span class="material-icons">sync</span> <span class="source">Loading...</span></p>
+    </div>
+  </main>
+
+  <script type="module">
+    import { FrontendTallyViewer } from "/js/FrontendTallyViewer.js";
+    import { FrontendTally } from "/js/FrontendTally.js";
+
+    const id = window.location.pathname.replace('/view/', '').split("/")[0];
+
+    const tallyManager = new FrontendTallyViewer("mainTally", id);
+
+    const client = new WebSocket('ws://'+window.location.hostname+':8080');
+    client.onmessage = (message) => {
+      const data = parseData(message.data);
+      processData(data);
+    }
+
+    function parseData(data){
+      return JSON.parse(data);
+    }
+
+    function processData(data) {
+      tallyManager.updateTallyState(data.tallyData);
+    }
+
+  </script>
+</body>
+</html>

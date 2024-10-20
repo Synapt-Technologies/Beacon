@@ -1,0 +1,138 @@
+div.tallyView {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  
+  width: 100%;
+}
+@media screen and (max-width: 800px){
+  div.tallyView {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+  
+}
+
+div.tallyView .tally {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  /* width: 150px; */
+  height: 150px;
+  margin: 10px;
+  padding: 10px;
+  border-radius: 5px;
+  background-color: var(--bg-color);
+  box-shadow: 0 0 5px 0 var(--bg-color-light);
+
+  transition: background-color 0.1s ease;
+
+  color: white;
+}
+@media screen and (max-width: 800px){
+  div.tallyView .tally {
+    height: 20vw;
+  }
+}
+
+div.tallyView .tally.program {
+  background-color: var(--tally-program);
+}
+div.tallyView .tally.preview {
+  background-color: var(--tally-preview);
+}
+div.tallyView .tally.alert {
+  background-color: var(--tally-alert);
+}
+
+
+div.tallyView .tally h2 {
+  margin: 5px;
+
+  font-size: 40px;
+
+}
+div.tallyView .tally h2 b   {
+  color: var(--bg-color-superlight) !important;
+
+}
+div.tallyView .tally h2 b span{
+
+  font-size: 30px;
+
+  height: 30px !important;
+  width: 30px !important;
+
+  color: var(--bg-color-superlight) !important;
+  margin-top: 3px;
+}
+
+div.tallyView .tally p {
+  --height: 20px;
+  color: inherit;
+
+  font-size: var(--height);
+  margin: 0;
+
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+div.tallyView .tally p span{
+  color: inherit;
+  font-size: inherit !important;
+}
+div.tallyView .tally p span.material-icons{
+  height: var(--height);
+  width: var(--height);
+}
+
+@media screen and (max-width: 600px){
+  div.tallyView .tally h2 {
+    font-size: 30px;
+    margin: 3px;
+  }
+  div.tallyView .tally p {
+    --height: 15px;
+  }
+  div.tallyView .tally h2 b span{
+    font-size: 23px;
+    height: 23px !important;
+    width: 23px !important;
+  }
+
+}
+
+div.tallyView.settings a {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  /* width: 150px; */
+  height: 150px;
+  margin: 10px;
+  padding: 10px;
+  border-radius: 5px;
+}
+div.tallyView.settings a span{
+  font-size: 60px;
+  margin: 4px;
+}
+div.tallyView.settings a p{
+  font-size: 18px;
+  margin: 0;
+}
+@media screen and (max-width: 800px){
+  div.tallyView.settings a {
+    height: 20vw;
+  }
+  div.tallyView.settings a span{
+    font-size: 50px;
+    margin: 2px;
+  }
+  div.tallyView.settings a p{
+    font-size: 16px;
+  }
+}
+

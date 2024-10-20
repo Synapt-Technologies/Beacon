@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BEACON PORTAL 2.0</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="stylesheet" href="/css/fonts.css">
+  <link rel="stylesheet" href="/css/config.css">
+  <link rel="stylesheet" href="/css/tally.css">
+  <link rel="stylesheet" href="/css/sources.css">
+  <link rel="stylesheet" href="/css/material-icons.css">
+
+</head>
+<body>
+
+  <aside>
+    <!-- <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Synapt Technologies Logo"> -->
+    <h1>BEACON</h1>
+    <p>V2.0 <b>Beta</b></p>
+  </aside>
+  <main>
+    <section id="settingsLoading">
+      <div class="titleRow">
+        <h1>Sources</h1>
+        <a href="/" class="backButton"><span class="material-icons">close</span></a>
+      </div>
+      <p>loading...</p>
+
+    </section>
+    <section id="settings" style="display: none;">
+      <div class="titleRow">
+        <h1>Sources</h1>
+        <a href="/" class="backButton"><span class="material-icons">close</span></a>
+      </div>
+      <p>Comma delimeted source ID's. To see what the source id's are <a href="/atem">click here.</a></p>
+      <p>Format: <b><i>source</i>, <i>source</i>, <i>source</i></b>. Alternatively <b>;</b> can be used.</p>
+      
+      <form action="/api/sources" method="post" class="tallyCont">
+
+        <div class="tallyCont" id="tallyCont">
+          
+          <!-- <div class="tally">
+            <div class="tallyIcon">
+              <span class="material-icons">podcasts</span>
+              <h2>1</h2>
+            </div>
+            <div class="tallyButtons">
+              <a href=""><span class="material-icons">brightness_6</span></a>
+              <a href=""><span class="material-icons">notifications</span></a>
+            </div>
+            <div class="sources">
+              <textarea type="text" name="atem_ip" pattern="^(\d+)((,|;)\s*\d+)*$"></textarea>
+            </div>
+          </div> -->
+        </div>
+
+        <button>Save</button>
+      </form>
+
+    </section>
+
+    <script type="module">
+     import { FrontendTallySource } from "/js/FrontendTallySource.js";
+
+
+      //fetch settings from /api/settings
+      fetch('/api/sources')
+      .then(response => response.json())
+      .then(data => {
+        parseData(data);
+      });
+
+      const tallyController = new FrontendTallySource('tallyCont');
+
+      const container = document.getElementById('tallyCont');
+
+      function parseData(data){
+
+        document.getElementById('settingsLoading').style.display = 'none';
+        document.getElementById('settings').style.display = 'block';
+
+        console.log(data);
+
+        tallyController.loadData(data.tallyData);
+
+      }
+
+    </script>
+  </main>
+  <script>
+      if ( window.history.replaceState ) {
+          window.history.replaceState( null, null, window.location.href );
+      }
+  </script>
+</body>
+</html>
