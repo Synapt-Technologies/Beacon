@@ -10,14 +10,6 @@ Find the light in your darkness. Highly configurable Tally for Blackmagic Atem s
 
 # Installation
 
-You can install Beacon Tally automatically with this install script:
-
-```bash
-bash -c "$(wget -qLO - https://raw.githubusercontent.com/IJIJI/Beacon/main/install.sh)"
-```
-
-### Manual install
-
 Update your Raspberry pi:
 
 ```shell
@@ -86,4 +78,14 @@ Congratulations, you can now access your Beacon tally via the browser! To see yo
 
 ```yaml
 ifconfig | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*'
+```
+
+### Automatic install
+
+You can install Beacon Tally automatically with this install script:
+
+***WARNING! This script does not allways work. The manual method is still recommended.***
+
+```bash
+bash -c "$(wget -qLO - https://raw.githubusercontent.com/IJIJI/Beacon/main/install.sh)"
 ```
