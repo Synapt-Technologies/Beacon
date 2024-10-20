@@ -25,24 +25,26 @@ sudo apt-get update
 sudo apt-get upgrade
 ```
 
-Install NodeJS and Yarn:
+Install Git, NodeJS, NPM, Yarn and TSX:
 
 ```bash
-sudo apt install nodejs npm
+sudo apt install git -y
+sudo apt install nodejs npm -y
 sudo npm install --global yarn
+sudo npm install --global tsx
 ```
 
 Make a directory:
 
 ```bash
 mkdir /opt/Beacon-tally
-cd /opt/Beacon-tally
 ```
 
 Clone and initialize repository:
 
 ```bash
-git clone https://github.com/IJIJI/Beacon.git
+git clone https://github.com/IJIJI/Beacon.git /opt/Beacon-tally
+cd /opt/Beacon-tally
 yarn install
 ```
 
