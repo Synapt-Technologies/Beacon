@@ -60,7 +60,13 @@ sudo apt install git -y &>/dev/null
 msg_ok    "Done - Installing dependencies: git"
 
 msg_info  "Installing dependencies: nodejs"
-sudo apt install nodejs -y &>/dev/null
+# sudo apt install nodejs -y &>/dev/null
+# installs fnm (Fast Node Manager)
+curl -fsSL https://fnm.vercel.app/install | bash &>/dev/null
+# activate fnm
+source ~/.bashrc &>/dev/null
+# download and install Node.js
+fnm use --install-if-missing 20 &>/dev/null
 msg_ok    "Done - Installing dependencies: nodejs"
 
 msg_info  "Installing dependencies: yarn"
