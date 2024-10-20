@@ -10,8 +10,8 @@ Find the light in your darkness. Highly configurable Tally for Blackmagic Atem s
 * Web view of tally.
 
 <p style="width:100%; box-sizing: border-box; display: flex; gap: 10px; flex-wrap: nowrap">
-  <img style="width:75%; border-radius: 5px" alt="BEACON CONTROL HOME" src="https://github.com/IJIJI/Beacon/blob/main/assets/Main-Page.png?raw=true" />
-  <img style="width:25%; border-radius: 5px" alt="BEACON PHONE TALLY" src="https://github.com/IJIJI/Beacon/blob/main/assets/Phone-Tally.png?raw=true" /> 
+  <img style="width:74%; border-radius: 5px" alt="BEACON CONTROL HOME" src="https://github.com/IJIJI/Beacon/blob/main/assets/Main-Page.png?raw=true" />
+  <img style="width:24%; border-radius: 5px" alt="BEACON PHONE TALLY" src="https://github.com/IJIJI/Beacon/blob/main/assets/Phone-Tally.png?raw=true" /> 
 </p>
 
 # Hardware
