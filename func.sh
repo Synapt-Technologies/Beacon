@@ -66,11 +66,11 @@ curl -fsSL https://fnm.vercel.app/install | bash &>/dev/null
 # activate fnm
 source ~/.bashrc &>/dev/null
 # download and install Node.js
-fnm use --install-if-missing 20 &>/dev/null
+sudo fnm use --install-if-missing 20 &>/dev/null
 msg_ok    "Done - Installing dependencies: nodejs"
 
 msg_info  "Installing dependencies: yarn"
-npm install --global yarn &>/dev/null
+sudo npm install --global yarn &>/dev/null
 msg_ok    "Done - Installing dependencies: yarn"
 
 }
