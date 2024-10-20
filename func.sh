@@ -84,10 +84,10 @@ msg_ok    "Done - Installing dependencies: tsx"
 
 function foldercreate_script() {
   if [[ ! -e $dir ]]; then
-    mkdir $dir
+    sudo mkdir $dir
   elif [[ -e $dir ]]; then
     sudo rm -rf $dir
-    mkdir $dir
+    sudo mkdir $dir
   elif [[ ! -d $dir ]]; then
     msg_error "$dir already exists but is not a directory" 1>&2
     exit
