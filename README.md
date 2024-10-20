@@ -13,31 +13,34 @@ Find the light in your darkness. Highly configurable Tally for Blackmagic Atem s
 Update your Raspberry pi:
 
 ```shell
-sudo apt-get update
+sudo apt-get update &&
 sudo apt-get upgrade
 ```
 
 Install Git, NodeJS, NPM, Yarn and TSX:
 
 ```bash
-sudo apt install git -y
-sudo apt install nodejs npm -y
-sudo npm install --global yarn
+sudo apt install git -y &&
+sudo apt install nodejs &&
+sudo apt install npm -y &&
+sudo npm install --global yarn &&
 sudo npm install --global tsx
 ```
+
+> Note. The last two installs might give the error "ENOENT: no such file or directory, uv_cwd". Re-opening the terminal will resolve this.
 
 Make a directory:
 
 ```bash
-mkdir /opt/Beacon-tally
+sudo mkdir /opt/Beacon-tally
 ```
 
 Clone and initialize repository:
 
 ```bash
-git clone https://github.com/IJIJI/Beacon.git /opt/Beacon-tally
-cd /opt/Beacon-tally
-yarn install
+sudo git clone https://github.com/IJIJI/Beacon.git /opt/Beacon-tally &&
+cd /opt/Beacon-tally &&
+sudo yarn install
 ```
 
 Create startup service:
@@ -46,7 +49,7 @@ Create startup service:
 sudo nano /lib/systemd/system/beacon.service
 ```
 
-Paste startup service into file:
+Paste startup service into file, then press Ctrl + S to save and Ctrl + X to exit:
 
 ```yaml
 #/lib/systemd/system/beacon.service
@@ -69,8 +72,8 @@ WantedBy=multi-user.target
 Enable and start service:
 
 ```yaml
-sudo systemctl daemon-reload
-sudo systemctl enable beacon
+sudo systemctl daemon-reload &&
+sudo systemctl enable beacon &&
 sudo systemctl start beacon
 ```
 
