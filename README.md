@@ -2,11 +2,22 @@
 
 Find the light in your darkness. Highly configurable Tally for Blackmagic Atem switchers.
 
-
 # Features
 
-
 # Hardware
+
+Beacon runs on Raspberry pi's. It has been tested a lot on a pi 2, but also wordks on newer features. It uses the gpio os hardware tally outputs. The pins are:
+
+|       Tally | Program | Preview |
+| ----------: | :-----: | ------- |
+| **1** |    3    | 15      |
+| **2** |    5    | 16      |
+| **3** |    7    | 18      |
+| **4** |    8    | 19      |
+| **5** |   10   | 21      |
+| **6** |   11   | 22      |
+| **7** |   12   | 23      |
+| **8** |   13   | 24      |
 
 # Installation
 
