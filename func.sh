@@ -48,8 +48,6 @@ msg_ok    "Done - Updating operating system: apt-get update"
 msg_info  "Updating operating system: apt-get upgrade"
 sudo apt-get -y upgrade &>/dev/null
 msg_ok    "Done - Updating operating system: apt-get upgrade"
-
-exit
 }
 
 
