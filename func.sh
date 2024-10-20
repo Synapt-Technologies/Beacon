@@ -75,6 +75,11 @@ sudo npm install --global yarn &>/dev/null
 # sudo npm install --global yarn &>/dev/null || echo "\nError: Unable to install yarn\n" && exit
 msg_ok    "Done - Installing dependencies: yarn"
 
+msg_info  "Installing dependencies: tsx"
+sudo npm install --global tsx &>/dev/null
+# sudo npm install --global tsx &>/dev/null || echo "\nError: Unable to install tsx\n" && exit
+msg_ok    "Done - Installing dependencies: tsx"
+
 }
 
 function foldercreate_script() {
