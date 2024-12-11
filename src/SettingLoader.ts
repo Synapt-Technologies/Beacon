@@ -10,8 +10,9 @@ import Conf from 'conf';
 
 export interface SettingLoaderEvents {
   loaded: (settings: SettingLoader.Config) => void;
-  set_alert_on_disconnect: (value: boolean) => void;
   set_atem_ip: (value: string) => void;
+  set_alert_on_disconnect: (value: boolean) => void;
+  network_sources: (value: boolean) => void;
 }
 
 export declare interface SettingLoader {
@@ -85,6 +86,10 @@ export class SettingLoader extends EventEmitter {
         this.config.settings.alert_on_disconnect = (value == 'true') || (value == 'false,true');
         this.emit('set_alert_on_disconnect', this.config.settings.alert_on_disconnect);
         break;
+      case 'network_sources':
+        this.config.settings.network_sources = (value == 'true') || (value == 'false,true');
+        this.emit('network_sources', this.config.settings.network_sources);
+        break;
     }
     console.log('Settings updated: ', key, this.config.settings);
 
@@ -134,11 +139,13 @@ export namespace SettingLoader
   {
     atem_ip: string = '192.168.10.240';
     alert_on_disconnect: boolean = false;
+    network_sources: boolean = false;
 
     toArray(): {[key: string]: any} {
       return {
         'atem_ip': this.atem_ip,
         'alert_on_disconnect': this.alert_on_disconnect,
+        'network_sources': this.network_sources,
       };
     };
 

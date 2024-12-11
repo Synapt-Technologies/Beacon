@@ -83,6 +83,29 @@
         </div>
       </form>
 
+      <div class="breakTitle">
+        <h1>Advanced</h1>
+        <div class="break"></div>
+      </div>
+
+      <form action="/api/settings" method="post">
+        <!-- Hardware alert on disconnect: CHECKBOX -->
+        <div class="formInput">
+          <label for="network_sources">Network Sources:</label>
+          <div class="formInputRow">
+
+            <label class="checkBoxCont" for="network_sources">
+              <input type="hidden" name="network_sources" value="false">
+              <input type="checkbox" id="network_sources" name="network_sources" value="true">
+              <span class="checkBoxSlide"></span>
+            </label>
+            <input class="formButton" type="submit" value="Set">
+
+          </div>
+        </div>
+      </form>
+
+
     </section>
 
     <script type="module">
@@ -96,6 +119,7 @@
         document.getElementById('settings').style.display = 'block';
         document.getElementById('switcher_ip').value = data.atem_ip;
         document.getElementById('hardware_alert').checked = data.alert_on_disconnect;
+        document.getElementById('network_sources').checked = data.network_sources;
       });
 
     </script>
