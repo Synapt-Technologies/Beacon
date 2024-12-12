@@ -16,7 +16,7 @@ Find the light in your darkness. Highly configurable Tally for Blackmagic Atem s
 
 # Hardware
 
-Beacon runs on Raspberry pi's. It has been tested a lot on a pi 2, but also wordks on newer features. It uses the gpio os hardware tally outputs. The pins are:
+Beacon runs on a Raspberry pi. It has been tested a lot on a pi 2, but also works on newer versions. It uses the gpio as hardware tally outputs. The pins are:
 
 |       Tally | Program | Preview |
 | ----------: | :-----: | ------- |
