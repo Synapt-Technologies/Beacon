@@ -1,8 +1,16 @@
 
 export interface SwitcherConfig {
     name: string;
-    type: string;
     host: string;
+}
+
+export interface SwitcherTallyState {
+    program: Array<number>;
+    preview: Array<number>;
+}
+
+export interface SwitcherInfo {
+    name: string;
 }
 
 export interface SwitcherConnection {
