@@ -40,30 +40,34 @@ export class AtemSwitcherConnection extends EventEmitter<SwitcherEvents> impleme
 
         this._atem.on('info', (data) => {
             // this.logPrefix("INFO", data);
-            console.log("[ATEM] Info: " + data);
+            console.log("[ATEM::" +this._name+"] Info: " + data);
             // this._parseAtem();
         });
         this._atem.on('error', (data) => {
             // this.logPrefix("ERROR", data)
             // this._parseAtem();
+            console.log("[ATEM::" +this._name+"] ERROR: " + data);
         });
 
         this._atem.on('connected', () => {
             this._info.connected = true;
             this._info.moment = Date.now();
             this.emit('connected');
+            console.log("[ATEM::" +this._name+"] Connected");
         })
 
         this._atem.on('disconnected', () => {
             this._info.connected = false;
             this._info.moment = Date.now();
             this.emit('disconnected');
+            console.log("[ATEM::" +this._name+"] Disconnected");
         })
 
         this._atem.on('stateChanged', (state, pathToChange) => {
             // this._parseAtem();
             this._info.state = state;
             this.emit('info_update', this._info, pathToChange)
+            console.log("[ATEM::" +this._name+"] Statechange: " + pathToChange);
         })
     }
 
