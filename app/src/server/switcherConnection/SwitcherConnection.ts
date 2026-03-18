@@ -1,3 +1,4 @@
+import { EventEmitter } from "events";
 
 export interface SwitcherConfig {
     name: string;
@@ -5,18 +6,28 @@ export interface SwitcherConfig {
 }
 
 export interface SwitcherTallyState {
+    moment: number | null;
     program: Array<number>;
     preview: Array<number>;
 }
 
 export interface SwitcherInfo {
-    name: string;
+    moment: number | null;
+    connected: boolean;
 }
 
-export interface SwitcherConnection {
+export type SwitcherEvents = {
+    connected: [];
+    disconnected: [];
+    tally_update: [SwitcherTallyState];
+    info_update: [SwitcherInfo];
+}
+
+export interface SwitcherConnection extends EventEmitter<SwitcherEvents> {
     setConfig(config: SwitcherConfig): void;
     connect(): Promise<void>;
     disconnect(): Promise<void>;
     isConnected(): boolean;
-    getSwitcherState(): any;
+    getTallyState(): any;
+    getInfo(): SwitcherInfo;
 }
