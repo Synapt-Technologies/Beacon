@@ -20,14 +20,16 @@ export type SwitcherEvents = {
     connected: [];
     disconnected: [];
     tally_update: [SwitcherTallyState];
-    info_update: [SwitcherInfo];
+    info_update: [SwitcherInfo, path: string[] | null];
 }
 
 export interface SwitcherConnection extends EventEmitter<SwitcherEvents> {
-    setConfig(config: SwitcherConfig): void;
     connect(): Promise<void>;
     disconnect(): Promise<void>;
     isConnected(): boolean;
     getTallyState(): any;
     getInfo(): SwitcherInfo;
+
+    getName(): string;
+    setName(name: string): void;
 }

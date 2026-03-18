@@ -1,10 +1,10 @@
 import { EventEmitter } from "events";
 
 import { SwitcherConnection, SwitcherConfig, SwitcherTallyState, SwitcherInfo, SwitcherEvents } from "./switcherConnection";
-import { Atem, AtemState, Enums } from "atem-connection";
+import { Atem, AtemState, Enums, Input } from "atem-connection";
 
 interface AtemSwitcherConfig extends SwitcherConfig {
-    me: number;
+    port: number;
 }
 
 interface AtemSwitcherInfo extends SwitcherInfo {
@@ -14,6 +14,7 @@ interface AtemSwitcherInfo extends SwitcherInfo {
 export class AtemSwitcherConnection extends EventEmitter<SwitcherEvents> implements SwitcherConnection {
 
     private _atem: Atem;
+    private _name: string;
 
     private _info: AtemSwitcherInfo = {
         moment: null,
@@ -27,13 +28,19 @@ export class AtemSwitcherConnection extends EventEmitter<SwitcherEvents> impleme
         preview: [],
     };
 
-    constructor() {
+    constructor(config: AtemSwitcherConfig) {
         super();
 
-        this._atem = new Atem();
+        this._atem = new Atem({
+            address: config.host ??= "192.168.10.240",
+            port: config.port ??= 9910
+        });
+
+        this._name = config.name ??= "Atem Switcher";
 
         this._atem.on('info', (data) => {
             // this.logPrefix("INFO", data);
+            console.log("[ATEM] Info: " + data);
             // this._parseAtem();
         });
         this._atem.on('error', (data) => {
@@ -54,14 +61,12 @@ export class AtemSwitcherConnection extends EventEmitter<SwitcherEvents> impleme
         })
 
         this._atem.on('stateChanged', (state, pathToChange) => {
-            // this.logPrefix('UPDATE', pathToChange);
             // this._parseAtem();
+            this._info.state = state;
+            this.emit('info_update', this._info, pathToChange)
         })
     }
 
-    setConfig(config: AtemSwitcherConfig): void {
-    
-    }
     connect(): Promise<void> {
         return Promise.resolve();
     }
@@ -83,12 +88,30 @@ export class AtemSwitcherConnection extends EventEmitter<SwitcherEvents> impleme
         if (!this._info.state) return null;
         return this._info.state.info.model;
     }
-    getSources(): Array<{ id: number; name: string }> | null {
+    getSources(): Map<number, { short: string; long: string }> | null {
         if (!this._info.state) return null;
-        if (!this._info.state.inputs || 
-            this._info.state.inputs == undefined || 
-            Object.keys(this._info.state.inputs).length === 0
-        ) return null;
-        return this._info.state.inputs.map(input => ({ id: input.inputId, name: input.longName }));
+
+        return new Map<number, { short: string; long: string }>
+            (
+            Object.entries(this._info.state)
+                .filter(([, value]) => value != undefined)
+                .map(([key, value]) => {
+                    return [
+                        Number(key),
+                        {
+                            short: value.shortName,
+                            long: value.longName
+                        }
+                    ];
+                })
+            );
+    }
+
+    getName(): string {
+        return this._name
+    }
+
+    setName(name: string): void {
+        this._name = name;
     }
 }
