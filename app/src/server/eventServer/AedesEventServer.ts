@@ -6,6 +6,8 @@ import { Aedes, AedesPublishPacket, Client, Subscription } from "aedes";
 import { createServer, Server } from "node:net";
 
 export interface AedesEventServerConfig extends EventServerConfig {
+    serve_http: boolean,
+    serve_ws: boolean
 }
 
 export class AedesEventServer extends EventEmitter<EventServerEvents> implements EventServer {

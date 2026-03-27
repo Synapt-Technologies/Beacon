@@ -7,7 +7,9 @@ import { LightState } from "./src/server/eventServer/EventServer";
 let con1 = new AtemSwitcherConnection({host: "127.0.0.1"})
 let eventServ = new AedesEventServer({
     name: "testAedes",
-    port: 1883
+    port: 1883,
+    serve_http: true,
+    serve_ws: true
 })
 
 // con1.on('info_update', function(info: SwitcherInfo, path: string[] | null) {
