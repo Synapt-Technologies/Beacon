@@ -20,7 +20,9 @@ con1.on('tally_update', function(tallydata: SwitcherTallyState) {
     console.log("Tally: ", util.inspect(tallydata, false, null, true));
 
     const fullTally: LightState = {
-        alert: [],
+        alert: [
+            {number: 2, type: "talent"}
+        ],
         program: tallydata.program,
         preview: tallydata.preview
     }
@@ -33,7 +35,9 @@ eventServ.on('subscribe', () => {
     const tallydata = con1.getTallyState();
 
     const fullTally: LightState = {
-        alert: [],
+        alert: [
+            {number: 2, type: "talent"}
+        ],
         program: tallydata.program,
         preview: tallydata.preview
     }
@@ -45,9 +49,17 @@ con1.connect();
 
 setInterval(function ()  {
 
-    // console.log("Info: ", util.inspect(con1.getInfo(), false, null, true));
-    // console.log("Sources: ", util.inspect(con1.getSources(), false, null, true));
-    // console.log("Tally: ", con1.getTallyState());
+    const tallydata = con1.getTallyState();
+
+    const fullTally: LightState = {
+        alert: [
+            {number: 2, type: "talent"}
+        ],
+        program: tallydata.program,
+        preview: tallydata.preview
+    }
+
+    eventServ.broadcastTally(fullTally);
 
 }, 1000);
 

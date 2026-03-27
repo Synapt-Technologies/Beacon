@@ -7,8 +7,15 @@ export interface EventServerConfig {
     name?: string;
 }
 
+
+
+export interface LightAlertState {
+    number: number;
+    type: "operator" | "talent";
+}
+
 export interface LightState extends TallyState {    
-    alert: Array<number>;
+    alert?: Array<LightAlertState>;
 }
 
 export type EventServerEvents = {
