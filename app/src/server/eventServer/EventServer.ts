@@ -13,11 +13,12 @@ export interface LightState extends TallyState {
 
 export type EventServerEvents = {
     connection: [];
+    subscribe: []
 }
 
 
 export interface EventServer extends EventEmitter<EventServerEvents> {
-    broadcastTally(state: LightState): Promise<void>;
+    broadcastTally(state: LightState): void;
 
     init(): void;
 
