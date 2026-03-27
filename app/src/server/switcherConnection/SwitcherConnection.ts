@@ -1,20 +1,18 @@
 import { EventEmitter } from "events";
+import { TallyState } from "../types/TallyState";
 
 export interface SwitcherConfig {
     name?: string;
     host?: string;
 }
 
-export interface SwitcherTallyState {
+export interface SwitcherTallyState extends TallyState{
     moment: number | null;
-    program: Array<number>;
-    preview: Array<number>;
 }
 
 export interface SwitcherInfo {
     moment: number | null;
     connected: boolean;
-    host: string | null;
 }
 
 export type SwitcherEvents = {

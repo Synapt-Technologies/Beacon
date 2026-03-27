@@ -3,24 +3,23 @@ import { EventEmitter } from "events";
 import { SwitcherConnection, SwitcherConfig, SwitcherTallyState, SwitcherInfo, SwitcherEvents } from "./switcherConnection";
 import { Atem, AtemState, Enums, Input } from "atem-connection";
 
-interface AtemSwitcherConfig extends SwitcherConfig {
+export interface AtemSwitcherConfig extends SwitcherConfig {
     port?: number;
 }
 
-interface AtemSwitcherInfo extends SwitcherInfo {
+export interface AtemSwitcherInfo extends SwitcherInfo {
     state: AtemState | null;
 }
 
 export class AtemSwitcherConnection extends EventEmitter<SwitcherEvents> implements SwitcherConnection {
 
     private _atem: Atem;
-    private _name: string;
+    private _config: AtemSwitcherConfig;
 
     private _info: AtemSwitcherInfo = {
         moment: null,
         state: null,
         connected: false,
-        host: null
     }
 
     private _tallyState: SwitcherTallyState = {
@@ -32,38 +31,41 @@ export class AtemSwitcherConnection extends EventEmitter<SwitcherEvents> impleme
     constructor(config: AtemSwitcherConfig) {
         super();
 
+        config.host = config.host ??= "192.168.10.240";
+        config.port = config.port ??= 9910;
+        config.name = config.name ??= "Atem Switcher";
+
         this._atem = new Atem({
-            address: config.host ??= "192.168.10.240",
-            port: config.port ??= 9910
+            address: config.host,
+            port: config.port
         });
 
-        this._info.host = config.host ??= "192.168.10.240";
+        this._config = config;
 
-        this._name = config.name ??= "Atem Switcher";
 
         this._atem.on('info', (data) => {
             // this.logPrefix("INFO", data);
-            console.log("[ATEM::" +this._name+"] Info: " + data);
+            console.log("[ATEM::" +this._config.name+"] Info: " + data);
             // this._parseAtem();
         });
         this._atem.on('error', (data) => {
             // this.logPrefix("ERROR", data)
             // this._parseAtem();
-            console.log("[ATEM::" +this._name+"] ERROR: " + data);
+            console.log("[ATEM::" +this._config.name+"] ERROR: " + data);
         });
 
         this._atem.on('connected', () => {
             this._info.connected = true;
             this._info.moment = Date.now();
             this.emit('connected');
-            console.log("[ATEM::" +this._name+"] Connected");
+            console.log("[ATEM::" +this._config.name+"] Connected");
         })
 
         this._atem.on('disconnected', () => {
             this._info.connected = false;
             this._info.moment = Date.now();
             this.emit('disconnected');
-            console.log("[ATEM::" +this._name+"] Disconnected");
+            console.log("[ATEM::" +this._config.name+"] Disconnected");
         })
 
         this._atem.on('stateChanged', (state, pathToChange) => {
@@ -77,10 +79,10 @@ export class AtemSwitcherConnection extends EventEmitter<SwitcherEvents> impleme
     }
 
     connect(): Promise<void> {
-        if (this._info.host == null)
+        if (this._config.host == null)
             return Promise.reject(new Error("Host is not set!"));
 
-        return this._atem.connect(this._info.host);
+        return this._atem.connect(this._config.host);
     }
     disconnect(): Promise<void> {
         return this._atem.disconnect();
@@ -132,10 +134,10 @@ export class AtemSwitcherConnection extends EventEmitter<SwitcherEvents> impleme
     }
 
     getName(): string {
-        return this._name
+        return this._config.name ??= "Atem Switcher";
     }
 
     setName(name: string): void {
-        this._name = name;
+        this._config.name = name;
     }
 }

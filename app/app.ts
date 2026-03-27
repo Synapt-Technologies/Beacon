@@ -1,6 +1,7 @@
 import { AtemSwitcherConnection } from "./src/server/switcherConnection/AtemSwitcherConnection";
 import util from "node:util";
 import { SwitcherInfo, SwitcherTallyState } from "./src/server/switcherConnection/switcherConnection";
+import { AedesEventServer } from "./src/server/eventServer/AedesEventServer";
 
 let con1 = new AtemSwitcherConnection({host: "127.0.0.1"})
 
@@ -26,3 +27,11 @@ setInterval(function ()  {
     // console.log("Tally: ", con1.getTallyState());
 
 }, 1000);
+
+
+let eventServ = new AedesEventServer({
+    name: "testAedes",
+    port: 1883
+})
+
+eventServ.init();
