@@ -4,7 +4,7 @@ import { SwitcherConnection, SwitcherConfig, SwitcherTallyState, SwitcherInfo, S
 import { Atem, AtemState, Enums, Input } from "atem-connection";
 
 interface AtemSwitcherConfig extends SwitcherConfig {
-    port: number;
+    port?: number;
 }
 
 interface AtemSwitcherInfo extends SwitcherInfo {
@@ -20,6 +20,7 @@ export class AtemSwitcherConnection extends EventEmitter<SwitcherEvents> impleme
         moment: null,
         state: null,
         connected: false,
+        host: null
     }
 
     private _tallyState: SwitcherTallyState = {
@@ -35,6 +36,8 @@ export class AtemSwitcherConnection extends EventEmitter<SwitcherEvents> impleme
             address: config.host ??= "192.168.10.240",
             port: config.port ??= 9910
         });
+
+        this._info.host = config.host ??= "192.168.10.240";
 
         this._name = config.name ??= "Atem Switcher";
 
@@ -66,22 +69,39 @@ export class AtemSwitcherConnection extends EventEmitter<SwitcherEvents> impleme
         this._atem.on('stateChanged', (state, pathToChange) => {
             // this._parseAtem();
             this._info.state = state;
-            this.emit('info_update', this._info, pathToChange)
-            console.log("[ATEM::" +this._name+"] Statechange: " + pathToChange);
+            this._setTallystate();
+            
+            this.emit('info_update', this._info, pathToChange) // Only if something changed? e.g. no tally change.
+            // console.log("[ATEM::" +this._name+"] Statechange: " + pathToChange);
         })
     }
 
     connect(): Promise<void> {
-        return Promise.resolve();
+        if (this._info.host == null)
+            return Promise.reject(new Error("Host is not set!"));
+
+        return this._atem.connect(this._info.host);
     }
     disconnect(): Promise<void> {
-        return Promise.resolve();
+        return this._atem.disconnect();
     }
     isConnected(): boolean {
         return this._info.connected;
     }
     getTallyState(): any {
         return this._tallyState;
+    }
+
+    _setTallystate(): void {
+        this._tallyState.moment = Date.now();
+        const newProgram: Array<number> = this._atem.listVisibleInputs("program");
+        const newPreview: Array<number> = this._atem.listVisibleInputs("preview");
+
+        if (newProgram.join(',') != this._tallyState.program.join(',') || newPreview.join(',') != this._tallyState.preview.join(',')){ // TODO Check if this is needed and smart.
+            this._tallyState.program = newProgram;
+            this._tallyState.preview = newPreview;
+            this.emit("tally_update", this._tallyState);
+        }
     }
 
 
@@ -92,22 +112,22 @@ export class AtemSwitcherConnection extends EventEmitter<SwitcherEvents> impleme
         if (!this._info.state) return null;
         return this._info.state.info.model;
     }
-    getSources(): Map<number, { short: string; long: string }> | null {
+    getSources(): Map<number, { short: string | undefined; long: string | undefined }> | null {
         if (!this._info.state) return null;
 
-        return new Map<number, { short: string; long: string }>
+        return new Map<number, { short: string | undefined; long: string | undefined }>
             (
-            Object.entries(this._info.state)
-                .filter(([, value]) => value != undefined)
-                .map(([key, value]) => {
-                    return [
-                        Number(key),
-                        {
-                            short: value.shortName,
-                            long: value.longName
-                        }
-                    ];
-                })
+                Object.entries(this._info.state.inputs)
+                    .filter(([, value]) => value != undefined)
+                    .map(([key, value]) => {
+                        return [
+                            Number(key),
+                            {
+                                short: value?.shortName,
+                                long: value?.longName
+                            }
+                        ];
+                    })
             );
     }
 

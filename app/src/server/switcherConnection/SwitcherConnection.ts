@@ -1,8 +1,8 @@
 import { EventEmitter } from "events";
 
 export interface SwitcherConfig {
-    name: string;
-    host: string;
+    name?: string;
+    host?: string;
 }
 
 export interface SwitcherTallyState {
@@ -14,6 +14,7 @@ export interface SwitcherTallyState {
 export interface SwitcherInfo {
     moment: number | null;
     connected: boolean;
+    host: string | null;
 }
 
 export type SwitcherEvents = {
