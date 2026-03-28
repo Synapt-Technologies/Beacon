@@ -11,10 +11,9 @@ export interface AtemSwitcherInfo extends SwitcherInfo {
     state: AtemState | null;
 }
 
-export class AtemSwitcherConnection extends EventEmitter<SwitcherEvents> implements SwitcherConnection {
+export class AtemSwitcherConnection extends  SwitcherConnection {
 
     private atem: Atem;
-    private config: AtemSwitcherConfig;
 
     private info: AtemSwitcherInfo = {
         moment: null,

@@ -22,13 +22,17 @@ export type SwitcherEvents = {
     info_update: [SwitcherInfo, path: string[] | null];
 }
 
-export interface SwitcherConnection extends EventEmitter<SwitcherEvents> {
-    connect(): Promise<void>;
-    disconnect(): Promise<void>;
-    isConnected(): boolean;
-    getTallyState(): any;
-    getInfo(): SwitcherInfo;
+export abstract class SwitcherConnection extends EventEmitter<SwitcherEvents> {
 
-    getName(): string;
-    setName(name: string): void;
+    protected config: SwitcherConfig = {};
+
+
+    abstract connect(): Promise<void>;
+    abstract disconnect(): Promise<void>;
+    abstract isConnected(): boolean;
+    abstract getTallyState(): any;
+    abstract getInfo(): SwitcherInfo;
+
+    abstract getName(): string;
+    abstract setName(name: string): void;
 }

@@ -24,11 +24,11 @@ export type EventServerEvents = {
 }
 
 
-export interface EventServer extends EventEmitter<EventServerEvents> {
-    broadcastTally(state: LightState): void;
+export abstract class EventServer extends EventEmitter<EventServerEvents> {
+    abstract broadcastTally(state: LightState): void;
 
-    init(): void;
+    abstract init(): void;
 
-    setName(name: string): void;
-    getName(): string;
+    abstract setName(name: string): void;
+    abstract getName(): string;
 }

@@ -10,7 +10,7 @@ export interface AedesEventServerConfig extends EventServerConfig {
     serve_ws: boolean
 }
 
-export class AedesEventServer extends EventEmitter<EventServerEvents> implements EventServer {
+export class AedesEventServer extends EventServer {
 
     private config: AedesEventServerConfig;
     private aedes!: Aedes;
