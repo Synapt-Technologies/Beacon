@@ -53,8 +53,9 @@ export class AtemSwitcherConnection extends  SwitcherConnection {
         this.atem.on('connected', () => {
             this.info.connected = true;
             this.info.moment = Date.now();
+            this.info.state = this.atem.state ?? null;
             this.emit('connected');
-            console.log("[ATEM::" +this.config.name+"] Connected");
+            console.log("[ATEM::" +this.config.name+"] Connected to model: " + this.getModel());
             this._setTallystate();
         })
 
