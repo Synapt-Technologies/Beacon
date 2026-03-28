@@ -4,6 +4,7 @@ import { TallyState } from "../types/TallyState";
 export interface SwitcherConfig {
     name?: string;
     host?: string;
+    port?: number;
 }
 
 export interface SwitcherTallyState extends TallyState{
