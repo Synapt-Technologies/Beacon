@@ -1,17 +1,21 @@
-import { EventEmitter } from "events";
-import net from "node:net";
-
 import { SwitcherConnection, SwitcherConfig, SwitcherTallyState, SwitcherInfo, SwitcherEvents } from "./switcherConnection";
 import { Atem, AtemState, Enums, Input } from "atem-connection";
 
 export interface AtemSwitcherConfig extends SwitcherConfig {
-}
+} // TODO ADD DEFAULTS
+
 
 export interface AtemSwitcherInfo extends SwitcherInfo {
     state: AtemState | null;
 }
 
 export class AtemSwitcherConnection extends  SwitcherConnection {
+
+    protected config: AtemSwitcherConfig = {
+        name: "Atem Switcher",
+        host: "192.168.10.240",
+        port: 9910
+    };
 
     private atem: Atem;
 
@@ -34,10 +38,7 @@ export class AtemSwitcherConnection extends  SwitcherConnection {
         config.port = config.port ??= 9910;
         config.name = config.name ??= "Atem Switcher";
 
-        if (net.isIP(config.host) == 0)
-            throw new Error("Invalid IP address");
-        if (config.port < 0 || config.port > 65535)
-            throw new Error("Invalid port number");
+        this.checkConfig();
 
         this.atem = new Atem({
             address: config.host,

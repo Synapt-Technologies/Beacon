@@ -1,38 +1,44 @@
 import { EventEmitter } from "events";
 import { EventServer, EventServerConfig, EventServerEvents, LightState } from "./EventServer";
-import util from "node:util";
 
-import { Aedes, AedesPublishPacket, Client, Subscription } from "aedes";
+import { Aedes, Client, Subscription } from "aedes";
 import { createServer, Server } from "node:net";
 
 export interface AedesEventServerConfig extends EventServerConfig {
-    serve_http: boolean,
-    serve_ws: boolean
-}
+    serve_http?: boolean;
+    serve_ws?: boolean;
+} // TODO ADD DEFAULTS
 
 export class AedesEventServer extends EventServer {
 
-    private config: AedesEventServerConfig;
+    protected config: AedesEventServerConfig = {
+        port: 1883,
+        name: "Aedes Event Server",
+        serve_http: true,
+        serve_ws: true
+    };
+
     private aedes!: Aedes;
     private server!: Server;
 
     constructor(config: AedesEventServerConfig) {
         super();
 
-        config.name = config.name ??= "Aedes Event Server";
-        // config.port = config.port ??= 1883;
-
-        this.config = config;
+        // TODO change to default config object.
+        this.config.port = config.port ??= 1883;
+        this.config.name = config.name ??= "Aedes Event Server";
+        this.config.serve_http = config.serve_http ??= true;
+        this.config.serve_ws = config.serve_ws ??= true;
+        
+        this.checkConfig();
     }
 
     async init() {
         this.aedes = await Aedes.createBroker();
         this.server = createServer(this.aedes.handle);
 
-        const port: number = this.config.port;
-
-        if (port < 0 || port > 65535)
-            throw new Error("Invalid port number");
+        // TODO change to default config object.
+        const port: number = this.config.port ??= 1883;
 
         this.server.listen(port,  () => {
             console.log('[Aedes::'+(this.config.name ??= 'Aedes Server')+'] Server started and listening on port ', port)
