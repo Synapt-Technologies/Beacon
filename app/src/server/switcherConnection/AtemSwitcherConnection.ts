@@ -59,6 +59,7 @@ export class AtemSwitcherConnection extends EventEmitter<SwitcherEvents> impleme
             this.info.moment = Date.now();
             this.emit('connected');
             console.log("[ATEM::" +this.config.name+"] Connected");
+            this._setTallystate();
         })
 
         this.atem.on('disconnected', () => {
