@@ -1,5 +1,5 @@
 import { SwitcherConnection, SwitcherConfig, SwitcherTallyState, SwitcherInfo, SwitcherEvents } from "./switcherConnection";
-import { Atem, AtemState, Enums, Input } from "atem-connection";
+import { Atem, AtemState, Enums as AtemEnums, Input as AtemInput } from "atem-connection";
 
 export interface AtemSwitcherConfig extends SwitcherConfig {
 } // TODO ADD DEFAULTS
@@ -9,6 +9,7 @@ export interface AtemSwitcherInfo extends SwitcherInfo {
     state: AtemState | null;
 }
 
+// TODO Add check for AtemConnectionStatus
 export class AtemSwitcherConnection extends  SwitcherConnection {
 
     protected config: AtemSwitcherConfig = {
@@ -19,17 +20,11 @@ export class AtemSwitcherConnection extends  SwitcherConnection {
 
     private atem: Atem;
 
-    private info: AtemSwitcherInfo = {
+    protected info: AtemSwitcherInfo = {
         moment: null,
         state: null,
         connected: false,
     }
-
-    private _tallyState: SwitcherTallyState = {
-        moment: null,
-        program: [],
-        preview: [],
-    };
 
     constructor(config: AtemSwitcherConfig) {
         super();
@@ -49,13 +44,9 @@ export class AtemSwitcherConnection extends  SwitcherConnection {
 
 
         this.atem.on('info', (data) => {
-            // this.logPrefix("INFO", data);
             console.log("[ATEM::" +this.config.name+"] Info: " + data);
-            // this._parseAtem();
         });
         this.atem.on('error', (data) => {
-            // this.logPrefix("ERROR", data)
-            // this._parseAtem();
             console.log("[ATEM::" +this.config.name+"] ERROR: " + data);
         });
 
@@ -75,12 +66,10 @@ export class AtemSwitcherConnection extends  SwitcherConnection {
         })
 
         this.atem.on('stateChanged', (state, pathToChange) => {
-            // this._parseAtem();
             this.info.state = state;
             this._setTallystate();
             
             this.emit('info_update', this.info, pathToChange) // Only if something changed? e.g. no tally change.
-            // console.log("[ATEM::" +this._name+"] Statechange: " + pathToChange);
         })
     }
 
@@ -93,35 +82,26 @@ export class AtemSwitcherConnection extends  SwitcherConnection {
     disconnect(): Promise<void> {
         return this.atem.disconnect();
     }
-    isConnected(): boolean {
-        return this.info.connected;
-    }
-    getTallyState(): any {
-        return this._tallyState;
-    }
 
-    _setTallystate(): void {
-        this._tallyState.moment = Date.now();
+    _setTallystate(): void { // TODO: Rename.
+        this.tallyState.moment = Date.now();
         const newProgram: Array<number> = this.atem.listVisibleInputs("program");
         const newPreview: Array<number> = this.atem.listVisibleInputs("preview");
 
-        if (newProgram.join(',') != this._tallyState.program.join(',') || newPreview.join(',') != this._tallyState.preview.join(',')){ // TODO Check if this is needed and smart.
-            this._tallyState.program = newProgram;
-            this._tallyState.preview = newPreview;
-            this.emit("tally_update", this._tallyState);
+        if (newProgram.join(',') != this.tallyState.program.join(',') || newPreview.join(',') != this.tallyState.preview.join(',')){ // TODO Check if this is needed and smart.
+            this.tallyState.program = newProgram;
+            this.tallyState.preview = newPreview;
+            this.emit("tally_update", this.tallyState);
         }
     }
 
-
-    getInfo(): SwitcherInfo {
-        return this.info;
+    getModel(): string | null {
+        if (!this.info.state || !this.info.state.info.model || !this.info.connected) return null;
+        return AtemEnums.Model[this.info.state.info.model];
     }
-    getModel(): Enums.Model | null {
-        if (!this.info.state) return null;
-        return this.info.state.info.model;
-    }
+    
     getSources(): Map<number, { short: string | undefined; long: string | undefined }> | null {
-        if (!this.info.state) return null;
+        if (!this.info.state || !this.info.connected) return null;
 
         return new Map<number, { short: string | undefined; long: string | undefined }>
             (
@@ -139,11 +119,6 @@ export class AtemSwitcherConnection extends  SwitcherConnection {
             );
     }
 
-    getName(): string {
-        return this.config.name ??= "Atem Switcher";
-    }
 
-    setName(name: string): void {
-        this.config.name = name;
-    }
+
 }

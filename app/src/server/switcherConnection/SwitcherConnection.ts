@@ -9,6 +9,7 @@ export interface SwitcherConfig {
 } // TODO ADD DEFAULTS
 
 
+
 export interface SwitcherTallyState extends TallyState{
     moment: number | null;
 }
@@ -27,12 +28,21 @@ export type SwitcherEvents = {
 
 export abstract class SwitcherConnection extends EventEmitter<SwitcherEvents> {
 
-    protected config: SwitcherConfig = {
-        name: "Switcher Connection"
+    protected config: SwitcherConfig = {};
+
+    protected info: SwitcherInfo = {
+        moment: null,
+        connected: false,
+    };
+
+    protected tallyState: SwitcherTallyState = {
+        moment: null,
+        program: [],
+        preview: [],
     };
 
     protected checkConfig() {
-        if (this.config.host == null || !net.isIP(this.config.host))
+        if (this.config.host == null || net.isIP(this.config.host) != 4)
             throw new Error("Host is required");
         if (this.config.port == null || this.config.port < 0 || this.config.port > 65535)
             throw new Error("Port is required");
@@ -40,10 +50,28 @@ export abstract class SwitcherConnection extends EventEmitter<SwitcherEvents> {
 
     abstract connect(): Promise<void>;
     abstract disconnect(): Promise<void>;
-    abstract isConnected(): boolean;
-    abstract getTallyState(): any;
-    abstract getInfo(): SwitcherInfo;
+    
+    isConnected(): boolean {
+        return this.info.connected;
+    }
 
-    abstract getName(): string;
-    abstract setName(name: string): void;
+    getTallyState(): any {
+        return this.tallyState;
+    }
+
+    getInfo(): SwitcherInfo {
+        return this.info;
+    }
+
+    abstract getSources(): Map<number, { short: string | undefined; long: string | undefined }> | null;
+
+    abstract getModel(): string | null;
+
+    getName(): string {
+        return this.config.name ??= "Unnamed Switcher";
+    }
+
+    setName(name: string): void {
+        this.config.name = name;
+    }
 }
