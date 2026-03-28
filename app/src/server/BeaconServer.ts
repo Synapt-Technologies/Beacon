@@ -61,7 +61,7 @@ export class BeaconServer {
         
         setInterval(() => {
             this.eventServer.broadcastTally(this.lightState);
-        }, 2000);
+        }, 1000);
     }
     
     init() {
