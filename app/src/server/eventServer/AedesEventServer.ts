@@ -12,9 +12,9 @@ export interface AedesEventServerConfig extends EventServerConfig {
 
 export class AedesEventServer extends EventEmitter<EventServerEvents> implements EventServer {
 
-    private _config: AedesEventServerConfig;
-    private _aedes!: Aedes;
-    private _server!: Server;
+    private config: AedesEventServerConfig;
+    private aedes!: Aedes;
+    private server!: Server;
 
     constructor(config: AedesEventServerConfig) {
         super();
@@ -22,38 +22,38 @@ export class AedesEventServer extends EventEmitter<EventServerEvents> implements
         config.name = config.name ??= "Aedes Event Server";
         // config.port = config.port ??= 1883;
 
-        this._config = config;
+        this.config = config;
     }
 
     async init() {
-        this._aedes = await Aedes.createBroker();
-        this._server = createServer(this._aedes.handle);
+        this.aedes = await Aedes.createBroker();
+        this.server = createServer(this.aedes.handle);
 
-        const port: number = this._config.port;
+        const port: number = this.config.port;
 
-        this._server.listen(port,  () => {
-            console.log('[Aedes::'+(this._config.name ??= 'Aedes Server')+'] Server started and listening on port ', port)
+        this.server.listen(port,  () => {
+            console.log('[Aedes::'+(this.config.name ??= 'Aedes Server')+'] Server started and listening on port ', port)
         });
 
-        if (this._aedes == undefined || this._server == undefined)
+        if (this.aedes == undefined || this.server == undefined)
             return;
 
-        this._aedes.on('subscribe', (subscriptions: Subscription[], client: Client) => {
-            console.log('[Aedes::'+(this._config.name ??= 'Aedes Server')+'] Subscription: ', subscriptions);
+        this.aedes.on('subscribe', (subscriptions: Subscription[], client: Client) => {
+            console.log('[Aedes::'+(this.config.name ??= 'Aedes Server')+'] Subscription: ', subscriptions);
                if (subscriptions.find((element) => element.topic.startsWith('tally/')))
                     this.emit('subscribe');
         });
 
-        this._aedes.on('publish',  (packet, client) => {if (client) {
-            console.log('[Aedes::'+this._config.name+'] Message: MQTT Client '+(client ? client.id : 'AEDES BROKER')+' has published message on '+packet.topic);
+        this.aedes.on('publish',  (packet, client) => {if (client) {
+            console.log('[Aedes::'+this.config.name+'] Message: MQTT Client '+(client ? client.id : 'AEDES BROKER')+' has published message on '+packet.topic);
         }});
     }
 
     broadcastTally(state: LightState): void {
-        if (this._aedes == undefined)
+        if (this.aedes == undefined)
             throw new Error("Not yet initialized.");
 
-        this._aedes.publish({
+        this.aedes.publish({
             cmd: 'publish',
             qos: 2,
             dup: false,
@@ -63,10 +63,10 @@ export class AedesEventServer extends EventEmitter<EventServerEvents> implements
         }, () => {});
     }
     setName(name: string): void {
-        this._config.name = name;
+        this.config.name = name;
     }
     getName(): string {
-        return this._config.name ??= "Aedes Event Server";
+        return this.config.name ??= "Aedes Event Server";
     }
 
 }

@@ -13,10 +13,10 @@ export interface AtemSwitcherInfo extends SwitcherInfo {
 
 export class AtemSwitcherConnection extends EventEmitter<SwitcherEvents> implements SwitcherConnection {
 
-    private _atem: Atem;
-    private _config: AtemSwitcherConfig;
+    private atem: Atem;
+    private config: AtemSwitcherConfig;
 
-    private _info: AtemSwitcherInfo = {
+    private info: AtemSwitcherInfo = {
         moment: null,
         state: null,
         connected: false,
@@ -35,60 +35,60 @@ export class AtemSwitcherConnection extends EventEmitter<SwitcherEvents> impleme
         config.port = config.port ??= 9910;
         config.name = config.name ??= "Atem Switcher";
 
-        this._atem = new Atem({
+        this.atem = new Atem({
             address: config.host,
             port: config.port
         });
 
-        this._config = config;
+        this.config = config;
 
 
-        this._atem.on('info', (data) => {
+        this.atem.on('info', (data) => {
             // this.logPrefix("INFO", data);
-            console.log("[ATEM::" +this._config.name+"] Info: " + data);
+            console.log("[ATEM::" +this.config.name+"] Info: " + data);
             // this._parseAtem();
         });
-        this._atem.on('error', (data) => {
+        this.atem.on('error', (data) => {
             // this.logPrefix("ERROR", data)
             // this._parseAtem();
-            console.log("[ATEM::" +this._config.name+"] ERROR: " + data);
+            console.log("[ATEM::" +this.config.name+"] ERROR: " + data);
         });
 
-        this._atem.on('connected', () => {
-            this._info.connected = true;
-            this._info.moment = Date.now();
+        this.atem.on('connected', () => {
+            this.info.connected = true;
+            this.info.moment = Date.now();
             this.emit('connected');
-            console.log("[ATEM::" +this._config.name+"] Connected");
+            console.log("[ATEM::" +this.config.name+"] Connected");
         })
 
-        this._atem.on('disconnected', () => {
-            this._info.connected = false;
-            this._info.moment = Date.now();
+        this.atem.on('disconnected', () => {
+            this.info.connected = false;
+            this.info.moment = Date.now();
             this.emit('disconnected');
-            console.log("[ATEM::" +this._config.name+"] Disconnected");
+            console.log("[ATEM::" +this.config.name+"] Disconnected");
         })
 
-        this._atem.on('stateChanged', (state, pathToChange) => {
+        this.atem.on('stateChanged', (state, pathToChange) => {
             // this._parseAtem();
-            this._info.state = state;
+            this.info.state = state;
             this._setTallystate();
             
-            this.emit('info_update', this._info, pathToChange) // Only if something changed? e.g. no tally change.
+            this.emit('info_update', this.info, pathToChange) // Only if something changed? e.g. no tally change.
             // console.log("[ATEM::" +this._name+"] Statechange: " + pathToChange);
         })
     }
 
     connect(): Promise<void> {
-        if (this._config.host == null)
+        if (this.config.host == null)
             return Promise.reject(new Error("Host is not set!"));
 
-        return this._atem.connect(this._config.host);
+        return this.atem.connect(this.config.host);
     }
     disconnect(): Promise<void> {
-        return this._atem.disconnect();
+        return this.atem.disconnect();
     }
     isConnected(): boolean {
-        return this._info.connected;
+        return this.info.connected;
     }
     getTallyState(): any {
         return this._tallyState;
@@ -96,8 +96,8 @@ export class AtemSwitcherConnection extends EventEmitter<SwitcherEvents> impleme
 
     _setTallystate(): void {
         this._tallyState.moment = Date.now();
-        const newProgram: Array<number> = this._atem.listVisibleInputs("program");
-        const newPreview: Array<number> = this._atem.listVisibleInputs("preview");
+        const newProgram: Array<number> = this.atem.listVisibleInputs("program");
+        const newPreview: Array<number> = this.atem.listVisibleInputs("preview");
 
         if (newProgram.join(',') != this._tallyState.program.join(',') || newPreview.join(',') != this._tallyState.preview.join(',')){ // TODO Check if this is needed and smart.
             this._tallyState.program = newProgram;
@@ -108,18 +108,18 @@ export class AtemSwitcherConnection extends EventEmitter<SwitcherEvents> impleme
 
 
     getInfo(): SwitcherInfo {
-        return this._info;
+        return this.info;
     }
     getModel(): Enums.Model | null {
-        if (!this._info.state) return null;
-        return this._info.state.info.model;
+        if (!this.info.state) return null;
+        return this.info.state.info.model;
     }
     getSources(): Map<number, { short: string | undefined; long: string | undefined }> | null {
-        if (!this._info.state) return null;
+        if (!this.info.state) return null;
 
         return new Map<number, { short: string | undefined; long: string | undefined }>
             (
-                Object.entries(this._info.state.inputs)
+                Object.entries(this.info.state.inputs)
                     .filter(([, value]) => value != undefined)
                     .map(([key, value]) => {
                         return [
@@ -134,10 +134,10 @@ export class AtemSwitcherConnection extends EventEmitter<SwitcherEvents> impleme
     }
 
     getName(): string {
-        return this._config.name ??= "Atem Switcher";
+        return this.config.name ??= "Atem Switcher";
     }
 
     setName(name: string): void {
-        this._config.name = name;
+        this.config.name = name;
     }
 }
