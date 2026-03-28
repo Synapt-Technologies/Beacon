@@ -31,6 +31,9 @@ export class AedesEventServer extends EventServer {
 
         const port: number = this.config.port;
 
+        if (port < 0 || port > 65535)
+            throw new Error("Invalid port number");
+
         this.server.listen(port,  () => {
             console.log('[Aedes::'+(this.config.name ??= 'Aedes Server')+'] Server started and listening on port ', port)
         });
