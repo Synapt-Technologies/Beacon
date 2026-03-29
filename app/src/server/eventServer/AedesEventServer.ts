@@ -7,16 +7,21 @@ import { createServer, Server } from "node:net";
 export interface AedesEventServerConfig extends EventServerConfig {
     serve_http?: boolean;
     serve_ws?: boolean;
+    ws_port?: number;
 } // TODO ADD DEFAULTS
+
+const DefaultAedesEventServerConfig = {
+    name: "Aedes",
+    parent: "?P?",
+    port: 1883,
+    serve_http: true,
+    serve_ws: true,
+    ws_port: 80
+}
 
 export class AedesEventServer extends EventServer {
 
-    protected config: AedesEventServerConfig = {
-        port: 1883,
-        name: "Aedes Event Server",
-        serve_http: true,
-        serve_ws: true
-    };
+    protected config: Required<AedesEventServerConfig> = DefaultAedesEventServerConfig;
 
     private aedes!: Aedes;
     private server!: Server;
@@ -24,25 +29,24 @@ export class AedesEventServer extends EventServer {
     constructor(config: AedesEventServerConfig) {
         super();
 
-        // TODO change to default config object.
-        this.config.port = config.port ??= 1883;
-        this.config.name = config.name ??= "Aedes Event Server";
-        this.config.parent = config.parent ??= "Unkown";
-        this.config.serve_http = config.serve_http ??= true;
-        this.config.serve_ws = config.serve_ws ??= true;
+        this.config = {...DefaultAedesEventServerConfig, ...config};
         
         this.checkConfig();
     }
 
-    async init() {
+    protected checkConfig() {
+        super.checkConfig();
+        if (this.config.ws_port < 0 || this.config.ws_port > 65535)
+            throw new Error("Port is required");
+    }
+
+    // TODO: Add factory method! EventServerFactory.create(type, config): EventServer
+    async init() { 
         this.aedes = await Aedes.createBroker();
         this.server = createServer(this.aedes.handle);
 
-        // TODO change to default config object.
-        const port: number = this.config.port ??= 1883;
-
-        this.server.listen(port,  () => {
-            this.devLog('Server started and listening on port ', port)
+        this.server.listen(this.config.port,  () => {
+            this.devLog('Server started and listening on port ', this.config.port)
         });
 
         if (this.aedes == undefined || this.server == undefined)
@@ -51,7 +55,7 @@ export class AedesEventServer extends EventServer {
         this.aedes.on('subscribe', (subscriptions: Subscription[], client: Client) => {
             this.devLog('Subscription:', subscriptions);
             
-            if (subscriptions.find((element) => element.topic.startsWith('tally/')))
+            if (subscriptions.some(sub => sub.topic == 'tally' || sub.topic.startsWith('tally/') ))
                 this.emit('subscribe');
         });
 
