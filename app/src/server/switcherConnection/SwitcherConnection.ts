@@ -26,7 +26,8 @@ export type SwitcherEvents = {
     info_update: [SwitcherInfo, path: string[] | null];
 }
 
-// TODO: Generic Connection Class that is implemented by connections?
+// TODO: Generic Connection Class that is implemented by all connections? -> If doing NetworkTallyConsumer maybe a NetworkConnection class?
+// TODO: Refactor into AbstractSwitcherConnection.
 export abstract class SwitcherConnection extends EventEmitter<SwitcherEvents> {
 
     protected readonly conType: string = "SWTCH";

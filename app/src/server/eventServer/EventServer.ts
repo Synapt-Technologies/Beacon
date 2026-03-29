@@ -22,7 +22,7 @@ export type EventServerEvents = {
     subscribe: []
 }
 
-
+// TODO: Make into AbstractNetworkTallyConsumer -imp-> AbstractTallyConsumer
 export abstract class EventServer extends EventEmitter<EventServerEvents> {
 
     protected readonly conType: string = "EVENT"
