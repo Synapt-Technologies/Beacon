@@ -59,7 +59,7 @@ export abstract class AbstractSwitcherConnection extends EventEmitter<SwitcherEv
         if (this.config.host == null || net.isIP(this.config.host) != 4)
             throw new Error("Host is required");
         if (this.config.port == null || this.config.port < 0 || this.config.port > 65535)
-            throw new Error("Port is required");
+            throw new Error("Valid Port is required");
     }
 
     abstract connect(): Promise<void>;
