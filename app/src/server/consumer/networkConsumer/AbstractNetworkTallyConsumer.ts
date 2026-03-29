@@ -1,0 +1,56 @@
+import { EventEmitter } from "node:events";
+import { AbstractTallyConsumer, ConsumerConfig, LightState, TallyConsumerEvents } from "../AbstractTallyConsumer";
+
+
+export interface NetworkConsumerConfig extends ConsumerConfig {
+    port?: number;
+    keep_alive?: boolean;
+    keep_alive_ms?: number;
+} 
+
+export interface NetworkTallyConsumerEvents extends TallyConsumerEvents {
+    connection: []; // When A client loads, subscribes or whatever.
+    disconnection: []; // When A client loads, subscribes or whatever.
+}
+
+export abstract class AbstractNetworkTallyConsumer<T extends NetworkTallyConsumerEvents = NetworkTallyConsumerEvents> extends AbstractTallyConsumer<T> {
+    
+    protected readonly conType: string = "CONSUMER"
+
+    protected static readonly DefaultConfig = {
+        ...super.DefaultConfig,
+        port: -1,
+        keep_alive: false,
+        keep_alive_ms: 1000
+    }
+    protected config: Required<NetworkConsumerConfig> = AbstractNetworkTallyConsumer.DefaultConfig;
+
+    constructor(config: ConsumerConfig) {
+        super(config); // TODO: Check if this handles the default correctly.
+    }
+        
+    protected checkConfig(config: ConsumerConfig) { // TODO Apply this style in the switcher connection too.
+        super.checkConfig(config);
+        
+        if (this.config.port == undefined || this.config.port < 0 || this.config.port > 65535) // TODO propegate to other check configs
+            throw new Error("Valid Port is required");
+    }
+    
+    consumeTally(state: LightState): void {
+        super.consumeTally(state);
+        this.broadcastTally(false);
+    }
+
+    abstract broadcastTally(retransmission: boolean): void;
+
+    init(): void {
+        if (this.config.keep_alive) {
+            setInterval(() => {
+                this.broadcastTally(true);
+            }, this.config.keep_alive_ms);
+        }
+    }
+
+    abstract setName(name: string): void;
+    abstract getName(): string;
+}
