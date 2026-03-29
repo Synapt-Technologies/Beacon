@@ -32,6 +32,7 @@ export abstract class EventServer extends EventEmitter<EventServerEvents> {
         parent: "?P?",
         port: -1,
     }
+    protected config: Required<EventServerConfig> = EventServer.DefaultConfig;
 
     protected lightState: LightState = {
         alert: [],
@@ -42,10 +43,7 @@ export abstract class EventServer extends EventEmitter<EventServerEvents> {
     protected devLog(...data: any[]) {
         console.log(...['['+(this.config.parent ??= '??')+'::'+this.conType+'::'+(this.config.name ??= 'Event Server')+'] ', ...data]);
     }
-    
-    protected config: Required<EventServerConfig> = EventServer.DefaultConfig;
-
-    
+        
     protected checkConfig() {
         if (this.config.port < 0 || this.config.port > 65535)
             throw new Error("Port is required");
