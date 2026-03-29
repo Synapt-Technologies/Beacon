@@ -9,6 +9,7 @@ export interface AtemSwitcherInfo extends SwitcherInfo {
     state: AtemState | null;
 }
 
+// TODO: Generic Connection Class that is implemented by connections?
 // TODO Add check for AtemConnectionStatus
 export class AtemSwitcherConnection extends  SwitcherConnection {
 

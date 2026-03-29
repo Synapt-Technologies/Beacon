@@ -27,6 +27,7 @@ export type SwitcherEvents = {
     info_update: [SwitcherInfo, path: string[] | null];
 }
 
+// TODO: Generic Connection Class that is implemented by connections?
 export abstract class SwitcherConnection extends EventEmitter<SwitcherEvents> {
 
     protected readonly conType: string = "SWTCH"
