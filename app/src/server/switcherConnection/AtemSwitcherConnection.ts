@@ -2,25 +2,24 @@ import { SwitcherConnection, SwitcherConfig, SwitcherTallyState, SwitcherInfo, S
 import { Atem, AtemState, Enums as AtemEnums, Input as AtemInput } from "atem-connection";
 
 export interface AtemSwitcherConfig extends SwitcherConfig {
-} // TODO ADD DEFAULTS
+}
 
 
 export interface AtemSwitcherInfo extends SwitcherInfo {
     state: AtemState | null;
 }
 
-const DefaultAtemSwitcherConfig = {
-    name: "Atem",
-    parent: "?P?",
-    host: "192.168.10.240",
-    port: 9910,
-    state: null
-}
-
 // TODO Add check for AtemConnectionStatus
 export class AtemSwitcherConnection extends  SwitcherConnection {
 
-    protected config: Required<AtemSwitcherConfig> = DefaultAtemSwitcherConfig;
+    protected static readonly DefaultConfig = {
+        ...super.DefaultConfig,
+        name: "Atem",
+        parent: "?P?",
+        host: "192.168.10.240",
+        port: 9910,
+    }
+    protected config: Required<AtemSwitcherConfig> = AtemSwitcherConnection.DefaultConfig;
 
     private atem: Atem;
 
@@ -33,7 +32,7 @@ export class AtemSwitcherConnection extends  SwitcherConnection {
     constructor(config: AtemSwitcherConfig) {
         super();
 
-        this.config = {...DefaultAtemSwitcherConfig, ...config};
+        this.config = {...this.config, ...config};
 
         this.checkConfig();
 
@@ -69,7 +68,7 @@ export class AtemSwitcherConnection extends  SwitcherConnection {
             this.info.state = state;
             this._setTallystate();
             
-            this.emit('info_update', this.info, pathToChange) // Only if something changed? e.g. no tally change.
+            this.emit('info_update', this.info, pathToChange) // TODO: Only if something changed? e.g. on tally change. Switcher model won't change without reconnect.
         })
     }
 

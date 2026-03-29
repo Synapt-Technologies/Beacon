@@ -9,13 +9,6 @@ export interface SwitcherConfig {
     port?: number;
 } // TODO ADD DEFAULTS
 
-const DefaultSwitcherConfig = {
-    name: "Switcher",
-    parent: "?P?",
-    host: "",
-    port: -1
-}
-
 
 export interface SwitcherTallyState extends TallyState{
     moment: number | null;
@@ -36,13 +29,19 @@ export type SwitcherEvents = {
 // TODO: Generic Connection Class that is implemented by connections?
 export abstract class SwitcherConnection extends EventEmitter<SwitcherEvents> {
 
-    protected readonly conType: string = "SWTCH"
+    protected readonly conType: string = "SWTCH";
+
+    protected static readonly DefaultConfig = {
+        name: "Switcher",
+        parent: "?P?",
+        host: "",
+        port: -1
+    }
+    protected config: Required<SwitcherConfig> = SwitcherConnection.DefaultConfig;
 
     protected devLog(...data: any[]) {
         console.log(...['['+(this.config.parent ??= '??')+'::'+this.conType+'::'+(this.config.name ??= 'Switcher Connection')+'] ', ...data]);
     }
-
-    protected config: SwitcherConfig = {};
 
     protected info: SwitcherInfo = {
         moment: null,
