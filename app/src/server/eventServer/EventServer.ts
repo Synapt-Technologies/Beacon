@@ -8,6 +8,11 @@ export interface EventServerConfig {
     port?: number;
 } // TODO ADD DEFAULTS
 
+const DefaultEventServerConfig = {
+    name: "Event Server",
+    parent: "?P?",
+    port: 0
+}
 
 
 export interface LightAlertState {
@@ -33,14 +38,11 @@ export abstract class EventServer extends EventEmitter<EventServerEvents> {
         console.log(...['['+(this.config.parent ??= '??')+'::'+this.conType+'::'+(this.config.name ??= 'Event Server')+'] ', ...data]);
     }
     
-    protected config: EventServerConfig = {
-        name: "Event Server",
-        parent: "Unknown"
-    };
+    protected config: Required<EventServerConfig> = DefaultEventServerConfig;
 
     
     protected checkConfig() {
-        if (this.config.port == null || this.config.port < 0 || this.config.port > 65535)
+        if (this.config.port < 0 || this.config.port > 65535)
             throw new Error("Port is required");
     }
     
