@@ -11,7 +11,7 @@ export interface EventServerConfig {
 const DefaultEventServerConfig = {
     name: "Event Server",
     parent: "?P?",
-    port: 0
+    port: -1
 }
 
 
