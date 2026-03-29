@@ -55,6 +55,8 @@ export class BeaconServer {
             this.eventServer.broadcastTally(this.lightState);
         });
 
+        // TODO Add set tally off / alert (setting) on switcher disconnect!
+
         this.eventServer.on('subscribe', () => {
             this.eventServer.broadcastTally(this.lightState);
         });
