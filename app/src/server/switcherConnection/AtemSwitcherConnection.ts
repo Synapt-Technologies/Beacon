@@ -1,4 +1,4 @@
-import { SwitcherConnection, SwitcherConfig, SwitcherTallyState, SwitcherInfo, SwitcherEvents } from "./switcherConnection";
+import { SwitcherConfig, SwitcherInfo, AbstractSwitcherConnection } from "./AbstractSwitcherConnection";
 import { Atem, AtemState, Enums as AtemEnums, Input as AtemInput } from "atem-connection";
 
 export interface AtemSwitcherConfig extends SwitcherConfig {
@@ -10,7 +10,7 @@ export interface AtemSwitcherInfo extends SwitcherInfo {
 }
 
 // TODO Add check for AtemConnectionStatus
-export class AtemSwitcherConnection extends  SwitcherConnection {
+export class AtemSwitcherConnection extends AbstractSwitcherConnection {
 
     protected static readonly DefaultConfig = {
         ...super.DefaultConfig,

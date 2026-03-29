@@ -28,7 +28,7 @@ export type SwitcherEvents = {
 
 // TODO: Generic Connection Class that is implemented by all connections? -> If doing NetworkTallyConsumer maybe a NetworkConnection class?
 // TODO: Refactor into AbstractSwitcherConnection.
-export abstract class SwitcherConnection extends EventEmitter<SwitcherEvents> {
+export abstract class AbstractSwitcherConnection extends EventEmitter<SwitcherEvents> {
 
     protected readonly conType: string = "SWTCH";
 
@@ -38,7 +38,7 @@ export abstract class SwitcherConnection extends EventEmitter<SwitcherEvents> {
         host: "",
         port: -1
     }
-    protected config: Required<SwitcherConfig> = SwitcherConnection.DefaultConfig;
+    protected config: Required<SwitcherConfig> = AbstractSwitcherConnection.DefaultConfig;
 
     protected devLog(...data: any[]) {
         console.log(...['['+(this.config.parent ??= '??')+'::'+this.conType+'::'+(this.config.name ??= 'Switcher Connection')+'] ', ...data]);

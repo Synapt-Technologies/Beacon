@@ -1,7 +1,7 @@
 import { AedesEventServer } from "./eventServer/AedesEventServer";
 import { EventServer, LightState } from "./eventServer/EventServer";
 import { AtemSwitcherConnection } from "./switcherConnection/AtemSwitcherConnection";
-import { SwitcherConnection, SwitcherTallyState } from "./switcherConnection/switcherConnection";
+import { AbstractSwitcherConnection, SwitcherTallyState } from "./switcherConnection/AbstractSwitcherConnection";
 
 
 export interface BeaconServerConfig {
@@ -18,7 +18,7 @@ const defaultConfig: BeaconServerConfig = {
 // TODO: Multiple event servers?
 export class BeaconServer {
 
-    private switcherConnection: SwitcherConnection;
+    private switcherConnection: AbstractSwitcherConnection;
     private eventServer: EventServer;
 
     private config: BeaconServerConfig;
