@@ -29,7 +29,7 @@ export abstract class EventServer extends EventEmitter<EventServerEvents> {
 
     protected static readonly DefaultConfig = {
         name: "Event Server",
-        parent: "?P?",
+        parent: "??",
         port: -1,
     }
     protected config: Required<EventServerConfig> = EventServer.DefaultConfig;

@@ -15,7 +15,6 @@ export class AtemSwitcherConnection extends AbstractSwitcherConnection {
     protected static readonly DefaultConfig = {
         ...super.DefaultConfig,
         name: "Atem",
-        parent: "?P?",
         host: "192.168.10.240",
         port: 9910,
     }

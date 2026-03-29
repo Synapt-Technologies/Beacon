@@ -30,11 +30,11 @@ export type SwitcherEvents = {
 // TODO: Refactor into AbstractSwitcherConnection.
 export abstract class AbstractSwitcherConnection extends EventEmitter<SwitcherEvents> {
 
-    protected readonly conType: string = "SWTCH";
+    protected readonly conType: string = "SWITCH";
 
     protected static readonly DefaultConfig = {
         name: "Switcher",
-        parent: "?P?",
+        parent: "??",
         host: "",
         port: -1
     }
