@@ -26,7 +26,6 @@ export class AedesEventServer extends EventServer {
         serve_ws: true,
         ws_port: 80
     }
-
     protected config: Required<AedesEventServerConfig> = AedesEventServer.DefaultConfig;
 
     private aedes!: Aedes;
