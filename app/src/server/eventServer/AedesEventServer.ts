@@ -10,7 +10,7 @@ export interface AedesEventServerConfig extends EventServerConfig {
     ws_port?: number;
     keep_alive?: boolean;
     keep_alive_ms?: number;
-} // TODO ADD DEFAULTS
+}
 
 
 
