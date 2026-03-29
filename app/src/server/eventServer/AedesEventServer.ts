@@ -8,6 +8,8 @@ export interface AedesEventServerConfig extends EventServerConfig {
     serve_http?: boolean;
     serve_ws?: boolean;
     ws_port?: number;
+    keep_alive?: boolean;
+    keep_alive_ms?: number;
 } // TODO ADD DEFAULTS
 
 
@@ -17,9 +19,8 @@ export class AedesEventServer extends EventServer {
     protected static readonly DefaultConfig = {
         ...super.DefaultConfig,
         name: "Aedes",
-        parent: "?P?",
         port: 1883,
-        keep_alive: false,
+        keep_alive: true,
         keep_alive_ms: 1000,
         serve_http: true,
         serve_ws: true,
@@ -67,12 +68,20 @@ export class AedesEventServer extends EventServer {
         this.aedes.on('publish',  (packet, client) => {if (client) {
             this.devLog('Message: MQTT Client', (client ? client.id : 'AEDES BROKER'), 'has published message on', packet.topic);
         }});
+
+        if (this.config.keep_alive) {
+            setInterval(() => {
+                this.intBroadcastTally(this.lightState, true);
+            }, this.config.keep_alive_ms);
+        }
     }
 
     broadcastTally(state: LightState): void {
+        super.broadcastTally(state);
         this.intBroadcastTally(state, false);
     }
 
+    // TODO: Rebroadcast option now only here, most protocols won't have a dup parameter, so that is good?
     protected intBroadcastTally(state: LightState, duplicate: boolean = false): void {
         if (this.aedes == undefined)
             throw new Error("Not yet initialized.");
@@ -86,6 +95,7 @@ export class AedesEventServer extends EventServer {
             retain: false
         }, () => {});
     }
+
     setName(name: string): void {
         this.config.name = name;
     }

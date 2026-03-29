@@ -6,8 +6,6 @@ export interface EventServerConfig {
     name?: string;
     parent?: string;
     port?: number;
-    keep_alive?: boolean;
-    keep_alive_ms?: number;
 } // TODO ADD DEFAULTS
 
 export interface LightAlertState {
@@ -33,10 +31,7 @@ export abstract class EventServer extends EventEmitter<EventServerEvents> {
         name: "Event Server",
         parent: "?P?",
         port: -1,
-        keep_alive: false,
-        keep_alive_ms: 1000
     }
-
 
     protected lightState: LightState = {
         alert: [],
@@ -56,7 +51,9 @@ export abstract class EventServer extends EventEmitter<EventServerEvents> {
             throw new Error("Port is required");
     }
     
-    abstract broadcastTally(state: LightState): void;
+    broadcastTally(state: LightState): void {
+        this.lightState = state;
+    }
 
     abstract init(): void;
 

@@ -41,9 +41,6 @@ export class BeaconServer {
         this.eventServer = new AedesEventServer({
             name: "AEDES",
             parent: this.config.name,
-            port: 1883,
-            serve_http: true,
-            serve_ws: true
         });
 
         this.switcherConnection.on('tally_update', (tallydata: SwitcherTallyState) => {
@@ -60,10 +57,6 @@ export class BeaconServer {
         this.eventServer.on('subscribe', () => {
             this.eventServer.broadcastTally(this.lightState);
         });
-        
-        setInterval(() => {
-            this.eventServer.broadcastTally(this.lightState);
-        }, 1000);
     }
     
     init() {
