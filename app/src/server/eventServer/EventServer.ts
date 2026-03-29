@@ -3,8 +3,9 @@ import { TallyState } from "../types/TallyState";
 
 
 export interface EventServerConfig {
-    port?: number;
     name?: string;
+    parent?: string;
+    port?: number;
 } // TODO ADD DEFAULTS
 
 
@@ -25,9 +26,16 @@ export type EventServerEvents = {
 
 
 export abstract class EventServer extends EventEmitter<EventServerEvents> {
+
+    protected readonly conType: string = "EVENT"
+
+    protected devLog(...data: any[]) {
+        console.log(...['['+(this.config.parent ??= '??')+'::'+this.conType+'::'+(this.config.name ??= 'Event Server')+'] ', ...data]);
+    }
     
     protected config: EventServerConfig = {
-        name: "Event Server"
+        name: "Event Server",
+        parent: "Unknown"
     };
 
     

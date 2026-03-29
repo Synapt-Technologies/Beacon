@@ -27,6 +27,7 @@ export class AedesEventServer extends EventServer {
         // TODO change to default config object.
         this.config.port = config.port ??= 1883;
         this.config.name = config.name ??= "Aedes Event Server";
+        this.config.parent = config.parent ??= "Unkown";
         this.config.serve_http = config.serve_http ??= true;
         this.config.serve_ws = config.serve_ws ??= true;
         
@@ -41,20 +42,21 @@ export class AedesEventServer extends EventServer {
         const port: number = this.config.port ??= 1883;
 
         this.server.listen(port,  () => {
-            console.log('[Aedes::'+(this.config.name ??= 'Aedes Server')+'] Server started and listening on port ', port)
+            this.devLog('Server started and listening on port ', port)
         });
 
         if (this.aedes == undefined || this.server == undefined)
             return;
 
         this.aedes.on('subscribe', (subscriptions: Subscription[], client: Client) => {
-            console.log('[Aedes::'+(this.config.name ??= 'Aedes Server')+'] Subscription: ', subscriptions);
-               if (subscriptions.find((element) => element.topic.startsWith('tally/')))
-                    this.emit('subscribe');
+            this.devLog('Subscription:', subscriptions);
+            
+            if (subscriptions.find((element) => element.topic.startsWith('tally/')))
+                this.emit('subscribe');
         });
 
         this.aedes.on('publish',  (packet, client) => {if (client) {
-            console.log('[Aedes::'+this.config.name+'] Message: MQTT Client '+(client ? client.id : 'AEDES BROKER')+' has published message on '+packet.topic);
+            this.devLog('Message: MQTT Client', (client ? client.id : 'AEDES BROKER'), 'has published message on', packet.topic);
         }});
     }
 

@@ -4,6 +4,7 @@ import net from "node:net";
 
 export interface SwitcherConfig {
     name?: string;
+    parent?: string;
     host?: string;
     port?: number;
 } // TODO ADD DEFAULTS
@@ -27,6 +28,12 @@ export type SwitcherEvents = {
 }
 
 export abstract class SwitcherConnection extends EventEmitter<SwitcherEvents> {
+
+    protected readonly conType: string = "SWTCH"
+
+    protected devLog(...data: any[]) {
+        console.log(...['['+(this.config.parent ??= '??')+'::'+this.conType+'::'+(this.config.name ??= 'Switcher Connection')+'] ', ...data]);
+    }
 
     protected config: SwitcherConfig = {};
 

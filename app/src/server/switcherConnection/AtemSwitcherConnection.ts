@@ -44,10 +44,10 @@ export class AtemSwitcherConnection extends  SwitcherConnection {
 
 
         this.atem.on('info', (data) => {
-            console.log("[ATEM::" +this.config.name+"] Info: " + data);
+            this.devLog("Info:", data);
         });
         this.atem.on('error', (data) => {
-            console.log("[ATEM::" +this.config.name+"] ERROR: " + data);
+            this.devLog("ERROR:", data);
         });
 
         this.atem.on('connected', () => {
@@ -55,7 +55,7 @@ export class AtemSwitcherConnection extends  SwitcherConnection {
             this.info.moment = Date.now();
             this.info.state = this.atem.state ?? null;
             this.emit('connected');
-            console.log("[ATEM::" +this.config.name+"] Connected to model: " + this.getModel());
+            this.devLog("Connected to model:", this.getModel());
             this._setTallystate();
         })
 
@@ -63,7 +63,7 @@ export class AtemSwitcherConnection extends  SwitcherConnection {
             this.info.connected = false;
             this.info.moment = Date.now();
             this.emit('disconnected');
-            console.log("[ATEM::" +this.config.name+"] Disconnected");
+            this.devLog("Disconnected");
         })
 
         this.atem.on('stateChanged', (state, pathToChange) => {
@@ -93,6 +93,7 @@ export class AtemSwitcherConnection extends  SwitcherConnection {
             this.tallyState.program = newProgram;
             this.tallyState.preview = newPreview;
             this.emit("tally_update", this.tallyState);
+            this.devLog("Tally Change:", this.tallyState);
         }
     }
 

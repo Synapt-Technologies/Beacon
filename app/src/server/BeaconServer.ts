@@ -33,12 +33,14 @@ export class BeaconServer {
         this.config = { ...defaultConfig, ...config };
 
         this.switcherConnection = new AtemSwitcherConnection({
-            name: this.config.name+"::SWTCH::ATEM",
+            name: "ATEM1",
+            parent: this.config.name,
             host: "127.0.0.1"
         });
 
         this.eventServer = new AedesEventServer({
-            name: this.config.name+"::EVENT::AEDES",
+            name: "AEDES",
+            parent: this.config.name,
             port: 1883,
             serve_http: true,
             serve_ws: true
