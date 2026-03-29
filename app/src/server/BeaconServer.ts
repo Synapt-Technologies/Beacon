@@ -41,6 +41,7 @@ export class BeaconServer {
         this.eventServer = new AedesEventServer({
             name: "AEDES",
             parent: this.config.name,
+            keep_alive_ms: 5000 // TODO: Make a mode to prevent network congestion with low or no keep alive?
         });
 
         this.switcherConnection.on('tally_update', (tallydata: SwitcherTallyState) => {
