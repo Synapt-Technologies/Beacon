@@ -34,7 +34,7 @@ export class AedesEventServer extends EventServer {
     constructor(config: AedesEventServerConfig) {
         super();
 
-        this.config = {...AedesEventServer.DefaultConfig, ...config};
+        this.config = {...this.config, ...config};
         
         this.checkConfig();
     }
