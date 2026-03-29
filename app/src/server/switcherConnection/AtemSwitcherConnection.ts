@@ -9,15 +9,18 @@ export interface AtemSwitcherInfo extends SwitcherInfo {
     state: AtemState | null;
 }
 
-// TODO: Generic Connection Class that is implemented by connections?
+const DefaultAtemSwitcherConfig = {
+    name: "Atem",
+    parent: "?P?",
+    host: "192.168.10.240",
+    port: 9910,
+    state: null
+}
+
 // TODO Add check for AtemConnectionStatus
 export class AtemSwitcherConnection extends  SwitcherConnection {
 
-    protected config: AtemSwitcherConfig = {
-        name: "Atem Switcher",
-        host: "192.168.10.240",
-        port: 9910
-    };
+    protected config: Required<AtemSwitcherConfig> = DefaultAtemSwitcherConfig;
 
     private atem: Atem;
 
@@ -30,9 +33,7 @@ export class AtemSwitcherConnection extends  SwitcherConnection {
     constructor(config: AtemSwitcherConfig) {
         super();
 
-        config.host = config.host ??= "192.168.10.240";
-        config.port = config.port ??= 9910;
-        config.name = config.name ??= "Atem Switcher";
+        this.config = {...DefaultAtemSwitcherConfig, ...config};
 
         this.checkConfig();
 
@@ -40,9 +41,6 @@ export class AtemSwitcherConnection extends  SwitcherConnection {
             address: config.host,
             port: config.port
         });
-
-        this.config = config;
-
 
         this.atem.on('info', (data) => {
             this.devLog("Info:", data);

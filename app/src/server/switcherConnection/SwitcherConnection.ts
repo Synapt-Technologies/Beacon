@@ -9,6 +9,12 @@ export interface SwitcherConfig {
     port?: number;
 } // TODO ADD DEFAULTS
 
+const DefaultSwitcherConfig = {
+    name: "Switcher",
+    parent: "?P?",
+    host: "",
+    port: -1
+}
 
 
 export interface SwitcherTallyState extends TallyState{
