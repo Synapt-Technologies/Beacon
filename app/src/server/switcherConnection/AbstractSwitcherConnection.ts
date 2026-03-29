@@ -26,8 +26,7 @@ export type SwitcherEvents = {
     info_update: [SwitcherInfo, path: string[] | null];
 }
 
-// TODO: Generic Connection Class that is implemented by all connections? -> If doing NetworkTallyConsumer maybe a NetworkConnection class?
-// TODO: Refactor into AbstractSwitcherConnection.
+// TODO: Change into a more generic producer, that can produce different fields. Program preview with priorities or alertstate. Higher priority overrites lower / they are combined.
 export abstract class AbstractSwitcherConnection extends EventEmitter<SwitcherEvents> {
 
     protected readonly conType: string = "SWITCH";
