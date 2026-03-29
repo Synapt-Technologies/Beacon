@@ -6,14 +6,9 @@ export interface EventServerConfig {
     name?: string;
     parent?: string;
     port?: number;
+    keep_alive?: boolean;
+    keep_alive_ms?: number;
 } // TODO ADD DEFAULTS
-
-const DefaultEventServerConfig = {
-    name: "Event Server",
-    parent: "?P?",
-    port: -1
-}
-
 
 export interface LightAlertState {
     number: number;
@@ -34,11 +29,26 @@ export abstract class EventServer extends EventEmitter<EventServerEvents> {
 
     protected readonly conType: string = "EVENT"
 
+    protected static readonly DefaultConfig = {
+        name: "Event Server",
+        parent: "?P?",
+        port: -1,
+        keep_alive: false,
+        keep_alive_ms: 1000
+    }
+
+
+    protected lightState: LightState = {
+        alert: [],
+        program: [],
+        preview: []
+    };
+
     protected devLog(...data: any[]) {
         console.log(...['['+(this.config.parent ??= '??')+'::'+this.conType+'::'+(this.config.name ??= 'Event Server')+'] ', ...data]);
     }
     
-    protected config: Required<EventServerConfig> = DefaultEventServerConfig;
+    protected config: Required<EventServerConfig> = EventServer.DefaultConfig;
 
     
     protected checkConfig() {

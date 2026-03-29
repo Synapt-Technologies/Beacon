@@ -10,18 +10,23 @@ export interface AedesEventServerConfig extends EventServerConfig {
     ws_port?: number;
 } // TODO ADD DEFAULTS
 
-const DefaultAedesEventServerConfig = {
-    name: "Aedes",
-    parent: "?P?",
-    port: 1883,
-    serve_http: true,
-    serve_ws: true,
-    ws_port: 80
-}
+
 
 export class AedesEventServer extends EventServer {
 
-    protected config: Required<AedesEventServerConfig> = DefaultAedesEventServerConfig;
+    protected static readonly DefaultConfig = {
+        ...super.DefaultConfig,
+        name: "Aedes",
+        parent: "?P?",
+        port: 1883,
+        keep_alive: false,
+        keep_alive_ms: 1000,
+        serve_http: true,
+        serve_ws: true,
+        ws_port: 80
+    }
+
+    protected config: Required<AedesEventServerConfig> = AedesEventServer.DefaultConfig;
 
     private aedes!: Aedes;
     private server!: Server;
@@ -29,7 +34,7 @@ export class AedesEventServer extends EventServer {
     constructor(config: AedesEventServerConfig) {
         super();
 
-        this.config = {...DefaultAedesEventServerConfig, ...config};
+        this.config = {...AedesEventServer.DefaultConfig, ...config};
         
         this.checkConfig();
     }
@@ -65,13 +70,17 @@ export class AedesEventServer extends EventServer {
     }
 
     broadcastTally(state: LightState): void {
+        this.intBroadcastTally(state, false);
+    }
+
+    protected intBroadcastTally(state: LightState, duplicate: boolean = false): void {
         if (this.aedes == undefined)
             throw new Error("Not yet initialized.");
 
         this.aedes.publish({
             cmd: 'publish',
-            qos: 2,
-            dup: false,
+            qos: 1, // At least once, or more
+            dup: duplicate,
             topic: 'tally',
             payload: Buffer.from(JSON.stringify(state)),
             retain: false
