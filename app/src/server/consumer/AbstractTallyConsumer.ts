@@ -38,7 +38,7 @@ export abstract class AbstractTallyConsumer<T extends TallyConsumerEvents = Tall
 
         this.config = {...this.getDefaultConfig(), ...config};
         
-        this.checkConfig(config);
+        this.checkConfig(this.config);
     }
 
     protected lightState: LightState = {
