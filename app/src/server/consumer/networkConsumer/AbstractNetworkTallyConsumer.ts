@@ -29,7 +29,7 @@ export abstract class AbstractNetworkTallyConsumer<T extends NetworkTallyConsume
     private timer?: NodeJS.Timeout;
 
     constructor(config: ConsumerConfig) {
-        super(config); // TODO: Check if this handles the default correctly.
+        super(config);
     }
         
     protected checkConfig(config: NetworkConsumerConfig) { // TODO Apply this style in the switcher connection too.
