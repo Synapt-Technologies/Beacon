@@ -5,15 +5,6 @@ import { TallyState } from "../types/TallyState";
 export interface ConsumerConfig {
     name?: string;
     parent?: string;
-} 
-
-export interface LightAlertState { // Todo: Move to TallyState File?
-    number: number;
-    type: "operator" | "talent";
-}
-
-export interface LightState extends TallyState { //TODO: Rename
-    alert: Array<LightAlertState>;
 }
 
 export interface TallyConsumerEvents {
@@ -42,7 +33,7 @@ export abstract class AbstractTallyConsumer<T extends TallyConsumerEvents = Tall
         this.checkConfig(this.config);
     }
 
-    protected lightState: LightState = {
+    protected lightState: TallyState = {
         alert: [],
         program: [],
         preview: []
@@ -50,7 +41,7 @@ export abstract class AbstractTallyConsumer<T extends TallyConsumerEvents = Tall
         
     protected checkConfig(config: ConsumerConfig) {}
     
-    consumeTally(state: LightState): void {
+    consumeTally(state: TallyState): void {
         this.lightState = state;
     }
 

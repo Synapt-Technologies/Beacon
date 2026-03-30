@@ -7,7 +7,7 @@ export interface SwitcherConfig {
     parent?: string;
     host?: string;
     port?: number;
-} // TODO ADD DEFAULTS
+}
 
 
 export interface SwitcherTallyState extends TallyState {
@@ -67,6 +67,7 @@ export abstract class AbstractSwitcherConnection extends EventEmitter<SwitcherEv
         moment: null,
         program: [],
         preview: [],
+        alert: [],
     };
 
     abstract init(): void | Promise<void>; // Prepare and connect.
