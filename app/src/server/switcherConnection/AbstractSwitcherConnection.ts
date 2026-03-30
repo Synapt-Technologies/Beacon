@@ -33,7 +33,8 @@ export abstract class AbstractSwitcherConnection extends EventEmitter<SwitcherEv
 
     protected config: Required<SwitcherConfig>;
 
-    public static readonly DefaultConfig: Required<SwitcherConfig> = {
+    // Static + function: Static removes recursion, function makes it so the parent constructor gets the child's values.
+    public static readonly DefaultConfig: Required<SwitcherConfig> = { 
         name: "Switcher",
         parent: "??",
         host: "",
