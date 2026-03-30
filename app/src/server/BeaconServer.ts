@@ -1,6 +1,6 @@
 import { AtemSwitcherConnection } from "./switcherConnection/AtemSwitcherConnection";
 import { AbstractSwitcherConnection, SwitcherTallyState } from "./switcherConnection/AbstractSwitcherConnection";
-import { AbstractTallyConsumer, LightState } from "./consumer/AbstractTallyConsumer";
+import { AbstractTallyConsumer } from "./consumer/AbstractTallyConsumer";
 import { AedesNetworkTallyConsumer } from "./consumer/networkConsumer/AedesNetworkTallyConsumer";
 
 
