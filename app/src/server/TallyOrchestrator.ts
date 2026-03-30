@@ -1,3 +1,4 @@
+import { EventEmitter } from "events";
 import { AbstractTallyConsumer } from "./consumer/AbstractTallyConsumer";
 import { AedesNetworkTallyConsumer } from "./consumer/networkConsumer/AedesNetworkTallyConsumer";
 import { TallyState } from "./types/TallyState";
@@ -10,10 +11,17 @@ export interface OrchestratorConfig {
 }
 
 
+export interface OrchestratorEvents {
+    tally_update: [];
+    producer_connected: [];
+    producer_disconnected: [];
+    producer_info: [];
+}
+
 // TODO: Multithreaded?
 // TODO: Multiple switcher connections?
 // TODO: Multiple event servers?
-export class TallyOrchestrator {
+export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
 
     private config: Required<OrchestratorConfig>;
 
@@ -32,6 +40,7 @@ export class TallyOrchestrator {
     };
 
     constructor(config: OrchestratorConfig) {
+        super();
         this.config = { ...TallyOrchestrator.DefaultConfig, ...config };
 
         this.checkConfig(this.config);
