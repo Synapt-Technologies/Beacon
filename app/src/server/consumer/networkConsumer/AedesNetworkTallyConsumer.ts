@@ -1,0 +1,83 @@
+import { AbstractNetworkTallyConsumer, NetworkConsumerConfig } from "./AbstractNetworkTallyConsumer";
+
+import { Aedes, Client, Subscription } from "aedes";
+import { createServer, Server } from "node:net";
+
+export interface AedesConsumerConfig extends NetworkConsumerConfig {
+    serve_tcp?: boolean;
+    serve_ws?: boolean;
+    ws_port?: number;
+}
+
+
+export class AedesNetworkTallyConsumer extends AbstractNetworkTallyConsumer {
+
+    protected declare config: Required<AedesConsumerConfig>; // Declare to indicate it overwrites the parent's type.
+    
+    protected getDefaultConfig(): Required<AedesConsumerConfig> {
+        return {
+            ...super.getDefaultConfig(),
+            name: "Aedes",
+            port: 1883,
+            keep_alive: true,
+            keep_alive_ms: 1000,
+            serve_tcp: true, // Right term?
+            serve_ws: true,
+            ws_port: 80
+        };
+    }
+
+    constructor(config: AedesConsumerConfig) {
+        super(config); // TODO: Check if this handles the default correctly.
+    }
+    
+    private aedes!: Aedes;
+    private server!: Server;
+
+    protected checkConfig(config: AedesConsumerConfig) { // TODO Apply this style in the switcher connection too.
+        super.checkConfig(config);
+        
+        if (this.config.ws_port == undefined || this.config.ws_port < 0 || this.config.ws_port > 65535) // TODO propegate to other check configs
+            throw new Error(`[${config.name}] Valid websocket Port is required`);
+    }
+
+    async init(): Promise<void> {
+        this.aedes = await Aedes.createBroker();
+        this.server = createServer(this.aedes.handle);
+
+        this.server.listen(this.config.port,  () => {
+            this.devLog('Started and listening on port ', this.config.port)
+        });
+
+        if (this.aedes == undefined || this.server == undefined)
+            return;
+
+        this.aedes.on('subscribe', (subscriptions: Subscription[], client: Client) => {
+            this.devLog('Subscription:', subscriptions);
+            
+            if (subscriptions.some(sub => sub.topic == 'tally' || sub.topic.startsWith('tally/') ))
+                this.emit('connection');
+        });
+
+        this.aedes.on('publish',  (packet, client) => {if (client) {
+            this.devLog('Message: MQTT Client', (client ? client.id : 'UNKNOWN ID'), 'has published message on', packet.topic);
+        }});
+
+        super.init();
+    }
+
+    broadcastTally(retransmission: boolean): void {
+        if (this.aedes == undefined)
+            throw new Error("Not yet initialized.");
+
+        this.aedes.publish({
+            cmd: 'publish',
+            qos: 1, // At least once, or more
+            dup: retransmission,
+            topic: 'tally',
+            payload: Buffer.from(JSON.stringify(this.lightState)),
+            retain: false
+        }, () => {});
+    }
+
+}

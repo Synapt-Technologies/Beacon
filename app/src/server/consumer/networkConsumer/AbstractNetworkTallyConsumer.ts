@@ -11,19 +11,21 @@ export interface NetworkConsumerConfig extends ConsumerConfig {
 export interface NetworkTallyConsumerEvents extends TallyConsumerEvents {
     connection: []; // When A client loads, subscribes or whatever.
     disconnection: []; // When A client loads, subscribes or whatever.
+    discovery: [id:string, outputs: any]
 }
 
 export abstract class AbstractNetworkTallyConsumer<T extends NetworkTallyConsumerEvents = NetworkTallyConsumerEvents> extends AbstractTallyConsumer<T> {
     
-    protected readonly conType: string = "CONSUMER"
-
-    protected static readonly DefaultConfig = {
-        ...super.DefaultConfig,
-        port: -1,
-        keep_alive: false,
-        keep_alive_ms: 1000
+    protected declare config: Required<NetworkConsumerConfig>; // Declare to indicate it overwrites the parent's type.
+    
+    protected getDefaultConfig(): Required<NetworkConsumerConfig> {
+        return {
+            ...super.getDefaultConfig(),
+            port: -1,
+            keep_alive: false,
+            keep_alive_ms: 1000
+        };
     }
-    protected config: Required<NetworkConsumerConfig> = AbstractNetworkTallyConsumer.DefaultConfig;
 
     constructor(config: ConsumerConfig) {
         super(config); // TODO: Check if this handles the default correctly.
@@ -33,7 +35,7 @@ export abstract class AbstractNetworkTallyConsumer<T extends NetworkTallyConsume
         super.checkConfig(config);
         
         if (this.config.port == undefined || this.config.port < 0 || this.config.port > 65535) // TODO propegate to other check configs
-            throw new Error("Valid Port is required");
+            throw new Error(`[${config.name}] Valid Port is required`);
     }
     
     consumeTally(state: LightState): void {
@@ -50,7 +52,4 @@ export abstract class AbstractNetworkTallyConsumer<T extends NetworkTallyConsume
             }, this.config.keep_alive_ms);
         }
     }
-
-    abstract setName(name: string): void;
-    abstract getName(): string;
 }

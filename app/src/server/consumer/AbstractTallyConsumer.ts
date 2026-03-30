@@ -22,18 +22,21 @@ export interface TallyConsumerEvents {
 
 export abstract class AbstractTallyConsumer<T extends TallyConsumerEvents = TallyConsumerEvents> extends EventEmitter<T> {
     
-    protected readonly conType: string = "CNSMR"
+    protected readonly conType: string = "CONSUMER"
 
-    protected static readonly DefaultConfig: Required<ConsumerConfig> = {
-        name: "Consumer",
-        parent: "??",
-    }
     protected config: Required<ConsumerConfig>;
+
+    protected getDefaultConfig(): Required<ConsumerConfig> {
+        return {
+            name: "Consumer",
+            parent: "??",
+        };
+    }
 
     constructor(config: ConsumerConfig) {
         super();
 
-        this.config = {...AbstractTallyConsumer.DefaultConfig, ...config};
+        this.config = {...this.getDefaultConfig(), ...config};
         
         this.checkConfig(config);
     }
@@ -52,8 +55,12 @@ export abstract class AbstractTallyConsumer<T extends TallyConsumerEvents = Tall
 
     abstract init(): void;
 
-    abstract setName(name: string): void;
-    abstract getName(): string;
+    setName(name: string): void {
+        this.config.name = name;
+    }
+    getName(): string {
+        return this.config.name;
+    }
 
     protected devLog(...data: any[]) {
         console.log(...['['+(this.config.parent ??= '??')+'::'+this.conType+'::'+(this.config.name)+'] ', ...data]);
