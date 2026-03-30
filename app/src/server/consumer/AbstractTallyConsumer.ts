@@ -53,7 +53,7 @@ export abstract class AbstractTallyConsumer<T extends TallyConsumerEvents = Tall
         this.lightState = state;
     }
 
-    abstract init(): void;
+    abstract init(): void | Promise<void>;
 
     setName(name: string): void {
         this.config.name = name;
