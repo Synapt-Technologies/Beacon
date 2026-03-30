@@ -28,7 +28,7 @@ export abstract class AbstractNetworkTallyConsumer<T extends NetworkTallyConsume
     
     private timer?: NodeJS.Timeout;
 
-    constructor(config: ConsumerConfig) {
+    constructor(config: NetworkConsumerConfig) {
         super(config);
     }
         
