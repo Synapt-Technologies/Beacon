@@ -63,6 +63,6 @@ export abstract class AbstractTallyConsumer<T extends TallyConsumerEvents = Tall
     }
 
     protected devLog(...data: any[]) {
-        console.log(...['['+(this.config.parent ??= '??')+'::'+this.conType+'::'+(this.config.name)+'] ', ...data]);
+        console.log(`[${this.config.parent}::${this.conType}::${this.config.name}]`, ...data);
     }
 }

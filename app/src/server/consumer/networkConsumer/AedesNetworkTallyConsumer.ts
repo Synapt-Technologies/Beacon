@@ -45,12 +45,17 @@ export class AedesNetworkTallyConsumer extends AbstractNetworkTallyConsumer {
         this.aedes = await Aedes.createBroker();
         this.server = createServer(this.aedes.handle);
 
-        this.server.listen(this.config.port,  () => {
-            this.devLog('Started and listening on port ', this.config.port)
+        await new Promise<void>((resolve, reject) => {
+            this.server.listen(this.config.port,  () => {
+                this.devLog('Started and listening on port ', this.config.port);
+                resolve();
+            });
+
+            this.server.once('error', (err) => { // Pesky boot errors
+                reject(err);
+            });
         });
 
-        if (this.aedes == undefined || this.server == undefined)
-            return;
 
         this.aedes.on('subscribe', (subscriptions: Subscription[], client: Client) => {
             this.devLog('Subscription:', subscriptions);
@@ -66,6 +71,16 @@ export class AedesNetworkTallyConsumer extends AbstractNetworkTallyConsumer {
         super.init();
     }
 
+    async destroy(): Promise<void> {
+        super.destroy();
+
+        await new Promise<void>((resolve) => {
+            this.server.close(() => resolve());
+        });
+        
+        await this.aedes.close();
+    }
+
     broadcastTally(retransmission: boolean): void {
         if (this.aedes == undefined)
             throw new Error("Not yet initialized.");
@@ -73,7 +88,7 @@ export class AedesNetworkTallyConsumer extends AbstractNetworkTallyConsumer {
         this.aedes.publish({
             cmd: 'publish',
             qos: 1, // At least once, or more
-            dup: retransmission,
+            dup: retransmission, // Might not be necessary.
             topic: 'tally',
             payload: Buffer.from(JSON.stringify(this.lightState)),
             retain: false

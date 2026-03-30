@@ -26,6 +26,8 @@ export abstract class AbstractNetworkTallyConsumer<T extends NetworkTallyConsume
             keep_alive_ms: 1000
         };
     }
+    
+    private timer?: NodeJS.Timeout;
 
     constructor(config: ConsumerConfig) {
         super(config); // TODO: Check if this handles the default correctly.
@@ -45,11 +47,16 @@ export abstract class AbstractNetworkTallyConsumer<T extends NetworkTallyConsume
 
     abstract broadcastTally(retransmission: boolean): void;
 
-    init(): void {
+    init(): void | Promise<void> {
         if (this.config.keep_alive) {
-            setInterval(() => {
+            this.timer = setInterval(() => {
                 this.broadcastTally(true);
             }, this.config.keep_alive_ms);
         }
+    }
+
+    destroy(): void | Promise<void> {
+        if (this.timer) 
+            clearInterval(this.timer);
     }
 }
