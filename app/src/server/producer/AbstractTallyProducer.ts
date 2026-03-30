@@ -29,7 +29,7 @@ export interface TallyProducerEvents {
     [key: string]: any[];
 }
 
-
+// TODO: Add the option for camera id prefix, to differentiate between producers
 export abstract class AbstractTallyProducer<T extends TallyProducerEvents = TallyProducerEvents> extends EventEmitter<T> {
 
     public      readonly conType: string = "PRODUCER";
