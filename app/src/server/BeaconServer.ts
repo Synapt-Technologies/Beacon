@@ -1,7 +1,8 @@
 import { AedesEventServer } from "./eventServer/AedesEventServer";
-import { EventServer, LightState } from "./eventServer/EventServer";
 import { AtemSwitcherConnection } from "./switcherConnection/AtemSwitcherConnection";
 import { AbstractSwitcherConnection, SwitcherTallyState } from "./switcherConnection/AbstractSwitcherConnection";
+import { AbstractTallyConsumer, LightState } from "./consumer/AbstractTallyConsumer";
+import { AedesNetworkTallyConsumer } from "./consumer/networkConsumer/AedesNetworkTallyConsumer";
 
 
 export interface BeaconServerConfig {
@@ -19,7 +20,7 @@ const defaultConfig: BeaconServerConfig = {
 export class BeaconServer {
 
     private switcherConnection: AbstractSwitcherConnection;
-    private eventServer: EventServer;
+    private tallyConsumer: AbstractTallyConsumer;
 
     private config: BeaconServerConfig;
 
@@ -38,7 +39,7 @@ export class BeaconServer {
             host: "127.0.0.1"
         });
 
-        this.eventServer = new AedesEventServer({
+        this.tallyConsumer = new AedesNetworkTallyConsumer({
             name: "AEDES",
             parent: this.config.name,
             keep_alive_ms: 5000 // TODO: Make a mode to prevent network congestion with low or no keep alive?
@@ -52,20 +53,20 @@ export class BeaconServer {
                 preview: tallydata.preview
             }
         
-            this.eventServer.broadcastTally(this.lightState);
+            this.tallyConsumer.consumeTally(this.lightState);
         });
 
         // TODO Add set tally off / alert (setting) on switcher disconnect!
 
-        this.eventServer.on('subscribe', () => {
-            this.eventServer.broadcastTally(this.lightState);
+        this.tallyConsumer.on('subscribe', () => {
+            this.tallyConsumer.consumeTally(this.lightState);
         });
     }
     
-    init() {
+    async init() {
 
-        this.eventServer.init();
-        this.switcherConnection.connect();
+        await this.tallyConsumer.init();
+        await this.switcherConnection.connect();
     }
     
 }
