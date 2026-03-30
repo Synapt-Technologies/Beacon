@@ -36,7 +36,7 @@ export abstract class AbstractNetworkTallyConsumer<T extends NetworkTallyConsume
     protected checkConfig(config: ConsumerConfig) { // TODO Apply this style in the switcher connection too.
         super.checkConfig(config);
         
-        if (this.config.port == undefined || this.config.port < 0 || this.config.port > 65535) // TODO propegate to other check configs
+        if (this.config.port == null || this.config.port < 0 || this.config.port > 65535) // TODO propegate to other check configs
             throw new Error(`[${config.name}] Valid Port is required`);
     }
     
