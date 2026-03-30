@@ -13,7 +13,7 @@ export interface TallyConsumerEvents {
 
 export abstract class AbstractTallyConsumer<T extends TallyConsumerEvents = TallyConsumerEvents> extends EventEmitter<T> {
     
-    protected readonly conType: string = "CONSUMER"
+    protected readonly conType: string = "CONSUMER";
 
     protected config: Required<ConsumerConfig>;
 
