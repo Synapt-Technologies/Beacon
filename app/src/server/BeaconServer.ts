@@ -3,6 +3,8 @@ import { AbstractSwitcherConnection, SwitcherTallyState } from "./switcherConnec
 import { AbstractTallyConsumer } from "./consumer/AbstractTallyConsumer";
 import { AedesNetworkTallyConsumer } from "./consumer/networkConsumer/AedesNetworkTallyConsumer";
 import { TallyState } from "./types/TallyState";
+import { AbstractTallyProducer, ProducerTallyState } from "./producer/AbstractTallyProducer";
+import { AtemNetClientTallyProducer } from "./producer/networkProducer/AtemNetClientTallyProducer";
 
 
 export interface BeaconServerConfig {
@@ -19,7 +21,7 @@ const defaultConfig: BeaconServerConfig = {
 // TODO: Multiple event servers?
 export class BeaconServer {
 
-    private switcherConnection: AbstractSwitcherConnection;
+    private tallyProducer: AbstractTallyProducer;
     private tallyConsumer: AbstractTallyConsumer;
 
     private config: BeaconServerConfig;
@@ -33,7 +35,7 @@ export class BeaconServer {
     constructor(config: BeaconServerConfig) {
         this.config = { ...defaultConfig, ...config };
 
-        this.switcherConnection = new AtemSwitcherConnection({
+        this.tallyProducer = new AtemNetClientTallyProducer({
             name: "ATEM1",
             parent: this.config.name,
             host: "127.0.0.1"
@@ -45,7 +47,7 @@ export class BeaconServer {
             keep_alive_ms: 5000 // TODO: Make a mode to prevent network congestion with low or no keep alive?
         });
 
-        this.switcherConnection.on('tally_update', (tallydata: SwitcherTallyState) => {
+        this.tallyProducer.on('tally_update', (tallydata: ProducerTallyState) => {
         
             this.lightState = {
                 alert: [],
@@ -66,7 +68,7 @@ export class BeaconServer {
     async init() {
 
         await this.tallyConsumer.init();
-        await this.switcherConnection.connect();
+        await this.tallyProducer.init();
     }
     
 }
