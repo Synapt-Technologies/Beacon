@@ -1,4 +1,3 @@
-import { AedesEventServer } from "./eventServer/AedesEventServer";
 import { AtemSwitcherConnection } from "./switcherConnection/AtemSwitcherConnection";
 import { AbstractSwitcherConnection, SwitcherTallyState } from "./switcherConnection/AbstractSwitcherConnection";
 import { AbstractTallyConsumer, LightState } from "./consumer/AbstractTallyConsumer";
