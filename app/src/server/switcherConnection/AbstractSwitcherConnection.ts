@@ -29,7 +29,7 @@ export type SwitcherEvents = {
 // TODO: Change into a more generic producer, that can produce different fields. Program preview with priorities or alertstate. Higher priority overrites lower / they are combined.
 export abstract class AbstractSwitcherConnection extends EventEmitter<SwitcherEvents> {
 
-    protected readonly conType: string = "SWITCH";
+    protected readonly conType: string = "SWITCHER";
 
     protected static readonly DefaultConfig = {
         name: "Switcher",
