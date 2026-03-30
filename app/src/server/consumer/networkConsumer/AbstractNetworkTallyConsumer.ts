@@ -25,6 +25,8 @@ export abstract class AbstractNetworkTallyConsumer<T extends NetworkTallyConsume
         keep_alive: false,
         keep_alive_ms: 1000
     };
+
+    protected abstract getDefaultConfig(): Required<NetworkConsumerConfig>;
     
     private timer?: NodeJS.Timeout;
 
