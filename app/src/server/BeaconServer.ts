@@ -2,6 +2,7 @@ import { AtemSwitcherConnection } from "./switcherConnection/AtemSwitcherConnect
 import { AbstractSwitcherConnection, SwitcherTallyState } from "./switcherConnection/AbstractSwitcherConnection";
 import { AbstractTallyConsumer } from "./consumer/AbstractTallyConsumer";
 import { AedesNetworkTallyConsumer } from "./consumer/networkConsumer/AedesNetworkTallyConsumer";
+import { TallyState } from "./types/TallyState";
 
 
 export interface BeaconServerConfig {
@@ -23,7 +24,7 @@ export class BeaconServer {
 
     private config: BeaconServerConfig;
 
-    private lightState: LightState = {
+    private lightState: TallyState = {
         alert: [],
         program: [],
         preview: []
