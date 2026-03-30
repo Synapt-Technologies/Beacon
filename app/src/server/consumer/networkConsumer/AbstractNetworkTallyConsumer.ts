@@ -18,14 +18,12 @@ export abstract class AbstractNetworkTallyConsumer<T extends NetworkTallyConsume
     
     protected declare config: Required<NetworkConsumerConfig>; // Declare to indicate it overwrites the parent's type.
     
-    protected getDefaultConfig(): Required<NetworkConsumerConfig> {
-        return {
-            ...super.getDefaultConfig(),
-            port: -1,
-            keep_alive: false,
-            keep_alive_ms: 1000
-        };
-    }
+    public static readonly DefaultConfig: Required<NetworkConsumerConfig> = {
+        ...AbstractTallyConsumer.DefaultConfig,
+        port: -1,
+        keep_alive: false,
+        keep_alive_ms: 1000
+    };
     
     private timer?: NodeJS.Timeout;
 

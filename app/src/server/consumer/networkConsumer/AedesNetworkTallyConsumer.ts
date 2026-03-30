@@ -14,21 +14,23 @@ export class AedesNetworkTallyConsumer extends AbstractNetworkTallyConsumer {
 
     protected declare config: Required<AedesConsumerConfig>; // Declare to indicate it overwrites the parent's type.
     
+    public static readonly DefaultConfig: Required<AedesConsumerConfig> = {
+        ...AbstractNetworkTallyConsumer.DefaultConfig,
+        name: "Aedes",
+        port: 1883,
+        keep_alive: true,
+        keep_alive_ms: 1000,
+        serve_tcp: true, // Right term?
+        serve_ws: true,
+        ws_port: 80
+    };
+    
     protected getDefaultConfig(): Required<AedesConsumerConfig> {
-        return {
-            ...super.getDefaultConfig(),
-            name: "Aedes",
-            port: 1883,
-            keep_alive: true,
-            keep_alive_ms: 1000,
-            serve_tcp: true, // Right term?
-            serve_ws: true,
-            ws_port: 80
-        };
+        return AedesNetworkTallyConsumer.DefaultConfig;
     }
 
     constructor(config: AedesConsumerConfig) {
-        super(config); // TODO: Check if this handles the default correctly.
+        super(config);
     }
     
     private aedes!: Aedes;
@@ -37,7 +39,7 @@ export class AedesNetworkTallyConsumer extends AbstractNetworkTallyConsumer {
     protected checkConfig(config: AedesConsumerConfig) {
         super.checkConfig(config);
         
-        if (config.ws_port == undefined || config.ws_port < 0 || config.ws_port > 65535)
+        if (config.ws_port == null || config.ws_port < 0 || config.ws_port > 65535)
             throw new Error(`[${config.name}] Valid websocket Port is required`);
     }
 

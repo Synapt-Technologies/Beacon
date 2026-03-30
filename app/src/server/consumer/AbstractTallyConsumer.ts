@@ -26,12 +26,13 @@ export abstract class AbstractTallyConsumer<T extends TallyConsumerEvents = Tall
 
     protected config: Required<ConsumerConfig>;
 
-    protected getDefaultConfig(): Required<ConsumerConfig> {
-        return {
-            name: "Consumer",
-            parent: "??",
-        };
-    }
+    // Static + function: Static removes recursion, function makes it so the parent constructor gets the child's values.
+    public static readonly DefaultConfig: Required<ConsumerConfig> = { 
+        name: "Consumer",
+        parent: "??",
+    };
+
+    protected abstract getDefaultConfig(): Required<ConsumerConfig>;
 
     constructor(config: ConsumerConfig) {
         super();
