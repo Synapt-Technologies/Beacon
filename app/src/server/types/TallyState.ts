@@ -1,8 +1,9 @@
 
-export enum LightAlertType {
+export enum LightAlertType { // TODO Check if these are desired types
+    IDENT,
     INFO,
     NORMAL,
-    PRIO
+    PRIO,
 }
 
 export enum LightAlertTarget {
