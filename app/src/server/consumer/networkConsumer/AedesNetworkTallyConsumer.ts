@@ -34,10 +34,10 @@ export class AedesNetworkTallyConsumer extends AbstractNetworkTallyConsumer {
     private aedes!: Aedes;
     private server!: Server;
 
-    protected checkConfig(config: AedesConsumerConfig) { // TODO Apply this style in the switcher connection too.
+    protected checkConfig(config: AedesConsumerConfig) {
         super.checkConfig(config);
         
-        if (this.config.ws_port == undefined || this.config.ws_port < 0 || this.config.ws_port > 65535) // TODO propegate to other check configs
+        if (config.ws_port == undefined || config.ws_port < 0 || config.ws_port > 65535)
             throw new Error(`[${config.name}] Valid websocket Port is required`);
     }
 
