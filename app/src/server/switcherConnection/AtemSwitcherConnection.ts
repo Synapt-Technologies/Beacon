@@ -12,28 +12,24 @@ export interface AtemSwitcherInfo extends SwitcherInfo {
 // TODO Add check for AtemConnectionStatus
 export class AtemSwitcherConnection extends AbstractSwitcherConnection {
 
-    protected static readonly DefaultConfig = {
-        ...super.DefaultConfig,
+    protected declare config: Required<AtemSwitcherConfig>;
+
+    public static readonly DefaultConfig: Required<SwitcherConfig> = {
+        ...AbstractSwitcherConnection.DefaultConfig,
         name: "Atem",
-        host: "192.168.10.240",
-        port: 9910,
+        port: 9910
+    };
+
+    protected getDefaultConfig(): Required<AtemSwitcherConfig> {
+        return AtemSwitcherConnection.DefaultConfig;
     }
-    protected config: Required<AtemSwitcherConfig> = AtemSwitcherConnection.DefaultConfig;
 
     private atem: Atem;
 
-    protected info: AtemSwitcherInfo = {
-        moment: null,
-        state: null,
-        connected: false,
-    }
+    protected declare info: AtemSwitcherInfo;
 
     constructor(config: AtemSwitcherConfig) {
-        super();
-
-        this.config = {...this.config, ...config};
-
-        this.checkConfig();
+        super(config);
 
         this.atem = new Atem({
             address: config.host,
@@ -53,7 +49,7 @@ export class AtemSwitcherConnection extends AbstractSwitcherConnection {
             this.info.state = this.atem.state ?? null;
             this.emit('connected');
             this.devLog("Connected to model:", this.getModel());
-            this._setTallystate();
+            this._parseTallystate();
         })
 
         this.atem.on('disconnected', () => {
@@ -65,10 +61,18 @@ export class AtemSwitcherConnection extends AbstractSwitcherConnection {
 
         this.atem.on('stateChanged', (state, pathToChange) => {
             this.info.state = state;
-            this._setTallystate();
+            this._parseTallystate();
             
             this.emit('info_update', this.info, pathToChange) // TODO: Only if something changed? e.g. on tally change. Switcher model won't change without reconnect.
         })
+    }
+
+    protected checkConfig(config: AtemSwitcherConfig) {
+        super.checkConfig(config);
+    }
+
+    async init(): Promise<void> {
+        await this.connect();
     }
 
     connect(): Promise<void> {
@@ -81,7 +85,7 @@ export class AtemSwitcherConnection extends AbstractSwitcherConnection {
         return this.atem.disconnect();
     }
 
-    _setTallystate(): void { // TODO: Rename.
+    protected _parseTallystate(): void { 
         this.tallyState.moment = Date.now();
         const newProgram: Array<number> = this.atem.listVisibleInputs("program");
         const newPreview: Array<number> = this.atem.listVisibleInputs("preview");
@@ -117,7 +121,5 @@ export class AtemSwitcherConnection extends AbstractSwitcherConnection {
                     })
             );
     }
-
-
 
 }

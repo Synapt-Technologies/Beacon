@@ -10,7 +10,7 @@ export interface SwitcherConfig {
 } // TODO ADD DEFAULTS
 
 
-export interface SwitcherTallyState extends TallyState{
+export interface SwitcherTallyState extends TallyState {
     moment: number | null;
 }
 
@@ -31,16 +31,30 @@ export abstract class AbstractSwitcherConnection extends EventEmitter<SwitcherEv
 
     protected readonly conType: string = "SWITCHER";
 
-    protected static readonly DefaultConfig = {
+    protected config: Required<SwitcherConfig>;
+
+    public static readonly DefaultConfig: Required<SwitcherConfig> = {
         name: "Switcher",
         parent: "??",
         host: "",
         port: -1
-    }
-    protected config: Required<SwitcherConfig> = AbstractSwitcherConnection.DefaultConfig;
+    };
 
-    protected devLog(...data: any[]) {
-        console.log(...['['+(this.config.parent ??= '??')+'::'+this.conType+'::'+(this.config.name ??= 'Switcher Connection')+'] ', ...data]);
+    protected abstract getDefaultConfig(): Required<SwitcherConfig>;
+
+    constructor(config: SwitcherConfig) {
+        super();
+
+        this.config = {...this.getDefaultConfig(), ...config};
+        
+        this.checkConfig(this.config);
+    }
+
+    protected checkConfig(config: SwitcherConfig) {
+        if (config.host == null || net.isIP(config.host) != 4)
+            throw new Error(`[${config.name}] Valid IPv4 Host is required`);
+        if (config.port == null || config.port < 0 || config.port > 65535)
+            throw new Error(`[${config.name}] Valid Port is required`);
     }
 
     protected info: SwitcherInfo = {
@@ -54,14 +68,9 @@ export abstract class AbstractSwitcherConnection extends EventEmitter<SwitcherEv
         preview: [],
     };
 
-    protected checkConfig() {
-        if (this.config.host == null || net.isIP(this.config.host) != 4)
-            throw new Error("Host is required");
-        if (this.config.port == null || this.config.port < 0 || this.config.port > 65535)
-            throw new Error("Valid Port is required");
-    }
+    abstract init(): void | Promise<void>; // Prepare and connect.
 
-    abstract connect(): Promise<void>;
+    abstract connect(): Promise<void>; // Just connect, called by init()
     abstract disconnect(): Promise<void>;
     
     isConnected(): boolean {
@@ -80,11 +89,15 @@ export abstract class AbstractSwitcherConnection extends EventEmitter<SwitcherEv
 
     abstract getModel(): string | null;
 
-    getName(): string {
-        return this.config.name ??= "Unnamed Switcher";
-    }
-
     setName(name: string): void {
         this.config.name = name;
     }
+    getName(): string {
+        return this.config.name;
+    }
+
+    protected devLog(...data: any[]) {
+        console.log(`[${this.config.parent}::${this.conType}::${this.config.name}]`, ...data);
+    }
+
 }
