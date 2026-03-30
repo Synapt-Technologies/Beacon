@@ -33,7 +33,7 @@ export abstract class AbstractTallyConsumer<T extends TallyConsumerEvents = Tall
         this.checkConfig(this.config);
     }
 
-    protected lightState: TallyState = {
+    protected tallyState: TallyState = {
         alert: [],
         program: [],
         preview: []
@@ -42,7 +42,7 @@ export abstract class AbstractTallyConsumer<T extends TallyConsumerEvents = Tall
     protected checkConfig(config: ConsumerConfig) {}
     
     consumeTally(state: TallyState): void {
-        this.lightState = state;
+        this.tallyState = state;
     }
 
     abstract init(): void | Promise<void>;

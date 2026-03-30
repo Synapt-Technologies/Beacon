@@ -92,7 +92,7 @@ export class AedesNetworkTallyConsumer extends AbstractNetworkTallyConsumer {
             qos: 1, // At least once, or more
             dup: retransmission, // Might not be necessary.
             topic: 'tally',
-            payload: Buffer.from(JSON.stringify(this.lightState)),
+            payload: Buffer.from(JSON.stringify(this.tallyState)),
             retain: false
         }, () => {});
     }
