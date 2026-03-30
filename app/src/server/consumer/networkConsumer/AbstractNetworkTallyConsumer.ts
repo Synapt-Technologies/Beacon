@@ -1,5 +1,6 @@
 import { EventEmitter } from "node:events";
-import { AbstractTallyConsumer, ConsumerConfig, LightState, TallyConsumerEvents } from "../AbstractTallyConsumer";
+import { AbstractTallyConsumer, ConsumerConfig, TallyConsumerEvents } from "../AbstractTallyConsumer";
+import { TallyState } from "../../types/TallyState";
 
 
 export interface NetworkConsumerConfig extends ConsumerConfig {
@@ -38,7 +39,7 @@ export abstract class AbstractNetworkTallyConsumer<T extends NetworkTallyConsume
             throw new Error(`[${config.name}] Valid Port is required`);
     }
     
-    consumeTally(state: LightState): void {
+    consumeTally(state: TallyState): void {
         super.consumeTally(state);
         this.broadcastTally(false);
     }
