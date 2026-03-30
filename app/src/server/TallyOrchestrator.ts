@@ -5,24 +5,25 @@ import { AbstractTallyProducer, ProducerTallyState } from "./producer/AbstractTa
 import { AtemNetClientTallyProducer } from "./producer/networkProducer/AtemNetClientTallyProducer";
 
 
-export interface BeaconServerConfig {
+export interface OrchestratorConfig {
     name: string;
 }
-
-const defaultConfig: BeaconServerConfig = {
-    name: "Beacon Server"
-};
 
 
 // TODO: Multithreaded?
 // TODO: Multiple switcher connections?
 // TODO: Multiple event servers?
-export class BeaconServer {
+export class TallyOrchestrator {
+
+    private config: Required<OrchestratorConfig>;
+
+    public static readonly DefaultConfig: Required<OrchestratorConfig> = {
+        name: "Beacon Server"
+    };
 
     private tallyProducer: AbstractTallyProducer;
     private tallyConsumer: AbstractTallyConsumer;
 
-    private config: BeaconServerConfig;
 
     private lightState: TallyState = {
         alert: [],
@@ -30,17 +31,19 @@ export class BeaconServer {
         preview: []
     };
 
-    constructor(config: BeaconServerConfig) {
-        this.config = { ...defaultConfig, ...config };
+    constructor(config: OrchestratorConfig) {
+        this.config = { ...TallyOrchestrator.DefaultConfig, ...config };
+
+        this.checkConfig(this.config);
 
         this.tallyProducer = new AtemNetClientTallyProducer({
-            name: "ATEM1",
+            name: "ATEM1", // TODO refactor default names, maybe also make it return e.g. Atem@192.168.10.240
             parent: this.config.name,
             host: "127.0.0.1"
         });
 
         this.tallyConsumer = new AedesNetworkTallyConsumer({
-            name: "AEDES",
+            name: "AEDES", // TODO refactor default names, maybe also make it return e.g. Atem@192.168.10.240
             parent: this.config.name,
             keep_alive_ms: 5000 // TODO: Make a mode to prevent network congestion with low or no keep alive?
         });
@@ -67,6 +70,10 @@ export class BeaconServer {
 
         await this.tallyConsumer.init();
         await this.tallyProducer.init();
+    }
+
+    protected checkConfig(config: OrchestratorConfig){
+
     }
     
 }
