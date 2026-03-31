@@ -29,10 +29,10 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
         name: "Beacon Server"
     };
 
-    private producers: Map<string, AbstractTallyProducer> = new Map();
-    private consumers: Map<string, AbstractTallyConsumer> = new Map();
+    private mainProducer: AbstractTallyProducer;
+    private auxProducers: Map<string, AbstractTallyProducer> = new Map();
 
-    private tallyProducer: AbstractTallyProducer;
+    private consumers: Map<string, AbstractTallyConsumer> = new Map();
     private tallyConsumer: AbstractTallyConsumer;
 
 
@@ -48,7 +48,7 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
 
         this.checkConfig(this.config);
 
-        this.tallyProducer = new AtemNetClientTallyProducer({
+        this.mainProducer = new AtemNetClientTallyProducer({
             name: "ATEM1", // TODO refactor default names, maybe also make it return e.g. Atem@192.168.10.240
             parent: this.config.name,
             host: "127.0.0.1"
@@ -60,7 +60,7 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
             keep_alive_ms: 5000 // TODO: Make a mode to prevent network congestion with low or no keep alive?
         });
 
-        this.tallyProducer.on('tally_update', (tallydata: ProducerTallyState) => {
+        this.mainProducer.on('tally_update', (tallydata: ProducerTallyState) => {
         
             this.lightState = {
                 alert: [],
@@ -81,7 +81,7 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
     async init() {
 
         await this.tallyConsumer.init();
-        await this.tallyProducer.init();
+        await this.mainProducer.init();
     }
 
     protected checkConfig(config: OrchestratorConfig){

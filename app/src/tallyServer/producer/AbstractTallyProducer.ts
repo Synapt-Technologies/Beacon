@@ -12,10 +12,10 @@ export interface ProducerTallyState extends TallyState {
 }
 
 export enum ProducerType {
-    UNKNOWN = -1,
-    SWITCHER,
-    AUX,
-    WEBPAGE
+    UNKNOWN = "UNKNWN",
+    SWITCHER = "SWTCHR",
+    AUX = "AUXILI",
+    WEBPAGE = "WEBPAG"
 }
 export interface ProducerInfo {
     update_moment: number | null;
@@ -32,7 +32,7 @@ export interface TallyProducerEvents {
 // TODO: Add the option for camera id prefix, to differentiate between producers
 export abstract class AbstractTallyProducer<T extends TallyProducerEvents = TallyProducerEvents> extends EventEmitter<T> {
 
-    public      readonly conType: string = "PRODUCER";
+    public      readonly conType: string = "PROD";
     protected   readonly producerType: ProducerType = ProducerType.UNKNOWN;
 
     protected config: Required<ProducerConfig>;

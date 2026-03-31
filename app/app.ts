@@ -1,8 +1,8 @@
-import { BeaconServer } from "./src/server/BeaconServer";
+import { TallyOrchestrator } from "./src/tallyServer/TallyOrchestrator";
 
 
-const server = new BeaconServer({name: "testBeacon"});
-server.init();
+const orchestrator = new TallyOrchestrator({name: "testOrchestrator"});
+orchestrator.init();
 
 
 // import { AtemSwitcherConnection } from "./src/server/switcherConnection/AtemSwitcherConnection";
