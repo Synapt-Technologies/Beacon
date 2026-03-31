@@ -29,6 +29,9 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
         name: "Beacon Server"
     };
 
+    private producers: Map<string, AbstractTallyProducer> = new Map();
+    private consumers: Map<string, AbstractTallyConsumer> = new Map();
+
     private tallyProducer: AbstractTallyProducer;
     private tallyConsumer: AbstractTallyConsumer;
 
