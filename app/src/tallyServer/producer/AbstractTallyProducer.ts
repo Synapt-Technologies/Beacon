@@ -78,7 +78,6 @@ export abstract class AbstractTallyProducer<T extends TallyProducerEvents = Tall
         update_moment: null, // TODO: Add check for last updated? Too long ago -> Wrong? -> Update moment even if no change.
         program: [],
         preview: [],
-        alert: [],
     };
 
     getTallyState(): ProducerTallyState {

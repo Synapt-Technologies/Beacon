@@ -37,7 +37,6 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
 
 
     private lightState: TallyState = {
-        alert: [],
         program: [],
         preview: []
     };
@@ -63,7 +62,6 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
         this.mainProducer.on('tally_update', (tallydata: ProducerTallyState) => {
         
             this.lightState = {
-                alert: [],
                 program: tallydata.program,
                 preview: tallydata.preview
             }

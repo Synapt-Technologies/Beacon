@@ -43,7 +43,6 @@ export abstract class AbstractTallyConsumer<T extends TallyConsumerEvents = Tall
     }
 
     protected tallyState: TallyState = {
-        alert: [],
         program: [],
         preview: []
     };
