@@ -19,6 +19,8 @@ export class Logger {
     public static GlobalConsoleLevel: LogLevel = LogLevel.INFO;
     public static GlobalFileLevel: LogLevel = LogLevel.DEBUG;
 
+    protected static instanceCount = 0;
+
     
     private static readonly MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
     // /project/logs/beacon.log
@@ -44,6 +46,11 @@ export class Logger {
         if (!fs.existsSync(Logger.LOG_DIR)) {
             fs.mkdirSync(Logger.LOG_DIR, { recursive: true });
         }
+
+        if (Logger.instanceCount === 0) {
+            this.logToFile(`\n\n-----===== Logger Initialized at ${new Date().toISOString()} =====-----`);
+        }
+        Logger.instanceCount++;
     }
 
     private print(level: LogLevel, ...data: any[]) {
