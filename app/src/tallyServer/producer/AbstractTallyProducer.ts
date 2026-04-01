@@ -33,8 +33,9 @@ export interface TallyProducerEvents {
 // TODO: Add the option for camera id prefix, to differentiate between producers
 export abstract class AbstractTallyProducer<T extends TallyProducerEvents = TallyProducerEvents> extends EventEmitter<T> {
 
-    public      readonly conType: string = "PROD";
-    protected   readonly producerType: ProducerType = ProducerType.UNKNOWN;
+    public readonly conType: string = "PROD";
+
+    protected abstract getProducerType(): ProducerType;
 
     protected logger: Logger;
 
@@ -56,7 +57,7 @@ export abstract class AbstractTallyProducer<T extends TallyProducerEvents = Tall
         this.logger = new Logger([
             this.config.parent,
             this.conType,
-            this.producerType,
+            this.getProducerType(),
             this.config.name
         ]);
         

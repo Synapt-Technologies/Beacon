@@ -15,8 +15,11 @@ export interface AtemNetClientProducerInfo extends NetClientProducerInfo {
 
 // TODO: Maybe add config type as generic for better TS: C extends ProducerConfig = ProducerConfig,
 export class AtemNetClientTallyProducer extends AbstractNetClientTallyProducer {
-    
-    protected readonly producerType: ProducerType = ProducerType.SWITCHER;
+
+    protected getProducerType(): ProducerType {
+        return ProducerType.SWITCHER;
+    }
+
     protected declare config: Required<AtemNetClientProducerConfig>; // Declare to indicate it overwrites the parent's type.
     
     public static readonly DefaultConfig: Required<AtemNetClientProducerConfig> = {
