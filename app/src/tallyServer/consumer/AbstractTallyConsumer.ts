@@ -1,6 +1,7 @@
 import { EventEmitter } from "node:events";
-import { TallyState } from "../types/TallyState";
+import { GlobalTallySource, TallyState } from "../types/TallyState";
 import { Logger } from "../../logging/Logger";
+import { DeviceAddress, DeviceAlertState, DeviceAlertTarget, TallyDevice } from "../types/DeviceState";
 
 
 export interface ConsumerConfig {
@@ -48,6 +49,12 @@ export abstract class AbstractTallyConsumer<T extends TallyConsumerEvents = Tall
     };
         
     protected checkConfig(config: ConsumerConfig) {}
+
+    abstract getAvailableDevices(): Map<DeviceAddress, TallyDevice>;
+    abstract getDevice(address: DeviceAddress): TallyDevice | null;
+    abstract setDeviceName(address: DeviceAddress, name: string): void;
+    abstract setDevicePatch(address: DeviceAddress, patch: Array<GlobalTallySource>): void;
+    abstract setDeviceAlert(address: DeviceAddress, type: DeviceAlertState, target: DeviceAlertTarget): void; 
     
     consumeTally(state: TallyState): void {
         this.tallyState = state;
