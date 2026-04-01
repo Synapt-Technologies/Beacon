@@ -16,4 +16,5 @@ node_modules
 #!.yarn/cache
 .pnp.*
 
-
+# Logs:
+logs/*
