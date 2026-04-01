@@ -45,9 +45,9 @@ export abstract class AbstractNetClientTallyProducer<T extends NetClientTallyPro
         super.checkConfig(config);
         
         if (config.host == null || net.isIP(config.host) != 4)
-            throw new Error(`[${config.name}] Valid IPv4 Host is required`);
+            this.logger.fatal(`Valid IPv4 Host is required. Submitted config:`, config);
         if (config.port == null || config.port < 0 || config.port > 65535)
-            throw new Error(`[${config.name}] Valid Port is required`);
+            this.logger.fatal(`Valid Port is required. Submitted config:`, config);
     }
 
     abstract init(): void | Promise<void>;

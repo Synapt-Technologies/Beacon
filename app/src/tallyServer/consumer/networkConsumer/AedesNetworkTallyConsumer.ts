@@ -40,7 +40,7 @@ export class AedesNetworkTallyConsumer extends AbstractNetworkTallyConsumer {
         super.checkConfig(config);
         
         if (config.ws_port == null || config.ws_port < 0 || config.ws_port > 65535)
-            throw new Error(`[${config.name}] Valid websocket Port is required`);
+            this.logger.fatal(`Valid websocket Port is required. Submitted config:`, config);
     }
 
     async init(): Promise<void> {
@@ -49,25 +49,26 @@ export class AedesNetworkTallyConsumer extends AbstractNetworkTallyConsumer {
 
         await new Promise<void>((resolve, reject) => {
             this.server.listen(this.config.port,  () => {
-                this.devLog('Started and listening on port ', this.config.port);
+                this.logger.info('Started and listening on port ', this.config.port);
                 resolve();
             });
 
             this.server.once('error', (err) => { // Pesky boot errors
+                this.logger.error('Error starting server:', err);
                 reject(err);
             });
         });
 
 
         this.aedes.on('subscribe', (subscriptions: Subscription[], client: Client) => {
-            this.devLog('Subscription:', subscriptions);
+            this.logger.debug('Subscription:', subscriptions);
             
             if (subscriptions.some(sub => sub.topic == 'tally' || sub.topic.startsWith('tally/') ))
                 this.emit('connection');
         });
 
         this.aedes.on('publish',  (packet, client) => {if (client) {
-            this.devLog('Message: MQTT Client', (client ? client.id : 'UNKNOWN ID'), 'has published message on', packet.topic);
+            this.logger.debug('Message: MQTT Client', (client ? client.id : 'UNKNOWN ID'), 'has published message on', packet.topic);
         }});
 
         super.init();

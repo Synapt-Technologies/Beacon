@@ -38,7 +38,7 @@ export abstract class AbstractNetworkTallyConsumer<T extends NetworkTallyConsume
         super.checkConfig(config);
         
         if (config.port == null || config.port < 0 || config.port > 65535)
-            throw new Error(`[${config.name}] Valid Port is required`);
+            this.logger.fatal(`Valid Port is required. Submitted config:`, config);
     }
     
     consumeTally(state: TallyState): void {

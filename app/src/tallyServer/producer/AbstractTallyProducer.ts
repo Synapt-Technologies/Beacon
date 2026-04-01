@@ -102,8 +102,4 @@ export abstract class AbstractTallyProducer<T extends TallyProducerEvents = Tall
     getName(): string {
         return this.config.name;
     }
-
-    // protected devLog(...data: any[]) {
-    //     console.log(`[${this.config.parent}::${this.conType}::${this.producerType}::${this.config.name}]`, ...data);
-    // }
 }

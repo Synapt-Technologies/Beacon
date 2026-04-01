@@ -1,5 +1,6 @@
 import { EventEmitter } from "node:events";
 import { TallyState } from "../types/TallyState";
+import { Logger } from "../../logging/Logger";
 
 
 export interface ConsumerConfig {
@@ -15,6 +16,8 @@ export abstract class AbstractTallyConsumer<T extends TallyConsumerEvents = Tall
     
     protected readonly conType: string = "CONS";
 
+    protected logger: Logger;
+
     protected config: Required<ConsumerConfig>;
 
     // Static + function: Static removes recursion, function makes it so the parent constructor gets the child's values.
@@ -29,6 +32,12 @@ export abstract class AbstractTallyConsumer<T extends TallyConsumerEvents = Tall
         super();
 
         this.config = {...this.getDefaultConfig(), ...config};
+
+        this.logger = new Logger([
+            this.config.parent,
+            this.conType,
+            this.config.name
+        ]);
         
         this.checkConfig(this.config);
     }
@@ -52,9 +61,5 @@ export abstract class AbstractTallyConsumer<T extends TallyConsumerEvents = Tall
     }
     getName(): string {
         return this.config.name;
-    }
-
-    protected devLog(...data: any[]) {
-        console.log(`[${this.config.parent}::${this.conType}::${this.config.name}]`, ...data);
     }
 }
