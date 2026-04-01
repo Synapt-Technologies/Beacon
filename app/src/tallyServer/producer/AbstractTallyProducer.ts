@@ -1,6 +1,7 @@
 import { EventEmitter } from "events";
 import { TallyState } from "../types/TallyState";
 import { SourceInfo } from "../types/SourceInfo";
+import { Logger } from "../../logging/Logger";
 
 export interface ProducerConfig {
     name?: string;
@@ -35,6 +36,8 @@ export abstract class AbstractTallyProducer<T extends TallyProducerEvents = Tall
     public      readonly conType: string = "PROD";
     protected   readonly producerType: ProducerType = ProducerType.UNKNOWN;
 
+    protected logger: Logger;
+
     protected config: Required<ProducerConfig>;
 
     // Static + function: Static removes recursion, function makes it so the parent constructor gets the child's values.
@@ -49,6 +52,13 @@ export abstract class AbstractTallyProducer<T extends TallyProducerEvents = Tall
         super();
 
         this.config = {...this.getDefaultConfig(), ...config};
+
+        this.logger = new Logger([
+            this.config.parent,
+            this.conType,
+            this.producerType,
+            this.config.name
+        ]);
         
         this.checkConfig(this.config);
     }
@@ -93,7 +103,7 @@ export abstract class AbstractTallyProducer<T extends TallyProducerEvents = Tall
         return this.config.name;
     }
 
-    protected devLog(...data: any[]) {
-        console.log(`[${this.config.parent}::${this.conType}::${this.producerType}::${this.config.name}]`, ...data);
-    }
+    // protected devLog(...data: any[]) {
+    //     console.log(`[${this.config.parent}::${this.conType}::${this.producerType}::${this.config.name}]`, ...data);
+    // }
 }

@@ -42,10 +42,10 @@ export class AtemNetClientTallyProducer extends AbstractNetClientTallyProducer {
         });
 
         this.atem.on('info', (data) => {
-            this.devLog("Info:", data);
+            this.logger.debug("Info:", data);
         });
         this.atem.on('error', (data) => {
-            this.devLog("Error:", data);
+            this.logger.error("Error:", data);
         });
 
         this.atem.on('connected', () => {
@@ -55,7 +55,7 @@ export class AtemNetClientTallyProducer extends AbstractNetClientTallyProducer {
             this.info.model = this._parseModel();
 
             this.emit('connected');
-            this.devLog("Connected to model:", this.getModel());
+            this.logger.info("Connected to model:", this.getModel());
             this._parseTallystate();
         })
 
@@ -63,7 +63,7 @@ export class AtemNetClientTallyProducer extends AbstractNetClientTallyProducer {
             this.info.connected = false;
             this.info.update_moment = Date.now();
             this.emit('disconnected');
-            this.devLog("Disconnected");
+            this.logger.warn("Disconnected");
         })
 
         this.atem.on('stateChanged', (state, pathToChange) => {
@@ -126,7 +126,7 @@ export class AtemNetClientTallyProducer extends AbstractNetClientTallyProducer {
             this.tallyState.program = newProgram;
             this.tallyState.preview = newPreview;
             this.emit("tally_update", this.tallyState);
-            this.devLog("Tally Change:", this.tallyState);
+            this.logger.debug("Tally Change:", this.tallyState);
         }
     }
 
