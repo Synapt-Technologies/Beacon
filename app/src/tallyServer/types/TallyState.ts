@@ -7,5 +7,5 @@ export interface TallyState {
 
 export interface GlobalTallySource {
     device: string;
-    source: string;
+    source: number; // TODO check if this should be a number
 }
