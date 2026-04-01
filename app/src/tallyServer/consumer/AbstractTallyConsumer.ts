@@ -52,6 +52,7 @@ export abstract class AbstractTallyConsumer<T extends TallyConsumerEvents = Tall
     
     consumeTally(state: TallyState): void {
         this.tallyState = state;
+        this.logger.debug("Consumed new tally state:", state);
     }
 
     abstract init(): void | Promise<void>;

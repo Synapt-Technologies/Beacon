@@ -16,7 +16,7 @@ interface LogConfig {
 
 
 export class Logger {
-    public static GlobalConsoleLevel: LogLevel = LogLevel.DEBUG;
+    public static GlobalConsoleLevel: LogLevel = LogLevel.INFO;
     public static GlobalFileLevel: LogLevel = LogLevel.DEBUG;
 
     
