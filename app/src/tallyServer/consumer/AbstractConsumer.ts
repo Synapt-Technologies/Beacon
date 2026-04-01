@@ -9,15 +9,17 @@ export interface ConsumerConfig {
     parent?: string;
 }
 
-export interface TallyConsumerEvents {
+export interface ConsumerEvents {
     [key: string]: any[];
 }
 
-export abstract class AbstractTallyConsumer<T extends TallyConsumerEvents = TallyConsumerEvents> extends EventEmitter<T> {
+export abstract class AbstractConsumer<T extends ConsumerEvents = ConsumerEvents> extends EventEmitter<T> {
     
     protected readonly conType: string = "CONS";
 
     protected logger: Logger;
+
+    protected devices: Map<string, TallyDevice> = new Map();
 
     protected config: Required<ConsumerConfig>;
 
@@ -50,10 +52,40 @@ export abstract class AbstractTallyConsumer<T extends TallyConsumerEvents = Tall
         
     protected checkConfig(config: ConsumerConfig) {}
 
-    abstract getAvailableDevices(): Map<DeviceAddress, TallyDevice>;
-    abstract getDevice(address: DeviceAddress): TallyDevice | null;
-    abstract setDeviceName(address: DeviceAddress, name: string): void;
-    abstract setDevicePatch(address: DeviceAddress, patch: Array<GlobalTallySource>): void;
+    protected getDeviceKey(address: DeviceAddress): string {
+        return `${address.parent}:${address.device}`;
+    }
+
+    getAvailableDevices(): Map<string, TallyDevice> {
+        return this.devices;
+    }
+    getDevice(address: DeviceAddress): TallyDevice | null {
+        return this.devices.get(this.getDeviceKey(address)) || null;
+    }
+    setDeviceName(address: DeviceAddress, name: string): void {
+        const key = this.getDeviceKey(address);
+        
+        const device = this.devices.get(key);
+        if (!device){
+            this.logger.warn(`Attempted to set name:`, name, `for unknown device at address:`, address)
+            return;
+        }
+        
+        device.name = name;
+        this.logger.debug(`Device ${key} renamed to: ${name}`);
+    }
+    setDevicePatch(address: DeviceAddress, patch: Array<GlobalTallySource>): void{
+        const key = this.getDeviceKey(address);
+        
+        const device = this.devices.get(key);
+        if (!device){
+            this.logger.warn(`Attempted to set patch:`, patch, `for unknown device at address:`, address)
+            return;
+        }
+        
+        device.patch = patch;
+        this.logger.debug(`Device ${key} set patch to:`, patch);
+    }
     abstract setDeviceAlert(address: DeviceAddress, type: DeviceAlertState, target: DeviceAlertTarget): void; 
     
     consumeTally(state: TallyState): void {

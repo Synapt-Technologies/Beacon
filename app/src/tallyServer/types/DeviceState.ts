@@ -1,4 +1,4 @@
-import { GlobalTallySource } from "./TallyState";
+import { GlobalTallySource, TallyState } from "./TallyState";
 
 export enum DeviceAlertState { // TODO Check if these are desired types
     IDENT,
@@ -24,9 +24,17 @@ export interface DeviceAddress {
     device: string;
 }
 
+export enum ConnectionType {
+    INTERNAL,
+    NETWORK,
+    WIRELESS
+}
 
 export interface TallyDevice {
     id: DeviceAddress;
     name: string;
+    connection: ConnectionType;
     patch: Array<GlobalTallySource>;
+    
+    state: DeviceTallyState;
 }

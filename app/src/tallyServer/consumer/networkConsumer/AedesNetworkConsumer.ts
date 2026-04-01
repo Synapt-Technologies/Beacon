@@ -1,7 +1,8 @@
-import { AbstractNetworkTallyConsumer, NetworkConsumerConfig } from "./AbstractNetworkTallyConsumer";
+import { AbstractNetworkConsumer, NetworkConsumerConfig } from "./AbstractNetworkConsumer";
 
 import { Aedes, Client, Subscription } from "aedes";
 import { createServer, Server } from "node:net";
+import { DeviceAddress, DeviceAlertState, DeviceAlertTarget } from "../../types/DeviceState";
 
 export interface AedesConsumerConfig extends NetworkConsumerConfig {
     serve_tcp?: boolean;
@@ -10,12 +11,15 @@ export interface AedesConsumerConfig extends NetworkConsumerConfig {
 }
 
 
-export class AedesNetworkTallyConsumer extends AbstractNetworkTallyConsumer {
+export class AedesNetworkConsumer extends AbstractNetworkConsumer {
+    setDeviceAlert(address: DeviceAddress, type: DeviceAlertState, target: DeviceAlertTarget): void {
+        throw new Error("Method not implemented.");
+    }
 
     protected declare config: Required<AedesConsumerConfig>; // Declare to indicate it overwrites the parent's type.
     
     public static readonly DefaultConfig: Required<AedesConsumerConfig> = {
-        ...AbstractNetworkTallyConsumer.DefaultConfig,
+        ...AbstractNetworkConsumer.DefaultConfig,
         name: "Aedes",
         port: 1883,
         keep_alive: true,
@@ -26,7 +30,7 @@ export class AedesNetworkTallyConsumer extends AbstractNetworkTallyConsumer {
     };
     
     protected getDefaultConfig(): Required<AedesConsumerConfig> {
-        return AedesNetworkTallyConsumer.DefaultConfig;
+        return AedesNetworkConsumer.DefaultConfig;
     }
 
     constructor(config: AedesConsumerConfig) {

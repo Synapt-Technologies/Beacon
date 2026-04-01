@@ -1,5 +1,5 @@
 import { EventEmitter } from "node:events";
-import { AbstractTallyConsumer, ConsumerConfig, TallyConsumerEvents } from "../AbstractTallyConsumer";
+import { AbstractConsumer, ConsumerConfig, ConsumerEvents } from "../AbstractConsumer";
 import { TallyState } from "../../types/TallyState";
 
 
@@ -9,18 +9,18 @@ export interface NetworkConsumerConfig extends ConsumerConfig {
     keep_alive_ms?: number;
 } 
 
-export interface NetworkTallyConsumerEvents extends TallyConsumerEvents {
+export interface NetworkConsumerEvents extends ConsumerEvents {
     connection: []; // When A client loads, subscribes or whatever.
     disconnection: []; // When A client loads, subscribes or whatever.
     discovery: [id:string, outputs: any]
 }
 
-export abstract class AbstractNetworkTallyConsumer<T extends NetworkTallyConsumerEvents = NetworkTallyConsumerEvents> extends AbstractTallyConsumer<T> {
+export abstract class AbstractNetworkConsumer<T extends NetworkConsumerEvents = NetworkConsumerEvents> extends AbstractConsumer<T> {
     
     protected declare config: Required<NetworkConsumerConfig>; // Declare to indicate it overwrites the parent's type.
     
     public static readonly DefaultConfig: Required<NetworkConsumerConfig> = {
-        ...AbstractTallyConsumer.DefaultConfig,
+        ...AbstractConsumer.DefaultConfig,
         port: -1,
         keep_alive: false,
         keep_alive_ms: 1000
