@@ -13,7 +13,7 @@ export enum DeviceAlertTarget {
     ALL
 }
 
-export enum DeviceTallyState {
+export enum DeviceTallyState { // TODO maybe add an alert state that is yellow, in the future logic in the ui can dictate what state means what.
     NONE = 0,
     PREVIEW = 1,
     PROGRAM = 2
