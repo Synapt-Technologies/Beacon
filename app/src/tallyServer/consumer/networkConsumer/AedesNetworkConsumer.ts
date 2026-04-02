@@ -2,7 +2,8 @@ import { AbstractNetworkConsumer, NetworkConsumerConfig } from "./AbstractNetwor
 
 import { Aedes, Client, Subscription } from "aedes";
 import { createServer, Server } from "node:net";
-import { DeviceAddress, DeviceAlertState, DeviceAlertTarget } from "../../types/DeviceState";
+import { DeviceAddress, DeviceAlertState, DeviceAlertTarget, DeviceTallyState, TallyDevice } from "../../types/DeviceState";
+import { TallyState } from "../../types/TallyState";
 
 export interface AedesConsumerConfig extends NetworkConsumerConfig {
     serve_tcp?: boolean;
@@ -12,8 +13,37 @@ export interface AedesConsumerConfig extends NetworkConsumerConfig {
 
 
 export class AedesNetworkConsumer extends AbstractNetworkConsumer {
+    protected sendTallyDevice(device: TallyDevice): void { // TODO move down in class, style or smt.
+        if (!this.aedes)
+            this.logger.fatal("Attempted to send tally device before initialization.");
+
+        const payload = JSON.stringify({
+            state: DeviceTallyState[device.state],
+            name: device.name, // TODO check if name and state are needed.
+            ts: Date.now()
+        });
+
+        this.aedes.publish(
+        {
+            cmd: 'publish',
+            qos: 1,
+            dup: false,
+            topic: `tally/device/${device.id.device}`,
+            payload: Buffer.from(payload),
+            retain: true
+        }, () => {});
+       
+    }
+
     setDeviceAlert(address: DeviceAddress, type: DeviceAlertState, target: DeviceAlertTarget): void {
-        throw new Error("Method not implemented.");
+        this.aedes.publish({
+            cmd: 'publish',
+            qos: 2, // High priority for alerts
+            dup: false,
+            topic: `tally/devices/${address.device}/alert`,
+            payload: Buffer.from(JSON.stringify({ type, target })),
+            retain: false // Alerts are momentary, no retain
+        }, () => {});
     }
 
     protected declare config: Required<AedesConsumerConfig>; // Declare to indicate it overwrites the parent's type.
@@ -26,7 +56,7 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer {
         keep_alive_ms: 1000,
         serve_tcp: true, // Right term?
         serve_ws: true,
-        ws_port: 80
+        ws_port: 80,
     };
     
     protected getDefaultConfig(): Required<AedesConsumerConfig> {
@@ -88,17 +118,23 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer {
         await this.aedes.close();
     }
 
-    broadcastTally(retransmission: boolean): void {
+    broadcastTally(): void {
         if (this.aedes == undefined)
-            throw new Error("Not yet initialized.");
+            this.logger.fatal("Attempted to broadcast tally device before initialization.");
+
+        const payload = {
+            program: Array.from(this.tallyState.program),
+            preview: Array.from(this.tallyState.preview),
+            ts: Date.now()
+        };
 
         this.aedes.publish({
             cmd: 'publish',
             qos: 1, // At least once, or more
-            dup: retransmission, // Might not be necessary.
-            topic: 'tally',
+            dup: false,
+            topic: 'tally/global',
             payload: Buffer.from(JSON.stringify(this.tallyState)),
-            retain: false
+            retain: true
         }, () => {});
     }
 

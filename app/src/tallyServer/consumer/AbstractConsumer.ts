@@ -1,5 +1,5 @@
 import { EventEmitter } from "node:events";
-import { GlobalTallySource, TallyState } from "../types/TallyState";
+import { GlobalSourceTools, GlobalTallySource, TallyState } from "../types/TallyState";
 import { Logger } from "../../logging/Logger";
 import { DeviceAddress, DeviceAlertState, DeviceAlertTarget, DeviceTallyState, TallyDevice } from "../types/DeviceState";
 
@@ -47,8 +47,8 @@ export abstract class AbstractConsumer<T extends ConsumerEvents = ConsumerEvents
     }
 
     protected tallyState: TallyState = {
-        program: [],
-        preview: []
+        program: new Set<string>(),
+        preview: new Set<string>()
     };
         
     protected checkConfig(config: ConsumerConfig) {}
@@ -107,14 +107,26 @@ export abstract class AbstractConsumer<T extends ConsumerEvents = ConsumerEvents
     }
 
     protected setTallyDevice(device: TallyDevice): void {
-        if (device.patch.map(x => x.source).some(item => this.tallyState.program.includes(item))) {
-            device.state = DeviceTallyState.PROGRAM;
+
+        let newState = DeviceTallyState.NONE; // Default state
+
+        for (const patch of device.patch) {
+
+            const parsedSource = GlobalSourceTools.create(patch.producer, patch.source);
+
+            if (this.tallyState.program.has(parsedSource)) {
+                newState = DeviceTallyState.PROGRAM;
+                break;
+            }
+            if (this.tallyState.preview.has(parsedSource)) {
+                newState = DeviceTallyState.PREVIEW;
+            }
         }
-        else if (device.patch.map(x => x.source).some(item => this.tallyState.preview.includes(item))) {
-            device.state = DeviceTallyState.PREVIEW;
-        }
-        else {
-            device.state = DeviceTallyState.NONE;
+
+        if (device.state !== newState) {
+            this.logger.debug(`Device ${this.getDeviceKey(device.id)} state changed from ${DeviceTallyState[device.state]} to ${DeviceTallyState[newState]}`);
+            (this as EventEmitter<ConsumerEvents>).emit('device_update', device);
+            device.state = newState;
         }
     }
 
@@ -122,7 +134,6 @@ export abstract class AbstractConsumer<T extends ConsumerEvents = ConsumerEvents
 
     consumeTally(state: TallyState): void {
         this.tallyState = state;
-        this.logger.debug("Consumed new tally state:", state);
 
         for (const device of this.devices.values()) {
             this.setTallyDevice(device);
