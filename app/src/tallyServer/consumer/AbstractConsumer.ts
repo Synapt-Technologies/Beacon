@@ -1,7 +1,7 @@
 import { EventEmitter } from "node:events";
 import { GlobalTallySource, TallyState } from "../types/TallyState";
 import { Logger } from "../../logging/Logger";
-import { DeviceAddress, DeviceAlertState, DeviceAlertTarget, TallyDevice } from "../types/DeviceState";
+import { DeviceAddress, DeviceAlertState, DeviceAlertTarget, DeviceTallyState, TallyDevice } from "../types/DeviceState";
 
 
 export interface ConsumerConfig {
@@ -10,6 +10,7 @@ export interface ConsumerConfig {
 }
 
 export interface ConsumerEvents {
+    device_update: [device: TallyDevice];
     [key: string]: any[];
 }
 
@@ -56,8 +57,16 @@ export abstract class AbstractConsumer<T extends ConsumerEvents = ConsumerEvents
         return `${address.parent}:${address.device}`;
     }
 
-    getAvailableDevices(): Map<string, TallyDevice> {
-        return this.devices;
+    protected getDeviceAddress(key: string): DeviceAddress {
+        
+        const parts = key.split(":");
+        const parent = parts.shift() || ""; // Take the first part
+        const device = parts.join(":");    // Put everything else back together
+        return { parent, device };
+    }
+
+    getAvailableDevices(): Array<TallyDevice> {
+        return Array.from(this.devices.values());
     }
     getDevice(address: DeviceAddress): TallyDevice | null {
         return this.devices.get(this.getDeviceKey(address)) || null;
@@ -72,6 +81,7 @@ export abstract class AbstractConsumer<T extends ConsumerEvents = ConsumerEvents
         }
         
         device.name = name;
+        (this as EventEmitter<ConsumerEvents>).emit('device_update', device);
         this.logger.debug(`Device ${key} renamed to: ${name}`);
     }
     setDevicePatch(address: DeviceAddress, patch: Array<GlobalTallySource>): void{
@@ -84,13 +94,39 @@ export abstract class AbstractConsumer<T extends ConsumerEvents = ConsumerEvents
         }
         
         device.patch = patch;
+        this.processTallyDevice(device);
+        (this as EventEmitter<ConsumerEvents>).emit('device_update', device);
         this.logger.debug(`Device ${key} set patch to:`, patch);
     }
     abstract setDeviceAlert(address: DeviceAddress, type: DeviceAlertState, target: DeviceAlertTarget): void; 
     
+
+    protected processTallyDevice(device: TallyDevice): void {
+        this.setTallyDevice(device);
+        this.sendTallyDevice(device);
+    }
+
+    protected setTallyDevice(device: TallyDevice): void {
+        if (device.patch.map(x => x.source).some(item => this.tallyState.program.includes(item))) {
+            device.state = DeviceTallyState.PROGRAM;
+        }
+        else if (device.patch.map(x => x.source).some(item => this.tallyState.preview.includes(item))) {
+            device.state = DeviceTallyState.PREVIEW;
+        }
+        else {
+            device.state = DeviceTallyState.NONE;
+        }
+    }
+
+    protected abstract sendTallyDevice(device: TallyDevice): void;
+
     consumeTally(state: TallyState): void {
         this.tallyState = state;
         this.logger.debug("Consumed new tally state:", state);
+
+        for (const device of this.devices.values()) {
+            this.setTallyDevice(device);
+        }
     }
 
     abstract init(): void | Promise<void>;
