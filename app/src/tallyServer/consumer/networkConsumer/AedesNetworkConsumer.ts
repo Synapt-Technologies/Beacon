@@ -122,18 +122,18 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer {
         if (this.aedes == undefined)
             this.logger.fatal("Attempted to broadcast tally device before initialization.");
 
-        const payload = {
+        const payload = JSON.stringify({
             program: Array.from(this.tallyState.program),
             preview: Array.from(this.tallyState.preview),
             ts: Date.now()
-        };
+        });
 
         this.aedes.publish({
             cmd: 'publish',
             qos: 1, // At least once, or more
             dup: false,
             topic: 'tally/global',
-            payload: Buffer.from(JSON.stringify(this.tallyState)),
+            payload: Buffer.from(payload),
             retain: true
         }, () => {});
     }
