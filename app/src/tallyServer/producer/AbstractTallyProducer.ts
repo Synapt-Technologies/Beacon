@@ -1,9 +1,10 @@
 import { EventEmitter } from "events";
-import { TallyState } from "../types/TallyState";
+import { ProducerId, TallyState } from "../types/TallyState";
 import { SourceInfo } from "../types/SourceInfo";
 import { Logger } from "../../logging/Logger";
 
 export interface ProducerConfig {
+    id: ProducerId,
     name?: string;
     parent?: string;
 }
@@ -43,6 +44,7 @@ export abstract class AbstractTallyProducer<T extends TallyProducerEvents = Tall
 
     // Static + function: Static removes recursion, function makes it so the parent constructor gets the child's values.
     public static readonly DefaultConfig: Required<ProducerConfig> = { 
+        id: "",
         name: "Producer", // Todo make empty and deny empty values?
         parent: "??",
     };
@@ -64,7 +66,10 @@ export abstract class AbstractTallyProducer<T extends TallyProducerEvents = Tall
         this.checkConfig(this.config);
     }
 
-    protected checkConfig(config: ProducerConfig) {}
+    protected checkConfig(config: ProducerConfig) {
+        if (this.config.id == "") // TODO propogate to the rest of the abstracts.
+            this.logger.fatal(`Invalid producer ID provided. Submitted config:`, config);
+    }
 
     abstract init(): void | Promise<void>;
     
@@ -76,8 +81,8 @@ export abstract class AbstractTallyProducer<T extends TallyProducerEvents = Tall
 
     protected tallyState: ProducerTallyState = {
         update_moment: null, // TODO: Add check for last updated? Too long ago -> Wrong? -> Update moment even if no change.
-        program: [],
-        preview: [],
+        program: new Set<string>(),
+        preview: new Set<string>(),
     };
 
     getTallyState(): ProducerTallyState {

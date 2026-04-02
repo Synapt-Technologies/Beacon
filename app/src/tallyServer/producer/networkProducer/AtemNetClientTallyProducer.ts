@@ -3,6 +3,7 @@ import { AbstractNetClientTallyProducer, NetClientProducerConfig, NetClientProdu
 import { Enums as AtemEnums, Input as AtemInput } from "atem-connection";
 import { SourceInfo } from "../../types/SourceInfo";
 import { ProducerType } from "../AbstractTallyProducer";
+import { GlobalSourceTools } from "../../types/TallyState";
 
 
 export interface AtemNetClientProducerConfig extends NetClientProducerConfig {
@@ -120,14 +121,25 @@ export class AtemNetClientTallyProducer extends AbstractNetClientTallyProducer {
 
     protected _parseTallystate(): void { 
         this.tallyState.update_moment = Date.now();
-        const newProgram: Array<number> = this.atem.listVisibleInputs("program");
-        const newPreview: Array<number> = this.atem.listVisibleInputs("preview");
+        const rawProgram: number[] = this.atem.listVisibleInputs("program");
+        const rawPreview: number[] = this.atem.listVisibleInputs("preview");
 
         // TODO Implement multi ME, and maybe even aux handling?
-        // TODO Order matters, add sort?
-        if (newProgram.join(',') != this.tallyState.program.join(',') || newPreview.join(',') != this.tallyState.preview.join(',')){
-            this.tallyState.program = newProgram;
-            this.tallyState.preview = newPreview;
+        const newProgramStrings = rawProgram.map(id => 
+            GlobalSourceTools.create(this.config.id, String(id))
+        );
+        const newPreviewStrings = rawPreview.map(id => 
+            GlobalSourceTools.create(this.config.id, String(id))
+        );
+
+        const newTallyState = {
+            update_moment: this.tallyState.update_moment,
+            program: new Set<string>(newProgramStrings),
+            preview: new Set<string>(newPreviewStrings)
+        }
+
+        if (!GlobalSourceTools.areTallyStatesEqual(this.tallyState, newTallyState)) {
+            this.tallyState = newTallyState;
             this.emit("tally_update", this.tallyState);
             this.logger.debug("Tally Change:", this.tallyState);
         }

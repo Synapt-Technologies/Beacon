@@ -1,11 +1,42 @@
 
 
-export interface TallyState {
-    program: Array<number>;
-    preview: Array<number>;
-}
+export type ProducerId = string;
+export type SourceId = string;
 
 export interface GlobalTallySource {
-    device: string;
-    source: number; // TODO check if this should be a number
+    producer: ProducerId;
+    source: SourceId;
 }
+
+export interface TallyState { // Use GlobalSourceTools to parse GlobalTallySources
+    program: Set<string>;
+    preview: Set<string>;
+}
+
+export abstract class GlobalSourceTools {
+    static create (producer: ProducerId, source: SourceId): string {
+        return `${producer}:${source}`;
+    } 
+    
+    static parse (key: string): GlobalTallySource {
+        const [producer, ...sourceParts] = key.split(":");
+        return { producer, source: sourceParts.join(":") };
+    }
+
+    private static areSetsEqual(a: Set<string>, b: Set<string>) {
+        if (a.size !== b.size) return false;
+        for (const item of a) {
+            if (!b.has(item)) return false;
+        }
+        return true;
+    }
+
+    static areTallyStatesEqual(a: TallyState, b: TallyState): boolean {
+        if (!this.areSetsEqual(a.program, b.program)) 
+            return false;
+        if (!this.areSetsEqual(a.preview, b.preview)) 
+            return false;
+
+        return true;
+    }
+};
