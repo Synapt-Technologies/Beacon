@@ -33,12 +33,12 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
     private auxProducers: Map<string, AbstractTallyProducer> = new Map();
 
     private consumers: Map<string, AbstractConsumer> = new Map();
-    private Consumer: AbstractConsumer;
+    private consumer: AbstractConsumer;
 
 
     private lightState: TallyState = {
-        program: [],
-        preview: []
+        program: new Set<string>(),
+        preview: new Set<string>()
     };
 
     constructor(config: OrchestratorConfig) {
@@ -50,13 +50,15 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
         this.mainProducer = new AtemNetClientTallyProducer({
             name: "ATEM1", // TODO refactor default names, maybe also make it return e.g. Atem@192.168.10.240
             parent: this.config.name,
-            host: "127.0.0.1"
+            host: "127.0.0.1",
+            id: "atem1"
         });
 
-        this.tallyConsumer = new AedesNetworkConsumer({
+        this.consumer = new AedesNetworkConsumer({
             name: "AEDES", // TODO refactor default names, maybe also make it return e.g. Atem@192.168.10.240
             parent: this.config.name,
-            keep_alive_ms: 5000 // TODO: Make a mode to prevent network congestion with low or no keep alive?
+            keep_alive_ms: 5000, // TODO: Make a mode to prevent network congestion with low or no keep alive?
+            broadcast_all: true
         });
 
         this.mainProducer.on('tally_update', (tallydata: ProducerTallyState) => {
@@ -66,19 +68,19 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
                 preview: tallydata.preview
             }
         
-            this.tallyConsumer.consumeTally(this.lightState);
+            this.consumer.consumeTally(this.lightState);
         });
 
         // TODO Add set tally off / alert (setting) on switcher disconnect!
 
-        this.tallyConsumer.on('subscribe', () => {
-            this.tallyConsumer.consumeTally(this.lightState);
+        this.consumer.on('subscribe', () => {
+            this.consumer.consumeTally(this.lightState);
         });
     }
     
     async init() {
 
-        await this.tallyConsumer.init();
+        await this.consumer.init();
         await this.mainProducer.init();
     }
 
