@@ -14,7 +14,7 @@ export class CoreDatabase {
     private logger: Logger;
 
     private constructor() {
-        const dbPath = path.join(process.cwd(), 'tally.db');
+        const dbPath = path.join(process.cwd(), '/db/tally.db');
         this.db = new Database(dbPath);
         this.db.pragma('journal_mode = WAL'); // High-performance mode
         this.init();
