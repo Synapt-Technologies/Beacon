@@ -7,7 +7,6 @@ import { AtemNetClientTallyProducer } from "./producer/networkProducer/AtemNetCl
 
 
 export interface OrchestratorConfig {
-    name: string;
 }
 
 
@@ -23,10 +22,11 @@ export interface OrchestratorEvents {
 // TODO: Multiple event servers?
 export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
 
+    public static readonly name: string = "Orchestrator";
+
     private config: Required<OrchestratorConfig>;
 
     public static readonly DefaultConfig: Required<OrchestratorConfig> = {
-        name: "Beacon Server"
     };
 
     private mainProducer: AbstractTallyProducer;
@@ -49,14 +49,14 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
 
         this.mainProducer = new AtemNetClientTallyProducer({
             name: "ATEM1", // TODO refactor default names, maybe also make it return e.g. Atem@192.168.10.240
-            parent: this.config.name,
+            parent: TallyOrchestrator.name,
             host: "127.0.0.1",
             id: "atem1"
         });
 
         this.consumer = new AedesNetworkConsumer({
             name: "AEDES", // TODO refactor default names, maybe also make it return e.g. Atem@192.168.10.240
-            parent: this.config.name,
+            parent: TallyOrchestrator.name,
             keep_alive_ms: 5000, // TODO: Make a mode to prevent network congestion with low or no keep alive?
             broadcast_all: true
         });
