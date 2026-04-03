@@ -12,39 +12,7 @@ export interface AedesConsumerConfig extends NetworkConsumerConfig {
 
 
 export class AedesNetworkConsumer extends AbstractNetworkConsumer {
-    protected sendTallyDevice(device: TallyDevice): void { // TODO move down in class, style or smt.
-        if (!this.aedes)
-            this.logger.fatal("Attempted to send tally device before initialization.");
-
-        const payload = JSON.stringify({
-            state: DeviceTallyState[device.state],
-            name: device.name, // TODO check if name and state are needed.
-            ts: Date.now()
-        });
-
-        this.aedes.publish(
-        {
-            cmd: 'publish',
-            qos: 1,
-            dup: false,
-            topic: `tally/device/${device.id.device}`,
-            payload: Buffer.from(payload),
-            retain: true
-        }, () => {});
-       
-    }
-
-    setDeviceAlert(address: DeviceAddress, type: DeviceAlertState, target: DeviceAlertTarget): void {
-        this.aedes.publish({
-            cmd: 'publish',
-            qos: 2, // High priority for alerts
-            dup: false,
-            topic: `tally/devices/${address.device}/alert`,
-            payload: Buffer.from(JSON.stringify({ type, target })),
-            retain: false // Alerts are momentary, no retain
-        }, () => {});
-    }
-
+    
     protected declare config: Required<AedesConsumerConfig>; // Declare to indicate it overwrites the parent's type.
     
     public static readonly DefaultConfig: Required<AedesConsumerConfig> = {
@@ -134,6 +102,39 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer {
             topic: 'tally/global',
             payload: Buffer.from(payload),
             retain: true
+        }, () => {});
+    }
+
+    protected sendTallyDevice(device: TallyDevice): void {
+        if (!this.aedes)
+            this.logger.fatal("Attempted to send tally device before initialization.");
+
+        const payload = JSON.stringify({
+            state: DeviceTallyState[device.state],
+            name: device.name, // TODO check if name and state are needed.
+            ts: Date.now()
+        });
+
+        this.aedes.publish(
+        {
+            cmd: 'publish',
+            qos: 1,
+            dup: false,
+            topic: `tally/device/${device.id.device}`,
+            payload: Buffer.from(payload),
+            retain: true
+        }, () => {});
+       
+    }
+
+    setDeviceAlert(address: DeviceAddress, type: DeviceAlertState, target: DeviceAlertTarget): void {
+        this.aedes.publish({
+            cmd: 'publish',
+            qos: 2, // High priority for alerts
+            dup: false,
+            topic: `tally/devices/${address.device}/alert`,
+            payload: Buffer.from(JSON.stringify({ type, target })),
+            retain: false // Alerts are momentary, no retain
         }, () => {});
     }
 
