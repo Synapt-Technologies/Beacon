@@ -1,12 +1,11 @@
 import Database from 'better-sqlite3';
 import path from 'path';
-import type { ProducerConfig, ProducerInfo } from '../tally/producer/AbstractTallyProducer';
+import type { AbstractTallyProducer, ProducerConfig, ProducerInfo } from '../tally/producer/AbstractTallyProducer';
 import { ConnectionType, DeviceTallyState, GlobalDeviceTools, type ConsumerId, type DeviceId, type TallyDevice } from '../tally/types/ConsumerStates';
-import { type ProducerId } from '../tally/types/ProducerStates';
 import { Logger } from '../logging/Logger';
-import type { ConsumerConfig } from '../tally/consumer/AbstractConsumer';
+import type { AbstractConsumer } from '../tally/consumer/AbstractConsumer';
 
-
+// TODO add more try catch.
 export class CoreDatabase {
     private static instance: CoreDatabase;
     private db: Database.Database;
@@ -66,13 +65,13 @@ export class CoreDatabase {
 
 
     // ? Producer Methods
-    public saveProducer(id: ProducerId, type: string, config: ProducerConfig): void {
+    public saveProducer(producer: AbstractTallyProducer): void {
         const stmt = this.db.prepare(`
             INSERT INTO producers (id, type, config)
             VALUES (?, ?, ?)
-            ON CONFLICT(id) DO UPDATE SET info=excluded.info
+            ON CONFLICT(id) DO UPDATE SET config=excluded.config
         `);
-        stmt.run(id, type, JSON.stringify(config));
+        stmt.run(producer.getId(), producer.constructor.name, JSON.stringify(producer.getConfig()));
     }
 
     public getProducers(): {id: string, type: string, config: ProducerConfig}[] {
@@ -98,13 +97,13 @@ export class CoreDatabase {
     }
 
     // ? Consumer Methods
-    public saveConsumer(id: ConsumerId, type: string, config: ConsumerConfig): void {
+    public saveConsumer(consumer: AbstractConsumer): void {
         const stmt = this.db.prepare(`
-            INSERT INTO consumers (id, config)
-            VALUES (?, ?)
-            ON CONFLICT(id) DO UPDATE SET info=excluded.info
+            INSERT INTO consumers (id, type, config)
+            VALUES (?, ?, ?)
+            ON CONFLICT(id) DO UPDATE SET config=excluded.config
         `);
-        stmt.run(id, type, JSON.stringify(config));
+        stmt.run(consumer.getId(), consumer.constructor.name, JSON.stringify(consumer.getConfig()));
     }
     public getConsumers(): {id: string, type: string, config: ProducerConfig}[] {
         return this.db.prepare('SELECT * FROM consumers').all() as {id: string, type: string, config: ProducerConfig}[];
