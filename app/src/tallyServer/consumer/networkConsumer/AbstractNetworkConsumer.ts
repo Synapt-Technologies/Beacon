@@ -1,6 +1,6 @@
 import { EventEmitter } from "node:events";
-import { AbstractConsumer, ConsumerConfig, ConsumerEvents } from "../AbstractConsumer";
-import { TallyState } from "../../types/TallyState";
+import { AbstractConsumer, type ConsumerConfig, type ConsumerEvents } from "../AbstractConsumer";
+import type { TallyState } from "../../types/TallyState";
 
 
 export interface NetworkConsumerConfig extends ConsumerConfig {

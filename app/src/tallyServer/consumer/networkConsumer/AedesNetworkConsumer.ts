@@ -1,9 +1,8 @@
-import { AbstractNetworkConsumer, NetworkConsumerConfig } from "./AbstractNetworkConsumer";
+import { AbstractNetworkConsumer, type NetworkConsumerConfig } from "./AbstractNetworkConsumer";
 
-import { Aedes, Client, Subscription } from "aedes";
+import { Aedes, type Client, type Subscription } from "aedes";
 import { createServer, Server } from "node:net";
-import { DeviceAddress, DeviceAlertState, DeviceAlertTarget, DeviceTallyState, TallyDevice } from "../../types/DeviceState";
-import { TallyState } from "../../types/TallyState";
+import { type DeviceAddress, DeviceAlertState, DeviceAlertTarget, DeviceTallyState, type TallyDevice } from "../../types/DeviceState";
 
 export interface AedesConsumerConfig extends NetworkConsumerConfig {
     serve_tcp?: boolean;

@@ -1,5 +1,5 @@
-import { EventEmitter } from "events";
-import { SourceInfo, ProducerId, TallyState } from "../types/TallyState";
+import { EventEmitter } from "node:events";
+import type { SourceInfo, ProducerId, TallyState } from "../types/TallyState";
 import { Logger } from "../../logging/Logger";
 
 export interface ProducerConfig {

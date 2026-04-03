@@ -1,4 +1,4 @@
-import { GlobalTallySource, TallyState } from "./TallyState";
+import { type GlobalTallySource } from "./TallyState";
 
 export enum DeviceAlertState { // TODO Check if these are desired types
     IDENT,

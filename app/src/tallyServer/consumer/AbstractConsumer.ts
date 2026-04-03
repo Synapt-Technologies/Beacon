@@ -1,7 +1,7 @@
 import { EventEmitter } from "node:events";
-import { GlobalSourceTools, GlobalTallySource, TallyState } from "../types/TallyState";
+import { GlobalSourceTools, type GlobalTallySource, type TallyState } from "../types/TallyState";
 import { Logger } from "../../logging/Logger";
-import { DeviceAddress, DeviceAlertState, DeviceAlertTarget, DeviceTallyState, TallyDevice } from "../types/DeviceState";
+import { type DeviceAddress, DeviceAlertState, DeviceAlertTarget, DeviceTallyState, type TallyDevice } from "../types/DeviceState";
 
 
 export interface ConsumerConfig {

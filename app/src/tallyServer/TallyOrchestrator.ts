@@ -1,8 +1,8 @@
 import { EventEmitter } from "events";
 import { AbstractConsumer } from "./consumer/AbstractConsumer";
 import { AedesNetworkConsumer } from "./consumer/networkConsumer/AedesNetworkConsumer";
-import { TallyState } from "./types/TallyState";
-import { AbstractTallyProducer, ProducerTallyState } from "./producer/AbstractTallyProducer";
+import type { TallyState } from "./types/TallyState";
+import { AbstractTallyProducer, type ProducerTallyState } from "./producer/AbstractTallyProducer";
 import { AtemNetClientTallyProducer } from "./producer/networkProducer/AtemNetClientTallyProducer";
 
 

@@ -1,4 +1,4 @@
-import { AbstractTallyProducer, ProducerConfig, ProducerInfo, ProducerTallyState, TallyProducerEvents } from "../AbstractTallyProducer";
+import { AbstractTallyProducer, type ProducerConfig, type ProducerInfo, type ProducerTallyState, type TallyProducerEvents } from "../AbstractTallyProducer";
 import net from "node:net";
 
 export interface NetClientProducerConfig extends ProducerConfig {
