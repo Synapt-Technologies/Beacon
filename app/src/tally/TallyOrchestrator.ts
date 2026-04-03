@@ -13,10 +13,15 @@ export interface OrchestratorConfig {
 
 
 export interface OrchestratorEvents {
-    tally_update: [];
-    producer_connected: [];
-    producer_disconnected: [];
-    producer_info: [];
+    producer_added: [producer: ProducerId, info: ProducerInfo]
+    producer_connected: [producer: ProducerId];
+    producer_disconnected: [producer: ProducerId];
+    producer_info: [info: ProducerInfo];
+
+    consumer_added: [consumer: ConsumerId];
+
+    device_connected: [device: TallyDevice];
+    device_info: [device: TallyDevice];
 }
 
 export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
