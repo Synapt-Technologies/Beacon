@@ -18,6 +18,7 @@ export interface SourceInfo {
 export interface TallyState { // Use GlobalSourceTools to parse GlobalTallySources
     program: Set<string>;
     preview: Set<string>;
+    update_moment?: number;
 }
 
 export type SourceMap = Map<string, SourceInfo>;

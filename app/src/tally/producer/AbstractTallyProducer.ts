@@ -8,10 +8,6 @@ export interface ProducerConfig {
     parent?: string;
 }
 
-export interface ProducerTallyState extends TallyState {
-    update_moment: number | null;
-}
-
 // export enum ProducerType { // Move to AbstractProducer once imp, or probably remove.
 //     UNKNOWN = "UNKNWN",
 //     SWITCHER = "SWTCHR",
@@ -26,7 +22,7 @@ export interface ProducerInfo {
 }
 
 export interface TallyProducerEvents {
-    tally_update: [ProducerTallyState];
+    tally_update: [TallyState];
     info_update: [ProducerInfo, path: string[] | null];
     [key: string]: any[];
 }
@@ -78,13 +74,13 @@ export abstract class AbstractTallyProducer<T extends TallyProducerEvents = Tall
         sources: new Map(),
     };
 
-    protected tallyState: ProducerTallyState = {
-        update_moment: null, // TODO: Add check for last updated? Too long ago -> Wrong? -> Update moment even if no change.
+    protected tallyState: TallyState = {
+        update_moment: undefined, // TODO: Add check for last updated? Too long ago -> Wrong? -> Update moment even if no change.
         program: new Set<string>(),
         preview: new Set<string>(),
     };
 
-    getTallyState(): ProducerTallyState {
+    getTallyState(): TallyState {
         return this.tallyState;
     }
 
