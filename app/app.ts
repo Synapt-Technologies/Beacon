@@ -1,4 +1,4 @@
-import { TallyOrchestrator } from "./src/tallyServer/TallyOrchestrator";
+import { TallyOrchestrator } from "./src/tally/TallyOrchestrator";
 
 
 const orchestrator = new TallyOrchestrator({name: "testOrchestrator"});
