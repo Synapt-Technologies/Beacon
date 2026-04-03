@@ -139,8 +139,10 @@ export class AtemNetClientTallyProducer extends AbstractNetClientTallyProducer {
 
         if (!GlobalSourceTools.areTallyStatesEqual(this.tallyState, newTallyState)) {
             this.tallyState = newTallyState;
+            
             this.emit("tally_update", this.tallyState);
-            this.logger.debug("Tally Change:", this.tallyState);
+
+            this.logger.debug("Tally Change:", GlobalSourceTools.serialize(this.tallyState));
         }
     }
 

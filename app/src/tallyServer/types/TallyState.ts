@@ -47,4 +47,12 @@ export abstract class GlobalSourceTools {
 
         return true;
     }
+
+    static serialize(state: TallyState) {
+        return {
+            ...state,
+            program: Array.from(state.program),
+            preview: Array.from(state.preview),
+        }
+    }
 };
