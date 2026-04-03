@@ -49,3 +49,15 @@ export interface TallyDevice {
     state: DeviceTallyState;
     last_update?: number;
 }
+
+
+export abstract class GlobalDeviceTools {
+    static create (consumer: ConsumerId, device: DeviceId): string { // Todo: Maybe global addressing tools?
+        return `${consumer}:${device}`;
+    } 
+
+    static parse (key: string): DeviceAddress {
+        const [consumer, ...deviceParts] = key.split(":");
+        return { consumer, device: deviceParts.join(":") };
+    }
+};
