@@ -30,7 +30,7 @@ export interface TallyProducerEvents {
     [key: string]: any[];
 }
 
-// TODO: Add the option for camera id prefix, to differentiate between producers
+// TODO: Add an AbstractProducer that can be extended by an AbstractAlertProducer
 export abstract class AbstractTallyProducer<T extends TallyProducerEvents = TallyProducerEvents> extends EventEmitter<T> {
 
     public readonly conType: string = "PROD";
