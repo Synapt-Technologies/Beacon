@@ -12,7 +12,7 @@ export interface ProducerTallyState extends TallyState {
     update_moment: number | null;
 }
 
-export enum ProducerType {
+export enum ProducerType { // Move to AbstractProducer once imp, or probably remove.
     UNKNOWN = "UNKNWN",
     SWITCHER = "SWTCHR",
     AUX = "AUXILI",
@@ -22,6 +22,7 @@ export interface ProducerInfo {
     update_moment: number | null;
     model: string;
     sources: SourceMap;
+    // Todo add multi bus support.
 }
 
 export interface TallyProducerEvents {
@@ -90,6 +91,10 @@ export abstract class AbstractTallyProducer<T extends TallyProducerEvents = Tall
 
     getInfo(): ProducerInfo {
         return this.info;
+    }
+
+    getId(): ProducerId {
+        return this.config.id;
     }
 
     getSources(): SourceMap | null {
