@@ -116,7 +116,7 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer {
         const payload = JSON.stringify({
             state: DeviceTallyState[device.state], // Maybe send number for efficiency?
             name: device.name, // TODO check if name and timestamp are needed.
-            ts: Date.now()
+            moment: Date.now()
         });
         
         this.logger.debug(`Attempting to publish to MQTT for ${device.id.device}...`);
