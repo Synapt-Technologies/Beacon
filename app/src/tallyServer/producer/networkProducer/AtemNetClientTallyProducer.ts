@@ -151,7 +151,7 @@ export class AtemNetClientTallyProducer extends AbstractNetClientTallyProducer {
         return AtemEnums.Model[this.info.state.info.model];
     }
 
-    protected _parseSources(): Map<number, SourceInfo> | null {
+    protected _parseSources(): Map<string, SourceInfo> | null {
         if (!this.info.state || !this.info.connected) 
             return null;
 
@@ -159,21 +159,21 @@ export class AtemNetClientTallyProducer extends AbstractNetClientTallyProducer {
         const modelName = this.getModel() ?? "Unknown";
         const sourceLabel = `${modelName} ${this.config.name}`;
 
-        return new Map<number, SourceInfo>(
+        return new Map<string, SourceInfo>(
             Object.entries(this.info.state.inputs)
                 .filter(([, value]) => value != undefined)
                 .map(([key, value]) => {
-                    const id = Number(key);
+                    const source = {producer: this.config.id, source: key};
+                    const sourceKey = GlobalSourceTools.create(this.config.id, key);
 
                     return [
-                        id,
+                        sourceKey,
                         {
-                            id: id,
-                            short: value?.shortName ?? `IN${id}`,
-                            long: value?.longName ?? `Input ${id}`,
-                            source: sourceLabel
+                            source: source,
+                            short: value?.shortName ?? `IN${sourceKey}`,
+                            long: value?.longName ?? `Input ${sourceKey}`,
                         }
-                    ] as [number, SourceInfo];
+                    ] as [string, SourceInfo];
                 })
         );
     }
@@ -184,9 +184,4 @@ export class AtemNetClientTallyProducer extends AbstractNetClientTallyProducer {
         return this.info.model;
     }
     
-    getSources(): Map<number, SourceInfo> | null {
-        return this.info.sources;
-    }
-
-
 }

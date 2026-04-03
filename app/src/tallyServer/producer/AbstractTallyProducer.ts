@@ -21,7 +21,7 @@ export enum ProducerType {
 export interface ProducerInfo {
     update_moment: number | null;
     model: string;
-    sources: Map<number, SourceInfo> | null
+    sources: Map<string, SourceInfo> | null
 }
 
 export interface TallyProducerEvents {
@@ -92,7 +92,7 @@ export abstract class AbstractTallyProducer<T extends TallyProducerEvents = Tall
         return this.info;
     }
 
-    getSources(): Map<number, SourceInfo> | null {
+    getSources(): Map<string, SourceInfo> | null {
         return this.info.sources;
     }
 
