@@ -94,18 +94,12 @@ export abstract class AbstractConsumer<T extends ConsumerEvents = ConsumerEvents
         }
         
         device.patch = patch;
-        this.processTallyDevice(device);
+        this.setTallyDevice(device);
         (this as EventEmitter<ConsumerEvents>).emit('device_update', device);
         this.logger.debug(`Device ${key} set patch to:`, patch);
     }
     abstract setDeviceAlert(address: DeviceAddress, type: DeviceAlertState, target: DeviceAlertTarget): void; 
     
-
-    protected processTallyDevice(device: TallyDevice): void {
-        this.setTallyDevice(device);
-        this.sendTallyDevice(device);
-    }
-
     protected setTallyDevice(device: TallyDevice): void {
 
         let newState = DeviceTallyState.NONE; // Default state
@@ -127,6 +121,7 @@ export abstract class AbstractConsumer<T extends ConsumerEvents = ConsumerEvents
             this.logger.debug(`Device ${this.getDeviceKey(device.id)} state changed from ${DeviceTallyState[device.state]} to ${DeviceTallyState[newState]}`);
             (this as EventEmitter<ConsumerEvents>).emit('device_update', device);
             device.state = newState;
+            this.sendTallyDevice(device);
         }
     }
 
