@@ -75,7 +75,7 @@ export class CoreDatabase {
     }
 
     public getProducers(): {id: string, type: string, config: ProducerConfig}[] {
-        return this.db.prepare('SELECT * FROM producers').all() as {id: string, type: string, config: ProducerConfig}[];
+        return this.db.prepare('SELECT * FROM producers').all() as {id: string, type: string, config: ProducerConfig}[]; // TODO Json parsing
     }
 
     public saveProducerInventory(id: string, info: ProducerInfo) {
@@ -106,7 +106,7 @@ export class CoreDatabase {
         stmt.run(consumer.getId(), consumer.constructor.name, JSON.stringify(consumer.getConfig()));
     }
     public getConsumers(): {id: string, type: string, config: ProducerConfig}[] {
-        return this.db.prepare('SELECT * FROM consumers').all() as {id: string, type: string, config: ProducerConfig}[];
+        return this.db.prepare('SELECT * FROM consumers').all() as {id: string, type: string, config: ProducerConfig}[]; // TODO Json parsing
     }
 
     public saveConsumerDevices(devices: TallyDevice[]) {
