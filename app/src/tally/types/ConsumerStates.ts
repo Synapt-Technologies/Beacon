@@ -46,4 +46,5 @@ export interface TallyDevice {
     patch: Array<GlobalTallySource>;
     // TODO ADD SOURCES LEADING TO TALLY
     state: DeviceTallyState;
+    last_update?: number;
 }

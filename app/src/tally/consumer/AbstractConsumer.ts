@@ -134,7 +134,8 @@ export abstract class AbstractConsumer<T extends ConsumerEvents = ConsumerEvents
             }
         }
 
-        if (device.state !== newState) {
+        if (device.state !== newState || !device.last_update) {
+            device.last_update = Date.now();
             this.logger.debug(`Device ${this.getDeviceKey(device.id)} state changed from ${DeviceTallyState[device.state]} to ${DeviceTallyState[newState]}`);
             (this as EventEmitter<ConsumerEvents>).emit('device_update', device);
             device.state = newState;

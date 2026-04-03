@@ -91,7 +91,7 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer {
             patch: Array.from([
                 {
                     producer: "atem1",
-                    source: "1",
+                    source: "2",
                 },
                 {
                     producer: "atem1",
