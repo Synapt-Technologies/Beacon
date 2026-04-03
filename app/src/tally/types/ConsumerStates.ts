@@ -34,12 +34,14 @@ export enum ConnectionType {
     WIRELESS
 }
 
+export interface DeviceName {
+    short: string;
+    long: string;
+}
+
 export interface TallyDevice {
     id: DeviceAddress;
-    name: {
-        short: string;
-        long: string;
-    };
+    name: DeviceName;
     connection: ConnectionType;
     patch: Array<GlobalTallySource>;
     // TODO ADD SOURCES LEADING TO TALLY

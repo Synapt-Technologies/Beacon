@@ -1,7 +1,7 @@
 import { EventEmitter } from "node:events";
 import { GlobalSourceTools, type GlobalTallySource, type TallyState } from "../types/ProducerStates";
 import { Logger } from "../../logging/Logger";
-import { type ConsumerId, type DeviceAddress, DeviceAlertState, DeviceAlertTarget, DeviceTallyState, type TallyDevice } from "../types/ConsumerStates";
+import { type ConsumerId, type DeviceAddress, DeviceAlertState, DeviceAlertTarget, type DeviceName, DeviceTallyState, type TallyDevice } from "../types/ConsumerStates";
 
 
 export interface ConsumerConfig {
@@ -77,7 +77,7 @@ export abstract class AbstractConsumer<T extends ConsumerEvents = ConsumerEvents
     getDevice(address: DeviceAddress): TallyDevice | null {
         return this.devices.get(this.getDeviceKey(address)) || null;
     }
-    setDeviceName(address: DeviceAddress, name: string): void {
+    setDeviceName(address: DeviceAddress, name: DeviceName): void {
         const key = this.getDeviceKey(address);
         
         const device = this.devices.get(key);
