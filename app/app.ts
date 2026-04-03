@@ -1,8 +1,7 @@
 import { TallyOrchestrator } from "./src/tally/TallyOrchestrator";
 
 
-const orchestrator = new TallyOrchestrator({name: "testOrchestrator"});
-orchestrator.init();
+const orchestrator = new TallyOrchestrator({});
 
 
 //TODO add exit handler, kinda like this:
