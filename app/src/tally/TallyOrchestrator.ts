@@ -64,7 +64,7 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
         this.addConsumer(testAedes);
 
         const testAtem = new AtemNetClientTallyProducer({
-            name: "ATEM-TVSHD", // TODO refactor default names, maybe also make it return e.g. Atem@192.168.10.240
+            name: "ATEM-TVSHD",
             parent: TallyOrchestrator.name,
             host: "127.0.0.1",
             id: "atem1"
