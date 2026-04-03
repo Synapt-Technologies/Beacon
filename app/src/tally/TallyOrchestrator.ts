@@ -1,10 +1,11 @@
 import { EventEmitter } from "events";
 import { AbstractConsumer } from "./consumer/AbstractConsumer";
 import { AedesNetworkConsumer } from "./consumer/networkConsumer/AedesNetworkConsumer";
-import type { ProducerId, TallyState } from "./types/ProducerStates";
+import { GlobalSourceTools, type ProducerId, type TallyState } from "./types/ProducerStates";
 import { AbstractTallyProducer, type ProducerInfo } from "./producer/AbstractTallyProducer";
 import { AtemNetClientTallyProducer } from "./producer/networkProducer/AtemNetClientTallyProducer";
 import { DeviceTallyState, type ConsumerId, type TallyDevice } from "./types/ConsumerStates";
+import { Logger } from "../logging/Logger";
 
 
 export interface OrchestratorConfig {
@@ -27,6 +28,8 @@ export interface OrchestratorEvents {
 export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
 
     public static readonly name: string = "Orchestrator";
+
+    protected logger: Logger;
     
     protected config: Required<OrchestratorConfig>;
 
@@ -48,6 +51,10 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
     constructor(config: OrchestratorConfig) {
         super();
         this.config = { ...TallyOrchestrator.DefaultConfig, ...config };
+
+        this.logger = new Logger([
+            TallyOrchestrator.name
+        ]);
 
         this.checkConfig(this.config);
         
@@ -98,7 +105,10 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
             this._parseGlobalTally();
         });
 
-        // if (typeof)
+        producer.on('disconnected', () => {
+            this.producerTallyStates.delete(producer.getId());
+            this._parseGlobalTally();
+        });
     }
 
     private _parseGlobalTally() {
@@ -114,6 +124,8 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
             if (state.moment && state.moment > newGlobalTally.moment )
                 newGlobalTally.moment = state.moment;
         }
+
+        this.logger.debug("Tally update:", GlobalSourceTools.serialize(newGlobalTally));
 
         this.globalTallyState = newGlobalTally;
 

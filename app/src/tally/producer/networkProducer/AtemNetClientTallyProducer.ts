@@ -1,7 +1,7 @@
 import { Atem, type AtemState } from "atem-connection";
 import { AbstractNetClientTallyProducer, type NetClientProducerConfig, type NetClientProducerInfo } from "./AbstractNetClientTallyProducer";
 import { Enums as AtemEnums, Input as AtemInput } from "atem-connection";
-import { GlobalSourceTools, type SourceInfo, type SourceMap } from "../../types/ProducerStates";
+import { GlobalSourceTools, type SourceInfo, type SourceMap, type TallyState } from "../../types/ProducerStates";
 
 
 export interface AtemNetClientProducerConfig extends NetClientProducerConfig {
@@ -142,8 +142,8 @@ export class AtemNetClientTallyProducer extends AbstractNetClientTallyProducer {
             GlobalSourceTools.create(this.config.id, String(id))
         );
 
-        const newTallyState = {
-            update_moment: this.tallyState.moment,
+        const newTallyState: TallyState = {
+            moment: this.tallyState.moment,
             program: new Set<string>(newProgramStrings),
             preview: new Set<string>(newPreviewStrings)
         }
