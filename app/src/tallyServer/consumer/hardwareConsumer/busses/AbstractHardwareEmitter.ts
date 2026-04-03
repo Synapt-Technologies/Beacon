@@ -1,0 +1,1 @@
+// TODO Busses manage a set of outputs, like a ws2812 string. An emitter has access to a single tally output on said bus.
