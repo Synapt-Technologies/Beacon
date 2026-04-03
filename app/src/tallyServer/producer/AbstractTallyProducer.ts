@@ -66,7 +66,7 @@ export abstract class AbstractTallyProducer<T extends TallyProducerEvents = Tall
     }
 
     protected checkConfig(config: ProducerConfig) {
-        if (this.config.id == "") // TODO propogate to the rest of the abstracts.
+        if (!config.id || config.id == "") // TODO propogate to the rest of the abstracts.
             this.logger.fatal(`Invalid producer ID provided. Submitted config:`, config);
     }
 
