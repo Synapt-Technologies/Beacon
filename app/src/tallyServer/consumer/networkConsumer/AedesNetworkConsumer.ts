@@ -2,7 +2,7 @@ import { AbstractNetworkConsumer, type NetworkConsumerConfig } from "./AbstractN
 
 import { Aedes, type Client, type Subscription } from "aedes";
 import { createServer, Server } from "node:net";
-import { type DeviceAddress, DeviceAlertState, DeviceAlertTarget, DeviceTallyState, type TallyDevice } from "../../types/DeviceState";
+import { ConnectionType, type DeviceAddress, DeviceAlertState, DeviceAlertTarget, DeviceTallyState, type TallyDevice } from "../../types/DeviceState";
 
 export interface AedesConsumerConfig extends NetworkConsumerConfig {
     serve_tcp?: boolean;
@@ -109,12 +109,15 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer {
         if (!this.aedes)
             this.logger.fatal("Attempted to send tally device before initialization.");
 
+
         const payload = JSON.stringify({
-            state: DeviceTallyState[device.state],
-            name: device.name, // TODO check if name and state are needed.
+            state: DeviceTallyState[device.state], // Maybe send number for efficiency?
+            name: device.name, // TODO check if name and timestamp are needed.
             ts: Date.now()
         });
-
+        
+        this.logger.debug(`Attempting to publish to MQTT for ${device.id.device}...`);
+        
         this.aedes.publish(
         {
             cmd: 'publish',
@@ -124,6 +127,8 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer {
             payload: Buffer.from(payload),
             retain: true
         }, () => {});
+
+        this.logger.debug(`Sent payload to device:`, payload);
        
     }
 
@@ -132,7 +137,7 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer {
             cmd: 'publish',
             qos: 2, // High priority for alerts
             dup: false,
-            topic: `tally/devices/${address.device}/alert`,
+            topic: `tally/device/${address.device}/alert`,
             payload: Buffer.from(JSON.stringify({ type, target })),
             retain: false // Alerts are momentary, no retain
         }, () => {});
