@@ -1,9 +1,8 @@
 import { Atem, AtemState } from "atem-connection";
 import { AbstractNetClientTallyProducer, NetClientProducerConfig, NetClientProducerInfo } from "./AbstractNetClientTallyProducer";
 import { Enums as AtemEnums, Input as AtemInput } from "atem-connection";
-import { SourceInfo } from "../../types/SourceInfo";
 import { ProducerType } from "../AbstractTallyProducer";
-import { GlobalSourceTools } from "../../types/TallyState";
+import { GlobalSourceTools, SourceInfo } from "../../types/TallyState";
 
 
 export interface AtemNetClientProducerConfig extends NetClientProducerConfig {

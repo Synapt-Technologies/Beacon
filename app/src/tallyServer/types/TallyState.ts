@@ -8,16 +8,24 @@ export interface GlobalTallySource {
     source: SourceId;
 }
 
+export interface SourceInfo {
+    source: GlobalTallySource;
+    long: string;
+    short: string;
+}
+
 export interface TallyState { // Use GlobalSourceTools to parse GlobalTallySources
     program: Set<string>;
     preview: Set<string>;
 }
 
+export type SourceMap = Map<string, SourceInfo>;
+
 export abstract class GlobalSourceTools {
     static create (producer: ProducerId, source: SourceId): string {
         return `${producer}:${source}`;
     } 
-    
+
     static parse (key: string): GlobalTallySource {
         const [producer, ...sourceParts] = key.split(":");
         return { producer, source: sourceParts.join(":") };
