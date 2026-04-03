@@ -12,12 +12,12 @@ export interface ProducerTallyState extends TallyState {
     update_moment: number | null;
 }
 
-export enum ProducerType { // Move to AbstractProducer once imp, or probably remove.
-    UNKNOWN = "UNKNWN",
-    SWITCHER = "SWTCHR",
-    AUX = "AUXILI",
-    WEBPAGE = "WEBPAG"
-}
+// export enum ProducerType { // Move to AbstractProducer once imp, or probably remove.
+//     UNKNOWN = "UNKNWN",
+//     SWITCHER = "SWTCHR",
+//     AUX = "AUXILI",
+//     WEBPAGE = "WEBPAG"
+// }
 export interface ProducerInfo {
     update_moment: number | null;
     model: string;
@@ -35,8 +35,7 @@ export interface TallyProducerEvents {
 export abstract class AbstractTallyProducer<T extends TallyProducerEvents = TallyProducerEvents> extends EventEmitter<T> {
 
     public readonly conType: string = "PROD";
-
-    protected abstract getProducerType(): ProducerType;
+    public readonly prodType: string = "SWTCHR";
 
     protected logger: Logger;
 
@@ -59,7 +58,7 @@ export abstract class AbstractTallyProducer<T extends TallyProducerEvents = Tall
         this.logger = new Logger([
             this.config.parent,
             this.conType,
-            this.getProducerType(),
+            this.prodType,
             this.config.name
         ]);
         
@@ -67,7 +66,7 @@ export abstract class AbstractTallyProducer<T extends TallyProducerEvents = Tall
     }
 
     protected checkConfig(config: ProducerConfig) {
-        if (!config.id || config.id == "") // TODO propogate to the rest of the abstracts.
+        if (!config.id || config.id == "")
             this.logger.fatal(`Invalid producer ID provided. Submitted config:`, config);
     }
 

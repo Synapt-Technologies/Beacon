@@ -1,7 +1,6 @@
 import { Atem, type AtemState } from "atem-connection";
 import { AbstractNetClientTallyProducer, type NetClientProducerConfig, type NetClientProducerInfo } from "./AbstractNetClientTallyProducer";
 import { Enums as AtemEnums, Input as AtemInput } from "atem-connection";
-import { ProducerType } from "../AbstractTallyProducer";
 import { GlobalSourceTools, type SourceInfo, type SourceMap } from "../../types/ProducerStates";
 
 
@@ -15,10 +14,6 @@ export interface AtemNetClientProducerInfo extends NetClientProducerInfo {
 
 // TODO: Maybe add config type as generic for better TS: C extends ProducerConfig = ProducerConfig,
 export class AtemNetClientTallyProducer extends AbstractNetClientTallyProducer {
-
-    protected getProducerType(): ProducerType {
-        return ProducerType.SWITCHER;
-    }
 
     protected declare config: Required<AtemNetClientProducerConfig>; // Declare to indicate it overwrites the parent's type.
     
