@@ -75,7 +75,7 @@ export abstract class AbstractTallyProducer<T extends TallyProducerEvents = Tall
     };
 
     protected tallyState: TallyState = {
-        update_moment: undefined, // TODO: Add check for last updated? Too long ago -> Wrong? -> Update moment even if no change.
+        moment: undefined, // TODO: Add check for last updated? Too long ago -> Wrong? -> Update moment even if no change.
         program: new Set<string>(),
         preview: new Set<string>(),
     };

@@ -119,7 +119,7 @@ export class AtemNetClientTallyProducer extends AbstractNetClientTallyProducer {
 
     protected _parseTallystate(): void { 
             
-        this.tallyState.update_moment = Date.now();
+        this.tallyState.moment = Date.now();
         let rawProgram: number[] = [];
         let rawPreview: number[] = [];
         
@@ -143,7 +143,7 @@ export class AtemNetClientTallyProducer extends AbstractNetClientTallyProducer {
         );
 
         const newTallyState = {
-            update_moment: this.tallyState.update_moment,
+            update_moment: this.tallyState.moment,
             program: new Set<string>(newProgramStrings),
             preview: new Set<string>(newPreviewStrings)
         }

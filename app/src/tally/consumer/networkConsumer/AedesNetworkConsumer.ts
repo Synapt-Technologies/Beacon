@@ -64,8 +64,8 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer {
         this.aedes.on('subscribe', (subscriptions: Subscription[], client: Client) => {
             this.logger.debug('Subscription:', subscriptions);
             
-            if (subscriptions.some(sub => sub.topic == 'tally' || sub.topic.startsWith('tally/') ))
-                this.emit('connection');
+            // if (subscriptions.some(sub => sub.topic == 'tally' || sub.topic.startsWith('tally/') ))
+            //     this.emit('connection'); // TODO: Device Discovery
         });
 
         this.aedes.on('publish',  (packet, client) => {if (client) {
@@ -148,7 +148,7 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer {
         const payload = JSON.stringify({
             state: DeviceTallyState[device.state], // Maybe send number for efficiency?
             name: device.name, // TODO check if name and timestamp are needed.
-            moment: Date.now()
+            moment: this.tallyState.moment
         });
         
         this.logger.debug(`Attempting to publish to MQTT for ${device.id.device}...`);

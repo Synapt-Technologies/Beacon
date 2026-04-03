@@ -97,11 +97,13 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
             this.producerTallyStates.set(producer.getId(), newState);
             this._parseGlobalTally();
         });
+
+        // if (typeof)
     }
 
     private _parseGlobalTally() {
         const newGlobalTally: TallyState = {
-            update_moment: Date.now(),
+            moment: Date.now(),
             program: new Set(),
             preview: new Set(),
         }
