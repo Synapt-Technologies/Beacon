@@ -93,6 +93,7 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
 
         this.consumers.set(consumer.getId(), consumer);
 
+        // if (this.producers.size != 0)
         this._parseGlobalTally();
     }
 
@@ -119,11 +120,18 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
         }
 
         for (const state of this.producerTallyStates.values()) {
+            if (!state.moment || state.moment == 0)
+                continue;
             state.program.forEach(source => newGlobalTally.program.add(source));
             state.preview.forEach(source => newGlobalTally.preview.add(source));
             if (state.moment && state.moment > newGlobalTally.moment )
                 newGlobalTally.moment = state.moment;
         }
+
+        if (newGlobalTally.moment == 0){
+            this.logger.warn(`Did not set tally, because of invalid payload. Might be due to init. Global Tally:`, GlobalSourceTools.serialize(newGlobalTally));
+        }
+
 
         this.logger.debug("Tally update:", GlobalSourceTools.serialize(newGlobalTally));
 
