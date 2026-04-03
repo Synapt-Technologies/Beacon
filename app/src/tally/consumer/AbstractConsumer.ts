@@ -1,10 +1,11 @@
 import { EventEmitter } from "node:events";
 import { GlobalSourceTools, type GlobalTallySource, type TallyState } from "../types/ProducerStates";
 import { Logger } from "../../logging/Logger";
-import { type DeviceAddress, DeviceAlertState, DeviceAlertTarget, DeviceTallyState, type TallyDevice } from "../types/ConsumerStates";
+import { type ConsumerId, type DeviceAddress, DeviceAlertState, DeviceAlertTarget, DeviceTallyState, type TallyDevice } from "../types/ConsumerStates";
 
 
 export interface ConsumerConfig {
+    id: ConsumerId;
     name?: string;
     parent?: string;
 }
@@ -27,6 +28,7 @@ export abstract class AbstractConsumer<T extends ConsumerEvents = ConsumerEvents
 
     // Static + function: Static removes recursion, function makes it so the parent constructor gets the child's values.
     public static readonly DefaultConfig: Required<ConsumerConfig> = { 
+        id: "",
         name: "Consumer",
         parent: "??",
     };
@@ -52,18 +54,21 @@ export abstract class AbstractConsumer<T extends ConsumerEvents = ConsumerEvents
         preview: new Set<string>()
     };
         
-    protected checkConfig(config: ConsumerConfig) {}
+    protected checkConfig(config: ConsumerConfig) {
+        if (!config.id || config.id == "")
+            this.logger.fatal(`Invalid producer ID provided. Submitted config:`, config);
+    }
 
     protected getDeviceKey(address: DeviceAddress): string {
-        return `${address.parent}:${address.device}`;
+        return `${address.consumer}:${address.device}`;
     }
 
     protected getDeviceAddress(key: string): DeviceAddress {
         
         const parts = key.split(":");
-        const parent = parts.shift() || ""; // Take the first part
+        const consumer = parts.shift() || ""; // Take the first part
         const device = parts.join(":");    // Put everything else back together
-        return { parent, device };
+        return { consumer, device };
     }
 
     getAvailableDevices(): Array<TallyDevice> {
@@ -137,6 +142,10 @@ export abstract class AbstractConsumer<T extends ConsumerEvents = ConsumerEvents
     }
 
     abstract init(): void | Promise<void>;
+    
+    getId(): ConsumerId {
+        return this.config.id;
+    }
 
     setName(name: string): void {
         this.config.name = name;

@@ -47,7 +47,7 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
         this.checkConfig(this.config);
 
         this.mainProducer = new AtemNetClientTallyProducer({
-            name: "ATEM1", // TODO refactor default names, maybe also make it return e.g. Atem@192.168.10.240
+            name: "ATEM-TVSHD", // TODO refactor default names, maybe also make it return e.g. Atem@192.168.10.240
             parent: TallyOrchestrator.name,
             host: "127.0.0.1",
             id: "atem1"
@@ -57,7 +57,8 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
             name: "AEDES", // TODO refactor default names, maybe also make it return e.g. Atem@192.168.10.240
             parent: TallyOrchestrator.name,
             keep_alive_ms: 5000, // TODO: Make a mode to prevent network congestion with low or no keep alive?
-            broadcast_all: true
+            broadcast_all: true,
+            id: "aedes"
         });
 
         this.mainProducer.on('tally_update', (tallydata: ProducerTallyState) => {

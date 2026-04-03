@@ -35,7 +35,7 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer {
 
         const testDevice: TallyDevice = {
             id: {
-                parent: "aa",
+                consumer: this.config.id,
                 device: "test1"
             },
             name: "Test Device 1",
