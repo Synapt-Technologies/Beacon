@@ -14,6 +14,7 @@ export interface NetClientTallyProducerEvents extends TallyProducerEvents{
     disconnected: [];
 }
 
+// TODO: Maybe IConnection to force getId and get and setName and other shared ops like db?
 export abstract class AbstractNetClientTallyProducer<T extends NetClientTallyProducerEvents = NetClientTallyProducerEvents> extends AbstractTallyProducer<T> {
     
     protected declare config: Required<NetClientProducerConfig>; // Declare to indicate it overwrites the parent's type.

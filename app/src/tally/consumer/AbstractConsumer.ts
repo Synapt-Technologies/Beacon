@@ -14,6 +14,7 @@ export interface ConsumerEvents {
     [key: string]: any[];
 }
 
+// TODO: Maybe IConnection to force getId and get and setName and other shared ops like db?
 export abstract class AbstractConsumer<T extends ConsumerEvents = ConsumerEvents> extends EventEmitter<T> {
     
     protected readonly conType: string = "CONS";
