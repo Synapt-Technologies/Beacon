@@ -44,8 +44,8 @@ export abstract class AbstractTallyProducer<T extends TallyProducerEvents = Tall
     // Static + function: Static removes recursion, function makes it so the parent constructor gets the child's values.
     public static readonly DefaultConfig: Required<ProducerConfig> = { 
         id: "",
-        name: "Producer", // Todo make empty and deny empty values?
-        parent: "??",
+        name: "Producer", // TODO Allow empty values, key is now ID
+        parent: "??", // TODO Needed?
     };
 
     protected abstract getDefaultConfig(): Required<ProducerConfig>;
