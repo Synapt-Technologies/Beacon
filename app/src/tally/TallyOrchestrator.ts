@@ -116,5 +116,17 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
             consumer.consumeTally(this.globalTallyState);
         }
     }
+
+    getDevices(): Map<ConsumerId, Array<TallyDevice>> {
+        const output = new Map();
+
+        this.consumers.forEach(consumer => {
+            const devices = consumer.getAvailableDevices();
+
+            output.set(consumer.getId(), devices);
+        });
+
+        return output;
+    }
        
 }
