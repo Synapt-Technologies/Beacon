@@ -54,6 +54,7 @@ export class AtemNetClientTallyProducer extends AbstractNetClientTallyProducer {
 
             this.emit('connected');
             this.logger.info("Connected to model:", this.getModel());
+            this._parseTallystate();
         })
 
         this.atem.on('disconnected', () => {
