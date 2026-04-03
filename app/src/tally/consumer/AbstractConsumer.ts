@@ -77,6 +77,17 @@ export abstract class AbstractConsumer<T extends ConsumerEvents = ConsumerEvents
     getDevice(address: DeviceAddress): TallyDevice | null {
         return this.devices.get(this.getDeviceKey(address)) || null;
     }
+
+    protected _addDevice(device: TallyDevice) {
+
+        device.id.consumer = this.config.id;
+
+        this.devices.set(this.getDeviceKey(device.id),
+            device
+        )
+
+        this.setTallyDevice(device);
+    }
     setDeviceName(address: DeviceAddress, name: DeviceName): void {
         const key = this.getDeviceKey(address);
         
