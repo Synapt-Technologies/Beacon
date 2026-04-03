@@ -1,10 +1,10 @@
 import { EventEmitter } from "events";
 import { AbstractConsumer } from "./consumer/AbstractConsumer";
 import { AedesNetworkConsumer } from "./consumer/networkConsumer/AedesNetworkConsumer";
-import type { TallyState } from "./types/ProducerStates";
-import { AbstractTallyProducer } from "./producer/AbstractTallyProducer";
+import type { ProducerId, TallyState } from "./types/ProducerStates";
+import { AbstractTallyProducer, type ProducerInfo } from "./producer/AbstractTallyProducer";
 import { AtemNetClientTallyProducer } from "./producer/networkProducer/AtemNetClientTallyProducer";
-import { DeviceTallyState } from "./types/ConsumerStates";
+import { DeviceTallyState, type ConsumerId, type TallyDevice } from "./types/ConsumerStates";
 
 
 export interface OrchestratorConfig {
