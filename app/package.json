@@ -14,13 +14,14 @@
     },
     "packageManager": "yarn@4.13.0",
     "devDependencies": {
-        "@types/node": "^25.5.0",
         "tsx": "^4.21.0",
         "typescript": "^5.9.3"
     },
     "dependencies": {
+        "@types/node": "^25.5.0",
         "aedes": "^1.0.1",
         "atem-connection": "^3.9.0",
+        "better-sqlite3": "^12.8.0",
         "config": "^4.4.1"
     }
 }
