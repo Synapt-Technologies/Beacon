@@ -59,14 +59,15 @@ export class AtemNetClientTallyProducer extends AbstractNetClientTallyProducer {
 
             this.emit('connected');
             this.logger.info("Connected to model:", this.getModel());
-            this._parseTallystate();
         })
 
         this.atem.on('disconnected', () => {
             this.info.connected = false;
             this.info.update_moment = Date.now();
+            this.info.state = null;
             this.emit('disconnected');
             this.logger.warn("Disconnected");
+            this._parseTallystate();
         })
 
         this.atem.on('stateChanged', (state, pathToChange) => {
@@ -83,12 +84,14 @@ export class AtemNetClientTallyProducer extends AbstractNetClientTallyProducer {
             if (!this.info.model || this.info.model === "UNKNOWN") {
                 this.info.model = this._parseModel();
                 infoChange = true;
+                this.logger.info(`Updated model:`, this.info.sources);
             }       
 
             // TODO: check if this fully covers.
             if (!this.info.sources || pathToChange.some(p => p.includes('inputs'))) {
                 this.info.sources = this._parseSources();
                 infoChange = true;
+                this.logger.info(`Updated sources:`, this.info.sources);
             }
 
             if (infoChange)
@@ -119,9 +122,21 @@ export class AtemNetClientTallyProducer extends AbstractNetClientTallyProducer {
     }
 
     protected _parseTallystate(): void { 
+            
         this.tallyState.update_moment = Date.now();
-        const rawProgram: number[] = this.atem.listVisibleInputs("program");
-        const rawPreview: number[] = this.atem.listVisibleInputs("preview");
+        let rawProgram: number[] = [];
+        let rawPreview: number[] = [];
+        
+        if (this.info.connected){
+            try {
+                rawProgram = this.atem.listVisibleInputs("program");
+                rawPreview = this.atem.listVisibleInputs("preview");
+            }
+            catch (e) {
+                this.logger.error(`Failed to parse tally state:`, e); // TODO Check if this happens often and there should better be some timeout.
+            }
+        }
+
 
         // TODO Implement multi ME, and maybe even aux handling?
         const newProgramStrings = rawProgram.map(id => 
@@ -153,11 +168,19 @@ export class AtemNetClientTallyProducer extends AbstractNetClientTallyProducer {
         return AtemEnums.Model[this.info.state.info.model];
     }
 
-    protected _parseSources(): SourceMap | null {
-        if (!this.info.state || !this.info.connected) 
-            return null;
-
+    protected _parseSources(): SourceMap {
         const sources = new Map();
+        
+        if (!this.info.state || !this.info.connected) 
+            return sources;
+
+        const getLabel = (id: string, label: string) => {
+            if (label) return label;
+            if (id === '0') return 'BLK';
+            if (id === '1000') return 'BARS';
+            return id;
+        }
+
 
         for (const [id, input] of Object.entries(this.info.state.inputs)) {
             if (!input) continue;
@@ -167,8 +190,8 @@ export class AtemNetClientTallyProducer extends AbstractNetClientTallyProducer {
             sources.set(globalKey, {
                 source: { producer: this.config.id, source: id },
                 // Use the raw 'id' for the fallback labels, not the globalKey
-                short: input.shortName || `${id}`,
-                long: input.longName || `Input ${id}`,
+                short: getLabel(id, input.shortName) || `${id}`,
+                long: getLabel(id, input.longName) || `Input ${id}`,
             });
         }
         
