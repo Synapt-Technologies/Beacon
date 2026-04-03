@@ -1,4 +1,7 @@
-import { type GlobalTallySource } from "./TallyState";
+import { type GlobalTallySource } from "./ProducerStates";
+
+export type ConsumerId = string;
+export type DeviceId = string;
 
 export enum DeviceAlertState { // TODO Check if these are desired types
     IDENT,
@@ -21,8 +24,8 @@ export enum DeviceTallyState { // TODO maybe add an warning state that is yellow
 }
 
 export interface DeviceAddress {
-    parent: string;
-    device: string;
+    consumer: ConsumerId;
+    device: DeviceId;
 }
 
 export enum ConnectionType {
