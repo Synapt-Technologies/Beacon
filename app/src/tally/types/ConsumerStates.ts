@@ -18,7 +18,8 @@ export enum DeviceAlertTarget {
 
 export enum DeviceTallyState { // TODO maybe add an warning state that is yellow, in the future logic in the ui can dictate what state means what.
     NONE = 0,
-    WARNING = 1,
+    DANGER = 2, // Light redish
+    WARNING = 1, // Yellow
     PREVIEW = 4,
     PROGRAM = 7
 }
