@@ -101,6 +101,7 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
 
     private _parseGlobalTally() {
         const newGlobalTally: TallyState = {
+            update_moment: Date.now(),
             program: new Set(),
             preview: new Set(),
         }
