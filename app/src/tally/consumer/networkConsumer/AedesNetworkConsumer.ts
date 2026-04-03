@@ -32,34 +32,6 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer {
 
     constructor(config: AedesConsumerConfig) {
         super(config);
-
-        const testDevice: TallyDevice = {
-            id: {
-                consumer: this.config.id,
-                device: "test1"
-            },
-            name: {
-                long: "Test Device 1",
-                short: "T1",
-            },
-            connection: ConnectionType.NETWORK,
-            patch: Array.from([
-                {
-                    producer: "atem1",
-                    source: "1",
-                },
-                {
-                    producer: "atem1",
-                    source: "3",
-                },
-            ]),
-            
-            state: DeviceTallyState.NONE,
-        }
-
-        this.devices.set(this.getDeviceKey(testDevice.id),
-            testDevice
-        )
     }
     
     private aedes!: Aedes;
