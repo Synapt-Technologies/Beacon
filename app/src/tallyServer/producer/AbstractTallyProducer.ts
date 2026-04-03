@@ -1,5 +1,5 @@
 import { EventEmitter } from "node:events";
-import type { SourceInfo, ProducerId, TallyState } from "../types/TallyState";
+import type { SourceInfo, ProducerId, TallyState, SourceMap } from "../types/TallyState";
 import { Logger } from "../../logging/Logger";
 
 export interface ProducerConfig {
@@ -21,7 +21,7 @@ export enum ProducerType {
 export interface ProducerInfo {
     update_moment: number | null;
     model: string;
-    sources: Map<string, SourceInfo> | null
+    sources: SourceMap | null
 }
 
 export interface TallyProducerEvents {
@@ -92,7 +92,7 @@ export abstract class AbstractTallyProducer<T extends TallyProducerEvents = Tall
         return this.info;
     }
 
-    getSources(): Map<string, SourceInfo> | null {
+    getSources(): SourceMap | null {
         return this.info.sources;
     }
 

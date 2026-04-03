@@ -2,7 +2,7 @@ import { Atem, type AtemState } from "atem-connection";
 import { AbstractNetClientTallyProducer, type NetClientProducerConfig, type NetClientProducerInfo } from "./AbstractNetClientTallyProducer";
 import { Enums as AtemEnums, Input as AtemInput } from "atem-connection";
 import { ProducerType } from "../AbstractTallyProducer";
-import { GlobalSourceTools, type SourceInfo } from "../../types/TallyState";
+import { GlobalSourceTools, type SourceInfo, type SourceMap } from "../../types/TallyState";
 
 
 export interface AtemNetClientProducerConfig extends NetClientProducerConfig {
@@ -151,35 +151,29 @@ export class AtemNetClientTallyProducer extends AbstractNetClientTallyProducer {
         return AtemEnums.Model[this.info.state.info.model];
     }
 
-    protected _parseSources(): Map<string, SourceInfo> | null {
+    protected _parseSources(): SourceMap | null {
         if (!this.info.state || !this.info.connected) 
             return null;
 
-        // TODO: Once model is var this can be reduced.
-        const modelName = this.getModel() ?? "Unknown";
-        const sourceLabel = `${modelName} ${this.config.name}`;
+        const sources = new Map();
 
-        return new Map<string, SourceInfo>(
-            Object.entries(this.info.state.inputs)
-                .filter(([, value]) => value != undefined)
-                .map(([key, value]) => {
-                    const source = {producer: this.config.id, source: key};
-                    const sourceKey = GlobalSourceTools.create(this.config.id, key);
+        for (const [id, input] of Object.entries(this.info.state.inputs)) {
+            if (!input) continue;
 
-                    return [
-                        sourceKey,
-                        {
-                            source: source,
-                            short: value?.shortName ?? `IN${sourceKey}`,
-                            long: value?.longName ?? `Input ${sourceKey}`,
-                        }
-                    ] as [string, SourceInfo];
-                })
-        );
+            const globalKey = GlobalSourceTools.create(this.config.id, id);
+            
+            sources.set(globalKey, {
+                source: { producer: this.config.id, source: id },
+                // Use the raw 'id' for the fallback labels, not the globalKey
+                short: input.shortName || `${id}`,
+                long: input.longName || `Input ${id}`,
+            });
+        }
+        
+        return sources;
+
     }
 
-
-    // TODO: Implement parse only on change!
     getModel(): string {
         return this.info.model;
     }
