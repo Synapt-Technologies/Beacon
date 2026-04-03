@@ -38,7 +38,10 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer {
                 consumer: this.config.id,
                 device: "test1"
             },
-            name: "Test Device 1",
+            name: {
+                long: "Test Device 1",
+                short: "T1",
+            },
             connection: ConnectionType.NETWORK,
             patch: Array.from([
                 {

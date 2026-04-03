@@ -36,7 +36,10 @@ export enum ConnectionType {
 
 export interface TallyDevice {
     id: DeviceAddress;
-    name: string;
+    name: {
+        short: string;
+        long: string;
+    };
     connection: ConnectionType;
     patch: Array<GlobalTallySource>;
     // TODO ADD SOURCES LEADING TO TALLY
