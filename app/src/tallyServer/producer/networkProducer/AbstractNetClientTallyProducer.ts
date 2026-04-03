@@ -34,7 +34,7 @@ export abstract class AbstractNetClientTallyProducer<T extends NetClientTallyPro
         update_moment: null,
         model: "UNKNOWN",
         connected: false,
-        sources: null
+        sources: new Map(),
     };
 
     isConnected(): boolean {
