@@ -1,9 +1,10 @@
 import Database from 'better-sqlite3';
 import path from 'path';
-import type { ProducerInfo } from '../tally/producer/AbstractTallyProducer';
+import type { ProducerConfig, ProducerInfo } from '../tally/producer/AbstractTallyProducer';
 import { ConnectionType, DeviceTallyState, GlobalDeviceTools, type ConsumerId, type DeviceId, type TallyDevice } from '../tally/types/ConsumerStates';
-import { GlobalSourceTools } from '../tally/types/ProducerStates';
+import { type ProducerId } from '../tally/types/ProducerStates';
 import { Logger } from '../logging/Logger';
+import type { ConsumerConfig } from '../tally/consumer/AbstractConsumer';
 
 
 export class CoreDatabase {
@@ -38,7 +39,7 @@ export class CoreDatabase {
                 config TEXT NOT NULL
             );
 
-            CREATE TABLE IF NOT EXISTS producer_inventory (
+            CREATE TABLE IF NOT EXISTS producer_info (
                 id TEXT PRIMARY KEY,
                 info TEXT NOT NULL,
                 FOREIGN KEY(id) REFERENCES producers(id) ON DELETE CASCADE
@@ -65,13 +66,22 @@ export class CoreDatabase {
 
 
     // ? Producer Methods
-    public getProducers(): any[] {
-        return this.db.prepare('SELECT * FROM producers').all();
+    public saveProducer(id: ProducerId, type: string, config: ProducerConfig): void {
+        const stmt = this.db.prepare(`
+            INSERT INTO producers (id, type, config)
+            VALUES (?, ?, ?)
+            ON CONFLICT(id) DO UPDATE SET info=excluded.info
+        `);
+        stmt.run(id, type, JSON.stringify(config));
+    }
+
+    public getProducers(): {id: string, type: string, config: ProducerConfig}[] {
+        return this.db.prepare('SELECT * FROM producers').all() as {id: string, type: string, config: ProducerConfig}[];
     }
 
     public saveProducerInventory(id: string, info: ProducerInfo) {
         const stmt = this.db.prepare(`
-            INSERT INTO producer_inventory (id, info)
+            INSERT INTO producer_info (id, info)
             VALUES (?, ?)
             ON CONFLICT(id) DO UPDATE SET info=excluded.info
         `);
@@ -79,7 +89,7 @@ export class CoreDatabase {
     }
 
     public getProducerInventory(id: string): ProducerInfo | null {
-        const row = this.db.prepare('SELECT info FROM producer_inventory WHERE id = ?').get(id) as { info: string } | undefined;
+        const row = this.db.prepare('SELECT info FROM producer_info WHERE id = ?').get(id) as { info: string } | undefined;
         if (!row) {
             return null;
         }
@@ -88,8 +98,16 @@ export class CoreDatabase {
     }
 
     // ? Consumer Methods
-    public getConsumers(): any[] {
-        return this.db.prepare('SELECT * FROM consumers').all();
+    public saveConsumer(id: ConsumerId, type: string, config: ConsumerConfig): void {
+        const stmt = this.db.prepare(`
+            INSERT INTO consumers (id, config)
+            VALUES (?, ?)
+            ON CONFLICT(id) DO UPDATE SET info=excluded.info
+        `);
+        stmt.run(id, type, JSON.stringify(config));
+    }
+    public getConsumers(): {id: string, type: string, config: ProducerConfig}[] {
+        return this.db.prepare('SELECT * FROM consumers').all() as {id: string, type: string, config: ProducerConfig}[];
     }
 
     public saveConsumerDevices(devices: TallyDevice[]) {
