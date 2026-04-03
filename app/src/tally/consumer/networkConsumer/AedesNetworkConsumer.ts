@@ -147,7 +147,7 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer {
 
         const payload = JSON.stringify({
             state: DeviceTallyState[device.state], // Maybe send number for efficiency?
-            name: device.name, // TODO check if name and timestamp are needed.
+            name: device.name,
             moment: this.tallyState.moment
         });
         
