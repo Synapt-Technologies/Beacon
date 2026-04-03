@@ -5,7 +5,7 @@ export type SourceId = string;
 
 export interface GlobalTallySource {
     producer: ProducerId;
-    source: SourceId;
+    source: SourceId; // TODO Add optional bus info, e.g. aux
 }
 
 export interface SourceInfo {
@@ -14,6 +14,7 @@ export interface SourceInfo {
     short: string;
 }
 
+// TODO Add short and long names
 export interface TallyState { // Use GlobalSourceTools to parse GlobalTallySources
     program: Set<string>;
     preview: Set<string>;

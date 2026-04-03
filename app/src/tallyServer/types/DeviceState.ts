@@ -36,6 +36,6 @@ export interface TallyDevice {
     name: string;
     connection: ConnectionType;
     patch: Array<GlobalTallySource>;
-    
+    // TODO ADD SOURCES LEADING TO TALLY
     state: DeviceTallyState;
 }
