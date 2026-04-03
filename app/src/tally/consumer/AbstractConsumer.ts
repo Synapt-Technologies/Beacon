@@ -35,6 +35,10 @@ export abstract class AbstractConsumer<T extends ConsumerEvents = ConsumerEvents
 
     protected abstract getDefaultConfig(): Required<ConsumerConfig>;
 
+    getConfig(): ConsumerConfig {
+        return this.config;
+    }
+
     constructor(config: ConsumerConfig) {
         super();
 

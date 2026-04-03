@@ -45,6 +45,10 @@ export abstract class AbstractTallyProducer<T extends TallyProducerEvents = Tall
     };
 
     protected abstract getDefaultConfig(): Required<ProducerConfig>;
+
+    getConfig(): ProducerConfig {
+        return this.config;
+    }
     
     constructor(config: ProducerConfig) {
         super();
