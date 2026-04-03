@@ -30,7 +30,6 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
     };
 
     private mainProducer: AbstractTallyProducer;
-    private auxProducers: Map<string, AbstractTallyProducer> = new Map();
 
     private consumers: Map<string, AbstractConsumer> = new Map();
     private consumer: AbstractConsumer;
