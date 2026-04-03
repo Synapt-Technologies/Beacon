@@ -32,6 +32,31 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer {
 
     constructor(config: AedesConsumerConfig) {
         super(config);
+
+        const testDevice: TallyDevice = {
+            id: {
+                parent: "aa",
+                device: "test1"
+            },
+            name: "Test Device 1",
+            connection: ConnectionType.NETWORK,
+            patch: Array.from([
+                {
+                    producer: "atem1",
+                    source: "1",
+                },
+                {
+                    producer: "atem1",
+                    source: "3",
+                },
+            ]),
+            
+            state: DeviceTallyState.NONE,
+        }
+
+        this.devices.set(this.getDeviceKey(testDevice.id),
+            testDevice
+        )
     }
     
     private aedes!: Aedes;
@@ -86,8 +111,10 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer {
     }
 
     broadcastTally(): void {
-        if (this.aedes == undefined)
-            this.logger.fatal("Attempted to broadcast tally device before initialization.");
+        if (!this.aedes) {
+            this.logger.warn("Discarding Tally: Attempted to send before initialization.");
+            return;
+        }
 
         const payload = JSON.stringify({
             program: Array.from(this.tallyState.program),
@@ -106,9 +133,10 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer {
     }
 
     protected sendTallyDevice(device: TallyDevice): void {
-        if (!this.aedes)
-            this.logger.fatal("Attempted to send tally device before initialization.");
-
+        if (!this.aedes) {
+            this.logger.warn("Discarding Tally: Attempted to send before initialization.");
+            return;
+        }
 
         const payload = JSON.stringify({
             state: DeviceTallyState[device.state], // Maybe send number for efficiency?
@@ -133,6 +161,11 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer {
     }
 
     setDeviceAlert(address: DeviceAddress, type: DeviceAlertState, target: DeviceAlertTarget): void {
+        if (!this.aedes) {
+            this.logger.warn("Discarding Tally: Attempted to send before initialization.");
+            return;
+        }
+
         this.aedes.publish({
             cmd: 'publish',
             qos: 2, // High priority for alerts
