@@ -102,8 +102,8 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
     }
 
     private _parseGlobalTally() {
-        const newGlobalTally: TallyState = {
-            moment: Date.now(),
+        const newGlobalTally: Required<TallyState> = {
+            moment: 0,
             program: new Set(),
             preview: new Set(),
         }
@@ -111,6 +111,8 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
         for (const state of this.producerTallyStates.values()) {
             state.program.forEach(source => newGlobalTally.program.add(source));
             state.preview.forEach(source => newGlobalTally.preview.add(source));
+            if (state.moment && state.moment > newGlobalTally.moment )
+                newGlobalTally.moment = state.moment;
         }
 
         this.globalTallyState = newGlobalTally;
