@@ -41,7 +41,7 @@ export interface DeviceName {
 
 export interface TallyDevice {
     id: DeviceAddress;
-    name: DeviceName;
+    name?: DeviceName;
     connection: ConnectionType;
     patch: Array<GlobalTallySource>;
     // TODO ADD SOURCES LEADING TO TALLY
