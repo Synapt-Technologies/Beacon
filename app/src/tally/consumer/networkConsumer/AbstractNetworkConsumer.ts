@@ -9,7 +9,7 @@ export interface NetworkConsumerConfig extends ConsumerConfig {
     broadcast_all?: boolean; // Broadcast all tally states to the /tally topic.
 } 
 
-export interface NetworkConsumerEvents extends ConsumerEvents {
+export type NetworkConsumerEvents = ConsumerEvents & {
     connection: []; // When A client loads, subscribes or whatever.
     disconnection: []; // When A client loads, subscribes or whatever.
     discovery: [id:string, outputs: any]

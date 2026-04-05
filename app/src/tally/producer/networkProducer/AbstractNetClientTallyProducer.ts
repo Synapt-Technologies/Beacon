@@ -9,7 +9,7 @@ export interface NetClientProducerConfig extends ProducerConfig {
 export interface NetClientProducerInfo extends ProducerInfo {
     connected: boolean;
 }
-export interface NetClientTallyProducerEvents extends TallyProducerEvents{
+export type NetClientTallyProducerEvents = TallyProducerEvents & {
     connected: [];
     disconnected: [];
 }

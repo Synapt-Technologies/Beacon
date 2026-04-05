@@ -21,14 +21,13 @@ export interface ProducerInfo {
     // Todo add multi bus support.
 }
 
-export interface TallyProducerEvents {
+export type TallyProducerEvents = {
     tally_update: [TallyState];
     info_update: [ProducerInfo, path: string[] | null];
-    [key: string]: any[];
 }
 
 // TODO: Add an AbstractProducer that can be extended by an AbstractAlertProducer
-export abstract class AbstractTallyProducer<T extends TallyProducerEvents = TallyProducerEvents> extends EventEmitter<T> {
+export abstract class AbstractTallyProducer<T extends TallyProducerEvents & Record<string, any[]> =TallyProducerEvents> extends EventEmitter<T> {
 
     public readonly conType: string = "PROD";
     public readonly prodType: string = "SWTCHR";

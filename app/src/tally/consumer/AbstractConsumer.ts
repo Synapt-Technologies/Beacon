@@ -10,13 +10,12 @@ export interface ConsumerConfig {
     parent?: string;
 }
 
-export interface ConsumerEvents {
+export type ConsumerEvents = {
     device_update: [device: TallyDevice];
-    [key: string]: any[];
 }
 
 // TODO: Maybe IConnection to force getId and get and setName and other shared ops like db?
-export abstract class AbstractConsumer<T extends ConsumerEvents = ConsumerEvents> extends EventEmitter<T> {
+export abstract class AbstractConsumer<T extends ConsumerEvents & Record<string, any[]> = ConsumerEvents> extends EventEmitter<T> {
     
     protected readonly conType: string = "CONS";
 
@@ -140,9 +139,9 @@ export abstract class AbstractConsumer<T extends ConsumerEvents = ConsumerEvents
 
         if (device.state !== newState || !device.last_update) {
             device.last_update = Date.now();
-            this.logger.debug(`Device ${this.getDeviceKey(device.id)} state changed from ${DeviceTallyState[device.state]} to ${DeviceTallyState[newState]}`);
-            (this as EventEmitter<ConsumerEvents>).emit('device_update', device);
             device.state = newState;
+            this.logger.debug(`Device ${this.getDeviceKey(device.id)} state changed to ${DeviceTallyState[device.state]}`);
+            (this as EventEmitter<ConsumerEvents>).emit('device_update', device);
             this.sendTallyDevice(device);
         }
     }
