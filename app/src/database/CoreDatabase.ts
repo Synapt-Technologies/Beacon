@@ -1,4 +1,5 @@
 import Database from 'better-sqlite3';
+import fs from 'node:fs';
 import path from 'path';
 import type { AbstractTallyProducer, ProducerConfig, ProducerInfo } from '../tally/producer/AbstractTallyProducer';
 import { ConnectionType, DeviceTallyState, GlobalDeviceTools, type ConsumerId, type DeviceId, type TallyDevice } from '../tally/types/ConsumerStates';
@@ -14,6 +15,10 @@ export class CoreDatabase {
 
     private constructor() {
         const dbPath = path.join(process.cwd(), '/db/tally.db');
+        const dbDir = path.dirname(dbPath);
+        if (!fs.existsSync(dbDir)) {
+            fs.mkdirSync(dbDir, { recursive: true });
+        }
         this.db = new Database(dbPath);
         this.db.pragma('journal_mode = WAL'); // High-performance mode
         this.init();
