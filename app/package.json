@@ -22,7 +22,6 @@
     "dependencies": {
         "aedes": "^1.0.1",
         "atem-connection": "^3.9.0",
-        "better-sqlite3": "^12.8.0",
-        "config": "^4.4.1"
+        "better-sqlite3": "^12.8.0"
     }
 }

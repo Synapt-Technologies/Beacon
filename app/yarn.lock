@@ -422,7 +422,6 @@ __metadata:
     aedes: "npm:^1.0.1"
     atem-connection: "npm:^3.9.0"
     better-sqlite3: "npm:^12.8.0"
-    config: "npm:^4.4.1"
     tsx: "npm:^4.21.0"
     typescript: "npm:^5.9.3"
   languageName: unknown
@@ -584,15 +583,6 @@ __metadata:
   version: 1.1.4
   resolution: "color-name@npm:1.1.4"
   checksum: 10c0/a1a3f914156960902f46f7f56bc62effc6c94e84b2cae157a526b1c1f74b677a47ec602bf68a61abfa2b42d15b7c5651c6dbe72a43af720bc588dff885b10f95
-  languageName: node
-  linkType: hard
-
-"config@npm:^4.4.1":
-  version: 4.4.1
-  resolution: "config@npm:4.4.1"
-  dependencies:
-    json5: "npm:^2.2.3"
-  checksum: 10c0/f92c7b61d2456f933a53da1fea06abe116584df99dd1254a93e7b10c9487ddf17a1f865bd7ab8e4cf0cca23777dd89b6b1ba81e1c71e06111d36fbb00b49c28f
   languageName: node
   linkType: hard
 
@@ -1044,15 +1034,6 @@ __metadata:
   version: 4.0.0
   resolution: "isexe@npm:4.0.0"
   checksum: 10c0/5884815115bceac452877659a9c7726382531592f43dc29e5d48b7c4100661aed54018cb90bd36cb2eaeba521092570769167acbb95c18d39afdccbcca06c5ce
-  languageName: node
-  linkType: hard
-
-"json5@npm:^2.2.3":
-  version: 2.2.3
-  resolution: "json5@npm:2.2.3"
-  bin:
-    json5: lib/cli.js
-  checksum: 10c0/5a04eed94810fa55c5ea138b2f7a5c12b97c3750bc63d11e511dcecbfef758003861522a070c2272764ee0f4e3e323862f386945aeb5b85b87ee43f084ba586c
   languageName: node
   linkType: hard
 
