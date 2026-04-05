@@ -56,7 +56,7 @@ export class CoreDatabase {
                 name TEXT NOT NULL,
                 connection TEXT NOT NULL,
                 patch TEXT NOT NULL,
-                data TEXT NOT NULL,
+                data TEXT,
                 FOREIGN KEY(consumer_id) REFERENCES consumers(id) ON DELETE CASCADE
             );
             
