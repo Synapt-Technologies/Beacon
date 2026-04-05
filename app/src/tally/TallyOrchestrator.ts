@@ -27,8 +27,6 @@ export interface OrchestratorEvents {
 
 export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
 
-    public static readonly name: string = "Orchestrator";
-
     protected logger: Logger;
     
     protected config: Required<OrchestratorConfig>;
