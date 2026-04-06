@@ -1,19 +1,21 @@
 import { CoreDatabase } from "./CoreDatabase";
+import type { ProducerInfo } from "../tally/producer/AbstractTallyProducer";
+import { Logger } from "../logging/Logger";
 
-export class ProducerPersistenceAgent {
-    constructor(private producerId: string) {}
+export class ProducerStore {
 
-    public async loadMemory(): Promise<{model: string, sources: Map<string, any>} | null> {
-        const row = CoreDatabase.getInstance().getProducerInventory(this.producerId);
-        if (!row) return null;
+    private db = CoreDatabase.getInstance();
+    private logger: Logger;
 
-        return {
-            model: row.model,
-            sources: new Map(JSON.parse(row.sources))
-        };
+    constructor(private producerId: string) {
+        this.logger = new Logger(["Store", "PROD", producerId]);
     }
 
-    public saveMemory(model: string, sources: Map<string, any>) {
-        CoreDatabase.getInstance().saveProducerInventory(this.producerId, model, sources);
+    public saveInfo(info: ProducerInfo): void {
+        this.db.saveProducerInventory(this.producerId, info);
+    }
+
+    public loadInfo(): ProducerInfo | null {
+        return this.db.getProducerInventory(this.producerId);
     }
 }
