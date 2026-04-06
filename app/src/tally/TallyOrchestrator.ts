@@ -56,29 +56,6 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
 
         this.checkConfig(this.config);
         
-        const testAedes = new AedesNetworkConsumer({
-            name: "AEDES", // TODO refactor default names, maybe also make it return e.g. Atem@192.168.10.240
-            parent: TallyOrchestrator.name,
-            keep_alive_ms: 5000,
-            broadcast_all: true,
-            id: "aedes"
-        });
-
-        testAedes.init();
-        
-        this.addConsumer(testAedes);
-
-        const testAtem = new AtemNetClientTallyProducer({
-            name: "ATEM-TVSHD",
-            parent: TallyOrchestrator.name,
-            host: "127.0.0.1",
-            id: "atem1"
-        });
-
-        testAtem.init();
-
-        this.addProducer(testAtem);
-
 
         // TODO Add set tally off / alert (setting) on switcher disconnect!
     }

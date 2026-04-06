@@ -1,16 +1,41 @@
 import { CoreDatabase } from "./src/database/CoreDatabase";
 import { AedesNetworkConsumer } from "./src/tally/consumer/networkConsumer/AedesNetworkConsumer";
-import type { ProducerConfig } from "./src/tally/producer/AbstractTallyProducer";
+import { AtemNetClientTallyProducer } from "./src/tally/producer/networkProducer/AtemNetClientTallyProducer";
 import { TallyOrchestrator } from "./src/tally/TallyOrchestrator";
 
 
-const databTest = CoreDatabase.getInstance();
-console.log("Producer DB: =", databTest.getProducers());
-console.log("Consumer DB: =", databTest.getConsumers());
+const cdb = CoreDatabase.getInstance();
+console.log("Producer DB: =", cdb.getProducers());
+console.log("Consumer DB: =", cdb.getConsumers());
 
 const orchestrator = new TallyOrchestrator({});
 
+const testAedes = new AedesNetworkConsumer({
+    name: "AEDES", // TODO refactor default names, maybe also make it return e.g. Atem@192.168.10.240
+    parent: TallyOrchestrator.name,
+    keep_alive_ms: 5000,
+    broadcast_all: true,
+    id: "aedes"
+});
 
+cdb.saveConsumer(testAedes);
+
+await testAedes.init();
+
+orchestrator.addConsumer(testAedes);
+
+const testAtem = new AtemNetClientTallyProducer({
+    name: "ATEM-TVSHD",
+    parent: TallyOrchestrator.name,
+    host: "127.0.0.1",
+    id: "atem1"
+});
+
+cdb.saveProducer(testAtem);
+
+await testAtem.init();
+
+orchestrator.addProducer(testAtem);
 
 
 
