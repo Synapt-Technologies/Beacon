@@ -2,7 +2,8 @@ import Database from 'better-sqlite3';
 import fs from 'node:fs';
 import path from 'path';
 import type { AbstractTallyProducer, ProducerConfig, ProducerInfo } from '../tally/producer/AbstractTallyProducer';
-import { ConnectionType, DeviceTallyState, GlobalDeviceTools, type ConsumerId, type DeviceId, type TallyDevice } from '../tally/types/ConsumerStates';
+import { GlobalSourceTools, type SourceInfo } from '../tally/types/ProducerStates';
+import { DeviceTallyState, GlobalDeviceTools, type DeviceAddress, type TallyDevice } from '../tally/types/ConsumerStates';
 import { Logger } from '../logging/Logger';
 import type { AbstractConsumer } from '../tally/consumer/AbstractConsumer';
 
@@ -58,10 +59,7 @@ export class CoreDatabase {
             CREATE TABLE IF NOT EXISTS consumer_devices (
                 id TEXT PRIMARY KEY,
                 consumer_id TEXT NOT NULL,
-                name TEXT NOT NULL,
-                connection TEXT NOT NULL,
-                patch TEXT NOT NULL,
-                data TEXT DEFAULT "{}",
+                data TEXT NOT NULL,
                 FOREIGN KEY(consumer_id) REFERENCES consumers(id) ON DELETE CASCADE
             );
             
@@ -84,21 +82,32 @@ export class CoreDatabase {
     }
 
     public saveProducerInventory(id: string, info: ProducerInfo) {
+        const serialized = { ...info, sources: Array.from(info.sources.values()) };
         const stmt = this.db.prepare(`
             INSERT INTO producer_info (id, info)
             VALUES (?, ?)
             ON CONFLICT(id) DO UPDATE SET info=excluded.info
         `);
-        stmt.run(id, JSON.stringify(info));
+        stmt.run(id, JSON.stringify(serialized));
     }
 
     public getProducerInventory(id: string): ProducerInfo | null {
         const row = this.db.prepare('SELECT info FROM producer_info WHERE id = ?').get(id) as { info: string } | undefined;
-        if (!row) {
+        if (!row) return null;
+
+        try {
+            const parsed = JSON.parse(row.info);
+            const sources = new Map<string, SourceInfo>(
+                (parsed.sources ?? []).map((s: SourceInfo) => [
+                    GlobalSourceTools.create(s.source.producer, s.source.source),
+                    s
+                ])
+            );
+            return { ...parsed, sources };
+        } catch {
+            this.logger.error(`Failed to parse producer inventory for:`, id);
             return null;
         }
-
-        return JSON.parse(row.info);
     }
 
     // ? Consumer Methods
@@ -119,68 +128,44 @@ export class CoreDatabase {
     }
 
     public saveConsumerDevice(device: TallyDevice) {
-
+        const id = GlobalDeviceTools.create(device.id.consumer, device.id.device);
         const stmt = this.db.prepare(`
-            INSERT INTO consumer_devices (id, consumer_id, name, connection, patch)
-            VALUES (?, ?, ?, ?, ?)
-            ON CONFLICT(id) DO UPDATE SET consumer_id=excluded.consumer_id, name=excluded.name, connection=excluded.connection, patch=excluded.patch
+            INSERT INTO consumer_devices (id, consumer_id, data)
+            VALUES (?, ?, ?)
+            ON CONFLICT(id) DO UPDATE SET data=excluded.data
         `);
-        stmt.run(GlobalDeviceTools.create(device.id.consumer, device.id.device), device.id.consumer, JSON.stringify(device.name), device.connection, JSON.stringify(device.patch));
+        stmt.run(id, device.id.consumer, JSON.stringify(device));
     }
 
-    public getConsumerDevice(id: string): TallyDevice | null {
-        const device = this.db.prepare('SELECT * FROM consumer_devices WHERE id = ?').get(id) as {id: string, consumer_id: ConsumerId, name: string, connection: ConnectionType, patch: string, data: string} | undefined;
-        if (!device) {
-            return null;
-        }
+    public getConsumerDevice(address: DeviceAddress): TallyDevice | null {
+        const id = GlobalDeviceTools.create(address.consumer, address.device);
+        const row = this.db.prepare('SELECT data FROM consumer_devices WHERE id = ?').get(id) as { data: string } | undefined;
+        if (!row) return null;
 
         try {
-            const parsedId = GlobalDeviceTools.parse(device.id);
-            
-            if (parsedId.consumer !== device.consumer_id) {
-                this.logger.error(`ID mismatch when loading ConsumerDevice with ID:`, id, `from DB. Device:`, device);
-                return null;
-            }
-
-            return {
-                id: parsedId,
-                name: JSON.parse(device.name),
-                connection: device.connection,
-                patch: JSON.parse(device.patch),
-                state: DeviceTallyState.NONE
-            };
-
-        } catch (e) {
-            this.logger.error(`Failed to parse device with ID`, device.id);
+            return { ...JSON.parse(row.data), state: DeviceTallyState.NONE };
+        } catch {
+            this.logger.error(`Failed to parse device with ID:`, id);
+            return null;
         }
-
-        return null;
     }
 
-    public getConsumerDevices(): Map<string, TallyDevice> | null {
-        const rows = this.db.prepare('SELECT * FROM consumer_devices').all() as {id: string, consumer_id: ConsumerId, name: string, connection: ConnectionType, patch: string}[];
+    public deleteConsumerDevice(address: DeviceAddress): void {
+        const id = GlobalDeviceTools.create(address.consumer, address.device);
+        this.db.prepare('DELETE FROM consumer_devices WHERE id = ?').run(id);
+    }
 
-        const output: Map<string, TallyDevice> = new Map();
+    public getConsumerDevices(consumerId: string): Map<string, TallyDevice> {
+        const rows = this.db.prepare('SELECT id, data FROM consumer_devices WHERE consumer_id = ?').all(consumerId) as { id: string, data: string }[];
 
-        for (const device of rows) {
+        const output = new Map<string, TallyDevice>();
+
+        for (const row of rows) {
             try {
-                const parsedId = GlobalDeviceTools.parse(device.id);
-                
-                if (parsedId.consumer !== device.consumer_id) {
-                    this.logger.error(`ID mismatch when batch loading ConsumerDevices. Device:`, device);
-                    continue;
-                }
-
-                output.set(device.id, {
-                    id: parsedId,
-                    name: JSON.parse(device.name),
-                    connection: device.connection,
-                    patch: JSON.parse(device.patch),
-                    state: DeviceTallyState.NONE
-                });
-
-            } catch (e) {
-                this.logger.error(`Failed to parse device with ID`, device.id);
+                const device: TallyDevice = { ...JSON.parse(row.data), state: DeviceTallyState.NONE };
+                output.set(row.id, device);
+            } catch {
+                this.logger.error(`Failed to parse device with ID:`, row.id);
             }
         }
 
