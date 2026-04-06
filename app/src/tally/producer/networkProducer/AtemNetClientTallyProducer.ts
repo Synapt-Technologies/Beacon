@@ -69,7 +69,7 @@ export class AtemNetClientTallyProducer extends AbstractNetClientTallyProducer {
         this.atem.on('stateChanged', (state, pathToChange) => {
             this.info.state = state;
             let infoChange: boolean = false;
-            
+
             // TODO: Add AUX support and check if this fully covers. Maybe startswith?
             if (pathToChange.some(p => p.includes('video.mixEffects') || p.includes('video.downstreamKeyers'))) {
                 this._parseTallystate();
@@ -81,7 +81,7 @@ export class AtemNetClientTallyProducer extends AbstractNetClientTallyProducer {
                 this.info.model = this._parseModel();
                 infoChange = true;
                 this.logger.info(`Updated model:`, this.info.sources);
-            }       
+            }
 
             // TODO: check if this fully covers.
             if (!this.info.sources || pathToChange.some(p => p.includes('inputs'))) {
@@ -91,7 +91,7 @@ export class AtemNetClientTallyProducer extends AbstractNetClientTallyProducer {
             }
 
             if (infoChange)
-                this.emit('info_update', this.info, pathToChange) 
+                this.emitInfoUpdate();
         })
     }
 

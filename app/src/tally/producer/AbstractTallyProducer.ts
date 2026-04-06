@@ -1,6 +1,7 @@
 import { EventEmitter } from "node:events";
-import type { SourceInfo, ProducerId, TallyState, SourceMap } from "../types/ProducerStates";
+import type { ProducerId, TallyState, SourceMap } from "../types/ProducerStates";
 import { Logger } from "../../logging/Logger";
+import { ProducerStore } from "../../database/ProducerStore";
 
 export interface ProducerConfig {
     id: ProducerId,
@@ -23,7 +24,7 @@ export interface ProducerInfo {
 
 export type TallyProducerEvents = {
     tally_update: [TallyState];
-    info_update: [ProducerInfo, path: string[] | null];
+    info_update: [ProducerInfo];
 }
 
 // TODO: Add an AbstractProducer that can be extended by an AbstractAlertProducer
@@ -33,6 +34,8 @@ export abstract class AbstractTallyProducer<T extends TallyProducerEvents & Reco
     public readonly prodType: string = "SWTCHR";
 
     protected logger: Logger;
+
+    protected store: ProducerStore;
 
     protected config: Required<ProducerConfig>;
 
@@ -60,6 +63,15 @@ export abstract class AbstractTallyProducer<T extends TallyProducerEvents & Reco
             this.prodType,
             this.config.name
         ]);
+
+        this.store = new ProducerStore(this.config.id);
+
+        const storedInfo = this.store.loadInfo();
+        if (storedInfo) {
+            this.info = storedInfo;
+            this.logger.debug(`Loaded stored info.`);
+        }
+
         
         this.checkConfig(this.config);
     }
@@ -89,6 +101,12 @@ export abstract class AbstractTallyProducer<T extends TallyProducerEvents & Reco
 
     getInfo(): ProducerInfo {
         return this.info;
+    }
+
+    protected emitInfoUpdate(): void {
+        this.store.saveInfo(this.info);
+        (this as EventEmitter<TallyProducerEvents>).emit('info_update', this.info);
+        this.logger.debug(`Persisted info to store.`);
     }
 
     getId(): ProducerId {
