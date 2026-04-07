@@ -5,7 +5,7 @@ import type { AbstractTallyProducer, ProducerConfig, ProducerInfo } from '../tal
 import { GlobalSourceTools, type SourceInfo } from '../tally/types/ProducerStates';
 import { DeviceTallyState, GlobalDeviceTools, type DeviceAddress, type TallyDevice } from '../tally/types/ConsumerStates';
 import { Logger } from '../logging/Logger';
-import type { AbstractConsumer } from '../tally/consumer/AbstractConsumer';
+import type { AbstractConsumer, ConsumerConfig } from '../tally/consumer/AbstractConsumer';
 
 // TODO add more try catch.
 export class CoreDatabase {
@@ -78,7 +78,8 @@ export class CoreDatabase {
     }
 
     public getProducers(): {id: string, type: string, config: ProducerConfig}[] {
-        return this.db.prepare('SELECT * FROM producers').all() as {id: string, type: string, config: ProducerConfig}[]; // TODO Json parsing
+        const rows = this.db.prepare('SELECT * FROM producers').all() as {id: string, type: string, config: string}[];
+        return rows.map(row => ({ ...row, config: JSON.parse(row.config) }));
     }
 
     public saveProducerInventory(id: string, info: ProducerInfo) {
@@ -119,8 +120,9 @@ export class CoreDatabase {
         `);
         stmt.run(consumer.getId(), consumer.constructor.name, JSON.stringify(consumer.getConfig()));
     }
-    public getConsumers(): {id: string, type: string, config: ProducerConfig}[] {
-        return this.db.prepare('SELECT * FROM consumers').all() as {id: string, type: string, config: ProducerConfig}[]; // TODO Json parsing
+    public getConsumers(): {id: string, type: string, config: ConsumerConfig}[] {
+        const rows = this.db.prepare('SELECT * FROM consumers').all() as {id: string, type: string, config: string}[];
+        return rows.map(row => ({ ...row, config: JSON.parse(row.config) }));
     }
 
     public saveConsumerDevices(devices: TallyDevice[]) {
