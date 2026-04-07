@@ -1,8 +1,8 @@
 import { CoreDatabase } from "../database/CoreDatabase";
 import { TallyFactory } from "./TallyFactory";
 import { TallyOrchestrator, type OrchestratorConfig } from "./TallyOrchestrator";
-import type { AbstractTallyProducer, ProducerConfig } from "./producer/AbstractTallyProducer";
-import type { AbstractConsumer, ConsumerConfig } from "./consumer/AbstractConsumer";
+import type { AbstractTallyProducer } from "./producer/AbstractTallyProducer";
+import type { AbstractConsumer } from "./consumer/AbstractConsumer";
 import type { ProducerId } from "./types/ProducerStates";
 import type { ConsumerId } from "./types/ConsumerStates";
 import { Logger } from "../logging/Logger";
@@ -21,7 +21,7 @@ export class TallyLifecycle {
         return this.orchestrator;
     }
 
-    public async boot(): Promise<void> {
+public async boot(): Promise<void> {
         const producers = this.db.getProducers();
         for (const { type, config } of producers) {
             try {
