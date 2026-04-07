@@ -18,7 +18,9 @@ export class AppCore {
         await this.lifecycle.boot();
 
         // TODO: Remove once the ui can configure producers and consumers.
-        await this._setupTestConfig();
+        if (!this.lifecycle.hasConfig()) {
+            await this._setupTestConfig();
+        }
 
         this._registerShutdownHandlers();
 
