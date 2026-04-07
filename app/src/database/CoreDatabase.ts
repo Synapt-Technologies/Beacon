@@ -111,6 +111,10 @@ export class CoreDatabase {
         }
     }
 
+    public deleteProducer(id: string): void {
+        this.db.prepare('DELETE FROM producers WHERE id = ?').run(id);
+    }
+
     // ? Consumer Methods
     public saveConsumer(consumer: AbstractConsumer): void {
         const stmt = this.db.prepare(`
@@ -123,6 +127,10 @@ export class CoreDatabase {
     public getConsumers(): {id: string, type: string, config: ConsumerConfig}[] {
         const rows = this.db.prepare('SELECT * FROM consumers').all() as {id: string, type: string, config: string}[];
         return rows.map(row => ({ ...row, config: JSON.parse(row.config) }));
+    }
+
+    public deleteConsumer(id: string): void {
+        this.db.prepare('DELETE FROM consumers WHERE id = ?').run(id);
     }
 
     public saveConsumerDevices(devices: TallyDevice[]) {
