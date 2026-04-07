@@ -1,7 +1,7 @@
 import { Atem, type AtemState } from "atem-connection";
 import { AbstractNetClientTallyProducer, type NetClientProducerConfig, type NetClientProducerInfo } from "./AbstractNetClientTallyProducer";
-import { Enums as AtemEnums, Input as AtemInput } from "atem-connection";
-import { GlobalSourceTools, type SourceInfo, type SourceMap, type TallyState } from "../../types/ProducerStates";
+import { Enums as AtemEnums } from "atem-connection";
+import { GlobalSourceTools, type SourceMap, type TallyState } from "../../types/ProducerStates";
 
 
 export interface AtemNetClientProducerConfig extends NetClientProducerConfig {
@@ -51,9 +51,11 @@ export class AtemNetClientTallyProducer extends AbstractNetClientTallyProducer {
             this.info.update_moment = Date.now();
             this.info.state = this.atem.state ?? null; // TODO: Add more state checking for this.
             this.info.model = this._parseModel();
+            this.info.sources = this._parseSources();
 
             this.emit('connected');
             this.logger.info("Connected to model:", this.getModel());
+            this.emitInfoUpdate();
             this._parseTallystate();
         })
 
