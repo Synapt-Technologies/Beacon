@@ -66,18 +66,24 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
 
     }
 
-    async addConsumer(consumer: AbstractConsumer) {
+    addConsumer(consumer: AbstractConsumer): void {
         this.consumers.set(consumer.getId(), consumer);
         this.emit('consumer_added', consumer.getId());
         this._parseGlobalTally();
     }
 
     removeConsumer(id: ConsumerId): void {
+        const consumer = this.consumers.get(id);
+        if (!consumer) {
+            this.logger.warn(`Attempted to remove unknown consumer:`, id);
+            return;
+        }
+        consumer.destroy();
         this.consumers.delete(id);
         this.emit('consumer_removed', id);
     }
 
-    async addProducer(producer: AbstractTallyProducer) {
+    addProducer(producer: AbstractTallyProducer): void {
         this.producers.set(producer.getId(), producer);
         this.emit('producer_added', producer.getId(), producer.getInfo());
 
@@ -93,7 +99,13 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
     }
 
     removeProducer(id: ProducerId): void {
-        this.producers.delete(id);
+        const producer = this.producers.get(id);
+        if (!producer) {
+            this.logger.warn(`Attempted to remove unknown producer:`, id);
+        } else {
+            producer.destroy();
+            this.producers.delete(id);
+        }
         this.producerTallyStates.delete(id);
         this.emit('producer_removed', id);
         this._parseGlobalTally();
