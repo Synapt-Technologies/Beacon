@@ -62,14 +62,14 @@ public async boot(): Promise<void> {
     }
 
     public async updateProducer(id: ProducerId, type: string, config: object): Promise<void> {
-        this.removeProducer(id);
+        await this.removeProducer(id);
         const producer = TallyFactory.createProducer(type, { ...config, id });
         await this.addProducer(producer);
     }
 
-    public removeProducer(id: ProducerId): void {
+    public async removeProducer(id: ProducerId): Promise<void> {
         this.db.deleteProducer(id);
-        this.orchestrator.removeProducer(id);
+        await this.orchestrator.removeProducer(id);
     }
 
     public async addConsumer(consumer: AbstractConsumer): Promise<void> {
@@ -83,20 +83,20 @@ public async boot(): Promise<void> {
     }
 
     public async updateConsumer(id: ConsumerId, type: string, config: object): Promise<void> {
-        this.removeConsumer(id);
+        await this.removeConsumer(id);
         const consumer = TallyFactory.createConsumer(type, { ...config, id });
         await this.addConsumer(consumer);
     }
 
-    public removeConsumer(id: ConsumerId): void {
+    public async removeConsumer(id: ConsumerId): Promise<void> {
         this.db.deleteConsumer(id);
-        this.orchestrator.removeConsumer(id);
+        await this.orchestrator.removeConsumer(id);
     }
 
     public async shutdown(): Promise<void> {
         for (const id of this.orchestrator.getProducerIds()) {
             try {
-                this.orchestrator.removeProducer(id);
+                await this.orchestrator.removeProducer(id);
             } catch (e) {
                 this.logger.error(`Error destroying producer:`, id, e);
             }
@@ -104,7 +104,7 @@ public async boot(): Promise<void> {
 
         for (const id of this.orchestrator.getConsumerIds()) {
             try {
-                this.orchestrator.removeConsumer(id);
+                await this.orchestrator.removeConsumer(id);
             } catch (e) {
                 this.logger.error(`Error destroying consumer:`, id, e);
             }

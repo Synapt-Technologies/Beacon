@@ -107,9 +107,9 @@ export class AtemNetClientTallyProducer extends AbstractNetClientTallyProducer {
         await this.connect();
     }
 
-    destroy(): Promise<void> {
-        this.disconnect();
-        return this.atem.destroy();
+    async destroy(): Promise<void> {
+        await this.disconnect();
+        await this.atem.destroy();
     }
 
     connect(): Promise<void> {
