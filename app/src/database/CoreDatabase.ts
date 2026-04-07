@@ -63,6 +63,11 @@ export class CoreDatabase {
                 data TEXT NOT NULL,
                 FOREIGN KEY(consumer_id) REFERENCES consumers(id) ON DELETE CASCADE
             );
+
+            CREATE TABLE IF NOT EXISTS settings {
+                key TEXT PRIMARY KEY,
+                value TEXT NOT NULL
+            }
             
         `);
     }
@@ -181,6 +186,27 @@ export class CoreDatabase {
         }
 
         return output;
+    }
+
+    public getSetting<T>(key: string): T | null {
+        const row = this.db.prepare('SELECT value FROM settings WHERE key = ?').get(key) as { value: string } | undefined;
+        if (!row) return null;
+
+        try {
+            return JSON.parse(row.value) as T;
+        } catch {
+            this.logger.error(`Failed to parse setting:`, key);
+            return null;
+        }
+    }
+
+    public setSetting<T>(key: string, value: T): void {
+        const stmt = this.db.prepare(`
+            INSERT INTO settings (key, value)
+            VALUES (?, ?)
+            ON CONFLICT(key) DO UPDATE SET value=excluded.value
+        `);
+        stmt.run(key, JSON.stringify(value));
     }
 
     public static destroy(): void {
