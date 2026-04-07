@@ -1,9 +1,7 @@
 import { EventEmitter } from "events";
 import { AbstractConsumer } from "./consumer/AbstractConsumer";
-import { AedesNetworkConsumer } from "./consumer/networkConsumer/AedesNetworkConsumer";
 import { GlobalSourceTools, type ProducerId, type TallyState } from "./types/ProducerStates";
 import { AbstractTallyProducer, type ProducerInfo } from "./producer/AbstractTallyProducer";
-import { AtemNetClientTallyProducer } from "./producer/networkProducer/AtemNetClientTallyProducer";
 import { DeviceTallyState, type ConsumerId, type TallyDevice } from "./types/ConsumerStates";
 import { Logger } from "../logging/Logger";
 
