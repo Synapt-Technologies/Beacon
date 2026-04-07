@@ -2,10 +2,12 @@ import { TallyLifecycle } from "./tally/TallyLifecycle";
 import { AedesNetworkConsumer } from "./tally/consumer/networkConsumer/AedesNetworkConsumer";
 import { AtemNetClientTallyProducer } from "./tally/producer/networkProducer/AtemNetClientTallyProducer";
 import { Logger } from "./logging/Logger";
+import { AdminServer } from "./admin/AdminServer";
 
 export class AppCore {
 
     private lifecycle: TallyLifecycle;
+    private admin = new AdminServer();
     private logger = new Logger(["CORE"]);
 
     constructor() {
@@ -16,6 +18,7 @@ export class AppCore {
         this.logger.info("Starting Beacon...");
 
         await this.lifecycle.boot();
+        this.admin.start();
 
         // TODO: Remove once the ui can configure producers and consumers.
         if (!this.lifecycle.hasConfig()) {
