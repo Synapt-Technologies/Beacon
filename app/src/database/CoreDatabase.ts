@@ -184,6 +184,7 @@ export class CoreDatabase {
     }
 
     public static destroy(): void {
+        // TODO Strengthen this with a try catch and make sure to handle errors properly.
         if (CoreDatabase.instance) {
             CoreDatabase.instance.logger.info(`Closing database.`);
             CoreDatabase.instance.db.close();
