@@ -17,10 +17,8 @@ export class AppCore {
 
         await this.lifecycle.boot();
 
-        // TODO: Remove test config once admin API / config UI is in place
-        if (this.lifecycle.getOrchestrator().getDevices().size === 0) {
-            await this._setupTestConfig();
-        }
+        // TODO: Remove once the ui can configure producers and consumers.
+        await this._setupTestConfig();
 
         this._registerShutdownHandlers();
 
