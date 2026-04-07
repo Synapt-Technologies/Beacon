@@ -51,11 +51,11 @@ export class AppCore {
     private _registerShutdownHandlers(): void {
         const shutdown = async () => {
             this.logger.info("Shutting down...");
-            // TODO: call destroy on lifecycle once implemented
+            await this.lifecycle.shutdown();
             process.exit(0);
         };
 
-        process.on("SIGINT", shutdown);
-        process.on("SIGTERM", shutdown);
+        process.prependListener("SIGINT", shutdown);
+        process.prependListener("SIGTERM", shutdown);
     }
 }
