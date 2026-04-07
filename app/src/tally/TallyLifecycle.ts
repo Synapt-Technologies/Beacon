@@ -11,7 +11,7 @@ export class TallyLifecycle {
 
     private db = CoreDatabase.getInstance();
     private orchestrator: TallyOrchestrator;
-    private logger = new Logger(["TallyLifecycle"]);
+    private logger = new Logger(["Tally", "Lifecycle"]);
 
     constructor(orchestratorConfig: OrchestratorConfig = {}) {
         this.orchestrator = new TallyOrchestrator(orchestratorConfig);

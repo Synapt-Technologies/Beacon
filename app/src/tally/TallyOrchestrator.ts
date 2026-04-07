@@ -52,9 +52,7 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
         super();
         this.config = { ...TallyOrchestrator.DefaultConfig, ...config };
 
-        this.logger = new Logger([
-            TallyOrchestrator.name
-        ]);
+        this.logger = new Logger(["Tally", "Orchestrator"]);
 
         this.checkConfig(this.config);
         

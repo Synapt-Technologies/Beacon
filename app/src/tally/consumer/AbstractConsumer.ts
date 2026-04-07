@@ -8,7 +8,6 @@ import { ConsumerStore } from "../../database/ConsumerStore";
 export interface ConsumerConfig {
     id: ConsumerId;
     name?: string;
-    parent?: string;
 }
 
 export type ConsumerEvents = {
@@ -30,10 +29,9 @@ export abstract class AbstractConsumer<T extends ConsumerEvents & Record<string,
     protected config: Required<ConsumerConfig>;
 
     // Static + function: Static removes recursion, function makes it so the parent constructor gets the child's values.
-    public static readonly DefaultConfig: Required<ConsumerConfig> = { 
+    public static readonly DefaultConfig: Required<ConsumerConfig> = {
         id: "",
         name: "Consumer",
-        parent: "??",
     };
 
     protected abstract getDefaultConfig(): Required<ConsumerConfig>;
@@ -47,11 +45,7 @@ export abstract class AbstractConsumer<T extends ConsumerEvents & Record<string,
 
         this.config = {...this.getDefaultConfig(), ...config};
 
-        this.logger = new Logger([
-            this.config.parent,
-            this.conType,
-            this.config.name
-        ]);
+        this.logger = new Logger(["Tally", this.conType, this.config.name]);
 
         this.store = new ConsumerStore(this.config.id);
 
@@ -198,4 +192,5 @@ export abstract class AbstractConsumer<T extends ConsumerEvents & Record<string,
     getName(): string {
         return this.config.name;
     }
+
 }

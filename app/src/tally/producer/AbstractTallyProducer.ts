@@ -6,7 +6,6 @@ import { ProducerStore } from "../../database/ProducerStore";
 export interface ProducerConfig {
     id: ProducerId,
     name?: string;
-    parent?: string;
 }
 
 // export enum ProducerType { // Move to AbstractProducer once imp, or probably remove.
@@ -40,10 +39,9 @@ export abstract class AbstractTallyProducer<T extends TallyProducerEvents & Reco
     protected config: Required<ProducerConfig>;
 
     // Static + function: Static removes recursion, function makes it so the parent constructor gets the child's values.
-    public static readonly DefaultConfig: Required<ProducerConfig> = { 
+    public static readonly DefaultConfig: Required<ProducerConfig> = {
         id: "",
-        name: "Producer", // TODO Allow empty values, key is now ID
-        parent: "??", // TODO Needed?
+        name: "Producer",
     };
 
     protected abstract getDefaultConfig(): Required<ProducerConfig>;
@@ -57,12 +55,7 @@ export abstract class AbstractTallyProducer<T extends TallyProducerEvents & Reco
 
         this.config = {...this.getDefaultConfig(), ...config};
 
-        this.logger = new Logger([
-            this.config.parent,
-            this.conType,
-            this.prodType,
-            this.config.name
-        ]);
+        this.logger = new Logger(["Tally", this.conType, this.prodType, this.config.name]);
 
         this.store = new ProducerStore(this.config.id);
 

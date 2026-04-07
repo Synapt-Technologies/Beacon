@@ -6,7 +6,7 @@ import { Logger } from "./logging/Logger";
 export class AppCore {
 
     private lifecycle: TallyLifecycle;
-    private logger = new Logger(["AppCore"]);
+    private logger = new Logger(["CORE"]);
 
     constructor() {
         this.lifecycle = new TallyLifecycle({});
