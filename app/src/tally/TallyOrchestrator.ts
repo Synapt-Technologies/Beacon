@@ -10,11 +10,6 @@ export interface OrchestratorConfig {
     state_on_disconnect?: DeviceTallyState;
 }
 
-export interface ConsumerPackage {
-    cons: AbstractConsumer;
-    locked: boolean;
-}
-
 
 export interface OrchestratorEvents {
     producer_added: [producer: ProducerId, info: ProducerInfo]
@@ -42,7 +37,7 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
 
 
     private producers: Map<string, AbstractTallyProducer> = new Map();
-    private consumers: Map<string, ConsumerPackage> = new Map();
+    private consumers: Map<string, AbstractConsumer> = new Map();
 
     private producerTallyStates: Map<string, TallyState> = new Map();
     private globalTallyState: TallyState = {
@@ -67,26 +62,19 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
 
     }
 
-    addConsumer(consumer: AbstractConsumer, locked: boolean = false): void {
-        this.consumers.set(consumer.getId(), {cons: consumer, locked: locked});
+    addConsumer(consumer: AbstractConsumer): void {
+        this.consumers.set(consumer.getId(), consumer);
         this.emit('consumer_added', consumer.getId());
         this._parseGlobalTally();
     }
 
-    async removeConsumer(id: ConsumerId, override_lock: boolean = false): Promise<void> {
+    async removeConsumer(id: ConsumerId): Promise<void> {
         const consumer = this.consumers.get(id);
         if (!consumer) {
             this.logger.warn(`Attempted to remove unknown consumer:`, id);
             return;
         }
-        if (consumer.locked && !override_lock) {
-            this.logger.warn(`Attempted to remove locked consumer:`, id);
-            return;
-        }
-
-        if (consumer.cons){
-            await consumer.cons.destroy();
-        }
+        await consumer.destroy();
         this.consumers.delete(id);
         this.emit('consumer_removed', id);
     }
@@ -148,7 +136,7 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
         this.globalTallyState = newGlobalTally;
 
         for (const consumer of this.consumers.values()) {
-            consumer.cons.consumeTally(this.globalTallyState);
+            consumer.consumeTally(this.globalTallyState);
         }
     }
 
@@ -172,9 +160,9 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
         const output = new Map();
 
         this.consumers.forEach(consumer => {
-            const devices = consumer.cons.getAvailableDevices();
+            const devices = consumer.getAvailableDevices();
 
-            output.set(consumer.cons.getId(), devices);
+            output.set(consumer.getId(), devices);
         });
 
         return output;
