@@ -110,6 +110,7 @@ public async boot(): Promise<void> {
             }
         }
 
+        CoreDatabase.destroy();
         this.logger.info(`Shutdown complete.`);
     }
 }

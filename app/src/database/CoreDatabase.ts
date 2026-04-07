@@ -24,8 +24,9 @@ export class CoreDatabase {
         this.db.pragma('journal_mode = WAL'); // High-performance mode
         this.init();
         this.logger = new Logger([
-            "CoreDatabase"
+            "DB"
         ]);
+        this.logger.info(`Database initialized at:`, dbPath);
     }
     
     public static getInstance(): CoreDatabase {
@@ -180,6 +181,14 @@ export class CoreDatabase {
         }
 
         return output;
+    }
+
+    public static destroy(): void {
+        if (CoreDatabase.instance) {
+            CoreDatabase.instance.logger.info(`Closing database.`);
+            CoreDatabase.instance.db.close();
+            CoreDatabase.instance = undefined as any;
+        }
     }
 
 }
