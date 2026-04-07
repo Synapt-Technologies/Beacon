@@ -43,7 +43,7 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer {
         if (config.ws_port == null || config.ws_port < 0 || config.ws_port > 65535)
             this.logger.fatal(`Valid websocket Port is required. Submitted config:`, config);
     }
-
+ 
     async init(): Promise<void> {
         this.aedes = await Aedes.createBroker();
         this.server = createServer(this.aedes.handle);
