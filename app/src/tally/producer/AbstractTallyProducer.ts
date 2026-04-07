@@ -82,6 +82,7 @@ export abstract class AbstractTallyProducer<T extends TallyProducerEvents & Reco
     }
 
     abstract init(): void | Promise<void>;
+    abstract destroy(): void | Promise<void>;
     
     protected info: ProducerInfo = {
         update_moment: null,

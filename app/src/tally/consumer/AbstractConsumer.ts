@@ -186,6 +186,7 @@ export abstract class AbstractConsumer<T extends ConsumerEvents & Record<string,
     }
 
     abstract init(): void | Promise<void>;
+    abstract destroy(): void | Promise<void>;
     
     getId(): ConsumerId {
         return this.config.id;
