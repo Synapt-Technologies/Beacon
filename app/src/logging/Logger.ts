@@ -47,10 +47,9 @@ export class Logger {
             fs.mkdirSync(Logger.LOG_DIR, { recursive: true });
         }
 
-        if (Logger.instanceCount === 0) {
+        if (++Logger.instanceCount === 1) {
             this.logToFile(`\n\n-----===== Logger Initialized at ${new Date().toISOString()} =====-----`);
         }
-        Logger.instanceCount++;
     }
 
     private print(level: LogLevel, ...data: any[]) {
