@@ -21,11 +21,19 @@ export class TallyLifecycle {
         return this.orchestrator;
     }
 
+    public getProducers() {
+        return this.db.getProducers();
+    }
+
+    public getConsumers() {
+        return this.db.getConsumers();
+    }
+
     public hasConfig(): boolean {
         return this.db.getProducers().length > 0 || this.db.getConsumers().length > 0;
     }
 
-public async boot(): Promise<void> {
+    public async boot(): Promise<void> {
         const producers = this.db.getProducers();
         for (const { type, config } of producers) {
             try {

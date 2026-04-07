@@ -15,19 +15,50 @@ export class AppCore {
     }
 
     public async start(): Promise<void> {
-        this.logger.info("Starting Beacon...");
 
+        this.logger.info("Starting Beacon...");
+        
+        this._registerShutdownHandlers();
+
+        this._wireAdminServer();
         await this.lifecycle.boot();
-        this.admin.start();
 
         // TODO: Remove once the ui can configure producers and consumers.
         if (!this.lifecycle.hasConfig()) {
             await this._setupTestConfig();
         }
 
-        this._registerShutdownHandlers();
+        this.admin.start();
 
         this.logger.info("Beacon started.");
+    }
+
+    private _wireAdminServer(): void {
+        const orchestrator = this.lifecycle.getOrchestrator();
+
+        const syncState = () => {
+            this.admin.setState({
+                producers: this.lifecycle.getProducers(),
+                consumers: this.lifecycle.getConsumers(),
+            });
+        };
+
+        orchestrator.on("producer_added", syncState);
+        orchestrator.on("producer_removed", syncState);
+        orchestrator.on("consumer_added", syncState);
+        orchestrator.on("consumer_removed", syncState);
+
+        this.admin.on("remove_producer", (id) => {
+            this.lifecycle.removeProducer(id).catch((err) => {
+                this.logger.error("Failed to remove producer:", id, err);
+            });
+        });
+
+        this.admin.on("remove_consumer", (id) => {
+            this.lifecycle.removeConsumer(id).catch((err) => {
+                this.logger.error("Failed to remove consumer:", id, err);
+            });
+        });
     }
 
     private async _setupTestConfig(): Promise<void> {
@@ -60,5 +91,8 @@ export class AppCore {
 
         process.prependListener("SIGINT", shutdown);
         process.prependListener("SIGTERM", shutdown);
+        process.on("exit", () => {});
+        process.on("uncaughtException", (err) => { this.logger.fatal("Uncaught exception", err); });
+        process.on("unhandledRejection", (reason) => { this.logger.fatal("Unhandled rejection", reason); });
     }
 }
