@@ -10,6 +10,8 @@ export class AdminServer {
     public start(port: number = 3000): void {
         this.app.use(express.json());
 
+        ViteExpress.config({ verbosity: ViteExpress.Verbosity.Silent });
+
         // TODO: Register API routes here
 
         ViteExpress.listen(this.app, port, () => {
