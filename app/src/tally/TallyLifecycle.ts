@@ -21,6 +21,10 @@ export class TallyLifecycle {
         return this.orchestrator;
     }
 
+    public hasConfig(): boolean {
+        return this.db.getProducers().length > 0 || this.db.getConsumers().length > 0;
+    }
+
 public async boot(): Promise<void> {
         const producers = this.db.getProducers();
         for (const { type, config } of producers) {
@@ -48,9 +52,19 @@ public async boot(): Promise<void> {
     }
 
     public async addProducer(producer: AbstractTallyProducer): Promise<void> {
+        if (this.orchestrator.hasProducer(producer.getId())) {
+            this.logger.warn(`Producer already exists, skipping add:`, producer.getId());
+            return;
+        }
         this.db.saveProducer(producer);
         await producer.init();
         this.orchestrator.addProducer(producer);
+    }
+
+    public async updateProducer(id: ProducerId, type: string, config: object): Promise<void> {
+        this.removeProducer(id);
+        const producer = TallyFactory.createProducer(type, { ...config, id });
+        await this.addProducer(producer);
     }
 
     public removeProducer(id: ProducerId): void {
@@ -59,9 +73,19 @@ public async boot(): Promise<void> {
     }
 
     public async addConsumer(consumer: AbstractConsumer): Promise<void> {
+        if (this.orchestrator.hasConsumer(consumer.getId())) {
+            this.logger.warn(`Consumer already exists, skipping add:`, consumer.getId());
+            return;
+        }
         this.db.saveConsumer(consumer);
         await consumer.init();
         this.orchestrator.addConsumer(consumer);
+    }
+
+    public async updateConsumer(id: ConsumerId, type: string, config: object): Promise<void> {
+        this.removeConsumer(id);
+        const consumer = TallyFactory.createConsumer(type, { ...config, id });
+        await this.addConsumer(consumer);
     }
 
     public removeConsumer(id: ConsumerId): void {
