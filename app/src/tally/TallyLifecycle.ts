@@ -92,4 +92,24 @@ public async boot(): Promise<void> {
         this.db.deleteConsumer(id);
         this.orchestrator.removeConsumer(id);
     }
+
+    public async shutdown(): Promise<void> {
+        for (const id of this.orchestrator.getProducerIds()) {
+            try {
+                this.orchestrator.removeProducer(id);
+            } catch (e) {
+                this.logger.error(`Error destroying producer:`, id, e);
+            }
+        }
+
+        for (const id of this.orchestrator.getConsumerIds()) {
+            try {
+                this.orchestrator.removeConsumer(id);
+            } catch (e) {
+                this.logger.error(`Error destroying consumer:`, id, e);
+            }
+        }
+
+        this.logger.info(`Shutdown complete.`);
+    }
 }

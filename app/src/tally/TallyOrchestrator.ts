@@ -148,8 +148,16 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
         return this.producers.has(id);
     }
 
+    getProducerIds(): ProducerId[] {
+        return Array.from(this.producers.keys());
+    }
+
     hasConsumer(id: ConsumerId): boolean {
         return this.consumers.has(id);
+    }
+
+    getConsumerIds(): ConsumerId[] {
+        return Array.from(this.consumers.keys());
     }
 
     getDevices(): Map<ConsumerId, Array<TallyDevice>> {
