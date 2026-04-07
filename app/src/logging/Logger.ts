@@ -20,6 +20,7 @@ export class Logger {
     public static GlobalFileLevel: LogLevel = LogLevel.DEBUG;
 
     protected static instanceCount = 0;
+    private static readonly INIT_KEY = Symbol.for("beacon.logger.initialized");
 
     
     private static readonly MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
@@ -47,7 +48,9 @@ export class Logger {
             fs.mkdirSync(Logger.LOG_DIR, { recursive: true });
         }
 
-        if (++Logger.instanceCount === 1) {
+        ++Logger.instanceCount;
+        if (!(globalThis as Record<symbol, boolean>)[Logger.INIT_KEY]) {
+            (globalThis as Record<symbol, boolean>)[Logger.INIT_KEY] = true;
             this.logToFile(`\n\n-----===== Logger Initialized at ${new Date().toISOString()} =====-----`);
         }
     }
