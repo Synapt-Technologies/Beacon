@@ -34,6 +34,10 @@ export class TallyLifecycle {
     }
 
     public async boot(): Promise<void> {
+        
+
+        // TODO load in default aedes and mabbe hardware.
+
         const producers = this.db.getProducers();
         for (const { type, config } of producers) {
             try {
