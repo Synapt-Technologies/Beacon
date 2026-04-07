@@ -15,11 +15,13 @@ export interface OrchestratorConfig {
 
 export interface OrchestratorEvents {
     producer_added: [producer: ProducerId, info: ProducerInfo]
+    producer_removed: [producer: ProducerId];
     producer_connected: [producer: ProducerId];
     producer_disconnected: [producer: ProducerId];
     producer_info: [info: ProducerInfo];
 
     consumer_added: [consumer: ConsumerId];
+    consumer_removed: [consumer: ConsumerId];
 
     device_connected: [device: TallyDevice];
     device_info: [device: TallyDevice];
@@ -65,16 +67,19 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
     }
 
     async addConsumer(consumer: AbstractConsumer) {
-
         this.consumers.set(consumer.getId(), consumer);
-
-        // if (this.producers.size != 0)
+        this.emit('consumer_added', consumer.getId());
         this._parseGlobalTally();
     }
 
-    async addProducer(producer: AbstractTallyProducer) {
+    removeConsumer(id: ConsumerId): void {
+        this.consumers.delete(id);
+        this.emit('consumer_removed', id);
+    }
 
+    async addProducer(producer: AbstractTallyProducer) {
         this.producers.set(producer.getId(), producer);
+        this.emit('producer_added', producer.getId(), producer.getInfo());
 
         producer.on('tally_update', (newState: TallyState) => {
             this.producerTallyStates.set(producer.getId(), newState);
@@ -85,6 +90,13 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
             this.producerTallyStates.delete(producer.getId());
             this._parseGlobalTally();
         });
+    }
+
+    removeProducer(id: ProducerId): void {
+        this.producers.delete(id);
+        this.producerTallyStates.delete(id);
+        this.emit('producer_removed', id);
+        this._parseGlobalTally();
     }
 
     private _parseGlobalTally() {
