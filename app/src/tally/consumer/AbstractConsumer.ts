@@ -2,6 +2,7 @@ import { EventEmitter } from "node:events";
 import { GlobalSourceTools, type GlobalTallySource, type TallyState } from "../types/ProducerStates";
 import { Logger } from "../../logging/Logger";
 import { type ConsumerId, type DeviceAddress, DeviceAlertState, DeviceAlertTarget, type DeviceName, DeviceTallyState, type TallyDevice } from "../types/ConsumerStates";
+import { ConsumerStore } from "../../database/ConsumerStore";
 
 
 export interface ConsumerConfig {
@@ -12,6 +13,7 @@ export interface ConsumerConfig {
 
 export type ConsumerEvents = {
     device_update: [device: TallyDevice];
+    device_removed: [address: DeviceAddress];
 }
 
 // TODO: Maybe IConnection to force getId and get and setName and other shared ops like db?
@@ -20,6 +22,8 @@ export abstract class AbstractConsumer<T extends ConsumerEvents & Record<string,
     protected readonly conType: string = "CONS";
 
     protected logger: Logger;
+
+    protected store: ConsumerStore;
 
     protected devices: Map<string, TallyDevice> = new Map();
 
@@ -48,7 +52,15 @@ export abstract class AbstractConsumer<T extends ConsumerEvents & Record<string,
             this.conType,
             this.config.name
         ]);
-        
+
+        this.store = new ConsumerStore(this.config.id);
+
+        const storedDevices = this.store.loadDevices();
+        if (storedDevices.size > 0) {
+            this.devices = storedDevices;
+            this.logger.debug(`Loaded ${storedDevices.size} stored device(s).`);
+        }
+
         this.checkConfig(this.config);
     }
 
@@ -84,11 +96,10 @@ export abstract class AbstractConsumer<T extends ConsumerEvents & Record<string,
     protected _addDevice(device: TallyDevice) {
 
         device.id.consumer = this.config.id;
+        const key = this.getDeviceKey(device.id);
 
-        this.devices.set(this.getDeviceKey(device.id),
-            device
-        )
-
+        this.devices.set(key, device);
+        this.store.saveDevice(device);
         this.setTallyDevice(device);
     }
     setDeviceName(address: DeviceAddress, name: DeviceName): void {
@@ -101,6 +112,7 @@ export abstract class AbstractConsumer<T extends ConsumerEvents & Record<string,
         }
         
         device.name = name;
+        this.store.saveDevice(device);
         (this as EventEmitter<ConsumerEvents>).emit('device_update', device);
         this.logger.debug(`Device ${key} renamed to: ${name}`);
     }
@@ -114,11 +126,26 @@ export abstract class AbstractConsumer<T extends ConsumerEvents & Record<string,
         }
         
         device.patch = patch;
+        this.store.saveDevice(device);
         this.setTallyDevice(device);
         (this as EventEmitter<ConsumerEvents>).emit('device_update', device);
         this.logger.debug(`Device ${key} set patch to:`, patch);
     }
-    abstract setDeviceAlert(address: DeviceAddress, type: DeviceAlertState, target: DeviceAlertTarget): void; 
+    deleteDevice(address: DeviceAddress): void {
+        const key = this.getDeviceKey(address);
+
+        if (!this.devices.has(key)) {
+            this.logger.warn(`Attempted to delete unknown device at address:`, address);
+            return;
+        }
+
+        this.devices.delete(key);
+        this.store.deleteDevice(address);
+        (this as EventEmitter<ConsumerEvents>).emit('device_removed', address);
+        this.logger.debug(`Device ${key} deleted.`);
+    }
+
+    abstract setDeviceAlert(address: DeviceAddress, type: DeviceAlertState, target: DeviceAlertTarget): void;
     
     protected setTallyDevice(device: TallyDevice): void {
 
