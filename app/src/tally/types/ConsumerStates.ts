@@ -32,7 +32,8 @@ export interface DeviceAddress {
 export enum ConnectionType {
     INTERNAL,
     NETWORK,
-    WIRELESS
+    WIRELESS,
+    VIRTUAL
 }
 
 export interface DeviceName {
