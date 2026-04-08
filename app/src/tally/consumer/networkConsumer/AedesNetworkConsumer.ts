@@ -19,8 +19,8 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer {
         ...AbstractNetworkConsumer.DefaultConfig,
         name: "Aedes",
         port: 1883,
-        keep_alive: true,
-        keep_alive_ms: 1000,
+        broadcast: true,
+        broadcast_ms: 1000,
         serve_tcp: true, // Right term?
         serve_ws: true,
         ws_port: 80,
