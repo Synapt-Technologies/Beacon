@@ -23,7 +23,7 @@ export abstract class AbstractNetworkConsumer<T extends NetworkConsumerEvents = 
         ...AbstractConsumer.DefaultConfig,
         port: -1,
         keep_alive: true,
-        keep_alive_ms: 2000,
+        keep_alive_ms: 500,
         broadcast_all: true,
     };
 
