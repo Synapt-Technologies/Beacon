@@ -20,8 +20,6 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer {
         id: "aedes",
         name: "MQTT Consumer",
         port: 1883,
-        keep_alive: true,
-        keep_alive_ms: 1000,
         serve_tcp: true, // Right term?
         serve_ws: true, // TODO Implement.
         ws_port: 80,
@@ -105,7 +103,7 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer {
         const payload = JSON.stringify({
             program: Array.from(this.tallyState.program),
             preview: Array.from(this.tallyState.preview),
-            ts: Date.now()
+            moment: Date.now()
         });
 
         this.aedes.publish({
@@ -117,6 +115,29 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer {
             retain: true
         }, () => {});
     }
+
+    broadcastKeepAlive(): void {
+        if (!this.aedes) {
+            this.logger.warn("Discarding Keep-Alive: Attempted to send before initialization.");
+            return;
+        }
+
+        const payload = JSON.stringify({
+            moment: Date.now(),
+            system: this.config.system_info
+        });
+
+        this.aedes.publish({
+            cmd: 'publish',
+            qos: 1, // At least once, or more
+            dup: false,
+            topic: 'system/info',
+            payload: Buffer.from(payload),
+            retain: false
+        }, () => {});
+
+    }
+
 
     protected sendTallyDevice(device: TallyDevice): void {
         if (!this.aedes) {

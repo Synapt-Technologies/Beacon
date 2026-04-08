@@ -23,7 +23,7 @@ export abstract class AbstractNetworkConsumer<T extends NetworkConsumerEvents = 
         ...AbstractConsumer.DefaultConfig,
         port: -1,
         keep_alive: true,
-        keep_alive_ms: 1000,
+        keep_alive_ms: 2000,
         broadcast_all: true,
     };
 
@@ -52,12 +52,16 @@ export abstract class AbstractNetworkConsumer<T extends NetworkConsumerEvents = 
 
     abstract broadcastTally(): void;
 
+    abstract broadcastKeepAlive(): void;
+
     init(): void | Promise<void> {
-        // if (this.config.keep_alive) { // TODO add keepalive with server info instead
-        //     this.timer = setInterval(() => {
-        //         this.broadcastTally();
-        //     }, this.config.keep_alive_ms);
-        // }
+
+        if (this.config.keep_alive) { // TODO add keepalive with server info instead
+            this.timer = setInterval(() => {
+                this.broadcastKeepAlive();
+            }, this.config.keep_alive_ms);
+            this.logger.info("Set keep alive at ms:", this.config.keep_alive_ms);
+        }
     }
 
     destroy(): void | Promise<void> {

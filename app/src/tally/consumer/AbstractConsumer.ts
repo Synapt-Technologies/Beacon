@@ -3,11 +3,13 @@ import { GlobalSourceTools, type GlobalTallySource, type TallyState } from "../t
 import { Logger } from "../../logging/Logger";
 import { type ConsumerId, type DeviceAddress, DeviceAlertState, DeviceAlertTarget, type DeviceName, DeviceTallyState, type TallyDevice } from "../types/ConsumerStates";
 import { ConsumerStore } from "../../database/ConsumerStore";
+import type { SystemInfo } from "../../types/SystemInfo";
 
 
 export interface ConsumerConfig {
     id: ConsumerId;
     name?: string;
+    system_info: SystemInfo;
 }
 
 export type ConsumerEvents = {
@@ -32,6 +34,9 @@ export abstract class AbstractConsumer<T extends ConsumerEvents & Record<string,
     public static readonly DefaultConfig: Required<ConsumerConfig> = {
         id: "",
         name: "Consumer",
+        system_info: {
+            name: "Beacon Tally Base"
+        }
     };
 
     protected abstract getDefaultConfig(): Required<ConsumerConfig>;
