@@ -5,7 +5,11 @@ import type { AbstractTallyProducer, ProducerConfig, ProducerInfo } from '../tal
 import { GlobalSourceTools, type SourceInfo } from '../tally/types/ProducerStates';
 import { DeviceTallyState, GlobalDeviceTools, type DeviceAddress, type TallyDevice } from '../tally/types/ConsumerStates';
 import { Logger } from '../logging/Logger';
-import type { AbstractConsumer, ConsumerConfig } from '../tally/consumer/AbstractConsumer';
+
+export enum SettingKey { // TODO: Nested key names? Like consumer->aedes+gpio or something.
+    ConsumerAedes = "consumer.aedes",
+    ConsumerGpio  = "consumer.gpio",
+}
 
 // TODO add more try catch.
 export class CoreDatabase {
@@ -52,16 +56,10 @@ export class CoreDatabase {
             );
 
             
-            CREATE TABLE IF NOT EXISTS consumers (
-                id TEXT PRIMARY KEY,
-                type TEXT NOT NULL,
-                config TEXT NOT NULL
-            );
             CREATE TABLE IF NOT EXISTS consumer_devices (
                 id TEXT PRIMARY KEY,
                 consumer_id TEXT NOT NULL,
-                data TEXT NOT NULL,
-                FOREIGN KEY(consumer_id) REFERENCES consumers(id) ON DELETE CASCADE
+                data TEXT NOT NULL
             );
 
             CREATE TABLE IF NOT EXISTS settings (
@@ -83,9 +81,9 @@ export class CoreDatabase {
         stmt.run(producer.getId(), producer.constructor.name, JSON.stringify(producer.getConfig()));
     }
 
-    public getProducers(): {id: string, type: string, config: ProducerConfig}[] {
-        const rows = this.db.prepare('SELECT * FROM producers').all() as {id: string, type: string, config: string}[];
-        return rows.map(row => ({ ...row, config: JSON.parse(row.config) }));
+    public getProducers(): { type: string, config: ProducerConfig }[] {
+        const rows = this.db.prepare('SELECT * FROM producers').all() as { id: string, type: string, config: string }[];
+        return rows.map(row => ({ type: row.type, config: JSON.parse(row.config) }));
     }
 
     public saveProducerInventory(id: string, info: ProducerInfo) {
@@ -121,23 +119,7 @@ export class CoreDatabase {
         this.db.prepare('DELETE FROM producers WHERE id = ?').run(id);
     }
 
-    // ? Consumer Methods
-    public saveConsumer(consumer: AbstractConsumer): void {
-        const stmt = this.db.prepare(`
-            INSERT INTO consumers (id, type, config)
-            VALUES (?, ?, ?)
-            ON CONFLICT(id) DO UPDATE SET config=excluded.config
-        `);
-        stmt.run(consumer.getId(), consumer.constructor.name, JSON.stringify(consumer.getConfig()));
-    }
-    public getConsumers(): {id: string, type: string, config: ConsumerConfig}[] {
-        const rows = this.db.prepare('SELECT * FROM consumers').all() as {id: string, type: string, config: string}[];
-        return rows.map(row => ({ ...row, config: JSON.parse(row.config) }));
-    }
-
-    public deleteConsumer(id: string): void {
-        this.db.prepare('DELETE FROM consumers WHERE id = ?').run(id);
-    }
+    // ? Consumer Device Methods
 
     public saveConsumerDevices(devices: TallyDevice[]) {
         devices.forEach(device => this.saveConsumerDevice(device));
@@ -188,7 +170,7 @@ export class CoreDatabase {
         return output;
     }
 
-    public getSetting<T>(key: string): T | null {
+    public getSetting<T>(key: SettingKey): T | null {
         const row = this.db.prepare('SELECT value FROM settings WHERE key = ?').get(key) as { value: string } | undefined;
         if (!row) return null;
 
@@ -200,7 +182,7 @@ export class CoreDatabase {
         }
     }
 
-    public setSetting<T>(key: string, value: T): void {
+    public setSetting<T>(key: SettingKey, value: T): void {
         const stmt = this.db.prepare(`
             INSERT INTO settings (key, value)
             VALUES (?, ?)
