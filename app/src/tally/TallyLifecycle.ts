@@ -7,6 +7,7 @@ import { Logger } from "../logging/Logger";
 import { AedesNetworkConsumer, type AedesConsumerConfig } from "./consumer/networkConsumer/AedesNetworkConsumer";
 import { RpiGpioHardwareConsumer, type GpioConsumerConfig } from "./consumer/hardwareConsumer/RpiGpioHardwareConsumer";
 import type { AbstractConsumer, ConsumerConfig } from "./consumer/AbstractConsumer";
+import type { ConsumerId } from "./types/ConsumerStates";
 
 export interface ConsumerSetting<TConfig extends ConsumerConfig = ConsumerConfig> {
     enabled: boolean;
@@ -14,13 +15,13 @@ export interface ConsumerSetting<TConfig extends ConsumerConfig = ConsumerConfig
 }
 
 export interface ConsumerUpdate {
-    id: string;
+    id: ConsumerId;
     enabled?: boolean;
     config?: Partial<ConsumerConfig>;
 }
 
 export interface LifecycleConfig {
-    consumers: Record<string, ConsumerSetting>;
+    consumers: Record<ConsumerId, ConsumerSetting>;
     producers: { type: string; config: ProducerConfig }[];
 }
 
@@ -34,16 +35,16 @@ export class TallyLifecycle {
     private db = CoreDatabase.getInstance();
     private orchestrator: TallyOrchestrator;
     private logger = new Logger(["Tally", "Lifecycle"]);
-    private config: { consumers: Record<string, ConsumerSetting> };
-    private _restarting = new Set<string>();
+    private config: { consumers: Record<ConsumerId, ConsumerSetting> };
+    private _restarting = new Set<ConsumerId>();
 
     // Add a consumer here and in _registry to register it.
-    public static readonly DefaultConfig: Record<string, ConsumerSetting> = {
+    public static readonly DefaultConsumers: Record<ConsumerId, ConsumerSetting> = {
         aedes: { enabled: true,  config: { ...AedesNetworkConsumer.DefaultConfig } },
         gpio:  { enabled: false, config: { ...RpiGpioHardwareConsumer.DefaultConfig } },
     };
 
-    private readonly _registry: Record<string, ConsumerRegistryEntry> = {
+    private readonly _registry: Record<ConsumerId, ConsumerRegistryEntry> = {
         aedes: { settingKey: SettingKey.ConsumerAedes, factory: (c) => new AedesNetworkConsumer(c as AedesConsumerConfig) },
         gpio:  { settingKey: SettingKey.ConsumerGpio,  factory: (c) => new RpiGpioHardwareConsumer(c as GpioConsumerConfig) },
     };
@@ -53,11 +54,11 @@ export class TallyLifecycle {
         this.config = { consumers: this._loadConsumers() };
     }
 
-    private _loadConsumers(): Record<string, ConsumerSetting> {
-        const consumers: Record<string, ConsumerSetting> = {};
+    private _loadConsumers(): Record<ConsumerId, ConsumerSetting> {
+        const consumers: Record<ConsumerId, ConsumerSetting> = {};
         for (const [id, entry] of Object.entries(this._registry)) {
             consumers[id] = this.db.getSetting<ConsumerSetting>(entry.settingKey)
-                ?? TallyLifecycle.DefaultConfig[id];
+                ?? TallyLifecycle.DefaultConsumers[id];
         }
         return consumers;
     }
@@ -152,7 +153,7 @@ export class TallyLifecycle {
         }
     }
 
-    private async _restartConsumer(id: string): Promise<void> {
+    private async _restartConsumer(id: ConsumerId): Promise<void> {
         if (this._restarting.has(id)) {
             this.logger.warn(`Consumer restart already in progress, skipping:`, id);
             return;
@@ -172,7 +173,7 @@ export class TallyLifecycle {
         }
     }
 
-    private async _startConsumer(id: string): Promise<void> {
+    private async _startConsumer(id: ConsumerId): Promise<void> {
         const entry = this._registry[id];
         if (!entry) {
             this.logger.error(`No factory registered for consumer:`, id);
