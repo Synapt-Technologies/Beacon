@@ -160,6 +160,7 @@ export class TallyLifecycle {
         this._restarting.add(id);
         try {
             if (this.orchestrator.hasConsumer(id)) {
+                this.logger.info(`Initialise STOP consumer:`, id);
                 await this.orchestrator.removeConsumer(id);
                 this.logger.info(`Stopped consumer:`, id);
             }
