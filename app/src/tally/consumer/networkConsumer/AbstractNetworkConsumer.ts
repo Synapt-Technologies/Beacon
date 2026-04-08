@@ -61,6 +61,8 @@ export abstract class AbstractNetworkConsumer<T extends NetworkConsumerEvents = 
     }
 
     destroy(): void | Promise<void> {
+        this.logger.debug('Destroying...');
+
         if (this.timer) 
             clearInterval(this.timer);
     }
