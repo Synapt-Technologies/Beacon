@@ -64,10 +64,10 @@ export class CoreDatabase {
                 FOREIGN KEY(consumer_id) REFERENCES consumers(id) ON DELETE CASCADE
             );
 
-            CREATE TABLE IF NOT EXISTS settings {
+            CREATE TABLE IF NOT EXISTS settings (
                 key TEXT PRIMARY KEY,
                 value TEXT NOT NULL
-            }
+            )
             
         `);
     }
