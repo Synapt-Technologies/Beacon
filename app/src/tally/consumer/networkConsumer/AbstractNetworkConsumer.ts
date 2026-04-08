@@ -24,7 +24,7 @@ export abstract class AbstractNetworkConsumer<T extends NetworkConsumerEvents = 
         port: -1,
         keep_alive: true,
         keep_alive_ms: 1000,
-        broadcast_all: false,
+        broadcast_all: true,
     };
 
     protected abstract getDefaultConfig(): Required<NetworkConsumerConfig>;
