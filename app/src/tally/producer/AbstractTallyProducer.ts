@@ -55,7 +55,7 @@ export abstract class AbstractTallyProducer<T extends TallyProducerEvents & Reco
 
         this.config = {...this.getDefaultConfig(), ...config};
 
-        this.logger = new Logger(["Tally", this.conType, this.prodType, this.config.name]);
+        this.logger = new Logger(["Tally", this.conType, this.prodType, this.config.id]);
 
         this.store = new ProducerStore(this.config.id);
 

@@ -45,7 +45,7 @@ export abstract class AbstractConsumer<T extends ConsumerEvents & Record<string,
 
         this.config = {...this.getDefaultConfig(), ...config};
 
-        this.logger = new Logger(["Tally", this.conType, this.config.name]);
+        this.logger = new Logger(["Tally", this.conType, this.config.id]);
 
         this.store = new ConsumerStore(this.config.id);
 
