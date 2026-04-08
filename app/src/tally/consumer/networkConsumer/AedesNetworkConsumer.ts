@@ -79,11 +79,21 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer {
     async destroy(): Promise<void> {
         super.destroy();
 
-        await new Promise<void>((resolve) => {
-            this.server.close(() => resolve());
-        });
+        try {
+
+            await new Promise<void>((resolve) => {
+                this.aedes.close(() => resolve());
+            });
+
+            await new Promise<void>((resolve) => {
+                this.server.close(() => resolve());
+            });
+
+            this.logger.debug('Destroyed successfully.');
+        } catch (err) {
+            this.logger.error('Error during shutdown:', err);
+        }
         
-        await this.aedes.close();
     }
 
     broadcastTally(): void {
