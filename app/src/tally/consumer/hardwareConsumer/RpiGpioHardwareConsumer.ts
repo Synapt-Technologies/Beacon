@@ -45,7 +45,7 @@ const DEFAULT_PINOUT: Record<HardwareVersion, Array<GpioTallyPins>> = {
 }
 
 // TODO MOVE ACTUAL HARDWARE CODE TO ANOTHER LIB? OR SOME SORT OF FACTORY TO PARSE HW VERSION?
-// TODO: HardwareBus.ts?
+// TODO: HardwareBus.ts? or HardwareConsumer that uses a factory to get the right outputs?
 export class RpiGpioHardwareConsumer extends AbstractConsumer {
 
     protected readonly conType = "GPIO";
