@@ -172,7 +172,7 @@ export abstract class AbstractConsumer<T extends ConsumerEvents & Record<string,
     consumeTally(state: TallyState): void {
         this.tallyState = state;
 
-        this.logger.debug('Consumed TallyState:', state);
+        this.logger.debug('Consumed TallyState:', GlobalSourceTools.serialize(state));
 
         for (const device of this.devices.values()) {
             this.setTallyDevice(device);
