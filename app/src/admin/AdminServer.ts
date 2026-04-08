@@ -3,23 +3,24 @@ import express from "express";
 import ViteExpress from "vite-express";
 import { Logger } from "../logging/Logger";
 import type { ProducerConfig } from "../tally/producer/AbstractTallyProducer";
-import type { ConsumerConfig } from "../tally/consumer/AbstractConsumer";
+import type { ConsumerUpdate, LifecycleConfig } from "../tally/TallyLifecycle";
 
 export interface AdminState {
-    producers: { id: string; type: string; config: ProducerConfig }[];
-    consumers: { id: string; type: string; config: ConsumerConfig }[];
+    producers: { type: string; config: ProducerConfig }[];
+    consumers: LifecycleConfig["consumers"];
 }
 
 export interface AdminServerEvents {
     remove_producer: [id: string];
-    remove_consumer: [id: string];
+    update_consumer: [update: ConsumerUpdate];
+    import_config:   [config: LifecycleConfig];
 }
 
 export class AdminServer extends EventEmitter<AdminServerEvents> {
 
     private app = express();
     private logger = new Logger(["ADMIN"]);
-    private state: AdminState = { producers: [], consumers: [] };
+    private state: AdminState = { producers: [], consumers: {} };
 
     public setState(state: AdminState): void {
         this.state = state;
@@ -48,8 +49,22 @@ export class AdminServer extends EventEmitter<AdminServerEvents> {
             res.status(204).send();
         });
 
-        this.app.delete("/api/consumers/:id", (req, res) => {
-            this.emit("remove_consumer", req.params.id);
+        this.app.patch("/api/consumers/:id", (req, res) => {
+            const id = req.params.id;
+            if (id !== "aedes" && id !== "gpio") {
+                res.status(400).json({ error: `Unknown consumer: ${id}` });
+                return;
+            }
+            this.emit("update_consumer", { id, ...req.body } as ConsumerUpdate);
+            res.status(204).send();
+        });
+
+        this.app.get("/api/config/export", (_req, res) => {
+            res.json({ consumers: this.state.consumers, producers: this.state.producers });
+        });
+
+        this.app.post("/api/config/import", (req, res) => {
+            this.emit("import_config", req.body as LifecycleConfig);
             res.status(204).send();
         });
     }

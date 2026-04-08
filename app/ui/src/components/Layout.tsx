@@ -6,6 +6,7 @@ export default function Layout() {
             <nav>
                 <NavLink to="/producers">Producers</NavLink>
                 <NavLink to="/consumers">Consumers</NavLink>
+                <NavLink to="/settings">Settings</NavLink>
             </nav>
             <main>
                 <Outlet />
