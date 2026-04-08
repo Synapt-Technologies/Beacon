@@ -17,7 +17,8 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer {
     
     public static readonly DefaultConfig: Required<AedesConsumerConfig> = {
         ...AbstractNetworkConsumer.DefaultConfig,
-        name: "Aedes",
+        id: "aedes",
+        name: "MQTT Consumer",
         port: 1883,
         keep_alive: true,
         keep_alive_ms: 1000,
