@@ -20,7 +20,6 @@
         "@types/node": "^25.5.0",
         "@types/react": "^19.2.14",
         "@types/react-dom": "^19.2.3",
-        "@types/rpio": "^2",
         "@vitejs/plugin-react": "^6.0.1",
         "react": "^19.2.4",
         "react-dom": "^19.2.4",
@@ -33,8 +32,8 @@
         "atem-connection": "^3.9.0",
         "better-sqlite3": "^12.8.0",
         "express": "^5.2.1",
+        "onoff": "^6.0.3",
         "react-router-dom": "^7.14.0",
-        "rpio": "^2.4.2",
         "vite-express": "^0.22.1"
     }
 }
