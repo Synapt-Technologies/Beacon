@@ -8,9 +8,11 @@ type ConsumersMeta = {
 };
 
 const CONSUMER_META: ConsumersMeta = {
-    aedes: { displayName: "MQTT Broker" },
+    aedes: { displayName: "MQTT Broker" }, // FETCH FROM BACKEND
     gpio:  { displayName: "GPIO Hardware" },
 };
+
+// TODO: make it so consumer info is fetched. Also if it is turned on, and check if turning off fails.
 
 export default function ConsumersPage() {
     const [consumers, setConsumers] = useState<LifecycleConfig["consumers"] | null>(null);
