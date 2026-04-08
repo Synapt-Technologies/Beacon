@@ -1,5 +1,4 @@
 import { TallyLifecycle } from "./tally/TallyLifecycle";
-import { AedesNetworkConsumer } from "./tally/consumer/networkConsumer/AedesNetworkConsumer";
 import { AtemNetClientTallyProducer } from "./tally/producer/networkProducer/AtemNetClientTallyProducer";
 import { Logger } from "./logging/Logger";
 import { AdminServer } from "./admin/AdminServer";
@@ -37,9 +36,10 @@ export class AppCore {
         const orchestrator = this.lifecycle.getOrchestrator();
 
         const syncState = () => {
+            const config = this.lifecycle.getConfig();
             this.admin.setState({
-                producers: this.lifecycle.getProducers(),
-                consumers: this.lifecycle.getConsumers(),
+                producers: config.producers,
+                consumers: config.consumers,
             });
         };
 
@@ -54,9 +54,15 @@ export class AppCore {
             });
         });
 
-        this.admin.on("remove_consumer", (id) => {
-            this.lifecycle.removeConsumer(id).catch((err) => {
-                this.logger.error("Failed to remove consumer:", id, err);
+        this.admin.on("update_consumer", (update) => {
+            this.lifecycle.updateConsumer(update).then(syncState).catch((err) => {
+                this.logger.error("Failed to update consumer:", err);
+            });
+        });
+
+        this.admin.on("import_config", (config) => {
+            this.lifecycle.importConfig(config).then(syncState).catch((err) => {
+                this.logger.error("Failed to import config:", err);
             });
         });
     }
@@ -64,14 +70,7 @@ export class AppCore {
     private async _setupTestConfig(): Promise<void> {
         this.logger.info("No persisted config found, loading test config...");
 
-        const consumer = new AedesNetworkConsumer({
-            id: "aedes",
-            name: "AEDES",
-            keep_alive_ms: 5000,
-            broadcast_all: true,
-        });
-
-        await this.lifecycle.addConsumer(consumer);
+        // Consumers are managed by LifecycleConfig — MQTT broker is enabled by default.
 
         const producer = new AtemNetClientTallyProducer({
             id: "atem1",
