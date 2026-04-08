@@ -9,7 +9,7 @@ import type { SystemInfo } from "../../types/SystemInfo";
 export interface ConsumerConfig {
     id: ConsumerId;
     name?: string;
-    system_info: SystemInfo;
+    system_info: SystemInfo | null;
 }
 
 export type ConsumerEvents = {
@@ -34,8 +34,9 @@ export abstract class AbstractConsumer<T extends ConsumerEvents & Record<string,
     public static readonly DefaultConfig: Required<ConsumerConfig> = {
         id: "",
         name: "Consumer",
+        // system_info: null, // TODO: Remove default system info.
         system_info: {
-            name: "Beacon Tally Base"
+            name: "Beacon-Tally Base"
         }
     };
 
@@ -71,6 +72,8 @@ export abstract class AbstractConsumer<T extends ConsumerEvents & Record<string,
     protected checkConfig(config: ConsumerConfig) {
         if (!config.id || config.id == "")
             this.logger.fatal(`Invalid producer ID provided. Submitted config:`, config);
+        if (config.system_info == null)
+            this.logger.fatal(`System info was not provided. Submitted config:`, config);
     }
 
     protected getDeviceKey(address: DeviceAddress): string {
