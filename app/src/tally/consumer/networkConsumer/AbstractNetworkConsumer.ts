@@ -4,8 +4,8 @@ import type { TallyState } from "../../types/ProducerStates";
 
 export interface NetworkConsumerConfig extends ConsumerConfig {
     port?: number;
-    broadcast?: boolean;
-    broadcast_ms?: number;
+    keep_alive?: boolean;
+    keep_alive_ms?: number;
     broadcast_all?: boolean; // Broadcast all tally states to the /tally topic.
 } 
 
@@ -22,8 +22,8 @@ export abstract class AbstractNetworkConsumer<T extends NetworkConsumerEvents = 
     public static readonly DefaultConfig: Required<NetworkConsumerConfig> = {
         ...AbstractConsumer.DefaultConfig,
         port: -1,
-        broadcast: true,
-        broadcast_ms: 1000,
+        keep_alive: true,
+        keep_alive_ms: 1000,
         broadcast_all: false,
     };
 
@@ -53,10 +53,10 @@ export abstract class AbstractNetworkConsumer<T extends NetworkConsumerEvents = 
     abstract broadcastTally(): void;
 
     init(): void | Promise<void> {
-        // if (this.config.broadcast) { // TODO add keepalive with server info instead
+        // if (this.config.keep_alive) { // TODO add keepalive with server info instead
         //     this.timer = setInterval(() => {
         //         this.broadcastTally();
-        //     }, this.config.broadcast_ms);
+        //     }, this.config.keep_alive_ms);
         // }
     }
 
