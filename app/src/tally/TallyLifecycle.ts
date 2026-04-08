@@ -32,14 +32,15 @@ interface ConsumerRegistryEntry {
 
 export class TallyLifecycle {
 
+    // TODO: HANDLE SYSTEM INFO TO CONSUMERS!
+
     private db = CoreDatabase.getInstance();
     private orchestrator: TallyOrchestrator;
     private logger = new Logger(["Tally", "Lifecycle"]);
     private config: { consumers: Record<ConsumerId, ConsumerSetting> };
     private _restarting = new Set<ConsumerId>();
 
-    // Add a consumer here and in _registry to register it.
-    public static readonly DefaultConsumers: Record<ConsumerId, ConsumerSetting> = {
+    public static readonly DefaultConsumers: Record<ConsumerId, ConsumerSetting> = { // TODO: Move into dynamic info field and create config field.
         aedes: { enabled: true,  config: { ...AedesNetworkConsumer.DefaultConfig } },
         gpio:  { enabled: false, config: { ...RpiGpioHardwareConsumer.DefaultConfig } },
     };
