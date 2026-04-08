@@ -23,7 +23,7 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer {
         keep_alive: true,
         keep_alive_ms: 1000,
         serve_tcp: true, // Right term?
-        serve_ws: true,
+        serve_ws: true, // TODO Implement.
         ws_port: 80,
     };
     
