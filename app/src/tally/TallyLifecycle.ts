@@ -22,7 +22,7 @@ export interface ConsumerUpdate {
 
 export interface LifecycleConfig {
     consumers: Record<ConsumerId, ConsumerSetting>;
-    producers: { type: string; config: ProducerConfig }[];
+    producers: { type: string; config: ProducerConfig }[]; //TODO ProducerType?
 }
 
 interface ConsumerRegistryEntry {
