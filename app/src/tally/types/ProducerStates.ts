@@ -3,6 +3,11 @@
 export type ProducerId = string;
 export type SourceId = string;
 
+export interface ProducerModel {
+    short?: string;
+    long?: string;
+}
+
 export interface GlobalTallySource {
     producer: ProducerId;
     source: SourceId; // TODO Add optional bus info, e.g. aux
