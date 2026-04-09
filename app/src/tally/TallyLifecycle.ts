@@ -248,6 +248,7 @@ export class TallyLifecycle {
             if (entry.enabled) {
 
                 if (!entry.available()) {
+                    this.updateConsumer({ id, enabled: false });
                     this.logger.warn(`Skipping consumer, it is not available on this hardware:`, id);
                     return;
                 }
