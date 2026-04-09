@@ -1,6 +1,5 @@
 import { AbstractConsumer, type ConsumerConfig } from "../AbstractConsumer";
 import { ConnectionType, DeviceTallyState, GlobalDeviceTools, type DeviceAddress, type DeviceAlertState, type DeviceAlertTarget, type DeviceId, type TallyDevice } from "../../types/ConsumerStates";
-import { Gpio } from "onoff";
 import { HardwareVersion } from "../../../types/SystemInfo";
 
 // TODO: check if this is the right GPIO library. Was rpi-gpio before, but it's not updated.
@@ -20,8 +19,8 @@ export interface GpioTallyPins {
 }
 
 interface GpioTallyOutput {
-    program: Gpio,
-    preview: Gpio,
+    program: InstanceType<typeof import('onoff').Gpio>,
+    preview: InstanceType<typeof import('onoff').Gpio>,
 }
 
 
@@ -75,6 +74,8 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
         const pinMap = DEFAULT_PINOUT[this.info.version];
 
         try {
+
+            const { Gpio } = require('onoff') as typeof import('onoff');
 
             for (let i = 0; i < pinMap.length; i++) {
 
