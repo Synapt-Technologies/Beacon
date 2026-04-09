@@ -10,7 +10,10 @@ import { TallyOrchestrator, type OrchestratorConfig } from '../tally/TallyOrches
 
 
 export const SettingKey = {
-    consumers: "consumers",
+    consumers: {
+        aedes: "consumers.aedes",
+        gpio: "consumers.gpio",
+    },
     orchestrator: "orchestrator",
     
 } as const;
@@ -23,7 +26,10 @@ type LeafValues<T> = T extends string
 
 
 interface SettingMap { // ?Note: String if not set.
-    consumers: LifeCycleConsumerConfig;
+    consumers: {
+        aedes: LifeCycleConsumerConfig;
+        gpio: LifeCycleConsumerConfig;
+    }
     orchestrator: OrchestratorConfig;
 }
 
