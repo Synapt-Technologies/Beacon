@@ -47,6 +47,8 @@ export class AppCore {
         orchestrator.on("consumer_added", syncState);
         orchestrator.on("consumer_removed", syncState);
 
+        syncState();
+
         this.admin.on("remove_producer", (id) => {
             this.lifecycle.removeProducer(id).catch((err) => {
                 this.logger.error("Failed to remove producer:", id, err);
