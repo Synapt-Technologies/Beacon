@@ -21,10 +21,6 @@ export interface LifeCycleConsumerConfig<T extends ConsumerConfig = ConsumerConf
     config?: Partial<T>;
 }
 
-type ConsumerRegistry = {
-    [K in keyof ConsumerConfigMap]: LifeCycleConsumerConfig<ConsumerConfigMap[K]>;
-};
-
 type ConsumerConfigMap = {
     aedes: AedesConsumerConfig;
     gpio: GpioConsumerConfig;
@@ -32,8 +28,19 @@ type ConsumerConfigMap = {
 
 type RegisteredConsumerId = keyof ConsumerConfigMap;
 
+type ConsumerMap<Extra extends object = {}> = {
+    [K in keyof ConsumerConfigMap]: LifeCycleConsumerConfig<ConsumerConfigMap[K]> & Extra;
+};
+
+type ConsumerRuntime = {
+    factory: (config: any) => AbstractConsumer;
+    available: () => boolean;
+};
+
+type ConsumerEntryMap = ConsumerMap<ConsumerRuntime>;
+
 export interface LifecycleConfig {
-    consumers?: Required<ConsumerRegistry>;
+    consumers?: ConsumerMap;
     orchestrator?: Partial<OrchestratorConfig>;
 }
 
@@ -46,40 +53,29 @@ export class TallyLifecycle {
 
     // TODO: HANDLE SYSTEM INFO TO CONSUMERS!
 
-    public static DefaultConfig: Required<LifecycleConfig> = {
-        consumers: {
-            aedes: {
-                enabled: true,
-                config: {},
-            },
-            gpio: {
-                enabled: true,
-                config: {},
-            },
-        },
-        orchestrator: {},        
-    }
-
     private db = CoreDatabase.getInstance();
     private orchestrator!: TallyOrchestrator;
     private logger = new Logger(["Tally", "Lifecycle"]);
     private _restarting = new Set<ConsumerId>();
 
-    public config: Required<LifecycleConfig> = TallyLifecycle.DefaultConfig;
     public info: LifeCycleInfo = {};
 
-    private _registry: Record<ConsumerId, { // TODO: Merge with config. Single source of truth.
-        factory:   (config: any) => AbstractConsumer;
-        available: () => boolean;
-    }> = {
-        aedes: { 
-            factory: (config) => new AedesNetworkConsumer(config), 
-            available: () => true 
-        },
-        gpio:  { 
-            factory: (config) => new RpiGpioHardwareConsumer(config), 
-            available: () => this.info.hardware == HardwareVersion.V2 
-        },
+    private _config = {
+        orchestrator: {} as Partial<OrchestratorConfig>,
+        consumers: {
+            aedes: {
+                factory: (config: any) => new AedesNetworkConsumer(config),
+                available: () => true,
+                enabled: true,
+                config: {},
+            },
+            gpio: {
+                factory: (config: any) => new RpiGpioHardwareConsumer(config),
+                available: () => this.info.hardware == HardwareVersion.V2,
+                enabled: true,
+                config: {},
+            },
+        } as ConsumerEntryMap,
     };
 
     constructor() {
@@ -88,26 +84,19 @@ export class TallyLifecycle {
     public async boot(): Promise<void> {
         // this.info = ? // TODO load hw info.
 
-        this.config = { 
-            ...TallyLifecycle.DefaultConfig, 
-            orchestrator: { 
-                ...this.db.getSetting(SettingKey.orchestrator) 
-            }, 
-            consumers: { 
-                aedes: { 
-                    ...TallyLifecycle.DefaultConfig.consumers.aedes,
-                    ...this.db.getSetting(SettingKey.consumers.aedes) 
-                }, 
-                gpio: { 
-                    ...TallyLifecycle.DefaultConfig.consumers.gpio,
-                    ...this.db.getSetting(SettingKey.consumers.gpio) 
-                } 
-            } 
-        };
+        this._config.orchestrator = { ...this.db.getSetting(SettingKey.orchestrator) };
 
-        this.orchestrator = new TallyOrchestrator(this.config.orchestrator);
+        for (const id of Object.keys(this._config.consumers) as RegisteredConsumerId[]) {
+            const stored = this.db.getSetting(SettingKey.consumers[id]);
+            if (stored) {
+                const { enabled, config } = stored;
+                if (enabled !== undefined) this._config.consumers[id].enabled = enabled;
+                if (config !== undefined) this._config.consumers[id].config = config;
+            }
+        }
 
-        
+        this.orchestrator = new TallyOrchestrator(this._config.orchestrator);
+
         for (const { type, config } of this.db.getProducers()) {
             try {
                 const producer = TallyFactory.createProducer(type, config);
@@ -118,24 +107,21 @@ export class TallyLifecycle {
                 this.logger.error(`Failed to restore producer: ${config.id} (${type})`, e);
             }
         }
-        
+
         await this._loadConsumers();
-        this.logger.info(`TallyLifecycle initialized with config:`, this.config, `and info:`, this.info);
+        this.logger.info(`TallyLifecycle initialized with config:`, this.getConfig(), `and info:`, this.info);
     }
 
 
     public getRegisteredConsumer(id: ConsumerId): RegisteredConsumerId | null {
-        if (id in this.config.consumers) 
-            return id as keyof typeof this.config.consumers;
-
+        if (id in this._config.consumers)
+            return id as RegisteredConsumerId;
         return null;
     }
 
     private async _loadConsumers(): Promise<void> {
-        for (const [id, setting] of Object.entries(this.config.consumers)) {
-            if (!setting?.enabled)
-                continue;
-
+        for (const id of Object.keys(this._config.consumers) as RegisteredConsumerId[]) {
+            if (!this._config.consumers[id].enabled) continue;
             await this._restartConsumer(id);
         }
     }
@@ -154,7 +140,10 @@ export class TallyLifecycle {
     // ? Config methods
 
     public getConfig(): LifecycleConfig {
-        return this.config;
+        return {
+            consumers: this._config.consumers as ConsumerMap,
+            orchestrator: this._config.orchestrator,
+        };
     }
 
     // public async importConfig(config: LifecycleConfig): Promise<void> {
@@ -222,15 +211,11 @@ export class TallyLifecycle {
             return;
         }
 
-        const currentConfig = this.config.consumers[id] ?? {};
-        const updatedConfig = { 
-            enabled: update.enabled ?? currentConfig.enabled, 
-            config: { ...currentConfig.config, ...update.config } 
-        };
+        const entry = this._config.consumers[id];
+        entry.enabled = update.enabled ?? entry.enabled;
+        entry.config = { ...entry.config, ...update.config };
 
-
-        this.config.consumers[id] = updatedConfig;
-        this.db.setSetting(SettingKey.consumers[id], updatedConfig);
+        this.db.setSetting(SettingKey.consumers[id], { enabled: entry.enabled, config: entry.config });
 
         await this._restartConsumer(update.id);
 
@@ -259,18 +244,15 @@ export class TallyLifecycle {
                 await this.orchestrator.removeConsumer(id);
                 this.logger.info(`Stopped consumer:`, id);
             }
-            if ((this.config.consumers as ConsumerRegistry)[id]?.enabled) {
-                
-                const entry = this._registry[id];
+            const entry = this._config.consumers[id];
+            if (entry.enabled) {
 
-                
                 if (!entry.available()) {
                     this.logger.warn(`Skipping consumer, it is not available on this hardware:`, id);
                     return;
                 }
 
-                const { config } = this.config.consumers[id];
-                const consumer = entry.factory(config);
+                const consumer = entry.factory(entry.config);
 
                 await consumer.init();
                 
