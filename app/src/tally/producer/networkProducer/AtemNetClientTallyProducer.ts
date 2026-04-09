@@ -1,7 +1,7 @@
 import { Atem, type AtemState } from "atem-connection";
 import { AbstractNetClientTallyProducer, type NetClientProducerConfig, type NetClientProducerInfo } from "./AbstractNetClientTallyProducer";
 import { Enums as AtemEnums } from "atem-connection";
-import { GlobalSourceTools, type ProducerModel, type SourceMap, type TallyState } from "../../types/ProducerStates";
+import { GlobalSourceTools, type ProducerModel, type SourceInfo, type SourceMap, type TallyState } from "../../types/ProducerStates";
 
 
 export interface AtemNetClientProducerConfig extends NetClientProducerConfig {
@@ -51,7 +51,7 @@ export class AtemNetClientTallyProducer extends AbstractNetClientTallyProducer {
         this.atem.on('connected', () => {
             this.info.connected = true;
             this.info.update_moment = Date.now();
-            // this.info.state = this.atem.state ?? null; // TODO: Check if needed, or should be parsed
+            this.info.state = this.atem.state ?? null;
             this.info.model =  this._parseModel();
             this.info.sources = this._parseSources();
 
@@ -73,6 +73,8 @@ export class AtemNetClientTallyProducer extends AbstractNetClientTallyProducer {
         this.atem.on('stateChanged', (state, pathToChange) => {
             this.info.state = state;
             let infoChange: boolean = false;
+
+            this.logger.debug("State Changed. Path:", pathToChange);
 
             // TODO: Add AUX support and check if this fully covers. Maybe startswith?
             if (pathToChange.some(p => p.includes('video.mixEffects') || p.includes('video.downstreamKeyers'))) {
@@ -162,7 +164,7 @@ export class AtemNetClientTallyProducer extends AbstractNetClientTallyProducer {
     }
 
     protected _parseModel(): ProducerModel {
-        if (!this.info.state || !(this.info.state.info.model || this.info.state.info.productIdentifier) || !this.info.connected) {
+        if (!this.info.state || !this.info.connected) {
             return this.info.model;
         } 
         return {
@@ -172,24 +174,26 @@ export class AtemNetClientTallyProducer extends AbstractNetClientTallyProducer {
     }
 
     protected _parseSources(): SourceMap {
-        const sources = new Map();
-        
-        if (!this.info.state || !this.info.connected) 
+        let sources: SourceMap = new Map();
+
+        if (!this.info.state || !this.info.connected){
             return sources;
-
-
+        }
 
         for (const [id, input] of Object.entries(this.info.state.inputs)) {
             if (!input) continue;
-
+            
             const globalKey = GlobalSourceTools.create(this.config.id, id);
             
-            sources.set(globalKey, {
+            const sourceInfo: SourceInfo = {
                 source: { producer: this.config.id, source: id },
-                // Use the raw 'id' for the fallback labels, not the globalKey
                 short: input.shortName || `${id}`,
                 long: input.longName || `Input ${id}`,
-            });
+            }
+
+            // this.logger.debug(`Parsing source. ID: ${globalKey}, info:`, sourceInfo);
+            
+            sources.set(globalKey, sourceInfo);
         }
         
         return sources;
