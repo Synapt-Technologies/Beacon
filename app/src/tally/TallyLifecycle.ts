@@ -302,7 +302,6 @@ export class TallyLifecycle {
                 this.logger.error(`Error destroying consumer:`, id, e);
             }
         }
-        CoreDatabase.destroy();
         this.logger.info(`Shutdown complete.`);
     }
 }

@@ -2,6 +2,7 @@ import { TallyLifecycle } from "./tally/TallyLifecycle";
 import { AtemNetClientTallyProducer } from "./tally/producer/networkProducer/AtemNetClientTallyProducer";
 import { Logger } from "./logging/Logger";
 import { AdminServer } from "./admin/AdminServer";
+import { CoreDatabase } from "./database/CoreDatabase";
 
 export class AppCore {
 
@@ -86,12 +87,13 @@ export class AppCore {
         const shutdown = async () => {
             this.logger.info("Shutting down...");
             await this.lifecycle.shutdown();
+            CoreDatabase.destroy();
             process.exit(0);
         };
 
         process.prependListener("SIGINT", shutdown);
         process.prependListener("SIGTERM", shutdown);
-        process.on("exit", () => {});
+        process.on("exit", () => { CoreDatabase.destroy(); }); // Sync safety net — covers crashes and paths that bypass shutdown()
         process.on("uncaughtException", (err) => { this.logger.fatal("Uncaught exception", err); });
         process.on("unhandledRejection", (reason) => { this.logger.fatal("Unhandled rejection", reason); });
     }
