@@ -123,6 +123,15 @@ export class AtemNetClientTallyProducer extends AbstractNetClientTallyProducer {
         return this.atem.disconnect();
     }
 
+    getInfo(): AtemNetClientProducerInfo { // TODO also map fields in super and combine in each child.
+        return {
+            update_moment: this.info.update_moment,
+            model: this.info.model,
+            sources: this.info.sources,
+            connected: this.info.connected,
+        } as AtemNetClientProducerInfo;
+    }
+
     protected _parseTallystate(): void { 
             
         this.tallyState.moment = Date.now();
