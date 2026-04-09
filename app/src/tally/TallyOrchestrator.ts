@@ -92,6 +92,10 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
             this.producerTallyStates.delete(producer.getId());
             this._parseGlobalTally();
         });
+
+        producer.on('info_update', (newInfo: ProducerInfo) => {
+            this.emit('producer_info', newInfo);
+        });
     }
 
     async removeProducer(id: ProducerId): Promise<void> {

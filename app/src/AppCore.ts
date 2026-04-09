@@ -47,6 +47,7 @@ export class AppCore {
         orchestrator.on("producer_removed", syncState);
         orchestrator.on("consumer_added", syncState);
         orchestrator.on("consumer_removed", syncState);
+        orchestrator.on("producer_info", syncState);
 
         syncState();
 
