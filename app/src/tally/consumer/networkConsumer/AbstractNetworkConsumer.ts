@@ -60,7 +60,7 @@ export abstract class AbstractNetworkConsumer<T extends NetworkConsumerEvents = 
             this.timer = setInterval(() => {
                 this.broadcastKeepAlive();
             }, this.config.keep_alive_ms);
-            this.logger.info("Set keep alive at ms:", this.config.keep_alive_ms);
+            this.logger.debug("Started keep alive at ms:", this.config.keep_alive_ms);
         }
     }
 
