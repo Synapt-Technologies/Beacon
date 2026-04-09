@@ -109,8 +109,7 @@ export class TallyLifecycle {
 
         this.orchestrator = new TallyOrchestrator(this.config.orchestrator);
 
-        this._loadConsumers();
-
+        
         for (const { type, config } of this.db.getProducers()) {
             try {
                 const producer = TallyFactory.createProducer(type, config);
@@ -121,11 +120,8 @@ export class TallyLifecycle {
                 this.logger.error(`Failed to restore producer: ${config.id} (${type})`, e);
             }
         }
-
-        for (const [id, setting] of Object.entries(this.config.consumers)) {
-            if (this._registry[id as ConsumerId].available() && setting.enabled) await this._startConsumer(id);
-        }
         
+        await this._loadConsumers();
         this.logger.info(`TallyLifecycle initialized with config:`, this.config, `and info:`, this.info);
     }
 
@@ -137,16 +133,17 @@ export class TallyLifecycle {
         return null;
     }
 
-    private _loadConsumers(): void {
+    private async _loadConsumers(): Promise<void> {
         for (const [id, setting] of Object.entries(this.config.consumers)) {
             const entry = this._registry[id as ConsumerId];
+            if (!setting?.enabled)
+                continue;
             if (!entry.available()) {
                 this.logger.info(`Skipping consumer, it is not available on this hardware:`, id);
                 continue;
             }
-            if (setting?.enabled) {
-                this.orchestrator.addConsumer(entry.factory(setting.config ?? {}));
-            }
+
+            await this._restartConsumer(id);
         }
     }
 
@@ -265,37 +262,26 @@ export class TallyLifecycle {
                 this.logger.info(`Stopped consumer:`, id);
             }
             if ((this.config.consumers as ConsumerRegistry)[id]?.enabled) {
-                await this._startConsumer(id);
+                
+                const entry = this._registry[id];
+                if (!entry) {
+                    this.logger.error(`No factory registered for consumer:`, id);
+                    return;
+                }
+
+                const { config } = this.config.consumers[id];
+                const consumer = entry.factory(config);
+
+                await consumer.init();
+                
+                this.orchestrator.addConsumer(consumer);
+
+                this.logger.info(`Started consumer:`, id);
             }
+        } catch (e) {
+            this.logger.error(`Failed to (re)-start consumer:`, id, e);
         } finally {
             this._restarting.delete(id);
-        }
-    }
-
-    private async _startConsumer(consumerId: ConsumerId): Promise<void> {
-
-        
-        const id = this.isRegisterdConsumer(consumerId);
-
-        if (!id) {
-            this.logger.warn(`Unknown consumer ID, skipping update:`, id);
-            return;
-        }
-
-        const entry = this._registry[id];
-        if (!entry) {
-            this.logger.error(`No factory registered for consumer:`, id);
-            return;
-        }
-        
-        const { config } = this.config.consumers[id];
-        try {
-            const consumer = entry.factory(config);
-            await consumer.init();
-            this.orchestrator.addConsumer(consumer);
-            this.logger.info(`Started consumer:`, id);
-        } catch (e) {
-            this.logger.error(`Failed to start consumer:`, id, e);
         }
     }
 
