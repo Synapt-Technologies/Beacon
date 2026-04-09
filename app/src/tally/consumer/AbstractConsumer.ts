@@ -7,9 +7,9 @@ import type { SystemInfo } from "../../types/SystemInfo";
 
 
 export interface ConsumerConfig {
-    id: ConsumerId;
+    id?: ConsumerId;
     name?: string;
-    system_info: SystemInfo | null;
+    system_info?: SystemInfo;
 }
 
 export type ConsumerEvents = {
