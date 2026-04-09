@@ -44,6 +44,11 @@ type ConsumerExport = {
 type ConsumerEntryMap    = ConsumerMap<ConsumerRuntime>;
 type ConsumerExportMap   = ConsumerMap<ConsumerExport>;
 
+type LifecycleConfigInternal = {
+    consumers: ConsumerEntryMap;
+    orchestrator: Partial<OrchestratorConfig>;
+};
+
 export interface LifecycleConfig {
     consumers?: ConsumerExportMap;
     orchestrator?: Partial<OrchestratorConfig>;
@@ -65,7 +70,7 @@ export class TallyLifecycle {
 
     public info: LifeCycleInfo = {};
 
-    private _config = {
+    private _config: LifecycleConfigInternal = {
         orchestrator: {} as Partial<OrchestratorConfig>,
         consumers: {
             aedes: {
@@ -146,10 +151,10 @@ export class TallyLifecycle {
 
     public getConfig(): LifecycleConfig {
         const consumers = Object.fromEntries(
-            Object.entries(this._config.consumers).map(([id, entry]) => [
-                id,
-                { enabled: entry.enabled, config: entry.config, available: entry.isAvailable() },
-            ])
+            Object.entries(this._config.consumers).map(([id, entry]) => {
+                const { factory: _, isAvailable, ...rest } = entry;
+                return [id, { ...rest, available: isAvailable() }];
+            })
         ) as ConsumerExportMap;
 
         return {
