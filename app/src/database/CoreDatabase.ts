@@ -5,12 +5,52 @@ import type { AbstractTallyProducer, ProducerConfig, ProducerInfo } from '../tal
 import { GlobalSourceTools, type SourceInfo } from '../tally/types/ProducerStates';
 import { DeviceTallyState, GlobalDeviceTools, type DeviceAddress, type TallyDevice } from '../tally/types/ConsumerStates';
 import { Logger } from '../logging/Logger';
+import type { LifecycleConfig } from '../tally/TallyLifecycle';
 
-export enum SettingKey { // TODO: Nested key names? Like consumer->aedes+gpio or something.
-    ConsumerAedes = "consumer.aedes",
-    ConsumerGpio  = "consumer.gpio",
+
+export const SettingKey = {
+    consumer: {
+        aedes: {
+            enabled: "consumer.aedes.enabled",
+            host:    "consumer.aedes.host",
+            port:    "consumer.aedes.port",
+        },
+        gpio: {
+            enabled: "consumer.gpio.enabled",
+            pin:     "consumer.gpio.pin",
+        },
+    },
+} as const;
+
+export type SettingKey = LeafValues<typeof SettingKey>;
+
+type LeafValues<T> = T extends string
+    ? T
+    : { [K in keyof T]: LeafValues<T[K]> }[keyof T];
+
+
+interface SettingMap { // ?Note: String if not set.
+    consumer: {
+        aedes: {
+            enabled: boolean;
+            host:    string;
+            port:    number;
+        };
+        gpio: {
+            enabled: boolean;
+            pin:     number;
+        };
+    };
 }
 
+type SettingType<K extends string, T = SettingMap> =
+    K extends `${infer Head}.${infer Tail}`
+        ? Head extends keyof T ? SettingType<Tail, T[Head]> : never
+        : K extends keyof T ? T[K] : never;
+
+
+
+        
 // TODO add more try catch.
 export class CoreDatabase {
     private static instance: CoreDatabase;
