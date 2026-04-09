@@ -41,6 +41,9 @@ export class AppCore {
                 producers: this.lifecycle.getProducers(),
                 consumers: config.consumers,
             });
+            this.logger.debug("Received producer update from lifecycle:", this.lifecycle.getProducers());
+            // this.logger.debug("NEW SOURCES:", this.lifecycle.getProducers().map(p => Array.from(p.info.sources.entries())));
+
         };
 
         orchestrator.on("producer_added", syncState);
