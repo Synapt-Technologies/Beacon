@@ -10,7 +10,7 @@ export class AppCore {
     private logger = new Logger(["CORE"]);
 
     constructor() {
-        this.lifecycle = new TallyLifecycle({});
+        this.lifecycle = new TallyLifecycle();
     }
 
     public async start(): Promise<void> {
@@ -18,9 +18,8 @@ export class AppCore {
         this.logger.info("Starting Beacon...");
         
         this._registerShutdownHandlers();
-
-        this._wireAdminServer();
         await this.lifecycle.boot();
+        this._wireAdminServer();
 
         // TODO: Remove once the ui can configure producers and consumers.
         if (!this.lifecycle.hasConfig()) {
@@ -38,7 +37,7 @@ export class AppCore {
         const syncState = () => {
             const config = this.lifecycle.getConfig();
             this.admin.setState({
-                producers: config.producers,
+                producers: this.lifecycle.getProducers(),
                 consumers: config.consumers,
             });
         };
@@ -60,11 +59,11 @@ export class AppCore {
             });
         });
 
-        this.admin.on("import_config", (config) => {
-            this.lifecycle.importConfig(config).then(syncState).catch((err) => {
-                this.logger.error("Failed to import config:", err);
-            });
-        });
+        // this.admin.on("import_config", (config) => {
+        //     this.lifecycle.importConfig(config).then(syncState).catch((err) => {
+        //         this.logger.error("Failed to import config:", err);
+        //     });
+        // });
     }
 
     private async _setupTestConfig(): Promise<void> {
