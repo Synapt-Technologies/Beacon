@@ -20,7 +20,7 @@ export class AdminServer extends EventEmitter<AdminServerEvents> {
 
     private app = express();
     private logger = new Logger(["ADMIN"]);
-    private state: AdminState = { producers: [], consumers: {} };
+    private state: AdminState = { producers: [], consumers: undefined };
 
     public setState(state: AdminState): void {
         this.state = state;
