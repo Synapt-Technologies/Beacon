@@ -39,7 +39,9 @@ export default function ConsumersPage() {
             <h1>Consumers</h1>
             {(Object.keys(CONSUMER_META) as ConsumerKey[]).map((id) => {
                 const { displayName } = CONSUMER_META[id];
-                const { enabled } = consumers[id];
+                const consumer = consumers[id];
+                if (!consumer) return null;
+                const { enabled } = consumer;
                 return (
                     <div key={id}>
                         <h2>{displayName}</h2>
