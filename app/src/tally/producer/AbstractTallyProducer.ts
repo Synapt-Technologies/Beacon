@@ -1,5 +1,5 @@
 import { EventEmitter } from "node:events";
-import type { ProducerId, TallyState, SourceMap } from "../types/ProducerStates";
+import type { ProducerId, TallyState, SourceMap, ProducerModel } from "../types/ProducerStates";
 import { Logger } from "../../logging/Logger";
 import { ProducerStore } from "../../database/ProducerStore";
 
@@ -16,7 +16,7 @@ export interface ProducerConfig {
 // }
 export interface ProducerInfo {
     update_moment: number | null;
-    model: string;
+    model: ProducerModel;
     sources: SourceMap;
     // Todo add multi bus support.
 }
@@ -77,9 +77,12 @@ export abstract class AbstractTallyProducer<T extends TallyProducerEvents & Reco
     abstract init(): void | Promise<void>;
     abstract destroy(): void | Promise<void>;
     
-    protected info: ProducerInfo = {
+    protected info: ProducerInfo = { // TODO make partial?
         update_moment: null,
-        model: "UNKNOWN",
+        model: {
+            short: "UNKNOWN",
+            long: "Unknown Model"
+        },
         sources: new Map(),
     };
 
@@ -111,7 +114,7 @@ export abstract class AbstractTallyProducer<T extends TallyProducerEvents & Reco
         return this.info.sources;
     }
 
-    getModel(): string {
+    getModel(): ProducerModel {
         return this.info.model;
     }
 

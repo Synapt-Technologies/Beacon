@@ -1,14 +1,16 @@
 import { Atem, type AtemState } from "atem-connection";
 import { AbstractNetClientTallyProducer, type NetClientProducerConfig, type NetClientProducerInfo } from "./AbstractNetClientTallyProducer";
 import { Enums as AtemEnums } from "atem-connection";
-import { GlobalSourceTools, type SourceMap, type TallyState } from "../../types/ProducerStates";
+import { GlobalSourceTools, type ProducerModel, type SourceMap, type TallyState } from "../../types/ProducerStates";
 
 
 export interface AtemNetClientProducerConfig extends NetClientProducerConfig {
     // me: number[] | null; //TODO
 }
 
-export interface AtemNetClientProducerInfo extends NetClientProducerInfo {
+interface AtemNetClientProducerInfo extends NetClientProducerInfo {
+}
+export interface AtemNetClientProducerInfoInternal extends NetClientProducerInfo {
     state: AtemState | null;
 }
 
@@ -29,7 +31,7 @@ export class AtemNetClientTallyProducer extends AbstractNetClientTallyProducer {
 
     private atem: Atem;
 
-    protected declare info: AtemNetClientProducerInfo;
+    protected declare info: AtemNetClientProducerInfoInternal;  // TODO make partial?
 
     constructor(config: AtemNetClientProducerConfig) {
         super(config);
@@ -49,8 +51,8 @@ export class AtemNetClientTallyProducer extends AbstractNetClientTallyProducer {
         this.atem.on('connected', () => {
             this.info.connected = true;
             this.info.update_moment = Date.now();
-            this.info.state = this.atem.state ?? null; // TODO: Add more state checking for this.
-            this.info.model = this._parseModel();
+            // this.info.state = this.atem.state ?? null; // TODO: Check if needed, or should be parsed
+            this.info.model =  this._parseModel();
             this.info.sources = this._parseSources();
 
             this.emit('connected');
@@ -79,14 +81,14 @@ export class AtemNetClientTallyProducer extends AbstractNetClientTallyProducer {
 
             // TODO: add check for path
             // TODO: Change the way unkown is stored and checked.
-            if (!this.info.model || this.info.model === "UNKNOWN") {
+            if (!this.info.model || this.info.model.short === "UNKNOWN") {
                 this.info.model = this._parseModel();
                 infoChange = true;
-                this.logger.info(`Updated model:`, this.info.sources);
+                this.logger.info(`Updated model:`, this.info.model);
             }
 
-            // TODO: check if this fully covers.
-            if (!this.info.sources || pathToChange.some(p => p.includes('inputs'))) {
+            // TODO: Doesn't full cover, sources are empty.
+            if (!this.info.sources || this.info.sources.size == 0 || pathToChange.some(p => p.includes('inputs'))) {
                 this.info.sources = this._parseSources();
                 infoChange = true;
                 this.logger.info(`Updated sources:`, this.info.sources);
@@ -159,11 +161,14 @@ export class AtemNetClientTallyProducer extends AbstractNetClientTallyProducer {
         }
     }
 
-    protected _parseModel(): string {
-        if (!this.info.state || !this.info.state.info.model || !this.info.connected) {
+    protected _parseModel(): ProducerModel {
+        if (!this.info.state || !(this.info.state.info.model || this.info.state.info.productIdentifier) || !this.info.connected) {
             return this.info.model;
         } 
-        return AtemEnums.Model[this.info.state.info.model];
+        return {
+            short: AtemEnums.Model[this.info.state.info.model],
+            long: this.info.state.info.productIdentifier,
+        };
     }
 
     protected _parseSources(): SourceMap {
@@ -197,8 +202,4 @@ export class AtemNetClientTallyProducer extends AbstractNetClientTallyProducer {
 
     }
 
-    getModel(): string {
-        return this.info.model;
-    }
-    
 }
