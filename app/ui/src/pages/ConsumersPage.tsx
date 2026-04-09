@@ -41,18 +41,23 @@ export default function ConsumersPage() {
                 const { displayName } = CONSUMER_META[id];
                 const consumer = consumers[id];
                 if (!consumer) return null;
-                const { enabled } = consumer;
+                const { enabled, available } = consumer;
                 return (
                     <div key={id}>
                         <h2>{displayName}</h2>
+                        {available ? (
                         <label>
                             <input
                                 type="checkbox"
                                 checked={enabled}
+                                disabled={!available}
                                 onChange={(e) => toggle(id, e.target.checked)}
                             />
                             {enabled ? "Enabled" : "Disabled"}
                         </label>
+                        ) : (
+                            <small>Not available on this hardware.</small>
+                        )}
                     </div>
                 );
             })}
