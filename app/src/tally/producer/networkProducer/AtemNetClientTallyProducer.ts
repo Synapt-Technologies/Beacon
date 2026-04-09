@@ -177,12 +177,6 @@ export class AtemNetClientTallyProducer extends AbstractNetClientTallyProducer {
         if (!this.info.state || !this.info.connected) 
             return sources;
 
-        const getLabel = (id: string, label: string) => {
-            if (label) return label;
-            if (id === '0') return 'BLK';
-            if (id === '1000') return 'BARS';
-            return id;
-        }
 
 
         for (const [id, input] of Object.entries(this.info.state.inputs)) {
@@ -193,8 +187,8 @@ export class AtemNetClientTallyProducer extends AbstractNetClientTallyProducer {
             sources.set(globalKey, {
                 source: { producer: this.config.id, source: id },
                 // Use the raw 'id' for the fallback labels, not the globalKey
-                short: getLabel(id, input.shortName) || `${id}`,
-                long: getLabel(id, input.longName) || `Input ${id}`,
+                short: input.shortName || `${id}`,
+                long: input.longName || `Input ${id}`,
             });
         }
         
