@@ -35,10 +35,12 @@ type ConsumerMap<Extra extends object = {}> = {
 type ConsumerRuntime = {
     factory: (config: any) => AbstractConsumer;
     isAvailable: () => boolean;
+    isDisableable: () => boolean;
 };
 
 type ConsumerExport = {
     available: boolean;
+    disableable: boolean;
 };
 
 type ConsumerEntryMap    = ConsumerMap<ConsumerRuntime>;
@@ -76,12 +78,14 @@ export class TallyLifecycle {
             aedes: {
                 factory: (config: any) => new AedesNetworkConsumer(config),
                 isAvailable: () => true,
+                isDisableable: () => false,
                 enabled: true,
                 config: {},
             },
             gpio: {
                 factory: (config: any) => new RpiGpioHardwareConsumer(config),
                 isAvailable: () => this.info.hardware == HardwareVersion.V2,
+                isDisableable: () => true,
                 enabled: true,
                 config: {},
             },
@@ -152,8 +156,8 @@ export class TallyLifecycle {
     public getConfig(): LifecycleConfig {
         const consumers = Object.fromEntries(
             Object.entries(this._config.consumers).map(([id, entry]) => {
-                const { factory: _, isAvailable, ...rest } = entry;
-                return [id, { ...rest, available: isAvailable() }];
+                const { factory: _, isAvailable, isDisableable, ...rest } = entry;
+                return [id, { ...rest, available: isAvailable(), disableable: isDisableable() }];
             })
         ) as ConsumerExportMap;
 
@@ -229,6 +233,12 @@ export class TallyLifecycle {
         }
 
         const entry = this._config.consumers[id];
+
+        if (update.enabled === false && !entry.isDisableable()) {
+            this.logger.warn(`Consumer cannot be disabled:`, id);
+            return;
+        }
+
         entry.enabled = update.enabled ?? entry.enabled;
         entry.config = { ...entry.config, ...update.config };
 
