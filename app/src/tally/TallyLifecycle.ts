@@ -97,6 +97,8 @@ export class TallyLifecycle {
 
     public async boot(): Promise<void> {
         // this.info = ? // TODO load hw info.
+        this.logger.info(`Initializing TallyLifecycle...`);
+
 
         this._config.orchestrator = { ...this.db.getSetting(SettingKey.orchestrator) };
 
@@ -123,7 +125,8 @@ export class TallyLifecycle {
         }
 
         await this._loadConsumers();
-        this.logger.info(`TallyLifecycle initialized with config:`, this.getConfig(), `and info:`, this.info);
+        this.logger.info(`Finished initializing TallyLifecycle successfully.`);
+        this.logger.debug(`TallyLifecycle initialized with config:`, this.getConfig(), `and info:`, this.info);
     }
 
 
