@@ -1,17 +1,17 @@
 import { AbstractConsumer, type ConsumerConfig } from "../AbstractConsumer";
 import { ConnectionType, DeviceTallyState, GlobalDeviceTools, type DeviceAddress, type DeviceAlertState, type DeviceAlertTarget, type DeviceId, type TallyDevice } from "../../types/ConsumerStates";
 import { Gpio } from "onoff";
-import { Logger } from "../../../logging/Logger";
-
+import { HardwareVersion } from "../../../types/SystemInfo";
 
 // TODO: check if this is the right GPIO library. Was rpi-gpio before, but it's not updated.
 
 export interface GpioConsumerConfig extends ConsumerConfig {
     // Pin mappings TBD
+    // TODO move hw discovery to another class.
 }
 
 export interface GpioConsumerInfo {
-    version: HardwareVersion;
+    version: HardwareVersion
 }
 
 export interface GpioTallyPins {
@@ -24,10 +24,6 @@ interface GpioTallyOutput {
     preview: Gpio,
 }
 
-enum HardwareVersion {
-    V2,
-    UNKNOWN
-}
 
 const DEFAULT_PINOUT: Record<HardwareVersion, Array<GpioTallyPins>> = {
     [HardwareVersion.UNKNOWN]: [],
