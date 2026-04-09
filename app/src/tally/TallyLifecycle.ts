@@ -8,75 +8,109 @@ import { AedesNetworkConsumer, type AedesConsumerConfig } from "./consumer/netwo
 import { RpiGpioHardwareConsumer, type GpioConsumerConfig } from "./consumer/hardwareConsumer/RpiGpioHardwareConsumer";
 import type { AbstractConsumer, ConsumerConfig } from "./consumer/AbstractConsumer";
 import type { ConsumerId } from "./types/ConsumerStates";
+import { HardwareVersion } from "../types/SystemInfo";
 
-export interface ConsumerSetting<TConfig extends ConsumerConfig = ConsumerConfig> {
-    enabled: boolean;
-    config: TConfig;
-}
-
-export interface ConsumerUpdate {
+// ? Mutations
+export interface ConsumerUpdate<T extends ConsumerConfig = ConsumerConfig> {
     id: ConsumerId;
     enabled?: boolean;
-    config?: Partial<ConsumerConfig>;
+    config?: Partial<T>;
 }
+
+// ? Config
+export interface LifeCycleConsumerConfig<T extends ConsumerConfig = ConsumerConfig> {
+    enabled?: boolean;
+    config?: Partial<T>;
+}
+
+type ConsumerRegistry = {
+    [K in keyof ConsumerConfigMap]: LifeCycleConsumerConfig<ConsumerConfigMap[K]>;
+};
+
+type ConsumerConfigMap = {
+    aedes: AedesConsumerConfig;
+    gpio: GpioConsumerConfig;
+};
+
+type RegisteredConsumerId = keyof ConsumerConfigMap;
 
 export interface LifecycleConfig {
-    consumers: Record<ConsumerId, ConsumerSetting>;
-    producers: { type: string; config: ProducerConfig }[]; //TODO ProducerType?
+    consumers?: Required<ConsumerRegistry>;
+    orchestrator?: Partial<OrchestratorConfig>;
 }
 
-interface ConsumerRegistryEntry {
-    settingKey: SettingKey;
-    factory: (config: ConsumerConfig) => AbstractConsumer;
+//? Info
+export interface LifeCycleInfo {
+    hardware?: HardwareVersion;
 }
 
 export class TallyLifecycle {
 
     // TODO: HANDLE SYSTEM INFO TO CONSUMERS!
 
+    public static DefaultConfig: Required<LifecycleConfig> = {
+        consumers: {
+            aedes: {
+                enabled: true,
+                config: {},
+            },
+            gpio: {
+                enabled: true,
+                config: {},
+            },
+        },
+        orchestrator: {},        
+    }
+
     private db = CoreDatabase.getInstance();
-    private orchestrator: TallyOrchestrator;
+    private orchestrator!: TallyOrchestrator;
     private logger = new Logger(["Tally", "Lifecycle"]);
-    private config: { consumers: Record<ConsumerId, ConsumerSetting> };
     private _restarting = new Set<ConsumerId>();
 
-    public static readonly DefaultConsumers: Record<ConsumerId, ConsumerSetting> = { // TODO: Move into dynamic info field and create config field.
-        aedes: { enabled: true,  config: { ...AedesNetworkConsumer.DefaultConfig } },
-        gpio:  { enabled: false, config: { ...RpiGpioHardwareConsumer.DefaultConfig } },
+    public config: Required<LifecycleConfig> = TallyLifecycle.DefaultConfig;
+    public info: LifeCycleInfo = {};
+
+    private _registry: Record<ConsumerId, { // TODO: Merge with config. Single source of truth.
+        factory:   (config: any) => AbstractConsumer;
+        available: () => boolean;
+    }> = {
+        aedes: { 
+            factory: (config) => new AedesNetworkConsumer(config), 
+            available: () => true 
+        },
+        gpio:  { 
+            factory: (config) => new RpiGpioHardwareConsumer(config), 
+            available: () => this.info.hardware == HardwareVersion.V2 
+        },
     };
 
-    private readonly _registry: Record<ConsumerId, ConsumerRegistryEntry> = {
-        aedes: { settingKey: SettingKey.ConsumerAedes, factory: (c) => new AedesNetworkConsumer(c as AedesConsumerConfig) },
-        gpio:  { settingKey: SettingKey.ConsumerGpio,  factory: (c) => new RpiGpioHardwareConsumer(c as GpioConsumerConfig) },
-    };
-
-    constructor(orchestratorConfig: OrchestratorConfig = {}) {
-        this.orchestrator = new TallyOrchestrator(orchestratorConfig);
-        this.config = { consumers: this._loadConsumers() };
-    }
-
-    private _loadConsumers(): Record<ConsumerId, ConsumerSetting> {
-        const consumers: Record<ConsumerId, ConsumerSetting> = {};
-        for (const [id, entry] of Object.entries(this._registry)) {
-            consumers[id] = this.db.getSetting<ConsumerSetting>(entry.settingKey)
-                ?? TallyLifecycle.DefaultConsumers[id];
-        }
-        return consumers;
-    }
-
-    public getOrchestrator(): TallyOrchestrator {
-        return this.orchestrator;
-    }
-
-    public getConfig(): LifecycleConfig {
-        return { consumers: this.config.consumers, producers: this.db.getProducers() };
-    }
-
-    public hasConfig(): boolean {
-        return this.db.getProducers().length > 0;
+    constructor() {
     }
 
     public async boot(): Promise<void> {
+        // this.info = ? // TODO load hw info.
+
+        this.config = { 
+            ...TallyLifecycle.DefaultConfig, 
+            orchestrator: { 
+                ...this.db.getSetting(SettingKey.orchestrator) 
+            }, 
+            consumers: { 
+                aedes: { 
+                    ...TallyLifecycle.DefaultConfig.consumers.aedes,
+                    ...this.db.getSetting(SettingKey.consumers.aedes) 
+                }, 
+                gpio: { 
+                    ...TallyLifecycle.DefaultConfig.consumers.gpio,
+                    ...this.db.getSetting(SettingKey.consumers.gpio) 
+                } 
+            } 
+        };
+
+        this.orchestrator = new TallyOrchestrator(this.config.orchestrator);
+
+        this._loadConsumers();
+
         for (const { type, config } of this.db.getProducers()) {
             try {
                 const producer = TallyFactory.createProducer(type, config);
@@ -91,6 +125,44 @@ export class TallyLifecycle {
         for (const [id, setting] of Object.entries(this.config.consumers)) {
             if (setting.enabled) await this._startConsumer(id);
         }
+        
+        this.logger.info(`TallyLifecycle initialized with config:`, this.config, `and info:`, this.info);
+    }
+
+
+    public isRegisterdConsumer(id: ConsumerId): RegisteredConsumerId | null {
+        if (id in this.config.consumers) 
+            return id as keyof typeof this.config.consumers;
+
+        return null;
+    }
+
+    private _loadConsumers(): void {
+        for (const [id, setting] of Object.entries(this.config.consumers)) {
+            const entry = this._registry[id as ConsumerId];
+            if (!entry.available()) {
+                this.logger.info(`Skipping consumer, it is not available on this hardware:`, id);
+                continue;
+            }
+            if (setting?.enabled)
+                this.orchestrator.addConsumer(entry.factory(setting.config ?? {}));
+        }
+    }
+
+    // public getOrchestrator(): TallyOrchestrator {
+    //     if (!this.orchestrator)
+    //         return this.logger.fatal(`Orchestrator not initialized. Call boot() first.`);
+
+    //     return this.orchestrator;
+    // }
+
+    public getInfo(): LifeCycleInfo {
+        return this.info;
+    }
+
+
+    public hasConfig(): boolean {
+        return this.db.getProducers().length > 0;
     }
 
     // ? Producer methods
@@ -117,56 +189,69 @@ export class TallyLifecycle {
     }
 
     // ? Consumer methods
-
     public async updateConsumer(update: ConsumerUpdate): Promise<void> {
-        const entry = this._registry[update.id];
-        if (!entry) {
-            this.logger.warn(`Unknown consumer ID, skipping update:`, update.id);
+
+        const id = update.id as keyof typeof this.config.consumers;
+
+        if (!(id in this.config.consumers)) {
+            this.logger.warn(`Unknown consumer ID, skipping update:`, id);
             return;
         }
 
-        const current = this.config.consumers[update.id];
-        if (update.enabled !== undefined) current.enabled = update.enabled;
-        if (update.config) current.config = { ...current.config, ...update.config };
+        const currentConfig = this.config.consumers[id] ?? {};
+        const updatedConfig = { ...currentConfig, ...update };
 
-        this.db.setSetting(entry.settingKey, current);
+        this.config.consumers[id] = updatedConfig;
+        this.db.setSetting(SettingKey.consumers[id], updatedConfig);
+
         await this._restartConsumer(update.id);
+
     }
 
-    public async importConfig(config: LifecycleConfig): Promise<void> {
-        for (const [id, setting] of Object.entries(config.consumers)) {
-            const entry = this._registry[id];
-            if (!entry) {
-                this.logger.warn(`Unknown consumer ID in import, skipping:`, id);
-                continue;
-            }
-            this.config.consumers[id] = setting;
-            this.db.setSetting(entry.settingKey, setting);
-            await this._restartConsumer(id);
-        }
+    // public async importConfig(config: LifecycleConfig): Promise<void> {
+    //     for (const [id, setting] of Object.entries(config.consumers)) {
+    //         const entry = this._registry[id];
+    //         if (!entry) {
+    //             this.logger.warn(`Unknown consumer ID in import, skipping:`, id);
+    //             continue;
+    //         }
+    //         this.config.consumers[id] = setting;
+    //         this.db.setSetting(entry.settingKey, setting);
+    //         await this._restartConsumer(id);
+    //     }
 
-        for (const id of this.orchestrator.getProducerIds()) {
-            await this.removeProducer(id);
-        }
-        for (const { type, config: pConfig } of config.producers) {
-            const producer = TallyFactory.createProducer(type, pConfig);
-            await this.addProducer(producer);
-        }
-    }
+    //     for (const id of this.orchestrator.getProducerIds()) {
+    //         await this.removeProducer(id);
+    //     }
+    //     for (const { type, config: pConfig } of config.producers) {
+    //         const producer = TallyFactory.createProducer(type, pConfig);
+    //         await this.addProducer(producer);
+    //     }
+    // }
 
-    private async _restartConsumer(id: ConsumerId): Promise<void> {
+    private async _restartConsumer(consumerId: ConsumerId): Promise<void> {
+
+        const id = this.isRegisterdConsumer(consumerId);
+
+        if (!id) {
+            this.logger.warn(`Unknown consumer ID, skipping update:`, id);
+            return;
+        }
+        
         if (this._restarting.has(id)) {
             this.logger.warn(`Consumer restart already in progress, skipping:`, id);
             return;
         }
+
         this._restarting.add(id);
+
         try {
             if (this.orchestrator.hasConsumer(id)) {
-                this.logger.info(`Initialise STOP consumer:`, id);
+                this.logger.info(`Stopping consumer:`, id);
                 await this.orchestrator.removeConsumer(id);
                 this.logger.info(`Stopped consumer:`, id);
             }
-            if (this.config.consumers[id]?.enabled) {
+            if ((this.config.consumers as ConsumerRegistry)[id]?.enabled) {
                 await this._startConsumer(id);
             }
         } finally {
@@ -174,12 +259,22 @@ export class TallyLifecycle {
         }
     }
 
-    private async _startConsumer(id: ConsumerId): Promise<void> {
+    private async _startConsumer(consumerId: ConsumerId): Promise<void> {
+
+        
+        const id = this.isRegisterdConsumer(consumerId);
+
+        if (!id) {
+            this.logger.warn(`Unknown consumer ID, skipping update:`, id);
+            return;
+        }
+
         const entry = this._registry[id];
         if (!entry) {
             this.logger.error(`No factory registered for consumer:`, id);
             return;
         }
+        
         const { config } = this.config.consumers[id];
         try {
             const consumer = entry.factory(config);
