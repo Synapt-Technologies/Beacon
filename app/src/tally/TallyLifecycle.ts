@@ -11,10 +11,8 @@ import type { ConsumerId } from "./types/ConsumerStates";
 import { HardwareVersion } from "../types/SystemInfo";
 
 // ? Mutations
-export interface ConsumerUpdate<T extends ConsumerConfig = ConsumerConfig> {
+export interface ConsumerUpdate<T extends ConsumerConfig = ConsumerConfig> extends LifeCycleConsumerConfig<T> {
     id: ConsumerId;
-    enabled?: boolean;
-    config?: Partial<T>;
 }
 
 // ? Config
@@ -126,7 +124,7 @@ export class TallyLifecycle {
     }
 
 
-    public isRegisterdConsumer(id: ConsumerId): RegisteredConsumerId | null {
+    public getRegisteredConsumer(id: ConsumerId): RegisteredConsumerId | null {
         if (id in this.config.consumers) 
             return id as keyof typeof this.config.consumers;
 
@@ -135,13 +133,8 @@ export class TallyLifecycle {
 
     private async _loadConsumers(): Promise<void> {
         for (const [id, setting] of Object.entries(this.config.consumers)) {
-            const entry = this._registry[id as ConsumerId];
             if (!setting?.enabled)
                 continue;
-            if (!entry.available()) {
-                this.logger.info(`Skipping consumer, it is not available on this hardware:`, id);
-                continue;
-            }
 
             await this._restartConsumer(id);
         }
@@ -221,15 +214,20 @@ export class TallyLifecycle {
     // ? Consumer methods
     public async updateConsumer(update: ConsumerUpdate): Promise<void> {
 
-        const id = update.id as keyof typeof this.config.consumers;
+        const id = this.getRegisteredConsumer(update.id);
 
-        if (!(id in this.config.consumers)) {
+
+        if (!id) {
             this.logger.warn(`Unknown consumer ID, skipping update:`, id);
             return;
         }
 
         const currentConfig = this.config.consumers[id] ?? {};
-        const updatedConfig = { ...currentConfig, ...update };
+        const updatedConfig = { 
+            enabled: update.enabled ?? currentConfig.enabled, 
+            config: { ...currentConfig.config, ...update.config } 
+        };
+
 
         this.config.consumers[id] = updatedConfig;
         this.db.setSetting(SettingKey.consumers[id], updatedConfig);
@@ -241,10 +239,10 @@ export class TallyLifecycle {
 
     private async _restartConsumer(consumerId: ConsumerId): Promise<void> {
 
-        const id = this.isRegisterdConsumer(consumerId);
+        const id = this.getRegisteredConsumer(consumerId);
 
         if (!id) {
-            this.logger.warn(`Unknown consumer ID, skipping update:`, id);
+            this.logger.warn(`Unknown consumer ID, skipping restart:`, id);
             return;
         }
         
@@ -252,8 +250,8 @@ export class TallyLifecycle {
             this.logger.warn(`Consumer restart already in progress, skipping:`, id);
             return;
         }
-
         this._restarting.add(id);
+
 
         try {
             if (this.orchestrator.hasConsumer(id)) {
@@ -264,8 +262,10 @@ export class TallyLifecycle {
             if ((this.config.consumers as ConsumerRegistry)[id]?.enabled) {
                 
                 const entry = this._registry[id];
-                if (!entry) {
-                    this.logger.error(`No factory registered for consumer:`, id);
+
+                
+                if (!entry.available()) {
+                    this.logger.warn(`Skipping consumer, it is not available on this hardware:`, id);
                     return;
                 }
 
