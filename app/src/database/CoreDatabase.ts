@@ -5,21 +5,14 @@ import type { AbstractTallyProducer, ProducerConfig, ProducerInfo } from '../tal
 import { GlobalSourceTools, type SourceInfo } from '../tally/types/ProducerStates';
 import { DeviceTallyState, GlobalDeviceTools, type DeviceAddress, type TallyDevice } from '../tally/types/ConsumerStates';
 import { Logger } from '../logging/Logger';
-import type { LifecycleConfig } from '../tally/TallyLifecycle';
+import type { LifecycleConfig, LifeCycleConsumerConfig } from '../tally/TallyLifecycle';
+import { TallyOrchestrator, type OrchestratorConfig } from '../tally/TallyOrchestrator';
 
 
 export const SettingKey = {
-    consumer: {
-        aedes: {
-            enabled: "consumer.aedes.enabled",
-            host:    "consumer.aedes.host",
-            port:    "consumer.aedes.port",
-        },
-        gpio: {
-            enabled: "consumer.gpio.enabled",
-            pin:     "consumer.gpio.pin",
-        },
-    },
+    consumers: "consumers",
+    orchestrator: "orchestrator",
+    
 } as const;
 
 export type SettingKey = LeafValues<typeof SettingKey>;
@@ -30,17 +23,8 @@ type LeafValues<T> = T extends string
 
 
 interface SettingMap { // ?Note: String if not set.
-    consumer: {
-        aedes: {
-            enabled: boolean;
-            host:    string;
-            port:    number;
-        };
-        gpio: {
-            enabled: boolean;
-            pin:     number;
-        };
-    };
+    consumers: LifeCycleConsumerConfig;
+    orchestrator: OrchestratorConfig;
 }
 
 type SettingType<K extends string, T = SettingMap> =
@@ -88,7 +72,6 @@ export class CoreDatabase {
                 type TEXT NOT NULL,
                 config TEXT NOT NULL
             );
-
             CREATE TABLE IF NOT EXISTS producer_info (
                 id TEXT PRIMARY KEY,
                 info TEXT NOT NULL,
@@ -160,7 +143,6 @@ export class CoreDatabase {
     }
 
     // ? Consumer Device Methods
-
     public saveConsumerDevices(devices: TallyDevice[]) {
         devices.forEach(device => this.saveConsumerDevice(device));
     }
@@ -210,19 +192,20 @@ export class CoreDatabase {
         return output;
     }
 
-    public getSetting<T>(key: SettingKey): T | null {
+    // ? Settings Methods
+    public getSetting<K extends SettingKey>(key: K): SettingType<K> | null {
         const row = this.db.prepare('SELECT value FROM settings WHERE key = ?').get(key) as { value: string } | undefined;
         if (!row) return null;
 
         try {
-            return JSON.parse(row.value) as T;
+            return JSON.parse(row.value) as SettingType<K>;
         } catch {
             this.logger.error(`Failed to parse setting:`, key);
             return null;
         }
     }
 
-    public setSetting<T>(key: SettingKey, value: T): void {
+    public setSetting<K extends SettingKey>(key: K, value: SettingType<K>): void {
         const stmt = this.db.prepare(`
             INSERT INTO settings (key, value)
             VALUES (?, ?)
