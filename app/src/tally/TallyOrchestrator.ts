@@ -36,10 +36,10 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
     };
 
 
-    private producers: Map<string, AbstractTallyProducer> = new Map();
-    private consumers: Map<string, AbstractConsumer> = new Map();
+    private producers: Map<ProducerId, AbstractTallyProducer> = new Map();
+    private consumers: Map<ConsumerId, AbstractConsumer> = new Map();
 
-    private producerTallyStates: Map<string, TallyState> = new Map();
+    private producerTallyStates: Map<ProducerId, TallyState> = new Map();
     private globalTallyState: TallyState = {
         preview: new Set(),
         program: new Set()
