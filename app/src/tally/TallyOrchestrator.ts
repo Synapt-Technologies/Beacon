@@ -144,11 +144,16 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
         return this.producers.has(id);
     }
 
+    getProducerInfo(id: ProducerId): ProducerInfo {
+        const producer = this.producers.get(id);
+        return producer?.getInfo() || { update_moment: null, model: "UNKNOWN", sources: new Map() };
+    }
+
     getProducerIds(): ProducerId[] {
         return Array.from(this.producers.keys());
     }
 
-    getProducerInfo(): Map<ProducerId, ProducerInfo> {
+    getProducerInfos(): Map<ProducerId, ProducerInfo> {
         const info = new Map<ProducerId, ProducerInfo>();
         for (const [id, producer] of this.producers) {
             info.set(id, producer.getInfo());

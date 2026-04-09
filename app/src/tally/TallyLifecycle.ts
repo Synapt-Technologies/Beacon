@@ -1,7 +1,7 @@
 import { CoreDatabase, SettingKey } from "../database/CoreDatabase";
 import { TallyFactory } from "./TallyFactory";
 import { TallyOrchestrator, type OrchestratorConfig } from "./TallyOrchestrator";
-import type { AbstractTallyProducer, ProducerConfig } from "./producer/AbstractTallyProducer";
+import type { AbstractTallyProducer, ProducerConfig, ProducerInfo } from "./producer/AbstractTallyProducer";
 import type { ProducerId } from "./types/ProducerStates";
 import { Logger } from "../logging/Logger";
 import { AedesNetworkConsumer, type AedesConsumerConfig } from "./consumer/networkConsumer/AedesNetworkConsumer";
@@ -217,8 +217,8 @@ export class TallyLifecycle {
     }
 
     // TODO add info.
-    public getProducers(): { type: string, config: ProducerConfig }[] { // TODO: assess if necessary and change type?
-        return this.db.getProducers();
+    public getProducers(): { type: string, config: ProducerConfig, info: ProducerInfo }[] { // TODO: assess if necessary and change type?
+        return this.db.getProducers().map(({ type, config }) => ({ type, config, info: this.orchestrator.getProducerInfo(config.id) }));
     }
 
     // ? Consumer methods
