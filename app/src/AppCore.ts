@@ -42,7 +42,7 @@ export class AppCore {
                 consumers: config.consumers,
             });
             this.logger.debug("Received producer update from lifecycle:", this.lifecycle.getProducers());
-            // this.logger.debug("NEW SOURCES:", this.lifecycle.getProducers().map(p => Array.from(p.info.sources.entries())));
+            this.logger.debug("Update new sources:", this.lifecycle.getProducers().map(p => p.info.sources));
 
         };
 
