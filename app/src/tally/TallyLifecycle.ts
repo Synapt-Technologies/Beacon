@@ -34,13 +34,18 @@ type ConsumerMap<Extra extends object = {}> = {
 
 type ConsumerRuntime = {
     factory: (config: any) => AbstractConsumer;
-    available: () => boolean;
+    isAvailable: () => boolean;
 };
 
-type ConsumerEntryMap = ConsumerMap<ConsumerRuntime>;
+type ConsumerExport = {
+    available: boolean;
+};
+
+type ConsumerEntryMap    = ConsumerMap<ConsumerRuntime>;
+type ConsumerExportMap   = ConsumerMap<ConsumerExport>;
 
 export interface LifecycleConfig {
-    consumers?: ConsumerMap;
+    consumers?: ConsumerExportMap;
     orchestrator?: Partial<OrchestratorConfig>;
 }
 
@@ -65,13 +70,13 @@ export class TallyLifecycle {
         consumers: {
             aedes: {
                 factory: (config: any) => new AedesNetworkConsumer(config),
-                available: () => true,
+                isAvailable: () => true,
                 enabled: true,
                 config: {},
             },
             gpio: {
                 factory: (config: any) => new RpiGpioHardwareConsumer(config),
-                available: () => this.info.hardware == HardwareVersion.V2,
+                isAvailable: () => this.info.hardware == HardwareVersion.V2,
                 enabled: true,
                 config: {},
             },
@@ -140,8 +145,15 @@ export class TallyLifecycle {
     // ? Config methods
 
     public getConfig(): LifecycleConfig {
+        const consumers = Object.fromEntries(
+            Object.entries(this._config.consumers).map(([id, entry]) => [
+                id,
+                { enabled: entry.enabled, config: entry.config, available: entry.isAvailable() },
+            ])
+        ) as ConsumerExportMap;
+
         return {
-            consumers: this._config.consumers as ConsumerMap,
+            consumers,
             orchestrator: this._config.orchestrator,
         };
     }
@@ -247,7 +259,7 @@ export class TallyLifecycle {
             const entry = this._config.consumers[id];
             if (entry.enabled) {
 
-                if (!entry.available()) {
+                if (!entry.isAvailable()) {
                     this.updateConsumer({ id, enabled: false });
                     this.logger.warn(`Skipping consumer, it is not available on this hardware:`, id);
                     return;
