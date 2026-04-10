@@ -17,7 +17,7 @@ export default function WebTallyPage() {
   // Compute tally state for each source from global tally state
   // In production this should come from a WebSocket / SSE feed
   // For now, no state is available without /api/devices
-  const sourceState = (_key: string) => 'none' as const
+  const sourceState = (_key: string): 'pgm' | 'pvw' | 'none' => 'none'
 
   if (selected) {
     const state = sourceState(`${selected.source.producer}:${selected.source.source}`)
@@ -80,8 +80,8 @@ export default function WebTallyPage() {
         <FullscreenOverlay
           open={fsOpen}
           state={state}
-          name={selected.long}
-          sub={selected.prodName}
+          name={selected.short}
+          sub={selected.long + " → " + selected.prodName}
           onClose={() => setFsOpen(false)}
         />
       </div>

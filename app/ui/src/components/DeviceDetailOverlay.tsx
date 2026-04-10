@@ -100,7 +100,7 @@ export function DeviceDetailOverlay({ device, backLabel, onClose }: DeviceDetail
           </div>
 
           <div className="sec-lbl">Patched sources</div>
-          {device.patch.length === 0 ? (
+          {device.patch.length === 0 ? ( // TODO: Make longname and shortname as primary?
             <div style={{ fontSize: 12, color: 'var(--color-text-tertiary)', padding: '8px 0' }}>
               No sources patched
             </div>
@@ -169,10 +169,13 @@ export function DeviceDetailOverlay({ device, backLabel, onClose }: DeviceDetail
         <FullscreenOverlay
           open={fsOpen}
           state={device.state}
-          name={device.long}
-          sub={device.patch.length
-            ? device.patch.map(s => s.source).join(', ')
-            : 'No sources patched'}
+          name={device.short}
+          sub={
+            // device.patch.length
+            // ? device.patch.map(s => s.source).join(', ')
+            device.long
+            // : 'No sources patched'
+          }
           onClose={() => setFsOpen(false)}
         />
 
