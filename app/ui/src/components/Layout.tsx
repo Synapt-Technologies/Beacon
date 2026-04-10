@@ -30,7 +30,7 @@ export default function Layout() {
         {/* Topbar */}
         <div style={{
           padding: '0 18px', height: 56,
-          display: 'flex', alignItems: 'center', gap: 10,
+          display: 'flex', flexWrap: 'nowrap', alignItems: 'center', gap: 10,
           borderBottom: '0.5px solid var(--color-border-tertiary)',
           background: 'var(--color-background-primary)', flexShrink: 0,
         }}>
