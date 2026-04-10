@@ -78,7 +78,7 @@ export class AdminServer extends EventEmitter<AdminServerEvents> {
         });
 
         this.app.get("/api/config/export", (_req, res) => {
-            res.json({ consumers: this.state.consumers, producers: this.state.producers });
+            res.json({ consumers: this.state.consumers, producers: this.state.producers }); // TODO better formatting
         });
 
         this.app.post("/api/config/import", (req, res) => {
