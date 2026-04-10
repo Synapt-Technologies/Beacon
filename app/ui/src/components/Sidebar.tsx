@@ -82,7 +82,7 @@ export function Sidebar() {
       {/* Logo */}
       <div style={{
         padding: '15px 14px', display: 'flex', alignItems: 'center',
-        gap: 10, minHeight: 56, borderBottom: '0.5px solid var(--color-border-tertiary)',
+        gap: 10, height: 56, borderBottom: '0.5px solid var(--color-border-tertiary)',
       }}>
         <div style={{
           width: 28, height: 28, flexShrink: 0, background: 'var(--acc)',
