@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import type { UIDevice, GlobalTallySource } from '../types/beacon'
 import { useApp } from '../context/AppContext'
-import { TallyBlock, stateSub } from './TallyBlock'
+import { TallyBlock, stateSub } from './Tallyblock'
 import { AlertButtons } from './AlertButtons'
 import { PatchModal } from './PatchModal'
 import { FullscreenOverlay } from './FullscreenOverlay'
