@@ -63,16 +63,14 @@ function AlertBtn({ slot, onAlert }: AlertBtnProps) {
     btn.appendChild(ripple)
     btn.style.animation = 'btn-fire .32s ease'
 
-    const orig = lbl.textContent ?? ''
-    lbl.textContent = slot.action === 'CLEAR' ? 'Cleared ✓' : 'Sent ✓'
+    const orig = lbl.style.color ?? ''
     lbl.style.color  = slot.action === 'CLEAR' ? '#1D9E75' : '#E85D30'
 
     setTimeout(() => ripple.remove(), 650)
     setTimeout(() => {
       btn.style.animation = ''
-      lbl.textContent = orig
-      lbl.style.color  = ''
-    }, 1300)
+      lbl.style.color  = orig
+    }, 750)
 
     onAlert(slot.action, slot.target)
   }
