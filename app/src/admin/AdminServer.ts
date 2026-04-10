@@ -62,7 +62,8 @@ export class AdminServer extends EventEmitter<AdminServerEvents> {
         });
 
         this.app.get("/api/devices", (req, res) => {
-            res.json(this.state.devices);
+            const output = Object.fromEntries(this.state.devices);
+            res.json(output);
         });
 
         this.app.get("/api/config/export", (_req, res) => {
