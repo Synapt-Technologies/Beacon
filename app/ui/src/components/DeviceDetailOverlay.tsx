@@ -57,7 +57,7 @@ export function DeviceDetailOverlay({ device, backLabel, onClose }: DeviceDetail
       <div style={{ position: 'absolute', inset: 0, zIndex: 10, display: 'flex', flexDirection: 'column', background: 'var(--color-background-secondary)' }}>
         {/* Header */}
         <div style={{
-          display: 'flex', alignItems: 'center', gap: 10, padding: '12px 18px',
+          display: 'flex', alignItems: 'center', gap: 10, padding: '12px 18px', height: '56px',
           borderBottom: '0.5px solid var(--color-border-tertiary)',
           background: 'var(--color-background-primary)', flexShrink: 0,
         }}>
