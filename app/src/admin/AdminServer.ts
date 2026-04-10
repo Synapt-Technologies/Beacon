@@ -4,10 +4,12 @@ import ViteExpress from "vite-express";
 import { Logger } from "../logging/Logger";
 import type { ProducerConfig } from "../tally/producer/AbstractTallyProducer";
 import type { ConsumerUpdate, LifecycleConfig } from "../tally/TallyLifecycle";
+import type { TallyDevice } from "../tally/types/ConsumerStates";
 
 export interface AdminState {
     producers: { type: string; config: ProducerConfig }[];
     consumers: LifecycleConfig["consumers"];
+    devices: Map<string, TallyDevice[]>;
 }
 
 export interface AdminServerEvents {
@@ -20,7 +22,7 @@ export class AdminServer extends EventEmitter<AdminServerEvents> {
 
     private app = express();
     private logger = new Logger(["ADMIN"]);
-    private state: AdminState = { producers: [], consumers: undefined };
+    private state: AdminState = { producers: [], consumers: undefined, devices: new Map() };
 
     public setState(state: AdminState): void {
         this.state = state;
@@ -57,6 +59,10 @@ export class AdminServer extends EventEmitter<AdminServerEvents> {
             }
             this.emit("update_consumer", { id, ...req.body } as ConsumerUpdate);
             res.status(204).send();
+        });
+
+        this.app.get("/api/devices", (req, res) => {
+            res.json(this.state.devices);
         });
 
         this.app.get("/api/config/export", (_req, res) => {

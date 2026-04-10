@@ -7,7 +7,7 @@ import { Logger } from "../logging/Logger";
 import { AedesNetworkConsumer, type AedesConsumerConfig } from "./consumer/networkConsumer/AedesNetworkConsumer";
 import { RpiGpioHardwareConsumer, type GpioConsumerConfig } from "./consumer/hardwareConsumer/RpiGpioHardwareConsumer";
 import type { AbstractConsumer, ConsumerConfig } from "./consumer/AbstractConsumer";
-import type { ConsumerId } from "./types/ConsumerStates";
+import type { ConsumerId, TallyDevice } from "./types/ConsumerStates";
 import { HardwareVersion } from "../types/SystemInfo";
 
 // ? Mutations
@@ -246,6 +246,11 @@ export class TallyLifecycle {
 
         await this._restartConsumer(update.id);
 
+    }
+
+    // TODO, callback from orchestrator in appcore instead?
+    public getDevices(): Map<ConsumerId, Array<TallyDevice>> {
+        return this.orchestrator.getDevices();
     }
 
 

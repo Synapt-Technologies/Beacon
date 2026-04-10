@@ -40,6 +40,7 @@ export class AppCore {
             this.admin.setState({
                 producers: this.lifecycle.getProducers(),
                 consumers: config.consumers,
+                devices: this.lifecycle.getDevices() // TODO, callback from orchestrator instead?
             });
             this.logger.debug("Received producer update from lifecycle:", this.lifecycle.getProducers());
             this.logger.debug("Update new sources:", this.lifecycle.getProducers().map(p => p.info.sources));
