@@ -116,15 +116,15 @@ export function Sidebar() {
           onClick={() => setCollapsed(c => !c)}
           style={{
             width: '100%', display: 'flex', alignItems: 'center',
-            justifyContent: 'center', gap: 8, padding: 7,
+            justifyContent: 'center', gap: 0, padding: 7,
             border: '0.5px solid var(--color-border-tertiary)',
             borderRadius: 'var(--border-radius-md)', cursor: 'pointer',
             color: 'var(--color-text-secondary)', background: 'none',
             fontSize: 12, whiteSpace: 'nowrap', overflow: 'hidden',
           }}
         >
-          <IconCollapse flipped={collapsed} />
-          <span style={{ opacity: collapsed ? 0 : 1, transition: 'opacity .15s' }}>
+          <IconCollapse flipped={!collapsed} />
+          <span style={{ opacity: collapsed ? 0 : 1, width: collapsed ? 0 : "100%", transition: 'opacity .25s, width .25s' }}>
             Collapse
           </span>
         </button>
