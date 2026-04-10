@@ -2,12 +2,12 @@ import { EventEmitter } from "events";
 import express from "express";
 import ViteExpress from "vite-express";
 import { Logger } from "../logging/Logger";
-import type { ProducerConfig } from "../tally/producer/AbstractTallyProducer";
+import type { ProducerConfig, ProducerInfo } from "../tally/producer/AbstractTallyProducer";
 import type { ConsumerUpdate, LifecycleConfig } from "../tally/TallyLifecycle";
 import type { TallyDevice } from "../tally/types/ConsumerStates";
 
 export interface AdminState {
-    producers: { type: string; config: ProducerConfig }[];
+    producers: { type: string, config: ProducerConfig, info: ProducerInfo }[];
     consumers: LifecycleConfig["consumers"];
     devices: Map<string, TallyDevice[]>;
 }
@@ -39,7 +39,18 @@ export class AdminServer extends EventEmitter<AdminServerEvents> {
 
     private _registerRoutes(): void {
         this.app.get("/api/producers", (_req, res) => {
-            res.json(this.state.producers);
+
+            const parsedState = this.state.producers.map((origin) => { // TODO Better serialisation
+                return {
+                    ...origin,
+                    info: {
+                        ...origin.info,
+                        sources: Object.fromEntries(origin.info.sources)
+                    }
+                }
+            })
+
+            res.json(parsedState);
         });
 
         this.app.get("/api/consumers", (_req, res) => {
