@@ -44,6 +44,7 @@ export class AppCore {
             });
             this.logger.debug("Received producer update from lifecycle:", this.lifecycle.getProducers());
             this.logger.debug("Update new sources:", this.lifecycle.getProducers().map(p => p.info.sources));
+            this.logger.debug("Update new devices:", this.lifecycle.getDevices());
 
         };
 
