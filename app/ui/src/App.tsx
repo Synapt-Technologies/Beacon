@@ -8,6 +8,7 @@ import { AppProvider } from "./context/AppContext";
 import OverviewPage from "./pages/OverviewPage";
 import WebTallyPage from "./pages/WebTallyPage";
 import ConnectionsPage from "./pages/ConnectionsPage";
+import './styles/global.css';
 
 export default function App() {
     return (
