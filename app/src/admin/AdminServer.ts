@@ -73,6 +73,7 @@ export class AdminServer extends EventEmitter<AdminServerEvents> {
         this.app.delete("/api/producers/:id", (req, res) => {
             this.emit("remove_producer", req.params.id);
             res.status(204).send();
+            this.logger.info(`Producer`,req.params.id,`delete requested.`);
         });
 
         this.app.patch("/api/consumers/:id", (req, res) => {
@@ -83,6 +84,7 @@ export class AdminServer extends EventEmitter<AdminServerEvents> {
             }
             this.emit("update_consumer", { id, ...req.body } as ConsumerUpdate);
             res.status(204).send();
+            this.logger.info(`Consumer update requested:`, { id, ...req.body } as ConsumerUpdate);
         });
 
         this.app.get("/api/devices", (req, res) => {
@@ -95,6 +97,7 @@ export class AdminServer extends EventEmitter<AdminServerEvents> {
             const { consumer, device } = req.params
             this.emit('patch_device', { consumer, device }, req.body.patch)
             res.status(204).send()
+            this.logger.info(`Device patch requested:`, { consumer, device }, req.body.patch);
         })
 
         //? TODO: Refactor claude
@@ -102,6 +105,7 @@ export class AdminServer extends EventEmitter<AdminServerEvents> {
             const { consumer, device } = req.params
             this.emit('rename_device', { consumer, device }, req.body.name)
             res.status(204).send()
+            this.logger.info(`Device rename requested:`, { consumer, device }, req.body.patch);
         })
 
         //? TODO: Refactor claude
@@ -110,6 +114,7 @@ export class AdminServer extends EventEmitter<AdminServerEvents> {
             const { type, target } = req.body
             this.emit('send_alert', { consumer, device }, type, target)
             res.status(204).send()
+            this.logger.info(`Device alert requested:`, { consumer, device }, req.body.patch);
         })
 
         this.app.get("/api/config/export", (_req, res) => {
