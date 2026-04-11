@@ -2,7 +2,7 @@ import Database from 'better-sqlite3';
 import fs from 'node:fs';
 import path from 'path';
 import type { AbstractTallyProducer, ProducerConfig, ProducerInfo } from '../tally/producer/AbstractTallyProducer';
-import { GlobalSourceTools, type SourceInfo } from '../tally/types/ProducerStates';
+import { GlobalSourceTools, type ProducerBundle, type SourceInfo } from '../tally/types/ProducerStates';
 import { DeviceTallyState, GlobalDeviceTools, type DeviceAddress, type TallyDevice } from '../tally/types/ConsumerStates';
 import { Logger } from '../logging/Logger';
 import type { LifecycleConfig, LifeCycleConsumerConfig } from '../tally/TallyLifecycle';
@@ -110,7 +110,7 @@ export class CoreDatabase {
         stmt.run(producer.getId(), producer.constructor.name, JSON.stringify(producer.getConfig()));
     }
 
-    public getProducers(): { type: string, config: ProducerConfig }[] {
+    public getProducers(): Required<Omit<ProducerBundle, "info">>[] {
         const rows = this.db.prepare('SELECT * FROM producers').all() as { id: string, type: string, config: string }[];
         return rows.map(row => ({ type: row.type, config: JSON.parse(row.config) }));
     }

@@ -5,9 +5,10 @@ import { Logger } from "../logging/Logger";
 import type { ProducerConfig, ProducerInfo } from "../tally/producer/AbstractTallyProducer";
 import type { ConsumerUpdate, LifecycleConfig } from "../tally/TallyLifecycle";
 import type { TallyDevice } from "../tally/types/ConsumerStates";
+import type { ProducerBundle } from "../tally/types/ProducerStates";
 
 export interface AdminState {
-    producers: { type: string, config: ProducerConfig, info: ProducerInfo }[];
+    producers: ProducerBundle[];
     consumers: LifecycleConfig["consumers"];
     devices: Map<string, TallyDevice[]>;
 }
@@ -45,7 +46,7 @@ export class AdminServer extends EventEmitter<AdminServerEvents> {
                     ...origin,
                     info: {
                         ...origin.info,
-                        sources: Object.fromEntries(origin.info.sources)
+                        sources: Object.fromEntries(origin.info?.sources || {})
                     }
                 }
             })

@@ -2,7 +2,7 @@ import { CoreDatabase, SettingKey } from "../database/CoreDatabase";
 import { TallyFactory } from "./TallyFactory";
 import { TallyOrchestrator, type OrchestratorConfig } from "./TallyOrchestrator";
 import type { AbstractTallyProducer, ProducerConfig, ProducerInfo } from "./producer/AbstractTallyProducer";
-import type { ProducerId } from "./types/ProducerStates";
+import type { ProducerBundle, ProducerId } from "./types/ProducerStates";
 import { Logger } from "../logging/Logger";
 import { AedesNetworkConsumer, type AedesConsumerConfig } from "./consumer/networkConsumer/AedesNetworkConsumer";
 import { RpiGpioHardwareConsumer, type GpioConsumerConfig } from "./consumer/hardwareConsumer/RpiGpioHardwareConsumer";
@@ -216,8 +216,8 @@ export class TallyLifecycle {
         await this.orchestrator.removeProducer(id);
     }
 
-    // TODO add info.
-    public getProducers(): { type: string, config: ProducerConfig, info: ProducerInfo }[] { // TODO: assess if necessary and change type?
+    
+    public getProducers(): ProducerBundle[] { // TODO: Check if a producer should have a getBundle?
         return this.db.getProducers().map(({ type, config }) => ({ type, config, info: this.orchestrator.getProducerInfo(config.id) }));
     }
 
