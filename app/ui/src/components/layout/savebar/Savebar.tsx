@@ -3,7 +3,7 @@ import { useBeacon } from "../../../context/BeaconContext";
 import { IconCheck } from '../../icons'
 
 
-export default function SaveBar() {
+export default function Savebar() {
     const { settingsUnsaved, discardSettings, saveSettings } = useBeacon();
 
     return (
