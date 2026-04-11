@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useBeacon } from '../context/BeaconContext'
-import { TallyBlock, stateSub } from '../components/Tallyblock'
+import { TallyBlock, stateSub } from '../components/TallyBlock'
 import { FullscreenOverlay } from '../components/FullscreenOverlay'
 import { IconChevronLeft, IconChevronRight, IconFullscreen } from '../components/icons'
 import type { SourceInfo } from '../../../src/tally/types/ProducerStates'
