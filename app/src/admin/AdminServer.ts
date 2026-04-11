@@ -4,7 +4,7 @@ import ViteExpress from "vite-express";
 import { Logger } from "../logging/Logger";
 import type { ProducerConfig, ProducerInfo } from "../tally/producer/AbstractTallyProducer";
 import type { ConsumerUpdate, LifecycleConfig } from "../tally/TallyLifecycle";
-import type { TallyDevice } from "../tally/types/ConsumerStates";
+import { DeviceAlertState, DeviceAlertTarget, type TallyDevice } from "../tally/types/ConsumerStates";
 import type { ProducerBundle } from "../tally/types/ProducerStates";
 
 export interface AdminState {
@@ -105,7 +105,7 @@ export class AdminServer extends EventEmitter<AdminServerEvents> {
             const { consumer, device } = req.params
             this.emit('rename_device', { consumer, device }, req.body.name)
             res.status(204).send()
-            this.logger.info(`Device rename requested:`, { consumer, device }, req.body.patch);
+            this.logger.info(`Device rename requested:`, { consumer, device }, req.body.name);
         })
 
         //? TODO: Refactor claude
@@ -114,7 +114,7 @@ export class AdminServer extends EventEmitter<AdminServerEvents> {
             const { type, target } = req.body
             this.emit('send_alert', { consumer, device }, type, target)
             res.status(204).send()
-            this.logger.info(`Device alert requested:`, { consumer, device }, req.body.patch);
+            this.logger.info(`Device alert requested:`, { consumer, device }, DeviceAlertState[type], DeviceAlertTarget[target])
         })
 
         this.app.get("/api/config/export", (_req, res) => {
