@@ -26,8 +26,12 @@ export default function Layout() {
         <div className="app-shell">
             <Sidebar />
 
-            <div>
-                <Header />
+            <div style={{
+                flex: 1, display: 'flex', flexDirection: 'column',
+                background: 'var(--color-background-secondary)',
+                overflow: 'hidden', position: 'relative',
+            }}>
+                <Header title={title}/>
 
                 <main>
                     <Outlet />
