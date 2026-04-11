@@ -1,13 +1,12 @@
-import { Dispatch, SetStateAction } from 'react'
 import { IconChevronRight } from '../icons'
 import { UITallyDevice } from '../../types/DeviceStates'
 import { DeviceTallyState } from '../../../../src/tally/types/ConsumerStates'
 
-export default function DeviceRow({ device, setSelected }: { device: UITallyDevice; setSelected: Dispatch<SetStateAction<UITallyDevice | null>> }) {
+export default function DeviceRow({ device, onSelect }: { device: UITallyDevice; onSelect: () => void }) {
     return (
         <div
             className={`row-card tl-${DeviceTallyState[device.state].toLowerCase()}`}
-            onClick={() => setSelected(device)}
+            onClick={onSelect}
         >
             <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-primary)' }}>

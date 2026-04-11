@@ -1,15 +1,18 @@
-import { useState } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
 import { useBeacon } from '../context/BeaconContext'
 import DeviceRow from '../components/devices/DeviceRow'
 import { DeviceDetailOverlay } from '../components/deviceDetail/DeviceDetailOverlay'
-import { UITallyDevice } from '../types/DeviceStates'
 import { GlobalDeviceTools } from '../../../src/tally/types/ConsumerStates'
 
 export default function OverviewPage() {
+  const navigate = useNavigate()
+  const { consumer, device: deviceId } = useParams()
   const { devices } = useBeacon()
-  const [selected, setSelected] = useState<UITallyDevice | null>(null)
 
-  const consumerCount = new Set(devices.map(d => d.id.consumer)).size
+  const consumerCount  = new Set(devices.map(d => d.id.consumer)).size
+  const selectedDevice = consumer && deviceId
+    ? devices.find(d => d.id.consumer === consumer && d.id.device === deviceId)
+    : null
 
   return (
     <div>
@@ -32,15 +35,15 @@ export default function OverviewPage() {
         <DeviceRow
           key={GlobalDeviceTools.create(device.id.consumer, device.id.device)}
           device={device}
-          setSelected={setSelected}
+          onSelect={() => navigate(`/overview/${device.id.consumer}/${device.id.device}`)}
         />
       ))}
 
-      {selected && (
+      {selectedDevice && (
         <DeviceDetailOverlay
-          device={selected}
+          device={selectedDevice}
+          backPath="/overview"
           backLabel="Overview"
-          onClose={() => setSelected(null)}
         />
       )}
     </div>

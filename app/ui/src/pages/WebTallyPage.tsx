@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useNavigate, useParams, useLocation } from 'react-router-dom'
 import { useBeacon } from '../context/BeaconContext'
 import { TallyBlock, stateSub } from '../components/TallyBlock'
 import { FullscreenOverlay } from '../components/FullscreenOverlay'
@@ -9,22 +9,23 @@ interface SelectedSource extends SourceInfo {
   prodName: string
 }
 
-// ? Helpers
-
 // TODO: replace with live tally state from WebSocket / SSE once available
 const sourceState = (_key: string): 'pgm' | 'pvw' | 'none' => 'none'
 
 // ? Source detail view
 
-function SourceDetail({ source, onClose }: { source: SelectedSource; onClose: () => void }) {
-  const [fsOpen, setFsOpen] = useState(false)
-  const state = sourceState(`${source.source.producer}:${source.source.source}`)
+function SourceDetail({ source, basePath }: { source: SelectedSource; basePath: string }) {
+  const navigate = useNavigate()
+  const location = useLocation()
+
+  const fsOpen = location.pathname.endsWith('/fullscreen')
+  const state  = sourceState(`${source.source.producer}:${source.source.source}`)
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
         <button
-          onClick={onClose}
+          onClick={() => navigate('/web-tally')}
           style={{
             display: 'flex', alignItems: 'center', gap: 5, fontSize: 13,
             color: 'var(--color-text-secondary)', border: 'none', background: 'none',
@@ -34,7 +35,7 @@ function SourceDetail({ source, onClose }: { source: SelectedSource; onClose: ()
           <IconChevronLeft /> All sources
         </button>
         <button
-          onClick={() => setFsOpen(true)}
+          onClick={() => navigate(`${basePath}/fullscreen`)}
           style={{
             display: 'flex', alignItems: 'center', gap: 5, fontSize: 12,
             marginLeft: 'auto', padding: '6px 14px', borderRadius: 99,
@@ -75,7 +76,7 @@ function SourceDetail({ source, onClose }: { source: SelectedSource; onClose: ()
         state={state}
         name={source.short}
         sub={`${source.long} · ${source.prodName}`}
-        onClose={() => setFsOpen(false)}
+        onClose={() => navigate(basePath)}
       />
     </div>
   )
@@ -84,11 +85,27 @@ function SourceDetail({ source, onClose }: { source: SelectedSource; onClose: ()
 // ? Page
 
 export default function WebTallyPage() {
+  const navigate = useNavigate()
+  const { producer: producerId, source: sourceId } = useParams()
   const { producers } = useBeacon()
-  const [selected, setSelected] = useState<SelectedSource | null>(null)
 
-  if (selected) {
-    return <SourceDetail source={selected} onClose={() => setSelected(null)} />
+  // Reconstruct SelectedSource from URL params + loaded producers
+  let selectedSource: SelectedSource | null = null
+  if (producerId && sourceId) {
+    for (const prod of producers) {
+      const sources = prod.info.sources as unknown as Record<string, SourceInfo>
+      const globalKey = `${producerId}:${sourceId}`
+      if (sources?.[globalKey]) {
+        selectedSource = { ...sources[globalKey], prodName: prod.config.name ?? prod.config.id }
+        break
+      }
+    }
+  }
+
+  const basePath = producerId && sourceId ? `/web-tally/${producerId}/${sourceId}` : '/web-tally'
+
+  if (selectedSource) {
+    return <SourceDetail source={selectedSource} basePath={basePath} />
   }
 
   return (
@@ -104,7 +121,6 @@ export default function WebTallyPage() {
       )}
 
       {producers.map(prod => {
-        // sources is typed as Map but is a plain object at runtime (serialized by server)
         const sources = Object.values(prod.info.sources as unknown as Record<string, SourceInfo>)
         return (
           <div key={prod.config.id} style={{ marginBottom: 16 }}>
@@ -123,7 +139,7 @@ export default function WebTallyPage() {
                 <div
                   key={key}
                   className={`row-card tl-${state}`}
-                  onClick={() => setSelected({ ...src, prodName: prod.config.name ?? prod.config.id })}
+                  onClick={() => navigate(`/web-tally/${src.source.producer}/${src.source.source}`)}
                 >
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-primary)' }}>

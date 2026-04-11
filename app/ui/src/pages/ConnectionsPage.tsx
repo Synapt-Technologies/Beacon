@@ -1,9 +1,10 @@
 import { useState } from 'react'
-import { useApp } from '../context/AppContext'
-import type { ProducerEntry } from '../types/beacon'
+import { useBeacon } from '../context/BeaconContext'
+import type { ProducerBundle } from '../../../src/tally/types/ProducerStates'
+import type { SourceInfo } from '../../../src/tally/types/ProducerStates'
 
 export default function ConnectionsPage() {
-  const { producers, removeProducer } = useApp()
+  const { producers, removeProducer, addProducer } = useBeacon()
   const [editing, setEditing] = useState<string | null>(null)
 
   return (
@@ -12,11 +13,11 @@ export default function ConnectionsPage() {
         <span style={{ fontSize: 11, color: 'var(--color-text-tertiary)' }}>
           ATEM switcher connections
         </span>
-        {/* Add producer — POST /api/producers not yet in AdminServer, placeholder */}
+        {/* TODO: wire up POST /api/producers in AdminServer */}
         <button
           className="sm-btn"
           style={{ color: 'var(--acc)', borderColor: 'color-mix(in srgb, var(--acc) 35%, transparent)' }}
-          onClick={() => alert('Add producer: wire up to POST /api/producers')}
+          onClick={() => alert('Add producer: POST /api/producers not yet implemented')}
         >
           + Add connection
         </button>
@@ -45,20 +46,21 @@ export default function ConnectionsPage() {
   )
 }
 
+// ? Producer card
+
 interface ProducerCardProps {
-  producer: ProducerEntry
+  producer: ProducerBundle
   editing: boolean
   onEdit: () => void
   onRemove: () => void
 }
 
 function ProducerCard({ producer: prod, editing, onEdit, onRemove }: ProducerCardProps) {
-  const [name, setName]   = useState(prod.config.name ?? '')
-  const [host, setHost]   = useState(prod.config.host ?? '')
-  const [port, setPort]   = useState(String(prod.config.port ?? 9910))
+  const [name, setName] = useState(prod.config.name ?? '')
 
-  const connected = prod.info?.connected ?? false
-  const sources   = prod.info ? Object.values(prod.info.sources) : []
+  // sources are plain objects at runtime (serialized from Map by the server)
+  const sources = Object.values(prod.info.sources as unknown as Record<string, SourceInfo>)
+  const model   = prod.info.model.short ?? prod.info.model.long ?? prod.type
 
   return (
     <div style={{
@@ -71,12 +73,12 @@ function ProducerCard({ producer: prod, editing, onEdit, onRemove }: ProducerCar
         display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px',
         borderBottom: editing ? '0.5px solid var(--color-border-tertiary)' : 'none',
       }}>
-        <div style={{ width: 8, height: 8, borderRadius: '50%', flexShrink: 0, background: connected ? '#1D9E75' : 'var(--color-border-secondary)' }} />
+        <div style={{ width: 8, height: 8, borderRadius: '50%', flexShrink: 0, background: prod.info.update_moment ? '#1D9E75' : 'var(--color-border-secondary)' }} />
         <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-primary)', flex: 1 }}>
           {prod.config.name ?? prod.config.id}
         </div>
         <span style={{ fontSize: 11, color: 'var(--color-text-tertiary)' }}>
-          {prod.info?.model ?? prod.type} · {sources.length} sources
+          {model} · {sources.length} source{sources.length !== 1 ? 's' : ''}
         </span>
         <button className="sm-btn" onClick={onEdit}>
           {editing ? 'Close' : 'Edit'}
@@ -87,18 +89,12 @@ function ProducerCard({ producer: prod, editing, onEdit, onRemove }: ProducerCar
       {editing && (
         <div style={{ padding: '12px 14px' }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 10 }}>
-            {[
-              { label: 'Name',       value: name, set: setName },
-              { label: 'IP address', value: host, set: setHost },
-              { label: 'Port',       value: port, set: setPort },
-            ].map(({ label, value, set }) => (
-              <div key={label} style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                <div style={{ fontSize: 10, fontWeight: 500, color: 'var(--color-text-tertiary)', textTransform: 'uppercase', letterSpacing: '.06em' }}>
-                  {label}
-                </div>
-                <input className="pf-input" value={value} onChange={e => set(e.target.value)} />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+              <div style={{ fontSize: 10, fontWeight: 500, color: 'var(--color-text-tertiary)', textTransform: 'uppercase', letterSpacing: '.06em' }}>
+                Name
               </div>
-            ))}
+              <input className="pf-input" value={name} onChange={e => setName(e.target.value)} />
+            </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
               <div style={{ fontSize: 10, fontWeight: 500, color: 'var(--color-text-tertiary)', textTransform: 'uppercase', letterSpacing: '.06em' }}>
                 Sources
@@ -135,8 +131,9 @@ function ProducerCard({ producer: prod, editing, onEdit, onRemove }: ProducerCar
           )}
 
           <div style={{ display: 'flex', gap: 8 }}>
+            {/* TODO: PATCH /api/producers/:id not yet in AdminServer */}
             <button
-              onClick={() => { alert('PATCH /api/producers/:id — wire up in AdminServer'); onEdit() }}
+              onClick={() => { alert('Save: PATCH /api/producers/:id not yet implemented'); onEdit() }}
               style={{
                 fontSize: 12, padding: '6px 14px',
                 borderRadius: 'var(--border-radius-md)', border: 'none',

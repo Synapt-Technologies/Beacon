@@ -1,6 +1,7 @@
 import { useState } from 'react'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useBeacon } from '../../context/BeaconContext'
-import { TallyBlock, stateSub } from '../Tallyblock'
+import { TallyBlock, stateSub } from '../TallyBlock'
 import { PatchModal } from '../PatchModal'
 import { FullscreenOverlay } from '../FullscreenOverlay'
 import { IconChevronLeft, IconFullscreen } from '../icons'
@@ -14,8 +15,8 @@ import type { TallyState } from '../../types/beacon'
 
 interface DeviceDetailOverlayProps {
     device: UITallyDevice
+    backPath: string    // e.g. '/overview' or '/devices'
     backLabel: string
-    onClose: () => void
 }
 
 const CONNECTION_LABELS: Record<ConnectionType, string> = {
@@ -40,11 +41,14 @@ function tallyStr(state: DeviceTallyState): TallyState {
     return 'none'
 }
 
-export function DeviceDetailOverlay({ device, backLabel, onClose }: DeviceDetailOverlayProps) {
+export function DeviceDetailOverlay({ device, backPath, backLabel }: DeviceDetailOverlayProps) {
+    const navigate = useNavigate()
+    const location = useLocation()
     const { producers, uiConfig, patchDevice } = useBeacon()
     const [patchOpen, setPatchOpen] = useState(false)
-    const [fsOpen, setFsOpen]       = useState(false)
 
+    const basePath    = `${backPath}/${device.id.consumer}/${device.id.device}`
+    const fsOpen      = location.pathname.endsWith('/fullscreen')
     const stateStr    = tallyStr(device.state)
     const deviceKey   = GlobalDeviceTools.create(device.id.consumer, device.id.device)
     const deviceLong  = device.name?.long  ?? device.id.device
@@ -65,7 +69,7 @@ export function DeviceDetailOverlay({ device, backLabel, onClose }: DeviceDetail
                     background: 'var(--color-background-primary)', flexShrink: 0,
                 }}>
                     <button
-                        onClick={onClose}
+                        onClick={() => navigate(backPath)}
                         style={{
                             display: 'flex', alignItems: 'center', gap: 5, fontSize: 13,
                             color: 'var(--color-text-secondary)', cursor: 'pointer',
@@ -79,7 +83,7 @@ export function DeviceDetailOverlay({ device, backLabel, onClose }: DeviceDetail
                         {deviceLong}
                     </span>
                     <button
-                        onClick={() => setFsOpen(true)}
+                        onClick={() => navigate(`${basePath}/fullscreen`)}
                         style={{
                             display: 'flex', alignItems: 'center', gap: 5, fontSize: 12,
                             padding: '6px 14px', borderRadius: 99,
@@ -127,7 +131,7 @@ export function DeviceDetailOverlay({ device, backLabel, onClose }: DeviceDetail
                     state={stateStr}
                     name={deviceShort}
                     sub={deviceLong}
-                    onClose={() => setFsOpen(false)}
+                    onClose={() => navigate(basePath)}
                 />
 
                 {/* producers.info.sources is a plain object at runtime */}

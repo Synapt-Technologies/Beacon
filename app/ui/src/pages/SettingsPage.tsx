@@ -1,12 +1,31 @@
 import { useState } from 'react'
-import { useApp } from '../context/AppContext'
+import { useBeacon } from '../context/BeaconContext'
 import { Toggle } from '../components/Toggle'
 import { IconReset } from '../components/icons'
+import { DeviceAlertState, DeviceAlertTarget } from '../../../src/tally/types/ConsumerStates'
+import { UIAlertSlot, DEFAULT_UI_ALERT_CONFIG } from '../../../src/types/UIStates'
 import type { AlertSlot, AlertAction, AlertTarget } from '../types/beacon'
-import {
-  ALERT_COLORS, ALERT_SHORT, ALERT_LONG,
-  DEFAULT_ALERT_CONFIG,
-} from '../types/beacon'
+import { ALERT_COLORS, ALERT_SHORT, ALERT_LONG } from '../types/beacon'
+
+// ? Enum ↔ string bridge helpers
+
+function toAlertSlot(slot: UIAlertSlot): AlertSlot {
+  return {
+    action:  DeviceAlertState[slot.action]  as AlertAction,
+    target:  slot.target !== null ? DeviceAlertTarget[slot.target] as AlertTarget : null,
+    timeout: slot.timeout,
+  }
+}
+
+function toUIAlertSlot(slot: AlertSlot): UIAlertSlot {
+  return {
+    action:  DeviceAlertState[slot.action as keyof typeof DeviceAlertState],
+    target:  slot.target !== null ? DeviceAlertTarget[slot.target as keyof typeof DeviceAlertTarget] : null,
+    timeout: slot.timeout,
+  }
+}
+
+// ? Alert icons
 
 const ALERT_ICONS: Record<AlertAction, React.ReactNode> = {
   IDENT: (
@@ -40,6 +59,8 @@ const ALERT_ICONS: Record<AlertAction, React.ReactNode> = {
     </svg>
   ),
 }
+
+// ? AlertRow
 
 interface AlertRowProps {
   slot: AlertSlot
@@ -77,7 +98,7 @@ function AlertRow({ slot, index, editing, onEdit, onSave, onReset, onCancel }: A
 
   const summaryParts = [ALERT_LONG[slot.action]]
   if (!isClr) {
-    if (slot.target) summaryParts.push(slot.target)
+    if (slot.target)  summaryParts.push(slot.target)
     if (slot.timeout && slot.timeout > 0) summaryParts.push(`${slot.timeout}s`)
   }
 
@@ -124,7 +145,6 @@ function AlertRow({ slot, index, editing, onEdit, onSave, onReset, onCancel }: A
     )
   }
 
-  // ─── Edit form ─────────────────────────────────────────────────────────────
   return (
     <div style={{
       borderBottom: index < 3 ? '0.5px solid var(--color-border-tertiary)' : 'none',
@@ -132,7 +152,6 @@ function AlertRow({ slot, index, editing, onEdit, onSave, onReset, onCancel }: A
     }}>
       <div style={{ padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 10 }}>
 
-        {/* Row 1: Action + Target */}
         <div style={{ display: 'flex', gap: 10 }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1 }}>
             <label style={{ fontSize: 10, fontWeight: 500, color: 'var(--color-text-tertiary)', textTransform: 'uppercase', letterSpacing: '.06em' }}>
@@ -167,7 +186,6 @@ function AlertRow({ slot, index, editing, onEdit, onSave, onReset, onCancel }: A
           )}
         </div>
 
-        {/* Row 2: Timeout (only for non-clear) */}
         {!isClr && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
             <label style={{ fontSize: 10, fontWeight: 500, color: 'var(--color-text-tertiary)', textTransform: 'uppercase', letterSpacing: '.06em' }}>
@@ -192,7 +210,6 @@ function AlertRow({ slot, index, editing, onEdit, onSave, onReset, onCancel }: A
         )}
       </div>
 
-      {/* Footer */}
       <div style={{
         display: 'flex', alignItems: 'center', gap: 8,
         padding: '10px 14px', borderTop: '0.5px solid var(--color-border-tertiary)',
@@ -225,17 +242,23 @@ function AlertRow({ slot, index, editing, onEdit, onSave, onReset, onCancel }: A
   )
 }
 
-// ─── Main page ────────────────────────────────────────────────────────────────
+// ? Page
 
 export default function SettingsPage() {
   const {
-    settings, consumers,
-    updateSettings, updateAlertSlot, resetAlertSlot,
-    exportConfig, importConfig,
-  } = useApp()
+    consumers,
+    uiConfig,
+    setConsumerEnabled,
+    updateAlertSlot,
+    resetAlertSlot,
+    exportConfig,
+    importConfig,
+  } = useBeacon()
 
   const [editingAlert, setEditingAlert] = useState<number | null>(null)
 
+  const gpioEnabled    = consumers.gpio?.enabled    ?? true
+  const aedesEnabled   = consumers.aedes?.enabled   ?? true
   const gpioAvailable  = consumers.gpio?.available  ?? false
   const aedesAvailable = consumers.aedes?.available ?? true
 
@@ -247,6 +270,12 @@ export default function SettingsPage() {
       if (input.files?.[0]) await importConfig(input.files[0])
     }
     input.click()
+  }
+
+  const handleResetAlerts = async () => {
+    for (let i = 0; i < DEFAULT_UI_ALERT_CONFIG.length; i++) {
+      await resetAlertSlot(i)
+    }
   }
 
   return (
@@ -263,32 +292,35 @@ export default function SettingsPage() {
             </div>
           </div>
           <Toggle
-            checked={settings.consumers.gpio}
+            checked={gpioEnabled}
             disabled={!gpioAvailable}
-            onChange={v => updateSettings({ consumers: { ...settings.consumers, gpio: v } })}
+            onChange={v => setConsumerEnabled('gpio', v)}
           />
         </div>
         <div className="s-row">
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: 13, color: 'var(--color-text-primary)' }}>MQTT broker</div>
-            <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginTop: 1 }}>Network tally over MQTT</div>
+            <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginTop: 1 }}>
+              Network tally over MQTT{!aedesAvailable ? ' — not available' : ''}
+            </div>
           </div>
           <Toggle
-            checked={settings.consumers.aedes}
-            onChange={v => updateSettings({ consumers: { ...settings.consumers, aedes: v } })}
+            checked={aedesEnabled}
+            disabled={!aedesAvailable}
+            onChange={v => setConsumerEnabled('aedes', v)}
           />
         </div>
       </div>
 
-      {/* Network */}
+      {/* Network — TODO: wire up to server config endpoint */}
       <div className="sec-lbl">Network</div>
       <div className="s-card">
         {[
-          { label: 'Admin port',         sub: 'Web UI server',       key: 'adminPort' as const,   },
-          { label: 'MQTT port',          sub: undefined,             key: 'mqttPort' as const,    },
-          { label: 'Keep-alive interval',sub: 'MQTT heartbeat in ms',key: 'keepAliveMs' as const, },
-        ].map(({ label, sub, key }) => (
-          <div key={key} className="s-row">
+          { label: 'Admin port',          sub: 'Web UI server',        placeholder: '3000' },
+          { label: 'MQTT port',           sub: undefined,              placeholder: '1883' },
+          { label: 'Keep-alive interval', sub: 'MQTT heartbeat in ms', placeholder: '500'  },
+        ].map(({ label, sub, placeholder }) => (
+          <div key={label} className="s-row">
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: 13, color: 'var(--color-text-primary)' }}>{label}</div>
               {sub && <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginTop: 1 }}>{sub}</div>}
@@ -296,14 +328,15 @@ export default function SettingsPage() {
             <input
               className="s-input"
               type="number"
-              value={settings.network[key]}
-              onChange={e => updateSettings({ network: { ...settings.network, [key]: parseInt(e.target.value) || 0 } })}
+              placeholder={placeholder}
+              disabled
+              title="Network settings not yet configurable"
             />
           </div>
         ))}
       </div>
 
-      {/* Tally behaviour */}
+      {/* Tally behaviour — TODO: wire up to server config endpoint */}
       <div className="sec-lbl">Tally behaviour</div>
       <div className="s-card">
         <div className="s-row">
@@ -311,11 +344,7 @@ export default function SettingsPage() {
             <div style={{ fontSize: 13, color: 'var(--color-text-primary)' }}>State on producer disconnect</div>
             <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginTop: 1 }}>Applied when a switcher goes offline</div>
           </div>
-          <select
-            className="s-select"
-            value={settings.behaviour.stateOnDisconnect}
-            onChange={e => updateSettings({ behaviour: { stateOnDisconnect: e.target.value as typeof settings.behaviour.stateOnDisconnect } })}
-          >
+          <select className="s-select" disabled title="Behaviour settings not yet configurable">
             <option>None</option>
             <option>Preview</option>
             <option>Program</option>
@@ -327,14 +356,14 @@ export default function SettingsPage() {
       {/* Alert buttons */}
       <div className="sec-lbl">Alert buttons</div>
       <div className="s-card">
-        {settings.alertConfig.map((slot, i) => (
+        {uiConfig.alerts.map((slot, i) => (
           <AlertRow
             key={i}
-            slot={slot}
+            slot={toAlertSlot(slot)}
             index={i}
             editing={editingAlert === i}
             onEdit={() => setEditingAlert(i)}
-            onSave={updated => { updateAlertSlot(i, updated); setEditingAlert(null) }}
+            onSave={updated => { updateAlertSlot(i, toUIAlertSlot(updated)); setEditingAlert(null) }}
             onReset={() => { resetAlertSlot(i); setEditingAlert(null) }}
             onCancel={() => setEditingAlert(null)}
           />
@@ -365,22 +394,13 @@ export default function SettingsPage() {
       <div className="s-card">
         <div className="s-row">
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 13, color: 'var(--color-text-primary)' }}>Reset to defaults</div>
-            <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginTop: 1 }}>Restore all settings to factory values</div>
+            <div style={{ fontSize: 13, color: 'var(--color-text-primary)' }}>Reset alert buttons</div>
+            <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginTop: 1 }}>Restore alert slots to defaults</div>
           </div>
           <button
             className="sm-btn"
             style={{ color: '#E24B4A', borderColor: 'color-mix(in srgb, #E24B4A 35%, transparent)' }}
-            onClick={() => {
-              if (confirm('Reset all settings to factory defaults?')) {
-                updateSettings({
-                  consumers:   { gpio: true, aedes: true },
-                  network:     { adminPort: 3000, mqttPort: 1883, keepAliveMs: 500 },
-                  behaviour:   { stateOnDisconnect: 'None' },
-                  alertConfig: DEFAULT_ALERT_CONFIG.map(s => ({ ...s })),
-                })
-              }
-            }}
+            onClick={() => { if (confirm('Reset alert buttons to defaults?')) handleResetAlerts() }}
           >
             Reset
           </button>
