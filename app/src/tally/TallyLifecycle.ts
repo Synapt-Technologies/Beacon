@@ -44,7 +44,7 @@ type ConsumerExport = {
 };
 
 type ConsumerEntryMap    = ConsumerMap<ConsumerRuntime>;
-type ConsumerExportMap   = ConsumerMap<ConsumerExport>;
+export type ConsumerExportMap   = ConsumerMap<ConsumerExport>;
 
 type LifecycleConfigInternal = {
     consumers: ConsumerEntryMap;
