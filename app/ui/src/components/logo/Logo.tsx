@@ -14,12 +14,12 @@ export default function Logo({collapsed }: {collapsed: boolean}) {
         }}>
             <IconBeacon size={16} />
         </div>
-        <span style={{
-            fontSize: 15, fontWeight: 500, color: 'var(--color-text-primary)',
-            whiteSpace: 'nowrap', opacity: collapsed ? 0 : 1, transition: 'opacity .15s',
-        }}>
-            Beacon
-        </span>
+            <span style={{
+                fontSize: 15, fontWeight: 500, color: 'var(--color-text-primary)',
+                whiteSpace: 'nowrap', opacity: collapsed ? 0 : 1, transition: 'opacity .15s',
+            }}>
+                Beacon
+            </span>
         </div>
     )
 }
