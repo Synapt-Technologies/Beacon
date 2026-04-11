@@ -11,8 +11,11 @@ import { GlobalTallySource, ProducerBundle, ProducerId } from '../../../src/tall
 import { ConsumerExportMap } from '../../../src/tally/TallyLifecycle'
 import { UITallyDevice } from '../types/DeviceStates'
 import { DeviceAddress, DeviceAlertState, DeviceAlertTarget } from '../../../src/tally/types/ConsumerStates'
-import { UIAlertSlot } from '../../../src/types/UIStates'
+import { DEFAULT_UI_ALERT_CONFIG, UIAlertSlot } from '../../../src/types/UIStates'
 import { UIConfig } from '../types/UIStates'
+import { ProducerConfig } from '../../../src/tally/producer/AbstractTallyProducer'
+import { ConsumerId } from '../types/beacon'
+import { ConsumerConfig } from '../../../src/tally/consumer/AbstractConsumer'
 // import * as api from '../api/beacon'
 // import type {
 //   ProducerEntry,
@@ -78,14 +81,21 @@ interface BeaconState {
     
     // mutations
     refresh: () => void
+
     removeProducer: (id: ProducerId) => Promise<void>
+    addProducer: (type: string, config: ProducerConfig) => Promise<void>
+    updateProducer: (id: ProducerId, config: ProducerConfig) => Promise<void>
+
     setConsumerEnabled: (id: 'gpio' | 'aedes', enabled: boolean) => Promise<void>
+    updateConsumer: (id: ConsumerId, config: ConsumerConfig) => Promise<void>
+
     patchDevice: (device: DeviceAddress, patch: GlobalTallySource[]) => Promise<void>
     renameDevice: (device: DeviceAddress, name: { short: string; long: string }) => Promise<void>
     sendAlert: (device: DeviceAddress, type: DeviceAlertState, target: DeviceAlertTarget) => Promise<void>
-    // updateSettings: (partial: Partial<AppSettings>) => void
+
     updateAlertSlot: (index: number, slot: UIAlertSlot) => void
     resetAlertSlot: (index: number) => void
+
     saveSettings: () => Promise<void>
     discardSettings: () => void
     exportConfig: () => Promise<void>
@@ -99,12 +109,15 @@ export function BeaconProvider({ children }: { children: ReactNode }) {
       const [producers, setProducers] = useState<ProducerBundle[]>([])
       const [consumers, setConsumers] = useState<ConsumerExportMap | {}>({})
       const [devices, setDevices]     = useState<UITallyDevice[]>([])
+      const [system, setSystem]     = useState<SystemInfo>({})
+      const [uiConfig, setUiConfig]     = useState<UIConfig>({
+        alerts: DEFAULT_UI_ALERT_CONFIG
+      })
     //   const [settings, setSettings]   = useState<AppSettings>(DEFAULT_SETTINGS)
     //   const [saved, setSaved]         = useState<AppSettings>(DEFAULT_SETTINGS)
     //   const [settingsDirty, setDirty] = useState(false)
       const [loading, setLoading]     = useState(true)
       const [error, setError]         = useState<string | null>(null)
-    
     
     const fetchAll = useCallback(async () => {
         // try {
@@ -250,20 +263,24 @@ export function BeaconProvider({ children }: { children: ReactNode }) {
 
     return (
         <BeaconContext value={{
-            producers, consumers, devices, 
+            producers: producers, consumers: consumers, devices: devices, 
+            system: system, uiConfig: uiConfig,
             // settings, settingsDirty, 
-            loading, error,
+            loading: loading, error: error,
             refresh: fetchAll,
-            removeProducer, setConsumerEnabled,
-            patchDevice, renameDevice, sendAlert,
-            updateSettings, updateAlertSlot, resetAlertSlot,
-            saveSettings, discardSettings,
-            exportConfig, importConfig,
+            removeProducer: , addProducer: , updateProducer: ,
+            setConsumerEnabled: , updateConsumer: ,
+            patchDevice: , renameDevice:, sendAlert:,
+            updateAlertSlot:, resetAlertSlot: ,
+            saveSettings: , discardSettings: ,
+            exportConfig: , importConfig: ,
         }}>
         {children}
         </BeaconContext>
     )   
 }
+
+
 
 // ? Hook
 
