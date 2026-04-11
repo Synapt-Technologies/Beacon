@@ -19,6 +19,8 @@ export default function WebTallyPage() {
   // For now, no state is available without /api/devices
   const sourceState = (_key: string): 'pgm' | 'pvw' | 'none' => 'none'
 
+  // TODO: Filter by producer
+
   if (selected) {
     const state = sourceState(`${selected.source.producer}:${selected.source.source}`)
     return (
