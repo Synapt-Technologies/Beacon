@@ -1,25 +1,24 @@
-import { Dispatch, SetStateAction } from 'react';
-import { IconChevronRight } from '../icons';
-import { UIDevice } from '../../types/beacon';
+import { Dispatch, SetStateAction } from 'react'
+import { IconChevronRight } from '../icons'
+import { UITallyDevice } from '../../types/DeviceStates'
+import { DeviceTallyState } from '../../../../src/tally/types/ConsumerStates'
 
-
-export default function DeviceRow({device, setSelected}: {device: UIDevice, setSelected: Dispatch<SetStateAction<UIDevice>>}) {
+export default function DeviceRow({ device, setSelected }: { device: UITallyDevice; setSelected: Dispatch<SetStateAction<UITallyDevice | null>> }) {
     return (
         <div
-        key={device.key}
-        className={`row-card tl-${device.state}`}
-        onClick={() => setSelected(device)}
+            className={`row-card tl-${DeviceTallyState[device.state].toLowerCase()}`}
+            onClick={() => setSelected(device)}
         >
             <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-primary)' }}>
-                {device.long}
+                <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-primary)' }}>
+                    {device.name?.long ?? device.id.device}
+                </div>
+                <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {device.patch.length === 0 ? 'No sources patched' : device.patch.map(s => s.source).join(', ')}
+                </div>
             </div>
-            <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {device.patch.length === 0 ? 'No sources patched' : device.patch.map(s => s.source).join(', ')}
-            </div>
-            </div>
-                <span className="tag-pill">{device.consumerName}</span>
+            <span className="tag-pill">{device.consumer.name}</span>
             <IconChevronRight style={{ color: 'var(--color-text-tertiary)', flexShrink: 0 }} />
         </div>
-    );
+    )
 }
