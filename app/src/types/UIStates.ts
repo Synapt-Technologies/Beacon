@@ -1,5 +1,9 @@
 import { DeviceAlertState, DeviceAlertTarget } from "../tally/types/ConsumerStates"
 
+export interface UIConfig {
+    alerts: UIAlertSlot[]
+}
+
 export interface UIAlertSlot {
   action: DeviceAlertState
   target: DeviceAlertTarget | null  // null for CLEAR
