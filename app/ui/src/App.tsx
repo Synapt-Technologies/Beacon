@@ -1,8 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import LayoutOld from "./components/Layout";
-import ProducersPage from "./pages/ProducersPage";
-import ConsumersPage from "./pages/ConsumersPage";
-import SettingsPage from "./pages/SettingsPage.tsx";
+import SettingsPage from "./pages/SettingsPage";
 import DevicesPage from "./pages/DevicesPage";
 import { AppProvider } from "./context/AppContext";
 import { BeaconProvider } from "./context/BeaconContext";
