@@ -19,7 +19,7 @@ export default function App() {
             <BeaconProvider>
                 <BrowserRouter>
                     <Routes>
-                        <Route element={<LayoutOld />}>
+                        <Route element={<Layout />}>
                             <Route index element={<Navigate to="/overview" replace />} />
                             <Route path="overview" element={<OverviewPage />} />
                             <Route path="web-tally" element={<WebTallyPage />} />
@@ -29,10 +29,6 @@ export default function App() {
                             {/* <Route path="connections" element={<ProducersPage />} /> */}
                             <Route path="settings" element={<SettingsPage />} />
                         </Route>
-                        <Route path="new" element={<Layout />}>
-
-                        </Route>
-
                     </Routes>
                 </BrowserRouter>
             </BeaconProvider>
