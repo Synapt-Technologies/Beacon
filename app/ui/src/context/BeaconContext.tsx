@@ -6,6 +6,7 @@ import {
   useCallback,
   type ReactNode,
 } from 'react'
+import * as api from '../api/BeaconApi'
 import { SystemInfo } from '../../../src/types/SystemInfo'
 import { GlobalTallySource, ProducerBundle, ProducerId } from '../../../src/tally/types/ProducerStates'
 import { ConsumerExportMap } from '../../../src/tally/TallyLifecycle'
@@ -15,41 +16,12 @@ import { DEFAULT_UI_ALERT_CONFIG, UIAlertSlot, UIConfig } from '../../../src/typ
 import { ProducerConfig } from '../../../src/tally/producer/AbstractTallyProducer'
 import { ConsumerId } from '../types/beacon'
 import { ConsumerConfig } from '../../../src/tally/consumer/AbstractConsumer'
-// import * as api from '../api/beacon'
-// import type {
-//   ProducerEntry,
-//   ConsumersState,
-//   UIDevice,
-//   AlertSlot,
-//   AppSettings,
-//   GlobalTallySource,
-// } from '../types/beacon'
-// import {
-//   DEFAULT_SETTINGS,
-//   DEFAULT_ALERT_CONFIG,
-//   stateFromValue,
-// } from '../types/beacon'
 
 
-// ? Helpers — used in fetchAll once API is wired up
-const CONNECTION_LABELS: Record<number, string> = {
-  0: 'Hardware',
-  1: 'Network',
-  2: 'Wireless',
-  3: 'Virtual',
-}
-
+// ? Helpers
 const CONSUMER_NAMES: Record<string, string> = {
   gpio:  'GPIO hardware',
   aedes: 'MQTT broker',
-}
-
-function formatTs(ms?: number): string {
-  if (!ms) return '—'
-  const s = Math.round((Date.now() - ms) / 1000)
-  if (s < 5)  return 'just now'
-  if (s < 60) return `${s}s ago`
-  return `${Math.round(s / 60)}m ago`
 }
 
 // ? Context Data Shape
@@ -100,105 +72,142 @@ export function BeaconProvider({ children }: { children: ReactNode }) {
     const [producers, setProducers] = useState<ProducerBundle[]>([])
     const [consumers, setConsumers] = useState<Partial<ConsumerExportMap>>({})
     const [devices, setDevices]     = useState<UITallyDevice[]>([])
-    const [system, setSystem]       = useState<SystemInfo>({})
+    const [system]                  = useState<SystemInfo>({})
     const [uiConfig, setUiConfig]   = useState<UIConfig>({ alerts: DEFAULT_UI_ALERT_CONFIG })
     const [settingsUnsaved, setSettingsUnsaved] = useState(false)
     const [loading, setLoading]     = useState(false)
     const [error, setError]         = useState<string | null>(null)
 
     const fetchAll = useCallback(async () => {
-        // try {
-        //   const [prods, cons] = await Promise.all([
-        //     api.getProducers(),
-        //     api.getConsumers(),
-        //   ])
-        //   setProducers(prods)
-        //   setConsumers(cons)
+        setLoading(true)
+        try {
+          const [prods, cons] = await Promise.all([
+            api.getProducers(),
+            api.getConsumers(),
+          ])
+          setProducers(prods)
+          setConsumers(cons)
 
-        //   // Devices endpoint may not exist yet — handle gracefully
-        //   try {
-        //     const rawDevices = await api.getDevices()
-        //     const ui: UIDevice[] = []
-        //     for (const [consumerId, devList] of Object.entries(rawDevices)) {
-        //       for (const dev of devList) {
-        //         ui.push({
-        //           key: `${dev.id.consumer}:${dev.id.device}`,
-        //           long: dev.name?.long ?? `${dev.id.consumer} ${dev.id.device}`,
-        //           short: dev.name?.short ?? dev.id.device,
-        //           consumerId: consumerId as ConsumerId,
-        //           consumerName: CONSUMER_NAMES[consumerId] ?? consumerId,
-        //           connectionLabel: CONNECTION_LABELS[dev.connection] ?? 'Unknown',
-        //           patch: dev.patch,
-        //           state: stateFromValue(dev.state),
-        //           lastUpdate: formatTs(dev.last_update),
-        //         })
-        //       }
-        //     }
-        //     setDevices(ui)
-        //   } catch {
-        //     setDevices([])
-        //   }
+          // Devices endpoint may not exist yet — handle gracefully
+          try {
+            const rawDevices = await api.getDevices()
+            const ui: UITallyDevice[] = []
+            for (const [consumerId, devList] of Object.entries(rawDevices)) {
+              for (const dev of devList) {
+                ui.push({
+                  ...dev,
+                  consumer: { name: CONSUMER_NAMES[consumerId] ?? consumerId },
+                })
+              }
+            }
+            setDevices(ui)
+          } catch {
+            setDevices([])
+          }
 
-        //   setError(null)
-        // } catch (e) {
-        //   setError(e instanceof Error ? e.message : 'Failed to load data')
-        // } finally {
-        //   setLoading(false)
-        // }
+          setError(null)
+        } catch (e) {
+          setError(e instanceof Error ? e.message : 'Failed to load data')
+        } finally {
+          setLoading(false)
+        }
     }, [])
 
     useEffect(() => { fetchAll() }, [fetchAll])
 
 
-    const addProducer = async (type: string, config: ProducerConfig) => {
-      return;
+    // ? Producers — no add/update endpoints yet
+    const addProducer = async (_type: string, _config: ProducerConfig) => {
+      // TODO: POST /api/producers not yet implemented on server
     }
     const removeProducer = async (id: ProducerId) => {
-      return;
+      await api.removeProducer(id)
+      setProducers(prev => prev.filter(p => p.config.id !== id))
     }
-    const updateProducer = async (id: ProducerId, config: ProducerConfig) => {
-      return;
+    const updateProducer = async (_id: ProducerId, _config: ProducerConfig) => {
+      // TODO: PATCH /api/producers/:id not yet implemented on server
     }
 
+    // ? Consumers
     const setConsumerEnabled = async (id: ConsumerId, enabled: boolean) => {
-      return;
+      await api.patchConsumer(id, { enabled })
+      setConsumers(prev => ({
+        ...prev,
+        [id]: { ...prev[id as keyof ConsumerExportMap], enabled },
+      }))
     }
     const updateConsumer = async (id: ConsumerId, config: ConsumerConfig) => {
-      return;
+      await api.patchConsumer(id, { config })
+      setConsumers(prev => ({
+        ...prev,
+        [id]: { ...prev[id as keyof ConsumerExportMap], config: { ...prev[id as keyof ConsumerExportMap]?.config, ...config } },
+      }))
     }
 
+    // ? Devices
     const patchDevice = async (device: DeviceAddress, patch: GlobalTallySource[]) => {
-      return new Promise<void>(resolve => setTimeout(resolve, 200));
+      await api.patchDevice(device, patch)
+      setDevices(prev => prev.map(d =>
+        d.id.consumer === device.consumer && d.id.device === device.device
+          ? { ...d, patch }
+          : d
+      ))
     }
     const renameDevice = async (device: DeviceAddress, name: { short: string; long: string }) => {
-      return new Promise<void>(resolve => setTimeout(resolve, 200));
+      await api.renameDevice(device, name)
+      setDevices(prev => prev.map(d =>
+        d.id.consumer === device.consumer && d.id.device === device.device
+          ? { ...d, name }
+          : d
+      ))
     }
     const removeDevice = async (device: DeviceAddress) => {
-      return new Promise<void>(resolve => setTimeout(resolve, 200));
+      // TODO: DELETE /api/devices/:consumer/:device not yet implemented on server
+      setDevices(prev => prev.filter(d =>
+        !(d.id.consumer === device.consumer && d.id.device === device.device)
+      ))
     }
     const sendAlert = async (device: DeviceAddress, type: DeviceAlertState, target: DeviceAlertTarget) => {
-      return new Promise<void>(resolve => setTimeout(resolve, 200));
+      await api.sendAlert(device, type, target)
     }
 
+    // ? Alert slots — local only, no server endpoint yet
     const updateAlertSlot = async (index: number, slot: UIAlertSlot) => {
-      return new Promise<void>(resolve => setTimeout(resolve, 200));
+      setUiConfig(prev => {
+        const alerts = [...prev.alerts]
+        alerts[index] = slot
+        return { ...prev, alerts }
+      })
+      setSettingsUnsaved(true)
     }
     const resetAlertSlot = async (index: number) => {
-      return new Promise<void>(resolve => setTimeout(resolve, 200));
+      setUiConfig(prev => {
+        const alerts = [...prev.alerts]
+        alerts[index] = DEFAULT_UI_ALERT_CONFIG[index]
+        return { ...prev, alerts }
+      })
+      setSettingsUnsaved(true)
     }
 
+    // ? Settings — no server endpoint yet
     const saveSettings = async () => {
-      return new Promise<void>(resolve => setTimeout(resolve, 200));
+      // TODO: persist uiConfig to server
+      setSettingsUnsaved(false)
     }
     const discardSettings = () => {
-      return;
+      // TODO: reload uiConfig from server
+      setSettingsUnsaved(false)
     }
 
+    // ? Config
     const exportConfig = async () => {
-      return new Promise<void>(resolve => setTimeout(resolve, 200));
+      await api.exportConfig()
     }
     const importConfig = async (file: File) => {
-      return new Promise<void>(resolve => setTimeout(resolve, 200));
+      const text = await file.text()
+      const config = JSON.parse(text)
+      await api.importConfig(config)
+      await fetchAll()
     }
 
     return (
