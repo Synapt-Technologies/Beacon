@@ -33,7 +33,7 @@ export default function Layout() {
             }}>
                 <Header title={title}/>
 
-                <main>
+                <main style={{ flex: 1, overflowY: 'auto', padding: '14px 18px' }}>
                     <Outlet />
                 </main>
 

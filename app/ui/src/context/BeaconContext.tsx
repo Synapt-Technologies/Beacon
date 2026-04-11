@@ -74,7 +74,7 @@ interface BeaconState {
     uiConfig: UIConfig;
 
     // settings: AppSettings // TODO CHECK IF NEEDED OR DIRECT UPDATE / LOAD
-    // settingsDirty: boolean
+    settingsUnsaved: boolean
 
     loading: boolean;
     error: string | null;
@@ -321,7 +321,8 @@ export function BeaconProvider({ children }: { children: ReactNode }) {
         <BeaconContext value={{
             producers: producers, consumers: consumers, devices: devices, 
             system: system, uiConfig: uiConfig,
-            // settings, settingsDirty, 
+            // settings, 
+            settingsUnsaved: false, 
             loading: loading, error: error,
             refresh: fetchAll,
             addProducer: addProducer, removeProducer: removeProducer, updateProducer: removeProducer,
