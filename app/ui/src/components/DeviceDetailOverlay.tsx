@@ -1,16 +1,42 @@
 import { useState } from 'react'
-import type { UIDevice, GlobalTallySource } from '../types/beacon'
-import { useApp } from '../context/AppContext'
+import { useBeacon } from '../context/BeaconContext'
 import { TallyBlock, stateSub } from './Tallyblock'
 import { AlertButtons } from './AlertButtons'
 import { PatchModal } from './PatchModal'
 import { FullscreenOverlay } from './FullscreenOverlay'
 import { IconChevronLeft, IconFullscreen } from './icons'
+import { UITallyDevice } from '../types/DeviceStates'
+import { ConnectionType, DeviceAlertState, DeviceAlertTarget, DeviceTallyState, GlobalDeviceTools } from '../../../src/tally/types/ConsumerStates'
+import type { SourceInfo } from '../../../src/tally/types/ProducerStates'
+import type { GlobalTallySource } from '../../../src/tally/types/ProducerStates'
+import type { AlertSlot, TallyState } from '../types/beacon'
 
 interface DeviceDetailOverlayProps {
-  device: UIDevice | null
+  device: UITallyDevice
   backLabel: string
   onClose: () => void
+}
+
+const CONNECTION_LABELS: Record<ConnectionType, string> = {
+  [ConnectionType.HARDWARE]: 'Hardware',
+  [ConnectionType.NETWORK]:  'Network',
+  [ConnectionType.WIRELESS]: 'Wireless',
+  [ConnectionType.VIRTUAL]:  'Virtual',
+}
+
+function formatTs(ms?: number): string { // TODO to helper class?
+  if (!ms) return '—'
+  const s = Math.round((Date.now() - ms) / 1000)
+  if (s < 5)  return 'Just now'
+  if (s < 60) return `${s}s ago`
+  if (s > 60*60) return `More than ${Math.floor(s / 60 / 60)}h ago`
+  return `${Math.round(s / 60)}m ago`
+}
+
+function tallyStr(state: DeviceTallyState): TallyState {
+  if (state === DeviceTallyState.PROGRAM || state === DeviceTallyState.DANGER) return 'pgm'
+  if (state === DeviceTallyState.PREVIEW || state === DeviceTallyState.WARNING) return 'pvw'
+  return 'none'
 }
 
 function InfoBox({ label, value }: { label: string; value: string }) {
@@ -30,26 +56,35 @@ function InfoBox({ label, value }: { label: string; value: string }) {
 }
 
 export function DeviceDetailOverlay({ device, backLabel, onClose }: DeviceDetailOverlayProps) {
-  const { producers, settings, patchDevice, renameDevice, sendAlert } = useApp()
-  const [patchOpen, setPatchOpen]   = useState(false)
-  const [fsOpen, setFsOpen]         = useState(false)
+  const { producers, uiConfig, patchDevice, sendAlert } = useBeacon()
+  const [patchOpen, setPatchOpen] = useState(false)
+  const [fsOpen, setFsOpen]       = useState(false)
 
-  if (!device) return null
+  const stateStr   = tallyStr(device.state)
+  const deviceKey  = GlobalDeviceTools.create(device.id.consumer, device.id.device)
+  const deviceLong = device.name?.long  ?? device.id.device
+  const deviceShort = device.name?.short ?? device.id.device
 
-  const stateLabel =
-    device.state === 'pgm' ? 'Program' :
-    device.state === 'pvw' ? 'Preview' : 'Idle'
+  // sources are plain objects at runtime (serialized from Map by the server)
+  const getSources = (p: typeof producers[number]): Record<string, SourceInfo> =>
+    p.info?.sources as unknown as Record<string, SourceInfo>
+
+  // AlertButtons expects old string-based AlertSlot; bridge from typed UIAlertSlot
+  const alertSlots: AlertSlot[] = uiConfig.alerts.map(slot => ({
+    action: DeviceAlertState[slot.action]  as AlertSlot['action'],
+    target: slot.target !== null ? DeviceAlertTarget[slot.target] as AlertSlot['target'] : null,
+    timeout: slot.timeout,
+  }))
 
   const handleAlert = async (action: string, target: string | null) => {
-    try {
-      const [consumer, ...rest] = device.key.split(':')
-      await sendAlert(device.key, action, target ?? 'ALL')
-    } catch { /* fire-and-forget in UI */ }
+    const type = DeviceAlertState[action as keyof typeof DeviceAlertState]
+    const tgt  = target ? DeviceAlertTarget[target as keyof typeof DeviceAlertTarget] : DeviceAlertTarget.ALL
+    try { await sendAlert(device.id, type, tgt) } catch { /* fire-and-forget */ }
   }
 
   const handlePatchApply = async (patch: GlobalTallySource[]) => {
     setPatchOpen(false)
-    await patchDevice(device.key, patch)
+    await patchDevice(device.id, patch)
   }
 
   return (
@@ -73,7 +108,7 @@ export function DeviceDetailOverlay({ device, backLabel, onClose }: DeviceDetail
             <IconChevronLeft /> {backLabel}
           </button>
           <span style={{ flex: 1, fontSize: 14, fontWeight: 500, color: 'var(--color-text-primary)' }}>
-            {device.long}
+            {deviceLong}
           </span>
           <button
             onClick={() => setFsOpen(true)}
@@ -90,29 +125,29 @@ export function DeviceDetailOverlay({ device, backLabel, onClose }: DeviceDetail
 
         {/* Body */}
         <div style={{ flex: 1, overflowY: 'auto', padding: '16px 18px' }}>
-          <TallyBlock name={device.long} sub={stateSub(device.state)} state={device.state} />
+          <TallyBlock name={deviceLong} sub={stateSub(stateStr)} state={stateStr} />
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 14 }}>
-            <InfoBox label="Consumer"    value={device.consumerName} />
-            <InfoBox label="Connection"  value={device.connectionLabel} />
-            <InfoBox label="Device ID"   value={device.key} />
-            <InfoBox label="Last update" value={device.lastUpdate} />
+            <InfoBox label="Consumer"    value={device.consumer.name} />
+            <InfoBox label="Connection"  value={CONNECTION_LABELS[device.connection] ?? 'Unknown'} />
+            <InfoBox label="Device ID"   value={deviceKey} />
+            <InfoBox label="Last update" value={formatTs(device.last_update)} />
           </div>
 
           <div className="sec-lbl">Patched sources</div>
-          {device.patch.length === 0 ? ( // TODO: Make longname and shortname as primary?
+          {device.patch.length === 0 ? (
             <div style={{ fontSize: 12, color: 'var(--color-text-tertiary)', padding: '8px 0' }}>
               No sources patched
             </div>
           ) : (
             device.patch.map((src, i) => {
-              // Try to find source info from producers
               const globalKey = `${src.producer}:${src.source}`
-              let srcInfo = null
+              let srcInfo: SourceInfo | undefined
               for (const p of producers) {
-                if (p.info?.sources[globalKey]) { srcInfo = p.info.sources[globalKey]; break }
+                const s = getSources(p)
+                if (s?.[globalKey]) { srcInfo = s[globalKey]; break }
               }
-              const prodEntry = producers.find(p => p.config.id === src.producer)
+              const prod = producers.find(p => p.config.id === src.producer)
               return (
                 <div key={i} style={{
                   border: '0.5px solid var(--color-border-tertiary)',
@@ -132,15 +167,9 @@ export function DeviceDetailOverlay({ device, backLabel, onClose }: DeviceDetail
                       {srcInfo?.long ?? `Source ${src.source}`}
                     </div>
                     <div style={{ fontSize: 10, color: 'var(--color-text-tertiary)' }}>
-                      {prodEntry?.config.name ?? src.producer}
+                      {prod?.config.name ?? src.producer}
                     </div>
                   </div>
-                  <span style={{
-                    fontSize: 10, fontWeight: 500, padding: '2px 7px', borderRadius: 99,
-                    background: 'var(--color-background-secondary)', color: 'var(--color-text-tertiary)',
-                  }}>
-                    {stateLabel}
-                  </span>
                 </div>
               )
             })
@@ -155,7 +184,7 @@ export function DeviceDetailOverlay({ device, backLabel, onClose }: DeviceDetail
             <div style={{ fontSize: 10, fontWeight: 500, color: 'var(--color-text-tertiary)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 10 }}>
               Alerts
             </div>
-            <AlertButtons slots={settings.alertConfig} onAlert={handleAlert} />
+            <AlertButtons slots={alertSlots} onAlert={handleAlert} />
           </div>
 
           <div style={{ marginTop: 10, display: 'flex', justifyContent: 'flex-end' }}>
@@ -168,24 +197,19 @@ export function DeviceDetailOverlay({ device, backLabel, onClose }: DeviceDetail
         {/* Fullscreen overlay */}
         <FullscreenOverlay
           open={fsOpen}
-          state={device.state}
-          name={device.short}
-          sub={
-            // device.patch.length
-            // ? device.patch.map(s => s.source).join(', ')
-            device.long
-            // : 'No sources patched'
-          }
+          state={stateStr}
+          name={deviceShort}
+          sub={deviceLong}
           onClose={() => setFsOpen(false)}
         />
 
-        {/* Patch modal */}
+        {/* Patch modal — producers.info.sources is a plain object at runtime */}
         <PatchModal
           open={patchOpen}
-          deviceName={device.long}
-          consumerName={device.consumerName}
+          deviceName={deviceLong}
+          consumerName={device.consumer.name}
           currentPatch={device.patch}
-          producers={producers}
+          producers={producers as any}
           onApply={handlePatchApply}
           onClose={() => setPatchOpen(false)}
         />
