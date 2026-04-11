@@ -3,13 +3,17 @@ import { type GlobalTallySource } from "./ProducerStates";
 export type ConsumerId = string;
 export type DeviceId = string;
 
+// TODO: More of a DeviceAlertAction?
+// TODO CHECK STRING VALUES
 export enum DeviceAlertState { // TODO Check if these are desired types
     IDENT,
     INFO,
     NORMAL,
     PRIO,
+    CLEAR
 }
 
+// TODO CHECK STRING VALUES
 export enum DeviceAlertTarget {
     OPERATOR,
     TALENT,
