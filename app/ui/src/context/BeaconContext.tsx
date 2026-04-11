@@ -82,8 +82,8 @@ interface BeaconState {
     // mutations
     refresh: () => void
 
-    removeProducer: (id: ProducerId) => Promise<void>
     addProducer: (type: string, config: ProducerConfig) => Promise<void>
+    removeProducer: (id: ProducerId) => Promise<void>
     updateProducer: (id: ProducerId, config: ProducerConfig) => Promise<void>
 
     setConsumerEnabled: (id: 'gpio' | 'aedes', enabled: boolean) => Promise<void>
@@ -91,13 +91,15 @@ interface BeaconState {
 
     patchDevice: (device: DeviceAddress, patch: GlobalTallySource[]) => Promise<void>
     renameDevice: (device: DeviceAddress, name: { short: string; long: string }) => Promise<void>
+    removeDevice: (device: DeviceAddress) => Promise<void>
     sendAlert: (device: DeviceAddress, type: DeviceAlertState, target: DeviceAlertTarget) => Promise<void>
 
-    updateAlertSlot: (index: number, slot: UIAlertSlot) => void
-    resetAlertSlot: (index: number) => void
+    updateAlertSlot: (index: number, slot: UIAlertSlot) => Promise<void>
+    resetAlertSlot: (index: number) => Promise<void>
 
     saveSettings: () => Promise<void>
     discardSettings: () => void
+
     exportConfig: () => Promise<void>
     importConfig: (file: File) => Promise<void>
 }
@@ -164,6 +166,60 @@ export function BeaconProvider({ children }: { children: ReactNode }) {
     useEffect(() => { fetchAll() }, [fetchAll])
     
     
+    const addProducer = async (type: string, config: ProducerConfig) => {
+      return;
+    }
+    const removeProducer = async (id: ProducerId) => {
+      return;
+    }
+    const updateProducer = async (id: ProducerId, config: ProducerConfig) => {
+      return;
+    }
+
+
+    
+    const setConsumerEnabled = async (id: 'gpio' | 'aedes', enabled: boolean) => {
+      return;
+    }
+    const updateConsumer = async (id: ConsumerId, config: ConsumerConfig) => {
+      return;
+    }
+
+    
+    const patchDevice = async (device: DeviceAddress, patch: GlobalTallySource[]) => {
+      return new Promise<void>(resolve => setTimeout(resolve, 200));
+    }
+    const renameDevice = async (device: DeviceAddress, name: { short: string; long: string }) => {
+      return new Promise<void>(resolve => setTimeout(resolve, 200));
+    }
+    const removeDevice = async (device: DeviceAddress) => {
+      return new Promise<void>(resolve => setTimeout(resolve, 200));
+    }
+    const sendAlert = async (device: DeviceAddress, type: DeviceAlertState, target: DeviceAlertTarget) => {
+      return new Promise<void>(resolve => setTimeout(resolve, 200));
+    }
+
+    const updateAlertSlot = async (index: number, slot: UIAlertSlot) => {
+      return new Promise<void>(resolve => setTimeout(resolve, 200));
+    }
+    const resetAlertSlot = async (index: number) => {
+      return new Promise<void>(resolve => setTimeout(resolve, 200));
+    }
+
+    const saveSettings = async () => {
+      return new Promise<void>(resolve => setTimeout(resolve, 200));
+    }
+    const discardSettings = () => {
+      return;
+    }
+
+    const exportConfig = async () => {
+      return new Promise<void>(resolve => setTimeout(resolve, 200));
+    }
+    const importConfig = async (file: File) => {
+      return new Promise<void>(resolve => setTimeout(resolve, 200));
+    }
+
     // // Poll for tally state updates every 2 seconds
     // useEffect(() => {
     //     const id = setInterval(() => {
@@ -268,12 +324,12 @@ export function BeaconProvider({ children }: { children: ReactNode }) {
             // settings, settingsDirty, 
             loading: loading, error: error,
             refresh: fetchAll,
-            removeProducer: , addProducer: , updateProducer: ,
-            setConsumerEnabled: , updateConsumer: ,
-            patchDevice: , renameDevice:, sendAlert:,
-            updateAlertSlot:, resetAlertSlot: ,
-            saveSettings: , discardSettings: ,
-            exportConfig: , importConfig: ,
+            addProducer: addProducer, removeProducer: removeProducer, updateProducer: removeProducer,
+            setConsumerEnabled: setConsumerEnabled, updateConsumer: updateConsumer,
+            patchDevice: patchDevice, renameDevice: renameDevice, removeDevice: removeDevice, sendAlert: sendAlert,
+            updateAlertSlot: updateAlertSlot, resetAlertSlot: resetAlertSlot,
+            saveSettings: saveSettings, discardSettings: discardSettings,
+            exportConfig: exportConfig, importConfig: importConfig,
         }}>
         {children}
         </BeaconContext>
@@ -284,7 +340,7 @@ export function BeaconProvider({ children }: { children: ReactNode }) {
 
 // ? Hook
 
-export function useApp(): BeaconState {
+export function useBeacon(): BeaconState {
   const ctx = useContext(BeaconContext)
   if (!ctx) throw new Error('useApp must be used within AppProvider')
   return ctx
