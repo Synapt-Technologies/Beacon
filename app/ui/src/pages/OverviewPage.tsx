@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useBeacon } from '../context/BeaconContext'
 import DeviceRow from '../components/devices/DeviceRow'
-import { DeviceDetailOverlay } from '../components/DeviceDetailOverlay'
+import { DeviceDetailOverlay } from '../components/deviceDetail/DeviceDetailOverlay'
 import { UITallyDevice } from '../types/DeviceStates'
 import { GlobalDeviceTools } from '../../../src/tally/types/ConsumerStates'
 

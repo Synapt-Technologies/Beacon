@@ -1,93 +1,94 @@
 import { useState } from 'react'
-import { useApp } from '../context/AppContext'
-import { TallyBlock, stateSub } from '../components/TallyBlock'
+import { useBeacon } from '../context/BeaconContext'
+import { TallyBlock, stateSub } from '../components/Tallyblock'
 import { FullscreenOverlay } from '../components/FullscreenOverlay'
 import { IconChevronLeft, IconChevronRight, IconFullscreen } from '../components/icons'
-import type { SourceInfo } from '../types/beacon'
+import type { SourceInfo } from '../../../src/tally/types/ProducerStates'
 
 interface SelectedSource extends SourceInfo {
   prodName: string
 }
 
+// ? Helpers
+
+// TODO: replace with live tally state from WebSocket / SSE once available
+const sourceState = (_key: string): 'pgm' | 'pvw' | 'none' => 'none'
+
+// ? Source detail view
+
+function SourceDetail({ source, onClose }: { source: SelectedSource; onClose: () => void }) {
+  const [fsOpen, setFsOpen] = useState(false)
+  const state = sourceState(`${source.source.producer}:${source.source.source}`)
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+        <button
+          onClick={onClose}
+          style={{
+            display: 'flex', alignItems: 'center', gap: 5, fontSize: 13,
+            color: 'var(--color-text-secondary)', border: 'none', background: 'none',
+            cursor: 'pointer', padding: '4px 8px', borderRadius: 'var(--border-radius-md)',
+          }}
+        >
+          <IconChevronLeft /> All sources
+        </button>
+        <button
+          onClick={() => setFsOpen(true)}
+          style={{
+            display: 'flex', alignItems: 'center', gap: 5, fontSize: 12,
+            marginLeft: 'auto', padding: '6px 14px', borderRadius: 99,
+            border: '0.5px solid var(--color-border-tertiary)',
+            background: 'none', color: 'var(--color-text-secondary)', cursor: 'pointer',
+          }}
+        >
+          <IconFullscreen /> Fullscreen
+        </button>
+      </div>
+
+      <TallyBlock name={source.long} sub={stateSub(state)} state={state} height={160} nameFontSize={26} />
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+        {([
+          ['Producer',   source.prodName],
+          ['Short name', source.short],
+          ['Source ID',  `${source.source.producer}:${source.source.source}`],
+          ['State',      state === 'pgm' ? 'Program' : state === 'pvw' ? 'Preview' : 'Idle'],
+        ] as [string, string][]).map(([label, value]) => (
+          <div key={label} style={{
+            background: 'var(--color-background-primary)',
+            border: '0.5px solid var(--color-border-tertiary)',
+            borderRadius: 'var(--border-radius-md)', padding: '9px 11px',
+          }}>
+            <div style={{ fontSize: 10, fontWeight: 500, color: 'var(--color-text-tertiary)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 3 }}>
+              {label}
+            </div>
+            <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-primary)' }}>
+              {value}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <FullscreenOverlay
+        open={fsOpen}
+        state={state}
+        name={source.short}
+        sub={`${source.long} · ${source.prodName}`}
+        onClose={() => setFsOpen(false)}
+      />
+    </div>
+  )
+}
+
+// ? Page
+
 export default function WebTallyPage() {
-  const { producers } = useApp()
+  const { producers } = useBeacon()
   const [selected, setSelected] = useState<SelectedSource | null>(null)
-  const [fsOpen, setFsOpen]     = useState(false)
-
-  // Compute tally state for each source from global tally state
-  // In production this should come from a WebSocket / SSE feed
-  // For now, no state is available without /api/devices
-  const sourceState = (_key: string): 'pgm' | 'pvw' | 'none' => 'none'
-
-  // TODO: Filter by producer
 
   if (selected) {
-    const state = sourceState(`${selected.source.producer}:${selected.source.source}`)
-    return (
-      <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-          <button
-            onClick={() => setSelected(null)}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 5, fontSize: 13,
-              color: 'var(--color-text-secondary)', border: 'none', background: 'none',
-              cursor: 'pointer', padding: '4px 8px', borderRadius: 'var(--border-radius-md)',
-            }}
-          >
-            <IconChevronLeft /> All sources
-          </button>
-          <button
-            onClick={() => setFsOpen(true)}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 5, fontSize: 12,
-              marginLeft: 'auto', padding: '6px 14px', borderRadius: 99,
-              border: '0.5px solid var(--color-border-tertiary)',
-              background: 'none', color: 'var(--color-text-secondary)', cursor: 'pointer',
-            }}
-          >
-            <IconFullscreen /> Fullscreen
-          </button>
-        </div>
-
-        <TallyBlock
-          name={selected.long}
-          sub={stateSub(state)}
-          state={state}
-          height={160}
-          nameFontSize={26}
-        />
-
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-          {[
-            ['Producer',   selected.prodName],
-            ['Short name', selected.short],
-            ['Source ID',  `${selected.source.producer}:${selected.source.source}`],
-            ['State',      state === 'pgm' ? 'Program' : state === 'pvw' ? 'Preview' : 'Idle'],
-          ].map(([label, value]) => (
-            <div key={label} style={{
-              background: 'var(--color-background-primary)',
-              border: '0.5px solid var(--color-border-tertiary)',
-              borderRadius: 'var(--border-radius-md)', padding: '9px 11px',
-            }}>
-              <div style={{ fontSize: 10, fontWeight: 500, color: 'var(--color-text-tertiary)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 3 }}>
-                {label}
-              </div>
-              <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-primary)' }}>
-                {value}
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <FullscreenOverlay
-          open={fsOpen}
-          state={state}
-          name={selected.short}
-          sub={selected.long + " → " + selected.prodName}
-          onClose={() => setFsOpen(false)}
-        />
-      </div>
-    )
+    return <SourceDetail source={selected} onClose={() => setSelected(null)} />
   }
 
   return (
@@ -96,8 +97,15 @@ export default function WebTallyPage() {
         Source states from all producers — click to view, then go fullscreen
       </div>
 
+      {producers.length === 0 && (
+        <div style={{ padding: '32px 0', textAlign: 'center', fontSize: 13, color: 'var(--color-text-tertiary)' }}>
+          No producers connected — add a connection first
+        </div>
+      )}
+
       {producers.map(prod => {
-        const sources = prod.info ? Object.values(prod.info.sources) : []
+        // sources is typed as Map but is a plain object at runtime (serialized by server)
+        const sources = Object.values(prod.info.sources as unknown as Record<string, SourceInfo>)
         return (
           <div key={prod.config.id} style={{ marginBottom: 16 }}>
             <div className="sec-lbl">{prod.config.name ?? prod.config.id}</div>
@@ -132,12 +140,6 @@ export default function WebTallyPage() {
           </div>
         )
       })}
-
-      {producers.length === 0 && (
-        <div style={{ padding: '32px 0', textAlign: 'center', fontSize: 13, color: 'var(--color-text-tertiary)' }}>
-          No producers connected — add a connection first
-        </div>
-      )}
     </div>
   )
 }

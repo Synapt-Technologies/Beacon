@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useApp } from '../context/AppContext'
-import { DeviceDetailOverlay } from '../components/DeviceDetailOverlay'
+import { DeviceDetailOverlay } from '../components/deviceDetail/DeviceDetailOverlay'
 import { PatchModal } from '../components/PatchModal'
 import type { UIDevice, GlobalTallySource } from '../types/beacon'
 
