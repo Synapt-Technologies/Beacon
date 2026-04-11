@@ -11,7 +11,8 @@ import { GlobalTallySource, ProducerBundle, ProducerId } from '../../../src/tall
 import { ConsumerExportMap } from '../../../src/tally/TallyLifecycle'
 import { UITallyDevice } from '../types/DeviceStates'
 import { DeviceAddress, DeviceAlertState, DeviceAlertTarget } from '../../../src/tally/types/ConsumerStates'
-import { UIAlertSlot } from '../types/UIStates'
+import { UIAlertSlot } from '../../../src/types/UIStates'
+import { UIConfig } from '../types/UIStates'
 // import * as api from '../api/beacon'
 // import type {
 //   ProducerEntry,
@@ -66,6 +67,8 @@ interface BeaconState {
     devices: UITallyDevice[]; // TODO: Map by producer?
 
     system: SystemInfo;
+
+    uiConfig: UIConfig;
 
     // settings: AppSettings // TODO CHECK IF NEEDED OR DIRECT UPDATE / LOAD
     // settingsDirty: boolean
