@@ -96,18 +96,18 @@ export type AlertAction = 'IDENT' | 'INFO' | 'NORMAL' | 'PRIO' | 'CLEAR'
 /** Mirror of backend DeviceAlertTarget (ConsumerStates.ts) */
 export type AlertTarget = 'ALL' | 'OPERATOR' | 'TALENT'
 
-// export interface AlertSlot {
-//   action: AlertAction
-//   target: AlertTarget | null  // null for CLEAR
-//   timeout: number | null      // seconds; 0 = hold until cleared; null for CLEAR
-// }
+export interface AlertSlot {
+  action: AlertAction
+  target: AlertTarget | null  // null for CLEAR
+  timeout: number | null      // seconds; 0 = hold until cleared; null for CLEAR
+}
 
-// export const DEFAULT_ALERT_CONFIG: AlertSlot[] = [
-//   { action: 'IDENT', target: 'ALL', timeout: 5 },
-//   { action: 'PRIO',  target: 'OPERATOR', timeout: 0 },
-//   { action: 'INFO',  target: 'ALL', timeout: 10 },
-//   { action: 'CLEAR', target: null, timeout: null },
-// ]
+export const DEFAULT_ALERT_CONFIG: AlertSlot[] = [
+  { action: 'IDENT', target: 'ALL', timeout: 5 },
+  { action: 'PRIO',  target: 'OPERATOR', timeout: 0 },
+  { action: 'INFO',  target: 'ALL', timeout: 10 },
+  { action: 'CLEAR', target: null, timeout: null },
+]
 
 export const ALERT_COLORS: Record<AlertAction, string> = {
   IDENT:  '#378ADD',

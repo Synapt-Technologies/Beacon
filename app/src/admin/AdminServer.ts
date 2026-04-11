@@ -51,6 +51,18 @@ export class AdminServer extends EventEmitter<AdminServerEvents> {
                 }
             })
 
+            //? TODO: Refactor claude
+            // producers: orchestrator.getProducers().map(p => ({
+            //     type: p.constructor.name,
+            //     config: p.getConfig(),
+            //     info: {
+            //         model:          p.getModel(),
+            //         connected:      p.isConnected?.() ?? false,
+            //         update_moment:  p.getInfo().update_moment,
+            //         sources:        Object.fromEntries(p.getSources() ?? []),
+            //     }
+            // }))
+
             res.json(parsedState);
         });
 
@@ -77,6 +89,28 @@ export class AdminServer extends EventEmitter<AdminServerEvents> {
             const output = Object.fromEntries(this.state.devices);
             res.json(output);
         });
+
+        //? TODO: Refactor claude
+        this.app.patch('/api/devices/:consumer/:device/patch', (req, res) => {
+            const { consumer, device } = req.params
+            this.emit('patch_device', { consumer, device }, req.body.patch)
+            res.status(204).send()
+        })
+
+        //? TODO: Refactor claude
+        this.app.patch('/api/devices/:consumer/:device/name', (req, res) => {
+            const { consumer, device } = req.params
+            this.emit('rename_device', { consumer, device }, req.body.name)
+            res.status(204).send()
+        })
+
+        //? TODO: Refactor claude
+        this.app.post('/api/devices/:consumer/:device/alert', (req, res) => {
+            const { consumer, device } = req.params
+            const { type, target } = req.body
+            this.emit('send_alert', { consumer, device }, type, target)
+            res.status(204).send()
+        })
 
         this.app.get("/api/config/export", (_req, res) => {
             res.json({ consumers: this.state.consumers, producers: this.state.producers }); // TODO better formatting
