@@ -159,19 +159,6 @@ function AlertRow({ slot, index, editing, onEdit, onSave, onReset, onCancel }: A
             {summaryParts.join(' · ')}
           </div>
         </div>
-        <button
-          onClick={onReset}
-          title="Reset to default"
-          style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            width: 26, height: 26, borderRadius: 'var(--border-radius-md)',
-            border: '0.5px solid var(--color-border-tertiary)', background: 'none',
-            cursor: 'pointer', color: 'var(--color-text-tertiary)', flexShrink: 0,
-            transition: 'background .1s, color .1s',
-          }}
-        >
-          <IconReset size={11} />
-        </button>
         <button className="sm-btn" onClick={onEdit}>Edit</button>
       </div>
     )
