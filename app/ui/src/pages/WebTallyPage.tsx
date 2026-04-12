@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useNavigate, useParams, useLocation } from 'react-router-dom'
 import { useBeacon } from '../context/BeaconContext'
 import { TallyBlock, stateSub } from '../components/TallyBlock'
@@ -82,12 +83,48 @@ function SourceDetail({ source, basePath }: { source: SelectedSource; basePath: 
   )
 }
 
+// ? Producer filter chips
+
+interface FilterChipsProps {
+  producers: { id: string; name: string }[]
+  active: string | null
+  onChange: (id: string | null) => void
+}
+
+function FilterChips({ producers, active, onChange }: FilterChipsProps) {
+  const chip = (id: string | null, label: string) => (
+    <button
+      key={id ?? '__all'}
+      onClick={() => onChange(id)}
+      style={{
+        fontSize: 11, padding: '3px 10px', borderRadius: 99, cursor: 'pointer',
+        border: active === id
+          ? 'none'
+          : '0.5px solid var(--color-border-tertiary)',
+        background: active === id ? 'var(--acc)' : 'var(--color-background-primary)',
+        color: active === id ? '#fff' : 'var(--color-text-secondary)',
+        transition: 'background .1s, color .1s',
+      }}
+    >
+      {label}
+    </button>
+  )
+
+  return (
+    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 14 }}>
+      {chip(null, 'All')}
+      {producers.map(p => chip(p.id, p.name))}
+    </div>
+  )
+}
+
 // ? Page
 
 export default function WebTallyPage() {
   const navigate = useNavigate()
   const { producer: producerId, source: sourceId } = useParams()
   const { producers } = useBeacon()
+  const [filterProducer, setFilterProducer] = useState<string | null>(null)
 
   // Reconstruct SelectedSource from URL params + loaded producers
   let selectedSource: SelectedSource | null = null
@@ -108,11 +145,25 @@ export default function WebTallyPage() {
     return <SourceDetail source={selectedSource} basePath={basePath} />
   }
 
+  const visibleProducers = filterProducer
+    ? producers.filter(p => p.config.id === filterProducer)
+    : producers
+
+  const filterOptions = producers.map(p => ({ id: p.config.id, name: p.config.name ?? p.config.id }))
+
   return (
     <div>
       <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginBottom: 12 }}>
         Source states from all producers — click to view, then go fullscreen
       </div>
+
+      {producers.length > 1 && (
+        <FilterChips
+          producers={filterOptions}
+          active={filterProducer}
+          onChange={setFilterProducer}
+        />
+      )}
 
       {producers.length === 0 && (
         <div style={{ padding: '32px 0', textAlign: 'center', fontSize: 13, color: 'var(--color-text-tertiary)' }}>
@@ -120,7 +171,7 @@ export default function WebTallyPage() {
         </div>
       )}
 
-      {producers.map(prod => {
+      {visibleProducers.map(prod => {
         const sources = Object.values(prod.info.sources as unknown as Record<string, SourceInfo>)
         return (
           <div key={prod.config.id} style={{ marginBottom: 16 }}>

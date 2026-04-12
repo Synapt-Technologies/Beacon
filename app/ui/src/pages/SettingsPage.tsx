@@ -6,6 +6,8 @@ import { DeviceAlertState, DeviceAlertTarget } from '../../../src/tally/types/Co
 import { UIAlertSlot, DEFAULT_UI_ALERT_CONFIG } from '../../../src/types/UIStates'
 import type { AlertSlot, AlertAction, AlertTarget } from '../types/beacon'
 import { ALERT_COLORS, ALERT_SHORT, ALERT_LONG } from '../types/beacon'
+import type { OrchestratorConfig } from '../../../src/tally/TallyLifecycle'
+import type { AedesConsumerConfig } from '../../../src/tally/consumer/networkConsumer/AedesNetworkConsumer'
 
 // ? Enum ↔ string bridge helpers
 
@@ -58,6 +60,50 @@ const ALERT_ICONS: Record<AlertAction, React.ReactNode> = {
       <path d="M4.5 4.5L9.5 9.5M9.5 4.5L4.5 9.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
     </svg>
   ),
+}
+
+// ? NetworkRow
+
+interface NetworkRowProps {
+  label: string
+  sub?: string
+  value: number | undefined
+  defaultVal: number
+  readOnly?: boolean
+  onSave?: (v: number) => void
+}
+
+function NetworkRow({ label, sub, value, defaultVal, readOnly, onSave }: NetworkRowProps) {
+  const [local, setLocal] = useState<number>(value ?? defaultVal)
+  const resolved = value ?? defaultVal
+  const dirty = local !== resolved
+
+  return (
+    <div className="s-row">
+      <div style={{ flex: 1 }}>
+        <div style={{ fontSize: 13, color: 'var(--color-text-primary)' }}>{label}</div>
+        {sub && <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginTop: 1 }}>{sub}</div>}
+      </div>
+      <input
+        className="s-input"
+        type="number"
+        value={readOnly ? (value ?? defaultVal) : local}
+        readOnly={readOnly}
+        disabled={readOnly}
+        onChange={readOnly ? undefined : e => setLocal(parseInt(e.target.value) || defaultVal)}
+        style={readOnly ? { color: 'var(--color-text-tertiary)' } : undefined}
+      />
+      {!readOnly && dirty && (
+        <button
+          className="sm-btn"
+          style={{ color: 'var(--acc)', borderColor: 'color-mix(in srgb, var(--acc) 40%, transparent)' }}
+          onClick={() => onSave?.(local)}
+        >
+          Apply
+        </button>
+      )}
+    </div>
+  )
 }
 
 // ? AlertRow
@@ -247,13 +293,19 @@ function AlertRow({ slot, index, editing, onEdit, onSave, onReset, onCancel }: A
 export default function SettingsPage() {
   const {
     consumers,
+    orchestratorConfig,
     uiConfig,
     setConsumerEnabled,
+    updateConsumer,
+    updateOrchestratorConfig,
     updateAlertSlot,
     resetAlertSlot,
     exportConfig,
     importConfig,
   } = useBeacon()
+
+  const aedesConfig = consumers.aedes?.config as Partial<AedesConsumerConfig> | undefined
+  const stateOnDisconnect = orchestratorConfig.state_on_disconnect ?? 0
 
   const [editingAlert, setEditingAlert] = useState<number | null>(null)
 
@@ -312,31 +364,32 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      {/* Network — TODO: wire up to server config endpoint */}
+      {/* Network */}
       <div className="sec-lbl">Network</div>
       <div className="s-card">
-        {[
-          { label: 'Admin port',          sub: 'Web UI server',        placeholder: '3000' },
-          { label: 'MQTT port',           sub: undefined,              placeholder: '1883' },
-          { label: 'Keep-alive interval', sub: 'MQTT heartbeat in ms', placeholder: '500'  },
-        ].map(({ label, sub, placeholder }) => (
-          <div key={label} className="s-row">
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 13, color: 'var(--color-text-primary)' }}>{label}</div>
-              {sub && <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginTop: 1 }}>{sub}</div>}
-            </div>
-            <input
-              className="s-input"
-              type="number"
-              placeholder={placeholder}
-              disabled
-              title="Network settings not yet configurable"
-            />
-          </div>
-        ))}
+        <NetworkRow
+          label="Admin port"
+          sub="Web UI server — requires restart to change"
+          value={parseInt(window.location.port) || 3000}
+          defaultVal={3000}
+          readOnly
+        />
+        <NetworkRow
+          label="MQTT port"
+          value={aedesConfig?.port}
+          defaultVal={1883}
+          onSave={v => updateConsumer('aedes', { port: v } as Partial<AedesConsumerConfig>)}
+        />
+        <NetworkRow
+          label="Keep-alive interval"
+          sub="MQTT heartbeat in ms"
+          value={aedesConfig?.keep_alive_ms}
+          defaultVal={500}
+          onSave={v => updateConsumer('aedes', { keep_alive_ms: v } as Partial<AedesConsumerConfig>)}
+        />
       </div>
 
-      {/* Tally behaviour — TODO: wire up to server config endpoint */}
+      {/* Tally behaviour */}
       <div className="sec-lbl">Tally behaviour</div>
       <div className="s-card">
         <div className="s-row">
@@ -344,11 +397,16 @@ export default function SettingsPage() {
             <div style={{ fontSize: 13, color: 'var(--color-text-primary)' }}>State on producer disconnect</div>
             <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginTop: 1 }}>Applied when a switcher goes offline</div>
           </div>
-          <select className="s-select" disabled title="Behaviour settings not yet configurable">
-            <option>None</option>
-            <option>Preview</option>
-            <option>Program</option>
-            <option>Warning</option>
+          <select
+            className="s-select"
+            value={stateOnDisconnect}
+            onChange={e => updateOrchestratorConfig({ state_on_disconnect: parseInt(e.target.value) as OrchestratorConfig['state_on_disconnect'] })}
+          >
+            <option value={0}>None</option>
+            <option value={1}>Warning</option>
+            <option value={2}>Danger</option>
+            <option value={4}>Preview</option>
+            <option value={7}>Program</option>
           </select>
         </div>
       </div>

@@ -9,7 +9,7 @@ import {
 import * as api from '../api/BeaconApi'
 import { SystemInfo } from '../../../src/types/SystemInfo'
 import { GlobalTallySource, ProducerBundle, ProducerId } from '../../../src/tally/types/ProducerStates'
-import { ConsumerExportMap } from '../../../src/tally/TallyLifecycle'
+import { ConsumerExportMap, type OrchestratorConfig } from '../../../src/tally/TallyLifecycle'
 import { UITallyDevice } from '../types/DeviceStates'
 import { DeviceAddress, DeviceAlertState, DeviceAlertTarget } from '../../../src/tally/types/ConsumerStates'
 import { DEFAULT_UI_ALERT_CONFIG, UIAlertSlot, UIConfig } from '../../../src/types/UIStates'
@@ -18,11 +18,7 @@ import { ConsumerId } from '../types/beacon'
 import { ConsumerConfig } from '../../../src/tally/consumer/AbstractConsumer'
 
 
-// ? Helpers
-const CONSUMER_NAMES: Record<string, string> = {
-  gpio:  'GPIO hardware',
-  aedes: 'MQTT broker',
-}
+import { CONSUMER_META } from '../config/consumers'
 
 // ? Context Data Shape
 
@@ -43,9 +39,12 @@ interface BeaconState {
     // mutations
     refresh: () => void
 
-    addProducer: (type: string, config: ProducerConfig) => Promise<void>
+    addProducer: (type: string, config: ProducerConfig & Record<string, unknown>) => Promise<void>
     removeProducer: (id: ProducerId) => Promise<void>
-    updateProducer: (id: ProducerId, config: ProducerConfig) => Promise<void>
+    updateProducer: (id: ProducerId, config: ProducerConfig & Record<string, unknown>) => Promise<void>
+
+    orchestratorConfig: Partial<OrchestratorConfig>
+    updateOrchestratorConfig: (config: Partial<OrchestratorConfig>) => Promise<void>
 
     setConsumerEnabled: (id: ConsumerId, enabled: boolean) => Promise<void>
     updateConsumer: (id: ConsumerId, config: ConsumerConfig) => Promise<void>
@@ -69,9 +68,10 @@ const BeaconContext = createContext<BeaconState | null>(null)
 
 // ? Provider
 export function BeaconProvider({ children }: { children: ReactNode }) {
-    const [producers, setProducers] = useState<ProducerBundle[]>([])
-    const [consumers, setConsumers] = useState<Partial<ConsumerExportMap>>({})
-    const [devices, setDevices]     = useState<UITallyDevice[]>([])
+    const [producers, setProducers]               = useState<ProducerBundle[]>([])
+    const [consumers, setConsumers]               = useState<Partial<ConsumerExportMap>>({})
+    const [devices, setDevices]                   = useState<UITallyDevice[]>([])
+    const [orchestratorConfig, setOrchestratorConfig] = useState<Partial<OrchestratorConfig>>({})
     const [system]                  = useState<SystemInfo>({})
     const [uiConfig, setUiConfig]   = useState<UIConfig>({ alerts: DEFAULT_UI_ALERT_CONFIG })
     const [settingsUnsaved, setSettingsUnsaved] = useState(false)
@@ -81,12 +81,14 @@ export function BeaconProvider({ children }: { children: ReactNode }) {
     const fetchAll = useCallback(async () => {
         setLoading(true)
         try {
-          const [prods, cons] = await Promise.all([
+          const [prods, cons, orchConfig] = await Promise.all([
             api.getProducers(),
             api.getConsumers(),
+            api.getOrchestratorConfig(),
           ])
           setProducers(prods)
           setConsumers(cons)
+          setOrchestratorConfig(orchConfig)
 
           // Devices endpoint may not exist yet — handle gracefully
           try {
@@ -96,7 +98,7 @@ export function BeaconProvider({ children }: { children: ReactNode }) {
               for (const dev of devList) {
                 ui.push({
                   ...dev,
-                  consumer: { name: CONSUMER_NAMES[consumerId] ?? consumerId },
+                  consumer: { name: CONSUMER_META[consumerId as keyof typeof CONSUMER_META]?.name ?? consumerId },
                 })
               }
             }
@@ -117,15 +119,25 @@ export function BeaconProvider({ children }: { children: ReactNode }) {
 
 
     // ? Producers — no add/update endpoints yet
-    const addProducer = async (_type: string, _config: ProducerConfig) => {
-      // TODO: POST /api/producers not yet implemented on server
+    const addProducer = async (type: string, config: ProducerConfig & Record<string, unknown>) => {
+      await api.addProducer(type, config)
+      await fetchAll()
     }
     const removeProducer = async (id: ProducerId) => {
       await api.removeProducer(id)
       setProducers(prev => prev.filter(p => p.config.id !== id))
     }
-    const updateProducer = async (_id: ProducerId, _config: ProducerConfig) => {
-      // TODO: PATCH /api/producers/:id not yet implemented on server
+    const updateProducer = async (id: ProducerId, config: ProducerConfig & Record<string, unknown>) => {
+      const prod = producers.find(p => p.config.id === id)
+      if (!prod) return
+      await api.updateProducer(id, prod.type, config)
+      await fetchAll()
+    }
+
+    // ? Orchestrator
+    const updateOrchestratorConfig = async (config: Partial<OrchestratorConfig>) => {
+      await api.updateOrchestratorConfig(config)
+      setOrchestratorConfig(prev => ({ ...prev, ...config }))
     }
 
     // ? Consumers
@@ -162,7 +174,7 @@ export function BeaconProvider({ children }: { children: ReactNode }) {
       ))
     }
     const removeDevice = async (device: DeviceAddress) => {
-      // TODO: DELETE /api/devices/:consumer/:device not yet implemented on server
+      await api.removeDevice(device)
       setDevices(prev => prev.filter(d =>
         !(d.id.consumer === device.consumer && d.id.device === device.device)
       ))
@@ -204,8 +216,13 @@ export function BeaconProvider({ children }: { children: ReactNode }) {
       await api.exportConfig()
     }
     const importConfig = async (file: File) => {
-      const text = await file.text()
-      const config = JSON.parse(text)
+      let config: unknown
+      try {
+        config = JSON.parse(await file.text())
+      } catch {
+        setError('Invalid config file — could not parse JSON')
+        return
+      }
       await api.importConfig(config)
       await fetchAll()
     }
@@ -213,11 +230,13 @@ export function BeaconProvider({ children }: { children: ReactNode }) {
     return (
         <BeaconContext value={{
             producers, consumers, devices,
+            orchestratorConfig,
             system, uiConfig,
             settingsUnsaved,
             loading, error,
             refresh: fetchAll,
             addProducer, removeProducer, updateProducer,
+            updateOrchestratorConfig,
             setConsumerEnabled, updateConsumer,
             patchDevice, renameDevice, removeDevice, sendAlert,
             updateAlertSlot, resetAlertSlot,

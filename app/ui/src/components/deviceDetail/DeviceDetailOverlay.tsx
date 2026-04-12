@@ -140,7 +140,7 @@ export function DeviceDetailOverlay({ device, backPath, backLabel }: DeviceDetai
                     deviceName={deviceLong}
                     consumerName={device.consumer.name}
                     currentPatch={device.patch}
-                    producers={producers as any}
+                    producers={producers}
                     onApply={handlePatchApply}
                     onClose={() => setPatchOpen(false)}
                 />

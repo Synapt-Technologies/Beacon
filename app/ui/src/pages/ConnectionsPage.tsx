@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import { useBeacon } from '../context/BeaconContext'
-import type { ProducerBundle } from '../../../src/tally/types/ProducerStates'
-import type { SourceInfo } from '../../../src/tally/types/ProducerStates'
+import { AddConnectionModal } from '../components/AddConnectionModal'
+import type { ProducerBundle, SourceInfo } from '../../../src/tally/types/ProducerStates'
+import type { ProducerConfig } from '../../../src/tally/producer/AbstractTallyProducer'
 
 export default function ConnectionsPage() {
-  const { producers, removeProducer, addProducer } = useBeacon()
+  const { producers, removeProducer } = useBeacon()
   const [editing, setEditing] = useState<string | null>(null)
+  const [addOpen, setAddOpen] = useState(false)
 
   return (
     <div>
@@ -13,15 +15,16 @@ export default function ConnectionsPage() {
         <span style={{ fontSize: 11, color: 'var(--color-text-tertiary)' }}>
           ATEM switcher connections
         </span>
-        {/* TODO: wire up POST /api/producers in AdminServer */}
         <button
           className="sm-btn"
           style={{ color: 'var(--acc)', borderColor: 'color-mix(in srgb, var(--acc) 35%, transparent)' }}
-          onClick={() => alert('Add producer: POST /api/producers not yet implemented')}
+          onClick={() => setAddOpen(true)}
         >
           + Add connection
         </button>
       </div>
+
+      <AddConnectionModal open={addOpen} onClose={() => setAddOpen(false)} />
 
       {producers.length === 0 && (
         <div style={{ padding: '32px 0', textAlign: 'center', fontSize: 13, color: 'var(--color-text-tertiary)' }}>
@@ -56,11 +59,34 @@ interface ProducerCardProps {
 }
 
 function ProducerCard({ producer: prod, editing, onEdit, onRemove }: ProducerCardProps) {
-  const [name, setName] = useState(prod.config.name ?? '')
+  const { updateProducer } = useBeacon()
 
-  // sources are plain objects at runtime (serialized from Map by the server)
+  // Cast config to access type-specific fields (host/port set by ATEM producer)
+  const cfg = prod.config as Record<string, unknown>
+
+  const [name,    setName]    = useState(String(cfg.name    ?? ''))
+  const [host,    setHost]    = useState(String(cfg.host    ?? ''))
+  const [port,    setPort]    = useState(String(cfg.port    ?? ''))
+  const [saving,  setSaving]  = useState(false)
+
   const sources = Object.values(prod.info.sources as unknown as Record<string, SourceInfo>)
   const model   = prod.info.model.short ?? prod.info.model.long ?? prod.type
+
+  const handleSave = async () => {
+    setSaving(true)
+    try {
+      const config: ProducerConfig & Record<string, unknown> = {
+        id:   prod.config.id,
+        name: name || undefined,
+        ...(host ? { host } : {}),
+        ...(port ? { port: parseInt(port) } : {}),
+      }
+      await updateProducer(prod.config.id, config)
+      onEdit()
+    } finally {
+      setSaving(false)
+    }
+  }
 
   return (
     <div style={{
@@ -88,59 +114,71 @@ function ProducerCard({ producer: prod, editing, onEdit, onRemove }: ProducerCar
       {/* Edit body */}
       {editing && (
         <div style={{ padding: '12px 14px' }}>
+
+          {/* Fields grid */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 10 }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-              <div style={{ fontSize: 10, fontWeight: 500, color: 'var(--color-text-tertiary)', textTransform: 'uppercase', letterSpacing: '.06em' }}>
-                Name
-              </div>
-              <input className="pf-input" value={name} onChange={e => setName(e.target.value)} />
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-              <div style={{ fontSize: 10, fontWeight: 500, color: 'var(--color-text-tertiary)', textTransform: 'uppercase', letterSpacing: '.06em' }}>
-                Sources
-              </div>
-              <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', paddingTop: 5 }}>
-                {sources.length} auto-discovered on connect
-              </div>
-            </div>
+            <Field label="Name">
+              <input className="pf-input" value={name} onChange={e => setName(e.target.value)} placeholder={prod.config.id} />
+            </Field>
+            <Field label="Type">
+              <div style={{ fontSize: 12, color: 'var(--color-text-secondary)', paddingTop: 6 }}>{prod.type}</div>
+            </Field>
+            {cfg.host !== undefined && (
+              <Field label="Host / IP">
+                <input className="pf-input" value={host} onChange={e => setHost(e.target.value)} placeholder="192.168.1.100" />
+              </Field>
+            )}
+            {cfg.port !== undefined && (
+              <Field label="Port">
+                <input className="pf-input" type="number" value={port} onChange={e => setPort(e.target.value)} placeholder="9910" />
+              </Field>
+            )}
           </div>
 
+          {/* Sources */}
           {sources.length > 0 && (
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginBottom: 10 }}>
-              {sources.slice(0, 12).map(s => (
-                <span key={`${s.source.producer}:${s.source.source}`} style={{
-                  fontSize: 10, padding: '2px 7px', borderRadius: 99,
-                  background: 'var(--color-background-secondary)',
-                  color: 'var(--color-text-secondary)',
-                  border: '0.5px solid var(--color-border-tertiary)',
-                }}>
-                  {s.short}
-                </span>
-              ))}
-              {sources.length > 12 && (
-                <span style={{
-                  fontSize: 10, padding: '2px 7px', borderRadius: 99,
-                  background: 'var(--color-background-secondary)',
-                  color: 'var(--color-text-tertiary)',
-                  border: '0.5px solid var(--color-border-tertiary)',
-                }}>
-                  +{sources.length - 12}
-                </span>
-              )}
+            <div style={{ marginBottom: 10 }}>
+              <div style={{ fontSize: 10, fontWeight: 500, color: 'var(--color-text-tertiary)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 6 }}>
+                Sources ({sources.length} auto-discovered)
+              </div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                {sources.slice(0, 12).map(s => (
+                  <span key={`${s.source.producer}:${s.source.source}`} style={{
+                    fontSize: 10, padding: '2px 7px', borderRadius: 99,
+                    background: 'var(--color-background-secondary)',
+                    color: 'var(--color-text-secondary)',
+                    border: '0.5px solid var(--color-border-tertiary)',
+                  }}>
+                    {s.short}
+                  </span>
+                ))}
+                {sources.length > 12 && (
+                  <span style={{
+                    fontSize: 10, padding: '2px 7px', borderRadius: 99,
+                    background: 'var(--color-background-secondary)',
+                    color: 'var(--color-text-tertiary)',
+                    border: '0.5px solid var(--color-border-tertiary)',
+                  }}>
+                    +{sources.length - 12}
+                  </span>
+                )}
+              </div>
             </div>
           )}
 
+          {/* Actions */}
           <div style={{ display: 'flex', gap: 8 }}>
-            {/* TODO: PATCH /api/producers/:id not yet in AdminServer */}
             <button
-              onClick={() => { alert('Save: PATCH /api/producers/:id not yet implemented'); onEdit() }}
+              onClick={handleSave}
+              disabled={saving}
               style={{
                 fontSize: 12, padding: '6px 14px',
                 borderRadius: 'var(--border-radius-md)', border: 'none',
-                background: 'var(--acc)', color: '#fff', cursor: 'pointer',
+                background: 'var(--acc)', color: '#fff', cursor: saving ? 'default' : 'pointer',
+                opacity: saving ? 0.6 : 1,
               }}
             >
-              Save changes
+              {saving ? 'Saving…' : 'Save changes'}
             </button>
             <button
               onClick={onRemove}
@@ -159,6 +197,17 @@ function ProducerCard({ producer: prod, editing, onEdit, onRemove }: ProducerCar
           </div>
         </div>
       )}
+    </div>
+  )
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+      <div style={{ fontSize: 10, fontWeight: 500, color: 'var(--color-text-tertiary)', textTransform: 'uppercase', letterSpacing: '.06em' }}>
+        {label}
+      </div>
+      {children}
     </div>
   )
 }

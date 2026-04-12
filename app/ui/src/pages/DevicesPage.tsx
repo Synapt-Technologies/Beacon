@@ -2,74 +2,17 @@ import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useBeacon } from '../context/BeaconContext'
 import { DeviceDetailOverlay } from '../components/deviceDetail/DeviceDetailOverlay'
+import { DeviceEditPanel } from '../components/devices/DeviceEditPanel'
 import { PatchModal } from '../components/PatchModal'
+import { CONSUMER_SECTIONS } from '../config/consumers'
 import { UITallyDevice } from '../types/DeviceStates'
 import { DeviceTallyState, GlobalDeviceTools } from '../../../src/tally/types/ConsumerStates'
 import type { GlobalTallySource } from '../../../src/tally/types/ProducerStates'
 
-const CONSUMER_SECTIONS: Array<{ id: string; label: string }> = [
-  { id: 'gpio',  label: 'GPIO hardware' },
-  { id: 'aedes', label: 'MQTT broker' },
-]
-
-// ? Name edit panel
-
-interface NameEditProps {
-  device: UITallyDevice
-  onSave: (name: { short: string; long: string }) => void
-  onCancel: () => void
-}
-
-function NameEditPanel({ device, onSave, onCancel }: NameEditProps) {
-  const [nameEdit, setNameEdit] = useState({
-    long:  device.name?.long  ?? device.id.device,
-    short: device.name?.short ?? device.id.device,
-  })
-
-  return (
-    <div style={{
-      padding: '12px 14px',
-      background: 'var(--color-background-secondary)',
-    }}>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 10 }}>
-        {([
-          ['Short name', 'short'],
-          ['Long name',  'long'],
-        ] as [string, 'short' | 'long'][]).map(([label, key]) => (
-          <div key={key} style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-            <div style={{ fontSize: 10, fontWeight: 500, color: 'var(--color-text-tertiary)', textTransform: 'uppercase', letterSpacing: '.06em' }}>
-              {label}
-            </div>
-            <input
-              className="pf-input"
-              value={nameEdit[key]}
-              onChange={e => setNameEdit(n => ({ ...n, [key]: e.target.value }))}
-            />
-          </div>
-        ))}
-      </div>
-      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
-        <button className="sm-btn" onClick={onCancel}>Cancel</button>
-        <button
-          onClick={() => onSave(nameEdit)}
-          style={{
-            fontSize: 12, padding: '5px 14px', borderRadius: 99,
-            border: 'none', background: 'var(--acc)', color: '#fff', cursor: 'pointer',
-          }}
-        >
-          Save name
-        </button>
-      </div>
-    </div>
-  )
-}
-
-// ? Page
-
 export default function DevicesPage() {
   const navigate = useNavigate()
   const { consumer, device: deviceId } = useParams()
-  const { devices, producers, renameDevice, patchDevice } = useBeacon()
+  const { devices, producers, consumers, renameDevice, patchDevice, removeDevice } = useBeacon()
 
   const [editing,  setEditing]  = useState<string | null>(null)   // device key
   const [patching, setPatching] = useState<UITallyDevice | null>(null)
@@ -89,9 +32,17 @@ export default function DevicesPage() {
     await patchDevice(patching.id, patch)
   }
 
+  const handleRemove = async (dev: UITallyDevice) => {
+    setEditing(null)
+    await removeDevice(dev.id)
+  }
+
   return (
     <div>
       {CONSUMER_SECTIONS.map(({ id, label }) => {
+        const consumerEntry = consumers[id as keyof typeof consumers]
+        if (consumerEntry?.enabled === false) return null
+
         const sectionDevices = devices.filter(d => d.id.consumer === id)
         return (
           <div key={id}>
@@ -99,11 +50,11 @@ export default function DevicesPage() {
             <div className="s-card" style={{ marginBottom: 14 }}>
               {sectionDevices.length === 0 ? (
                 <div style={{ padding: '12px 14px', fontSize: 12, color: 'var(--color-text-tertiary)' }}>
-                  No devices — consumer may be disabled
+                  No devices found
                 </div>
               ) : (
                 sectionDevices.map((dev, idx) => {
-                  const devKey = GlobalDeviceTools.create(dev.id.consumer, dev.id.device)
+                  const devKey   = GlobalDeviceTools.create(dev.id.consumer, dev.id.device)
                   const isEditing = editing === devKey
                   const isLast    = idx === sectionDevices.length - 1
 
@@ -142,9 +93,8 @@ export default function DevicesPage() {
                             ))
                           )}
                         </div>
-                        <button className="sm-btn" onClick={() => setPatching(dev)}>Patch</button>
                         <button className="sm-btn" onClick={() => setEditing(isEditing ? null : devKey)}>
-                          {isEditing ? 'Cancel' : 'Edit'}
+                          {isEditing ? 'Close' : 'Edit'}
                         </button>
                         <button
                           className="sm-btn"
@@ -155,11 +105,13 @@ export default function DevicesPage() {
                         </button>
                       </div>
 
-                      {/* Name edit panel */}
+                      {/* Edit panel */}
                       {isEditing && (
-                        <NameEditPanel
+                        <DeviceEditPanel
                           device={dev}
                           onSave={name => handleSaveName(dev, name)}
+                          onPatch={() => { setPatching(dev); setEditing(null) }}
+                          onRemove={() => handleRemove(dev)}
                           onCancel={() => setEditing(null)}
                         />
                       )}
@@ -186,7 +138,7 @@ export default function DevicesPage() {
         deviceName={patching?.name?.long ?? patching?.id.device ?? ''}
         consumerName={patching?.consumer.name ?? ''}
         currentPatch={patching?.patch ?? []}
-        producers={producers as any}
+        producers={producers}
         onApply={handlePatchApply}
         onClose={() => setPatching(null)}
       />

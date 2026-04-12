@@ -1,20 +1,20 @@
 import { useState, useEffect } from 'react'
-import type { GlobalTallySource, ProducerEntry } from '../types/beacon'
+import type { ProducerBundle, GlobalTallySource, SourceInfo } from '../../../src/tally/types/ProducerStates'
 
 interface PatchModalProps {
-  open: boolean
-  deviceName: string
+  open:         boolean
+  deviceName:   string
   consumerName: string
   currentPatch: GlobalTallySource[]
-  producers: ProducerEntry[]
-  onApply: (patch: GlobalTallySource[]) => void
-  onClose: () => void
+  producers:    ProducerBundle[]
+  onApply:      (patch: GlobalTallySource[]) => void
+  onClose:      () => void
 }
 
 export function PatchModal({
   open, deviceName, consumerName, currentPatch, producers, onApply, onClose,
 }: PatchModalProps) {
-  const [query, setQuery]     = useState('')
+  const [query,    setQuery]    = useState('')
   const [selected, setSelected] = useState<Set<string>>(new Set())
 
   useEffect(() => {
@@ -84,13 +84,14 @@ export function PatchModal({
         {/* Source list */}
         <div style={{ flex: 1, overflowY: 'auto', padding: '6px 0' }}>
           {producers.map(prod => {
-            const sources = prod.info
-              ? Object.values(prod.info.sources).filter(s =>
-                  !q ||
-                  s.short.toLowerCase().includes(q) ||
-                  s.long.toLowerCase().includes(q)
-                )
-              : []
+            // sources is a Map<string, SourceInfo> on the server but arrives as a plain
+            // object after JSON serialisation — cast once here, not at every call site
+            const allSources = Object.values(prod.info.sources as unknown as Record<string, SourceInfo>)
+            const sources = allSources.filter(s =>
+              !q ||
+              s.short.toLowerCase().includes(q) ||
+              s.long.toLowerCase().includes(q)
+            )
             if (!sources.length) return null
             return (
               <div key={prod.config.id}>
@@ -102,7 +103,7 @@ export function PatchModal({
                   {prod.config.name ?? prod.config.id}
                 </div>
                 {sources.map(src => {
-                  const key = `${src.source.producer}:${src.source.source}`
+                  const key     = `${src.source.producer}:${src.source.source}`
                   const checked = selected.has(key)
                   return (
                     <div
@@ -135,7 +136,10 @@ export function PatchModal({
             )
           })}
 
-          {producers.every(p => !p.info?.sources) && (
+          {producers.every(p => {
+            const sources = p.info.sources as unknown as Record<string, SourceInfo>
+            return Object.keys(sources).length === 0
+          }) && (
             <div style={{ padding: '16px', fontSize: 12, color: 'var(--color-text-tertiary)', textAlign: 'center' }}>
               No sources available — check producer connections
             </div>
