@@ -130,8 +130,8 @@ export class AdminServer extends EventEmitter<AdminServerEvents> {
         this.app.patch("/api/devices/:consumer/:device/name", (req, res) => {
             const { consumer, device } = req.params;
             const name: DeviceName = req.body.name;
-            if (!name?.short || !name?.long) {
-                res.status(400).json({ error: "name.short and name.long are required" });
+            if (!name?.long) {
+                res.status(400).json({ error: "name.long is required" });
                 return;
             }
             this.emit("rename_device", { consumer, device }, name);

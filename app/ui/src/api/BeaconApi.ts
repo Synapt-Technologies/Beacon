@@ -66,7 +66,7 @@ export function patchDevice(device: DeviceAddress, patch: GlobalTallySource[]): 
     })
 }
 
-export function renameDevice(device: DeviceAddress, name: { short: string; long: string }): Promise<void> {
+export function renameDevice(device: DeviceAddress, name: { short?: string; long: string }): Promise<void> {
     return request(`/devices/${device.consumer}/${device.device}/name`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },

@@ -41,13 +41,13 @@ export enum ConnectionType {
 }
 
 export interface DeviceName {
-    short: string;
+    short?: string;
     long: string;
 }
 
 export interface TallyDevice {
     id: DeviceAddress;
-    name?: DeviceName; // TODO: Not optional
+    name: DeviceName;
     connection: ConnectionType;
     patch: Array<GlobalTallySource>;
     // TODO ADD SOURCES LEADING TO TALLY
