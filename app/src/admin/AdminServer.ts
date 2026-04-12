@@ -4,7 +4,7 @@ import ViteExpress from "vite-express";
 import { Logger } from "../logging/Logger";
 import type { ProducerConfig } from "../tally/producer/AbstractTallyProducer";
 import type { ConsumerUpdate, LifecycleConfig } from "../tally/TallyLifecycle";
-import type { DeviceAddress, DeviceAlertState, DeviceAlertTarget, DeviceName, TallyDevice } from "../tally/types/ConsumerStates";
+import  { type DeviceAddress,  DeviceAlertState, DeviceAlertTarget, type DeviceName, type TallyDevice } from "../tally/types/ConsumerStates";
 import type { GlobalTallySource, ProducerBundle, ProducerId } from "../tally/types/ProducerStates";
 import type { OrchestratorConfig } from "../tally/TallyLifecycle";
 
@@ -155,7 +155,7 @@ export class AdminServer extends EventEmitter<AdminServerEvents> {
             }
             this.emit("send_alert", { consumer, device }, type as DeviceAlertState, target as DeviceAlertTarget);
             res.status(204).send();
-            this.logger.info(`Device alert requested:`, { consumer, device }, type, target);
+            this.logger.info(`Device alert requested:`, { consumer, device }, DeviceAlertState[type], DeviceAlertTarget[target]);
         });
 
         // ? Config
