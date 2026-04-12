@@ -9,7 +9,7 @@ import {
 import * as api from '../api/BeaconApi'
 import { SystemInfo } from '../../../src/types/SystemInfo'
 import { GlobalTallySource, ProducerBundle, ProducerId } from '../../../src/tally/types/ProducerStates'
-import { ConsumerExportMap, type OrchestratorConfig } from '../../../src/tally/TallyLifecycle'
+import { ConsumerExportMap, type OrchestratorConfig, type LifecycleConfig } from '../../../src/tally/TallyLifecycle'
 import { UITallyDevice } from '../types/DeviceStates'
 import { DeviceAddress, DeviceAlertState, DeviceAlertTarget } from '../../../src/tally/types/ConsumerStates'
 import { DEFAULT_UI_ALERT_CONFIG, UIAlertSlot, UIConfig } from '../../../src/types/UIStates'
@@ -223,7 +223,7 @@ export function BeaconProvider({ children }: { children: ReactNode }) {
         setError('Invalid config file — could not parse JSON')
         return
       }
-      await api.importConfig(config)
+      await api.importConfig(config as LifecycleConfig)
       await fetchAll()
     }
 

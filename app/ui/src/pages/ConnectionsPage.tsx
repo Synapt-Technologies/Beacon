@@ -62,7 +62,7 @@ function ProducerCard({ producer: prod, editing, onEdit, onRemove }: ProducerCar
   const { updateProducer } = useBeacon()
 
   // Cast config to access type-specific fields (host/port set by ATEM producer)
-  const cfg = prod.config as Record<string, unknown>
+  const cfg = prod.config as unknown as Record<string, unknown>
 
   const [name,    setName]    = useState(String(cfg.name    ?? ''))
   const [host,    setHost]    = useState(String(cfg.host    ?? ''))
