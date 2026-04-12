@@ -34,6 +34,7 @@
         "express": "^5.2.1",
         "less": "^4.6.4",
         "onoff": "^6.0.3",
+        "react-hot-toast": "^2.6.0",
         "react-router-dom": "^7.14.0",
         "vite-express": "^0.22.1"
     }

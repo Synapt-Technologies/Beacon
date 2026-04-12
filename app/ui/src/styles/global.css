@@ -196,6 +196,12 @@ input, select { font-family: inherit; }
 }
 .pf-input:focus { border-color: var(--color-border-primary); }
 
+/* ─── Spinner ───────────────────────────────────────────────────────────────── */
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
 /* ─── Alert button animation ───────────────────────────────────────────────── */
 
 @keyframes ripple {

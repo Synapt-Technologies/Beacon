@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { toast } from 'react-hot-toast'
 import { useBeacon } from '../context/BeaconContext'
 import { Toggle } from '../components/Toggle'
 import { IconReset } from '../components/icons'
@@ -296,23 +297,31 @@ export default function SettingsPage() {
   const [pendingPort,         setPendingPort]         = useState<number | null>(null)
   const [pendingKeepalive,    setPendingKeepalive]    = useState<number | null>(null)
   const [pendingDisconnect,   setPendingDisconnect]   = useState<OrchestratorConfig['state_on_disconnect'] | null>(null)
+  const [saving,              setSaving]              = useState(false)
 
   const serverDisconnect = orchestratorConfig.state_on_disconnect ?? 0
   const settingsUnsaved  = pendingPort !== null || pendingKeepalive !== null || pendingDisconnect !== null
 
   const handleSave = async () => {
-    if (pendingPort !== null || pendingKeepalive !== null) {
-      await updateConsumer('aedes', {
-        ...(pendingPort      !== null ? { port: pendingPort }               : {}),
-        ...(pendingKeepalive !== null ? { keep_alive_ms: pendingKeepalive } : {}),
-      } as Partial<AedesConsumerConfig>)
+    setSaving(true)
+    try {
+      if (pendingPort !== null || pendingKeepalive !== null) {
+        await updateConsumer('aedes', {
+          ...(pendingPort      !== null ? { port: pendingPort }               : {}),
+          ...(pendingKeepalive !== null ? { keep_alive_ms: pendingKeepalive } : {}),
+        } as Partial<AedesConsumerConfig>)
+      }
+      if (pendingDisconnect !== null) {
+        await updateOrchestratorConfig({ state_on_disconnect: pendingDisconnect })
+      }
+      setPendingPort(null)
+      setPendingKeepalive(null)
+      setPendingDisconnect(null)
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Failed to save settings')
+    } finally {
+      setSaving(false)
     }
-    if (pendingDisconnect !== null) {
-      await updateOrchestratorConfig({ state_on_disconnect: pendingDisconnect })
-    }
-    setPendingPort(null)
-    setPendingKeepalive(null)
-    setPendingDisconnect(null)
   }
 
   const handleDiscard = () => {
@@ -492,7 +501,7 @@ export default function SettingsPage() {
       </div>
 
       {settingsUnsaved && (
-        <Savebar onSave={handleSave} onDiscard={handleDiscard} />
+        <Savebar onSave={handleSave} onDiscard={handleDiscard} saving={saving} />
       )}
 
     </div>

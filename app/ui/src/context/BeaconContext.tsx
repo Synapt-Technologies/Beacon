@@ -6,6 +6,7 @@ import {
   useCallback,
   type ReactNode,
 } from 'react'
+import { toast } from 'react-hot-toast'
 import * as api from '../api/BeaconApi'
 import { SystemInfo } from '../../../src/types/SystemInfo'
 import { GlobalTallySource, ProducerBundle, ProducerId } from '../../../src/tally/types/ProducerStates'
@@ -110,18 +111,24 @@ export function BeaconProvider({ children }: { children: ReactNode }) {
 
     // ? Producers
     const addProducer = async (type: string, config: ProducerConfig & Record<string, unknown>) => {
-      await api.addProducer(type, config)
-      await fetchAll()
+      try {
+        await api.addProducer(type, config)
+        await fetchAll()
+      } catch (e) { toast.error(e instanceof Error ? e.message : 'Failed to add connection') ; throw e }
     }
     const removeProducer = async (id: ProducerId) => {
-      await api.removeProducer(id)
-      setProducers(prev => prev.filter(p => p.config.id !== id))
+      try {
+        await api.removeProducer(id)
+        setProducers(prev => prev.filter(p => p.config.id !== id))
+      } catch (e) { toast.error(e instanceof Error ? e.message : 'Failed to remove connection') ; throw e }
     }
     const updateProducer = async (id: ProducerId, config: ProducerConfig & Record<string, unknown>) => {
       const prod = producers.find(p => p.config.id === id)
       if (!prod) return
-      await api.updateProducer(id, prod.type, config)
-      await fetchAll()
+      try {
+        await api.updateProducer(id, prod.type, config)
+        await fetchAll()
+      } catch (e) { toast.error(e instanceof Error ? e.message : 'Failed to update connection') ; throw e }
     }
 
     // ? Orchestrator
@@ -132,11 +139,13 @@ export function BeaconProvider({ children }: { children: ReactNode }) {
 
     // ? Consumers
     const setConsumerEnabled = async (id: ConsumerId, enabled: boolean) => {
-      await api.patchConsumer(id, { enabled })
-      setConsumers(prev => ({
-        ...prev,
-        [id]: { ...prev[id as keyof ConsumerExportMap], enabled },
-      }))
+      try {
+        await api.patchConsumer(id, { enabled })
+        setConsumers(prev => ({
+          ...prev,
+          [id]: { ...prev[id as keyof ConsumerExportMap], enabled },
+        }))
+      } catch (e) { toast.error(e instanceof Error ? e.message : 'Failed to update consumer') ; throw e }
     }
     const updateConsumer = async (id: ConsumerId, config: ConsumerConfig) => {
       await api.patchConsumer(id, { config })
@@ -148,29 +157,37 @@ export function BeaconProvider({ children }: { children: ReactNode }) {
 
     // ? Devices
     const patchDevice = async (device: DeviceAddress, patch: GlobalTallySource[]) => {
-      await api.patchDevice(device, patch)
-      setDevices(prev => prev.map(d =>
-        d.id.consumer === device.consumer && d.id.device === device.device
-          ? { ...d, patch }
-          : d
-      ))
+      try {
+        await api.patchDevice(device, patch)
+        setDevices(prev => prev.map(d =>
+          d.id.consumer === device.consumer && d.id.device === device.device
+            ? { ...d, patch }
+            : d
+        ))
+      } catch (e) { toast.error(e instanceof Error ? e.message : 'Failed to patch device') ; throw e }
     }
     const renameDevice = async (device: DeviceAddress, name: { short?: string; long: string }) => {
-      await api.renameDevice(device, name)
-      setDevices(prev => prev.map(d =>
-        d.id.consumer === device.consumer && d.id.device === device.device
-          ? { ...d, name }
-          : d
-      ))
+      try {
+        await api.renameDevice(device, name)
+        setDevices(prev => prev.map(d =>
+          d.id.consumer === device.consumer && d.id.device === device.device
+            ? { ...d, name }
+            : d
+        ))
+      } catch (e) { toast.error(e instanceof Error ? e.message : 'Failed to rename device') ; throw e }
     }
     const removeDevice = async (device: DeviceAddress) => {
-      await api.removeDevice(device)
-      setDevices(prev => prev.filter(d =>
-        !(d.id.consumer === device.consumer && d.id.device === device.device)
-      ))
+      try {
+        await api.removeDevice(device)
+        setDevices(prev => prev.filter(d =>
+          !(d.id.consumer === device.consumer && d.id.device === device.device)
+        ))
+      } catch (e) { toast.error(e instanceof Error ? e.message : 'Failed to remove device') ; throw e }
     }
     const sendAlert = async (device: DeviceAddress, type: DeviceAlertState, target: DeviceAlertTarget) => {
-      await api.sendAlert(device, type, target)
+      try {
+        await api.sendAlert(device, type, target)
+      } catch (e) { toast.error(e instanceof Error ? e.message : 'Failed to send alert') ; throw e }
     }
 
     // ? Alert slots — applied immediately, no pending state

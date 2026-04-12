@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { Toaster } from "react-hot-toast";
 import { BeaconProvider } from "./context/BeaconContext";
 import Layout from "./components/layout/Layout";
 import OverviewPage from "./pages/OverviewPage";
@@ -11,6 +12,20 @@ import './styles/global.css';
 export default function App() {
     return (
         <BeaconProvider>
+            <Toaster
+                position="bottom-right"
+                toastOptions={{
+                    error: {
+                        duration: 5000,
+                        style: {
+                            background: 'var(--color-background-primary)',
+                            color: 'var(--color-text-primary)',
+                            border: '0.5px solid var(--color-border-secondary)',
+                            fontSize: 13,
+                        },
+                    },
+                }}
+            />
             <BrowserRouter>
                 <Routes>
                     <Route element={<Layout />}>
