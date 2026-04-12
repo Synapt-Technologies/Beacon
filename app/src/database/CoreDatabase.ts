@@ -1,12 +1,13 @@
 import Database from 'better-sqlite3';
 import fs from 'node:fs';
 import path from 'path';
-import type { AbstractTallyProducer, ProducerConfig, ProducerInfo } from '../tally/producer/AbstractTallyProducer';
-import { GlobalSourceTools, type SourceInfo } from '../tally/types/ProducerStates';
+import type { ProducerConfig, ProducerInfo } from '../tally/producer/AbstractTallyProducer';
+import { GlobalSourceTools, type ProducerBundle, type SourceInfo } from '../tally/types/ProducerStates';
 import { DeviceTallyState, GlobalDeviceTools, type DeviceAddress, type TallyDevice } from '../tally/types/ConsumerStates';
 import { Logger } from '../logging/Logger';
 import type { LifecycleConfig, LifeCycleConsumerConfig } from '../tally/TallyLifecycle';
 import { TallyOrchestrator, type OrchestratorConfig } from '../tally/TallyOrchestrator';
+import type { UIAlertSlot } from '../types/UIStates';
 
 
 export const SettingKey = {
@@ -15,6 +16,9 @@ export const SettingKey = {
         gpio: "consumers.gpio",
     },
     orchestrator: "orchestrator",
+    ui: {
+        alert: "ui.alert"
+    }
     
 } as const;
 
@@ -31,6 +35,9 @@ interface SettingMap { // ?Note: String if not set.
         gpio: LifeCycleConsumerConfig;
     }
     orchestrator: OrchestratorConfig;
+    ui: {
+        alert: UIAlertSlot[];
+    }
 }
 
 type SettingType<K extends string, T = SettingMap> =
@@ -101,16 +108,16 @@ export class CoreDatabase {
 
 
     // ? Producer Methods
-    public saveProducer(producer: AbstractTallyProducer): void {
+    public saveProducer(entry: { type: string; config: ProducerConfig }): void {
         const stmt = this.db.prepare(`
             INSERT INTO producers (id, type, config)
             VALUES (?, ?, ?)
             ON CONFLICT(id) DO UPDATE SET config=excluded.config
         `);
-        stmt.run(producer.getId(), producer.constructor.name, JSON.stringify(producer.getConfig()));
+        stmt.run(entry.config.id, entry.type, JSON.stringify(entry.config));
     }
 
-    public getProducers(): { type: string, config: ProducerConfig }[] {
+    public getProducers(): Required<Omit<ProducerBundle, "info">>[] {
         const rows = this.db.prepare('SELECT * FROM producers').all() as { id: string, type: string, config: string }[];
         return rows.map(row => ({ type: row.type, config: JSON.parse(row.config) }));
     }
@@ -188,7 +195,10 @@ export class CoreDatabase {
 
         for (const row of rows) {
             try {
-                const device: TallyDevice = { ...JSON.parse(row.data), state: DeviceTallyState.NONE };
+                const parsed = JSON.parse(row.data);
+                // Migration: devices stored before name was required get a default.
+                if (!parsed.name) parsed.name = { long: parsed.id?.device ?? row.id };
+                const device: TallyDevice = { ...parsed, state: DeviceTallyState.NONE };
                 output.set(row.id, device);
             } catch {
                 this.logger.error(`Failed to parse device with ID:`, row.id);
