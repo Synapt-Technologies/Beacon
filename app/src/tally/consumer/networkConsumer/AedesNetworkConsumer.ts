@@ -2,7 +2,7 @@ import { AbstractNetworkConsumer, type NetworkConsumerConfig } from "./AbstractN
 
 import { Aedes, type Client, type Subscription } from "aedes";
 import { createServer, Server } from "node:net";
-import { type DeviceAddress, DeviceAlertState, DeviceAlertTarget, DeviceTallyState, type TallyDevice } from "../../types/ConsumerStates";
+import { ConnectionType, type DeviceAddress, DeviceAlertState, DeviceAlertTarget, DeviceTallyState, type TallyDevice } from "../../types/ConsumerStates";
 
 export interface AedesConsumerConfig extends NetworkConsumerConfig {
     serve_tcp?: boolean;
@@ -72,6 +72,25 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer {
         }});
 
         super.init();
+
+
+        // const testTallyDevice1: TallyDevice = {
+        //     id: { consumer: this.config.id, device: 'ad322df69708' },
+        //     name: {long: 'Test Device 1' },
+        //     state: DeviceTallyState.NONE,
+        //     connection: ConnectionType.NETWORK,
+        //     patch: [],
+        // };
+        // const testTallyDevice2: TallyDevice = {
+        //     id: { consumer: this.config.id, device: '9862eef93c9e' },
+        //     name: {long: 'Test Device 2' },
+        //     state: DeviceTallyState.NONE,
+        //     connection: ConnectionType.NETWORK,
+        //     patch: [],
+        // };
+
+        // this._addDevice(testTallyDevice1);
+        // this._addDevice(testTallyDevice2);
     }
 
     async destroy(): Promise<void> {
