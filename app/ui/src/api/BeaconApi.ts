@@ -1,5 +1,5 @@
 import type { ProducerBundle, ProducerId, GlobalTallySource } from '../../../src/tally/types/ProducerStates'
-import type { ConsumerExportMap, LifeCycleConsumerConfig, LifecycleConfig } from '../../../src/tally/TallyLifecycle'
+import type { ConsumerExportMap, LifeCycleConsumerConfig, LifecycleConfig, OrchestratorConfig } from '../../../src/tally/TallyLifecycle'
 import type { TallyDevice, DeviceAddress, DeviceAlertState, DeviceAlertTarget } from '../../../src/tally/types/ConsumerStates'
 import type { ConsumerId } from '../types/beacon'
 
@@ -16,6 +16,22 @@ async function request<T = void>(path: string, init?: RequestInit): Promise<T> {
 
 export function getProducers(): Promise<ProducerBundle[]> {
     return request('/producers')
+}
+
+export function addProducer(type: string, config: object): Promise<void> {
+    return request('/producers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type, config }),
+    })
+}
+
+export function updateProducer(id: ProducerId, type: string, config: object): Promise<void> {
+    return request(`/producers/${encodeURIComponent(id)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type, config }),
+    })
 }
 
 export function removeProducer(id: ProducerId): Promise<void> {
@@ -58,6 +74,10 @@ export function renameDevice(device: DeviceAddress, name: { short: string; long:
     })
 }
 
+export function removeDevice(device: DeviceAddress): Promise<void> {
+    return request(`/devices/${device.consumer}/${device.device}`, { method: 'DELETE' })
+}
+
 export function sendAlert(device: DeviceAddress, type: DeviceAlertState, target: DeviceAlertTarget): Promise<void> {
     return request(`/devices/${device.consumer}/${device.device}/alert`, {
         method: 'POST',
@@ -75,6 +95,18 @@ export async function exportConfig(): Promise<void> {
     const a = Object.assign(document.createElement('a'), { href: url, download: 'beacon-config.json' })
     a.click()
     URL.revokeObjectURL(url)
+}
+
+export function getOrchestratorConfig(): Promise<Partial<OrchestratorConfig>> {
+    return request('/config/orchestrator')
+}
+
+export function updateOrchestratorConfig(config: Partial<OrchestratorConfig>): Promise<void> {
+    return request('/config/orchestrator', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(config),
+    })
 }
 
 export function importConfig(config: LifecycleConfig): Promise<void> {

@@ -71,7 +71,7 @@ export abstract class AbstractConsumer<T extends ConsumerEvents & Record<string,
         
     protected checkConfig(config: ConsumerConfig) {
         if (!config.id || config.id == "")
-            this.logger.fatal(`Invalid producer ID provided. Submitted config:`, config);
+            this.logger.fatal(`Invalid consumer ID provided. Submitted config:`, config);
         if (config.system_info == null)
             this.logger.fatal(`System info was not provided. Submitted config:`, config);
     }

@@ -1,5 +1,6 @@
 import { TallyLifecycle } from "./tally/TallyLifecycle";
 import { AtemNetClientTallyProducer } from "./tally/producer/networkProducer/AtemNetClientTallyProducer";
+import { TallyFactory } from "./tally/TallyFactory";
 import { Logger } from "./logging/Logger";
 import { AdminServer } from "./admin/AdminServer";
 import { CoreDatabase } from "./database/CoreDatabase";
@@ -17,7 +18,7 @@ export class AppCore {
     public async start(): Promise<void> {
 
         this.logger.info("Starting Beacon...");
-        
+
         this._registerShutdownHandlers();
         await this.lifecycle.boot();
         this._wireAdminServer();
@@ -36,25 +37,40 @@ export class AppCore {
         const orchestrator = this.lifecycle.getOrchestrator();
 
         const syncState = () => {
-            const config = this.lifecycle.getConfig();
             this.admin.setState({
-                producers: this.lifecycle.getProducers(),
-                consumers: config.consumers,
-                devices: this.lifecycle.getDevices() // TODO, callback from orchestrator instead?
+                producers:          this.lifecycle.getProducers(),
+                consumers:          this.lifecycle.getConfig().consumers,
+                devices:            this.lifecycle.getDevices(),
+                orchestratorConfig: this.lifecycle.getOrchestratorConfig(),
             });
-            this.logger.debug("Received producer update from lifecycle:", this.lifecycle.getProducers());
-            this.logger.debug("Update new sources:", this.lifecycle.getProducers().map(p => p.info.sources));
-            this.logger.debug("Update new devices:", this.lifecycle.getDevices());
-
         };
 
-        orchestrator.on("producer_added", syncState);
-        orchestrator.on("producer_removed", syncState);
-        orchestrator.on("consumer_added", syncState);
-        orchestrator.on("consumer_removed", syncState);
-        orchestrator.on("producer_info", syncState);
+        orchestrator.on("producer_added",    syncState);
+        orchestrator.on("producer_removed",  syncState);
+        orchestrator.on("consumer_added",    syncState);
+        orchestrator.on("consumer_removed",  syncState);
+        orchestrator.on("producer_info",     syncState);
 
         syncState();
+
+        // ? Producers
+
+        this.admin.on("add_producer", (type, config) => {
+            try {
+                const producer = TallyFactory.createProducer(type, config);
+                this.lifecycle.addProducer(producer).catch((err) => {
+                    this.logger.error("Failed to add producer:", err);
+                });
+            } catch (err) {
+                this.logger.error("Unknown producer type:", type, err);
+            }
+        });
+
+        this.admin.on("update_producer", (id, type, config) => {
+            this.lifecycle.updateProducer(id, type, config).then(syncState).catch((err) => {
+                this.logger.error("Failed to update producer:", id, err);
+            });
+        });
 
         this.admin.on("remove_producer", (id) => {
             this.lifecycle.removeProducer(id).catch((err) => {
@@ -62,23 +78,52 @@ export class AppCore {
             });
         });
 
+        // ? Consumers
+
         this.admin.on("update_consumer", (update) => {
             this.lifecycle.updateConsumer(update).then(syncState).catch((err) => {
                 this.logger.error("Failed to update consumer:", err);
             });
         });
 
-        // this.admin.on("import_config", (config) => {
-        //     this.lifecycle.importConfig(config).then(syncState).catch((err) => {
-        //         this.logger.error("Failed to import config:", err);
-        //     });
-        // });
+        // ? Devices
+
+        this.admin.on("patch_device", (address, patch) => {
+            this.lifecycle.patchDevice(address, patch);
+            syncState();
+        });
+
+        this.admin.on("rename_device", (address, name) => {
+            this.lifecycle.renameDevice(address, name);
+            syncState();
+        });
+
+        this.admin.on("remove_device", (address) => {
+            this.lifecycle.removeDevice(address);
+            syncState();
+        });
+
+        this.admin.on("send_alert", (address, type, target) => {
+            this.lifecycle.sendAlert(address, type, target);
+        });
+
+        // ? Config
+
+        this.admin.on("update_orchestrator", (config) => {
+            this.lifecycle.updateOrchestratorConfig(config).then(syncState).catch((err) => {
+                this.logger.error("Failed to update orchestrator config:", err);
+            });
+        });
+
+        this.admin.on("import_config", (config) => {
+            this.lifecycle.importConfig(config).then(syncState).catch((err) => {
+                this.logger.error("Failed to import config:", err);
+            });
+        });
     }
 
     private async _setupTestConfig(): Promise<void> {
         this.logger.info("No persisted config found, loading test config...");
-
-        // Consumers are managed by LifecycleConfig — MQTT broker is enabled by default.
 
         const producer = new AtemNetClientTallyProducer({
             id: "atem1",
@@ -99,7 +144,7 @@ export class AppCore {
 
         process.prependListener("SIGINT", shutdown);
         process.prependListener("SIGTERM", shutdown);
-        process.on("exit", () => { CoreDatabase.destroy(); }); // Sync safety net — covers crashes and paths that bypass shutdown()
+        process.on("exit", () => { CoreDatabase.destroy(); });
         process.on("uncaughtException", (err) => { this.logger.fatal("Uncaught exception", err); });
         process.on("unhandledRejection", (reason) => { this.logger.fatal("Unhandled rejection", reason); });
     }

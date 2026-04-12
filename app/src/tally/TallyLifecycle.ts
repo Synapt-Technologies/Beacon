@@ -1,13 +1,15 @@
 import { CoreDatabase, SettingKey } from "../database/CoreDatabase";
 import { TallyFactory } from "./TallyFactory";
 import { TallyOrchestrator, type OrchestratorConfig } from "./TallyOrchestrator";
-import type { AbstractTallyProducer, ProducerConfig, ProducerInfo } from "./producer/AbstractTallyProducer";
+export type { OrchestratorConfig };
+import type { AbstractTallyProducer, ProducerConfig } from "./producer/AbstractTallyProducer";
 import type { ProducerBundle, ProducerId } from "./types/ProducerStates";
 import { Logger } from "../logging/Logger";
-import { AedesNetworkConsumer, type AedesConsumerConfig } from "./consumer/networkConsumer/AedesNetworkConsumer";
-import { RpiGpioHardwareConsumer, type GpioConsumerConfig } from "./consumer/hardwareConsumer/RpiGpioHardwareConsumer";
+import type { AedesConsumerConfig } from "./consumer/networkConsumer/AedesNetworkConsumer";
+import type { GpioConsumerConfig } from "./consumer/hardwareConsumer/RpiGpioHardwareConsumer";
 import type { AbstractConsumer, ConsumerConfig } from "./consumer/AbstractConsumer";
-import type { ConsumerId, TallyDevice } from "./types/ConsumerStates";
+import type { ConsumerId, DeviceAddress, DeviceAlertState, DeviceAlertTarget, DeviceName, TallyDevice } from "./types/ConsumerStates";
+import type { GlobalTallySource } from "./types/ProducerStates";
 import { HardwareVersion } from "../types/SystemInfo";
 
 // ? Mutations
@@ -52,6 +54,7 @@ type LifecycleConfigInternal = {
 };
 
 export interface LifecycleConfig {
+    producers?: Array<{ type: string; config: ProducerConfig }>;
     consumers?: ConsumerExportMap;
     orchestrator?: Partial<OrchestratorConfig>;
 }
@@ -76,14 +79,14 @@ export class TallyLifecycle {
         orchestrator: {} as Partial<OrchestratorConfig>,
         consumers: {
             aedes: {
-                factory: (config: any) => new AedesNetworkConsumer(config),
+                factory: (config: AedesConsumerConfig) => TallyFactory.createConsumer('AedesNetworkConsumer', config),
                 isAvailable: () => true,
                 isDisableable: () => false,
                 enabled: true,
                 config: {},
             },
             gpio: {
-                factory: (config: any) => new RpiGpioHardwareConsumer(config),
+                factory: (config: GpioConsumerConfig) => TallyFactory.createConsumer('RpiGpioHardwareConsumer', config),
                 isAvailable: () => this.info.hardware == HardwareVersion.V2,
                 isDisableable: () => true,
                 enabled: true,
@@ -167,30 +170,50 @@ export class TallyLifecycle {
         };
     }
 
-    // public async importConfig(config: LifecycleConfig): Promise<void> {
-    //     for (const [id, setting] of Object.entries(config.consumers)) {
-    //         const entry = this._registry[id];
-    //         if (!entry) {
-    //             this.logger.warn(`Unknown consumer ID in import, skipping:`, id);
-    //             continue;
-    //         }
-    //         this.config.consumers[id] = setting;
-    //         this.db.setSetting(entry.settingKey, setting);
-    //         await this._restartConsumer(id);
-    //     }
+    public async importConfig(config: LifecycleConfig): Promise<void> {
+        if (config.consumers) {
+            for (const [id, setting] of Object.entries(config.consumers) as [RegisteredConsumerId, LifeCycleConsumerConfig][]) {
+                if (!(id in this._config.consumers)) {
+                    this.logger.warn(`Unknown consumer ID in import, skipping:`, id);
+                    continue;
+                }
+                if (setting.enabled !== undefined) this._config.consumers[id].enabled = setting.enabled;
+                if (setting.config)               this._config.consumers[id].config  = { ...this._config.consumers[id].config, ...setting.config };
+                this.db.setSetting(SettingKey.consumers[id], { enabled: this._config.consumers[id].enabled, config: this._config.consumers[id].config });
+                await this._restartConsumer(id);
+            }
+        }
 
-    //     for (const id of this.orchestrator.getProducerIds()) {
-    //         await this.removeProducer(id);
-    //     }
-    //     for (const { type, config: pConfig } of config.producers) {
-    //         const producer = TallyFactory.createProducer(type, pConfig);
-    //         await this.addProducer(producer);
-    //     }
-    // }
+        if (config.producers) {
+            for (const id of this.orchestrator.getProducerIds()) {
+                await this.removeProducer(id);
+            }
+            for (const { type, config: pConfig } of config.producers) {
+                try {
+                    const producer = TallyFactory.createProducer(type, pConfig);
+                    await this.addProducer(producer);
+                } catch (e) {
+                    this.logger.error(`Failed to import producer:`, pConfig.id, e);
+                }
+            }
+        }
+
+        this.logger.info(`Config imported.`);
+    }
 
 
     public hasConfig(): boolean {
         return this.db.getProducers().length > 0;
+    }
+
+    public getOrchestratorConfig(): Partial<OrchestratorConfig> {
+        return this._config.orchestrator;
+    }
+
+    public async updateOrchestratorConfig(config: Partial<OrchestratorConfig>): Promise<void> {
+        this._config.orchestrator = { ...this._config.orchestrator, ...config };
+        this.db.setSetting(SettingKey.orchestrator, this._config.orchestrator);
+        this.logger.info(`Orchestrator config updated:`, this._config.orchestrator);
     }
 
     // ? Producer methods
@@ -253,6 +276,31 @@ export class TallyLifecycle {
         return this.orchestrator.getDevices();
     }
 
+    // ? Device methods — delegate to the owning consumer
+
+    public patchDevice(address: DeviceAddress, patch: GlobalTallySource[]): void {
+        const consumer = this.orchestrator.getConsumer(address.consumer);
+        if (!consumer) { this.logger.warn(`patchDevice: no consumer for`, address.consumer); return; }
+        consumer.setDevicePatch(address, patch);
+    }
+
+    public renameDevice(address: DeviceAddress, name: DeviceName): void {
+        const consumer = this.orchestrator.getConsumer(address.consumer);
+        if (!consumer) { this.logger.warn(`renameDevice: no consumer for`, address.consumer); return; }
+        consumer.setDeviceName(address, name);
+    }
+
+    public removeDevice(address: DeviceAddress): void {
+        const consumer = this.orchestrator.getConsumer(address.consumer);
+        if (!consumer) { this.logger.warn(`removeDevice: no consumer for`, address.consumer); return; }
+        consumer.deleteDevice(address);
+    }
+
+    public sendAlert(address: DeviceAddress, type: DeviceAlertState, target: DeviceAlertTarget): void {
+        const consumer = this.orchestrator.getConsumer(address.consumer);
+        if (!consumer) { this.logger.warn(`sendAlert: no consumer for`, address.consumer); return; }
+        consumer.setDeviceAlert(address, type, target);
+    }
 
     private async _restartConsumer(consumerId: ConsumerId): Promise<void> {
 

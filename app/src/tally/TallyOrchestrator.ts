@@ -169,6 +169,10 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
         return this.consumers.has(id);
     }
 
+    getConsumer(id: ConsumerId): AbstractConsumer | null {
+        return this.consumers.get(id) ?? null;
+    }
+
     getConsumerIds(): ConsumerId[] {
         return Array.from(this.consumers.keys());
     }
