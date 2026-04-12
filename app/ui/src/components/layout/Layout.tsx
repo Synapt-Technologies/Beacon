@@ -2,7 +2,6 @@ import { Outlet, useLocation } from "react-router-dom"
 import { useEffect } from "react"
 import Sidebar from "./sidebar/Sidebar"
 import Header from "./header/Header"
-import Savebar from "./savebar/Savebar"
 
 const PAGE_TITLES: Record<string, string> = {
     '/overview':    'Tally overview',
@@ -37,7 +36,6 @@ export default function Layout() {
                     <Outlet />
                 </main>
 
-                <Savebar />
             </div>
         </div>
     );

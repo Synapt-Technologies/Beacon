@@ -10,7 +10,7 @@ export default function DeviceRow({ device, onSelect }: { device: UITallyDevice;
         >
             <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-primary)' }}>
-                    {device.name?.long ?? device.id.device}
+                    {device.name.long}
                 </div>
                 <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {device.patch.length === 0 ? 'No sources patched' : device.patch.map(s => s.source).join(', ')}

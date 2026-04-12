@@ -16,8 +16,6 @@ import { DEFAULT_UI_ALERT_CONFIG, UIAlertSlot, UIConfig } from '../../../src/typ
 import { ProducerConfig } from '../../../src/tally/producer/AbstractTallyProducer'
 import { ConsumerId } from '../types/beacon'
 import { ConsumerConfig } from '../../../src/tally/consumer/AbstractConsumer'
-
-
 import { CONSUMER_META } from '../config/consumers'
 
 // ? Context Data Shape
@@ -25,13 +23,12 @@ import { CONSUMER_META } from '../config/consumers'
 interface BeaconState {
     producers: ProducerBundle[];
     consumers: Partial<ConsumerExportMap>;
-    devices: UITallyDevice[]; // TODO: Map by producer?
+    devices: UITallyDevice[];
 
     system: SystemInfo;
-
     uiConfig: UIConfig;
 
-    settingsUnsaved: boolean
+    orchestratorConfig: Partial<OrchestratorConfig>
 
     loading: boolean;
     error: string | null;
@@ -43,22 +40,18 @@ interface BeaconState {
     removeProducer: (id: ProducerId) => Promise<void>
     updateProducer: (id: ProducerId, config: ProducerConfig & Record<string, unknown>) => Promise<void>
 
-    orchestratorConfig: Partial<OrchestratorConfig>
     updateOrchestratorConfig: (config: Partial<OrchestratorConfig>) => Promise<void>
 
     setConsumerEnabled: (id: ConsumerId, enabled: boolean) => Promise<void>
     updateConsumer: (id: ConsumerId, config: ConsumerConfig) => Promise<void>
 
     patchDevice: (device: DeviceAddress, patch: GlobalTallySource[]) => Promise<void>
-    renameDevice: (device: DeviceAddress, name: { short: string; long: string }) => Promise<void>
+    renameDevice: (device: DeviceAddress, name: { short?: string; long: string }) => Promise<void>
     removeDevice: (device: DeviceAddress) => Promise<void>
     sendAlert: (device: DeviceAddress, type: DeviceAlertState, target: DeviceAlertTarget) => Promise<void>
 
-    updateAlertSlot: (index: number, slot: UIAlertSlot) => Promise<void>
-    resetAlertSlot: (index: number) => Promise<void>
-
-    saveSettings: () => Promise<void>
-    discardSettings: () => void
+    updateAlertSlot: (index: number, slot: UIAlertSlot) => void
+    resetAlertSlot: (index: number) => void
 
     exportConfig: () => Promise<void>
     importConfig: (file: File) => Promise<void>
@@ -68,15 +61,14 @@ const BeaconContext = createContext<BeaconState | null>(null)
 
 // ? Provider
 export function BeaconProvider({ children }: { children: ReactNode }) {
-    const [producers, setProducers]               = useState<ProducerBundle[]>([])
-    const [consumers, setConsumers]               = useState<Partial<ConsumerExportMap>>({})
-    const [devices, setDevices]                   = useState<UITallyDevice[]>([])
+    const [producers, setProducers]                   = useState<ProducerBundle[]>([])
+    const [consumers, setConsumers]                   = useState<Partial<ConsumerExportMap>>({})
+    const [devices, setDevices]                       = useState<UITallyDevice[]>([])
     const [orchestratorConfig, setOrchestratorConfig] = useState<Partial<OrchestratorConfig>>({})
-    const [system]                  = useState<SystemInfo>({})
-    const [uiConfig, setUiConfig]   = useState<UIConfig>({ alerts: DEFAULT_UI_ALERT_CONFIG })
-    const [settingsUnsaved, setSettingsUnsaved] = useState(false)
-    const [loading, setLoading]     = useState(false)
-    const [error, setError]         = useState<string | null>(null)
+    const [system]                                    = useState<SystemInfo>({})
+    const [uiConfig, setUiConfig]                     = useState<UIConfig>({ alerts: DEFAULT_UI_ALERT_CONFIG })
+    const [loading, setLoading]                       = useState(false)
+    const [error, setError]                           = useState<string | null>(null)
 
     const fetchAll = useCallback(async () => {
         setLoading(true)
@@ -90,7 +82,6 @@ export function BeaconProvider({ children }: { children: ReactNode }) {
           setConsumers(cons)
           setOrchestratorConfig(orchConfig)
 
-          // Devices endpoint may not exist yet — handle gracefully
           try {
             const rawDevices = await api.getDevices()
             const ui: UITallyDevice[] = []
@@ -117,8 +108,7 @@ export function BeaconProvider({ children }: { children: ReactNode }) {
 
     useEffect(() => { fetchAll() }, [fetchAll])
 
-
-    // ? Producers — no add/update endpoints yet
+    // ? Producers
     const addProducer = async (type: string, config: ProducerConfig & Record<string, unknown>) => {
       await api.addProducer(type, config)
       await fetchAll()
@@ -165,7 +155,7 @@ export function BeaconProvider({ children }: { children: ReactNode }) {
           : d
       ))
     }
-    const renameDevice = async (device: DeviceAddress, name: { short: string; long: string }) => {
+    const renameDevice = async (device: DeviceAddress, name: { short?: string; long: string }) => {
       await api.renameDevice(device, name)
       setDevices(prev => prev.map(d =>
         d.id.consumer === device.consumer && d.id.device === device.device
@@ -183,32 +173,20 @@ export function BeaconProvider({ children }: { children: ReactNode }) {
       await api.sendAlert(device, type, target)
     }
 
-    // ? Alert slots — local only, no server endpoint yet
-    const updateAlertSlot = async (index: number, slot: UIAlertSlot) => {
+    // ? Alert slots — applied immediately, no pending state
+    const updateAlertSlot = (index: number, slot: UIAlertSlot) => {
       setUiConfig(prev => {
         const alerts = [...prev.alerts]
         alerts[index] = slot
         return { ...prev, alerts }
       })
-      setSettingsUnsaved(true)
     }
-    const resetAlertSlot = async (index: number) => {
+    const resetAlertSlot = (index: number) => {
       setUiConfig(prev => {
         const alerts = [...prev.alerts]
         alerts[index] = DEFAULT_UI_ALERT_CONFIG[index]
         return { ...prev, alerts }
       })
-      setSettingsUnsaved(true)
-    }
-
-    // ? Settings — no server endpoint yet
-    const saveSettings = async () => {
-      // TODO: persist uiConfig to server
-      setSettingsUnsaved(false)
-    }
-    const discardSettings = () => {
-      // TODO: reload uiConfig from server
-      setSettingsUnsaved(false)
     }
 
     // ? Config
@@ -232,7 +210,6 @@ export function BeaconProvider({ children }: { children: ReactNode }) {
             producers, consumers, devices,
             orchestratorConfig,
             system, uiConfig,
-            settingsUnsaved,
             loading, error,
             refresh: fetchAll,
             addProducer, removeProducer, updateProducer,
@@ -240,15 +217,12 @@ export function BeaconProvider({ children }: { children: ReactNode }) {
             setConsumerEnabled, updateConsumer,
             patchDevice, renameDevice, removeDevice, sendAlert,
             updateAlertSlot, resetAlertSlot,
-            saveSettings, discardSettings,
             exportConfig, importConfig,
         }}>
         {children}
         </BeaconContext>
     )
 }
-
-
 
 // ? Hook
 

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useBeacon } from '../context/BeaconContext'
 import { Toggle } from '../components/Toggle'
 import { IconReset } from '../components/icons'
+import Savebar from '../components/layout/savebar/Savebar'
 import { DeviceAlertState, DeviceAlertTarget } from '../../../src/tally/types/ConsumerStates'
 import { UIAlertSlot, DEFAULT_UI_ALERT_CONFIG } from '../../../src/types/UIStates'
 import type { AlertSlot, AlertAction, AlertTarget } from '../types/beacon'
@@ -62,22 +63,16 @@ const ALERT_ICONS: Record<AlertAction, React.ReactNode> = {
   ),
 }
 
-// ? NetworkRow
+// ? NetworkRow — stateless, controlled by parent pending state
 
-interface NetworkRowProps {
+function NetworkRow({ label, sub, value, defaultVal, readOnly, onChange }: {
   label: string
   sub?: string
   value: number | undefined
   defaultVal: number
   readOnly?: boolean
-  onSave?: (v: number) => void
-}
-
-function NetworkRow({ label, sub, value, defaultVal, readOnly, onSave }: NetworkRowProps) {
-  const [local, setLocal] = useState<number>(value ?? defaultVal)
-  const resolved = value ?? defaultVal
-  const dirty = local !== resolved
-
+  onChange?: (v: number) => void
+}) {
   return (
     <div className="s-row">
       <div style={{ flex: 1 }}>
@@ -87,21 +82,12 @@ function NetworkRow({ label, sub, value, defaultVal, readOnly, onSave }: Network
       <input
         className="s-input"
         type="number"
-        value={readOnly ? (value ?? defaultVal) : local}
+        value={value ?? defaultVal}
         readOnly={readOnly}
         disabled={readOnly}
-        onChange={readOnly ? undefined : e => setLocal(parseInt(e.target.value) || defaultVal)}
+        onChange={readOnly ? undefined : e => onChange?.(parseInt(e.target.value) || defaultVal)}
         style={readOnly ? { color: 'var(--color-text-tertiary)' } : undefined}
       />
-      {!readOnly && dirty && (
-        <button
-          className="sm-btn"
-          style={{ color: 'var(--acc)', borderColor: 'color-mix(in srgb, var(--acc) 40%, transparent)' }}
-          onClick={() => onSave?.(local)}
-        >
-          Apply
-        </button>
-      )}
     </div>
   )
 }
@@ -305,7 +291,35 @@ export default function SettingsPage() {
   } = useBeacon()
 
   const aedesConfig = consumers.aedes?.config as Partial<AedesConsumerConfig> | undefined
-  const stateOnDisconnect = orchestratorConfig.state_on_disconnect ?? 0
+
+  // ? Pending state for savebar — network and tally behaviour fields
+  const [pendingPort,         setPendingPort]         = useState<number | null>(null)
+  const [pendingKeepalive,    setPendingKeepalive]    = useState<number | null>(null)
+  const [pendingDisconnect,   setPendingDisconnect]   = useState<OrchestratorConfig['state_on_disconnect'] | null>(null)
+
+  const serverDisconnect = orchestratorConfig.state_on_disconnect ?? 0
+  const settingsUnsaved  = pendingPort !== null || pendingKeepalive !== null || pendingDisconnect !== null
+
+  const handleSave = async () => {
+    if (pendingPort !== null || pendingKeepalive !== null) {
+      await updateConsumer('aedes', {
+        ...(pendingPort      !== null ? { port: pendingPort }               : {}),
+        ...(pendingKeepalive !== null ? { keep_alive_ms: pendingKeepalive } : {}),
+      } as Partial<AedesConsumerConfig>)
+    }
+    if (pendingDisconnect !== null) {
+      await updateOrchestratorConfig({ state_on_disconnect: pendingDisconnect })
+    }
+    setPendingPort(null)
+    setPendingKeepalive(null)
+    setPendingDisconnect(null)
+  }
+
+  const handleDiscard = () => {
+    setPendingPort(null)
+    setPendingKeepalive(null)
+    setPendingDisconnect(null)
+  }
 
   const [editingAlert, setEditingAlert] = useState<number | null>(null)
 
@@ -324,14 +338,12 @@ export default function SettingsPage() {
     input.click()
   }
 
-  const handleResetAlerts = async () => {
-    for (let i = 0; i < DEFAULT_UI_ALERT_CONFIG.length; i++) {
-      await resetAlertSlot(i)
-    }
+  const handleResetAlerts = () => {
+    for (let i = 0; i < DEFAULT_UI_ALERT_CONFIG.length; i++) resetAlertSlot(i)
   }
 
   return (
-    <div style={{ paddingBottom: 80 }}>
+    <div style={{ paddingBottom: settingsUnsaved ? 80 : 20 }}>
 
       {/* Consumers */}
       <div className="sec-lbl">Consumers</div>
@@ -376,16 +388,16 @@ export default function SettingsPage() {
         />
         <NetworkRow
           label="MQTT port"
-          value={aedesConfig?.port}
+          value={pendingPort ?? aedesConfig?.port}
           defaultVal={1883}
-          onSave={v => updateConsumer('aedes', { port: v } as Partial<AedesConsumerConfig>)}
+          onChange={setPendingPort}
         />
         <NetworkRow
           label="Keep-alive interval"
           sub="MQTT heartbeat in ms"
-          value={aedesConfig?.keep_alive_ms}
+          value={pendingKeepalive ?? aedesConfig?.keep_alive_ms}
           defaultVal={500}
-          onSave={v => updateConsumer('aedes', { keep_alive_ms: v } as Partial<AedesConsumerConfig>)}
+          onChange={setPendingKeepalive}
         />
       </div>
 
@@ -399,8 +411,8 @@ export default function SettingsPage() {
           </div>
           <select
             className="s-select"
-            value={stateOnDisconnect}
-            onChange={e => updateOrchestratorConfig({ state_on_disconnect: parseInt(e.target.value) as OrchestratorConfig['state_on_disconnect'] })}
+            value={pendingDisconnect ?? serverDisconnect}
+            onChange={e => setPendingDisconnect(parseInt(e.target.value) as OrchestratorConfig['state_on_disconnect'])}
           >
             <option value={0}>None</option>
             <option value={1}>Warning</option>
@@ -478,6 +490,10 @@ export default function SettingsPage() {
           </span>
         </div>
       </div>
+
+      {settingsUnsaved && (
+        <Savebar onSave={handleSave} onDiscard={handleDiscard} />
+      )}
 
     </div>
   )
