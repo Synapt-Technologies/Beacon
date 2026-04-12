@@ -3,6 +3,7 @@ import { useBeacon } from '../context/BeaconContext'
 import { AddConnectionModal } from '../components/AddConnectionModal'
 import type { ProducerBundle, SourceInfo } from '../../../src/tally/types/ProducerStates'
 import type { ProducerConfig } from '../../../src/tally/producer/AbstractTallyProducer'
+import { PRODUCER_TYPE_MAP } from '../config/producers'
 
 export default function ConnectionsPage() {
   const { producers, removeProducer } = useBeacon()
@@ -69,8 +70,9 @@ function ProducerCard({ producer: prod, editing, onEdit, onRemove }: ProducerCar
   const [port,    setPort]    = useState(String(cfg.port    ?? ''))
   const [saving,  setSaving]  = useState(false)
 
-  const sources = Object.values(prod.info.sources as unknown as Record<string, SourceInfo>)
-  const model   = prod.info.model.short ?? prod.info.model.long ?? prod.type
+  const sources    = Object.values(prod.info.sources as unknown as Record<string, SourceInfo>)
+  const model      = prod.info.model.short ?? prod.info.model.long
+  const typeLabel  = PRODUCER_TYPE_MAP[prod.type]?.shortLabel ?? prod.type
 
   const handleSave = async () => {
     setSaving(true)
@@ -104,7 +106,7 @@ function ProducerCard({ producer: prod, editing, onEdit, onRemove }: ProducerCar
           {prod.config.name ?? prod.config.id}
         </div>
         <span style={{ fontSize: 11, color: 'var(--color-text-tertiary)' }}>
-          {model} · {sources.length} source{sources.length !== 1 ? 's' : ''}
+          {[typeLabel, model, `${sources.length} source${sources.length !== 1 ? 's' : ''}`].filter(Boolean).join(' · ')}
         </span>
         <button className="sm-btn" onClick={onEdit}>
           {editing ? 'Close' : 'Edit'}

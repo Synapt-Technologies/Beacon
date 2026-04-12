@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { toast } from 'react-hot-toast'
 import { useBeacon } from '../context/BeaconContext'
 import { Toggle } from '../components/Toggle'
 import { IconReset } from '../components/icons'
@@ -317,8 +316,8 @@ export default function SettingsPage() {
       setPendingPort(null)
       setPendingKeepalive(null)
       setPendingDisconnect(null)
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Failed to save settings')
+    } catch {
+      // BeaconContext shows the toast; pending state preserved so user can retry
     } finally {
       setSaving(false)
     }

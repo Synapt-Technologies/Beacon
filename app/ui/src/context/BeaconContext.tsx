@@ -120,7 +120,7 @@ export function BeaconProvider({ children }: { children: ReactNode }) {
       try {
         await api.removeProducer(id)
         setProducers(prev => prev.filter(p => p.config.id !== id))
-      } catch (e) { toast.error(e instanceof Error ? e.message : 'Failed to remove connection') ; throw e }
+      } catch (e) { toast.error(e instanceof Error ? e.message : 'Failed to remove connection') ; await fetchAll() ; throw e }
     }
     const updateProducer = async (id: ProducerId, config: ProducerConfig & Record<string, unknown>) => {
       const prod = producers.find(p => p.config.id === id)
@@ -133,8 +133,10 @@ export function BeaconProvider({ children }: { children: ReactNode }) {
 
     // ? Orchestrator
     const updateOrchestratorConfig = async (config: Partial<OrchestratorConfig>) => {
-      await api.updateOrchestratorConfig(config)
-      setOrchestratorConfig(prev => ({ ...prev, ...config }))
+      try {
+        await api.updateOrchestratorConfig(config)
+        setOrchestratorConfig(prev => ({ ...prev, ...config }))
+      } catch (e) { toast.error(e instanceof Error ? e.message : 'Failed to save settings') ; await fetchAll() ; throw e }
     }
 
     // ? Consumers
@@ -145,14 +147,16 @@ export function BeaconProvider({ children }: { children: ReactNode }) {
           ...prev,
           [id]: { ...prev[id as keyof ConsumerExportMap], enabled },
         }))
-      } catch (e) { toast.error(e instanceof Error ? e.message : 'Failed to update consumer') ; throw e }
+      } catch (e) { toast.error(e instanceof Error ? e.message : 'Failed to update consumer') ; await fetchAll() ; throw e }
     }
     const updateConsumer = async (id: ConsumerId, config: ConsumerConfig) => {
-      await api.patchConsumer(id, { config })
-      setConsumers(prev => ({
-        ...prev,
-        [id]: { ...prev[id as keyof ConsumerExportMap], config: { ...prev[id as keyof ConsumerExportMap]?.config, ...config } },
-      }))
+      try {
+        await api.patchConsumer(id, { config })
+        setConsumers(prev => ({
+          ...prev,
+          [id]: { ...prev[id as keyof ConsumerExportMap], config: { ...prev[id as keyof ConsumerExportMap]?.config, ...config } },
+        }))
+      } catch (e) { toast.error(e instanceof Error ? e.message : 'Failed to save settings') ; await fetchAll() ; throw e }
     }
 
     // ? Devices
@@ -164,7 +168,7 @@ export function BeaconProvider({ children }: { children: ReactNode }) {
             ? { ...d, patch }
             : d
         ))
-      } catch (e) { toast.error(e instanceof Error ? e.message : 'Failed to patch device') ; throw e }
+      } catch (e) { toast.error(e instanceof Error ? e.message : 'Failed to patch device') ; await fetchAll() ; throw e }
     }
     const renameDevice = async (device: DeviceAddress, name: { short?: string; long: string }) => {
       try {
@@ -174,7 +178,7 @@ export function BeaconProvider({ children }: { children: ReactNode }) {
             ? { ...d, name }
             : d
         ))
-      } catch (e) { toast.error(e instanceof Error ? e.message : 'Failed to rename device') ; throw e }
+      } catch (e) { toast.error(e instanceof Error ? e.message : 'Failed to rename device') ; await fetchAll() ; throw e }
     }
     const removeDevice = async (device: DeviceAddress) => {
       try {
@@ -182,7 +186,7 @@ export function BeaconProvider({ children }: { children: ReactNode }) {
         setDevices(prev => prev.filter(d =>
           !(d.id.consumer === device.consumer && d.id.device === device.device)
         ))
-      } catch (e) { toast.error(e instanceof Error ? e.message : 'Failed to remove device') ; throw e }
+      } catch (e) { toast.error(e instanceof Error ? e.message : 'Failed to remove device') ; await fetchAll() ; throw e }
     }
     const sendAlert = async (device: DeviceAddress, type: DeviceAlertState, target: DeviceAlertTarget) => {
       try {

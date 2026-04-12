@@ -1,35 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useBeacon } from '../context/BeaconContext'
 import type { ProducerConfig } from '../../../src/tally/producer/AbstractTallyProducer'
-
-// ? Producer type registry — extend here when new producer types are added
-
-interface ProducerTypedef {
-  id:          string        // matches TallyFactory switch case
-  label:       string
-  defaultName: string
-  fields:      FieldDef[]
-}
-
-interface FieldDef {
-  key:         string
-  label:       string
-  type:        'text' | 'number'
-  placeholder: string
-  default:     string | number
-}
-
-const PRODUCER_TYPES: ProducerTypedef[] = [
-  {
-    id:          'AtemNetClientTallyProducer',
-    label:       'ATEM Switcher',
-    defaultName: 'ATEM',
-    fields: [
-      { key: 'host', label: 'Host / IP',   type: 'text',   placeholder: '192.168.1.100', default: '' },
-      { key: 'port', label: 'Port',         type: 'number', placeholder: '9910',          default: 9910 },
-    ],
-  },
-]
+import { PRODUCER_TYPES } from '../config/producers'
 
 function slugify(host: string): string {
   return 'atem-' + host.replace(/[^a-z0-9]/gi, '-').replace(/-+/g, '-').replace(/^-|-$/g, '').toLowerCase()
