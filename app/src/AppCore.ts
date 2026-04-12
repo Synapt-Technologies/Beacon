@@ -1,6 +1,5 @@
 import { TallyLifecycle } from "./tally/TallyLifecycle";
-import { AtemNetClientTallyProducer } from "./tally/producer/networkProducer/AtemNetClientTallyProducer";
-import { TallyFactory } from "./tally/TallyFactory";
+import type { ProducerConfig } from "./tally/producer/AbstractTallyProducer";
 import { Logger } from "./logging/Logger";
 import { AdminServer } from "./admin/AdminServer";
 import { CoreDatabase } from "./database/CoreDatabase";
@@ -56,14 +55,9 @@ export class AppCore {
         // ? Producers
 
         this.admin.on("add_producer", (type, config) => {
-            try {
-                const producer = TallyFactory.createProducer(type, config);
-                this.lifecycle.addProducer(producer).catch((err) => {
-                    this.logger.error("Failed to add producer:", err);
-                });
-            } catch (err) {
-                this.logger.error("Unknown producer type:", type, err);
-            }
+            this.lifecycle.addProducer(type, config).then(syncState).catch((err) => {
+                this.logger.error("Failed to add producer:", err);
+            });
         });
 
         this.admin.on("update_producer", (id, type, config) => {
@@ -124,14 +118,11 @@ export class AppCore {
 
     private async _setupTestConfig(): Promise<void> {
         this.logger.info("No persisted config found, loading test config...");
-
-        const producer = new AtemNetClientTallyProducer({
+        await this.lifecycle.addProducer("AtemNetClientTallyProducer", {
             id: "atem1",
             name: "ATEM-TVSHD",
             host: "127.0.0.1",
-        });
-
-        await this.lifecycle.addProducer(producer);
+        } as unknown as ProducerConfig);
     }
 
     private _registerShutdownHandlers(): void {

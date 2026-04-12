@@ -2,7 +2,7 @@ import { CoreDatabase, SettingKey } from "../database/CoreDatabase";
 import { TallyFactory } from "./TallyFactory";
 import { TallyOrchestrator, type OrchestratorConfig } from "./TallyOrchestrator";
 export type { OrchestratorConfig };
-import type { AbstractTallyProducer, ProducerConfig } from "./producer/AbstractTallyProducer";
+import type { ProducerConfig } from "./producer/AbstractTallyProducer";
 import type { ProducerBundle, ProducerId } from "./types/ProducerStates";
 import { Logger } from "../logging/Logger";
 import type { AedesConsumerConfig } from "./consumer/networkConsumer/AedesNetworkConsumer";
@@ -116,9 +116,7 @@ export class TallyLifecycle {
 
         for (const { type, config } of this.db.getProducers()) {
             try {
-                const producer = TallyFactory.createProducer(type, config);
-                await producer.init();
-                this.orchestrator.addProducer(producer);
+                await this._startProducer(type, config);
                 this.logger.info(`Restored producer: ${config.id} (${type})`);
             } catch (e) {
                 this.logger.error(`Failed to restore producer: ${config.id} (${type})`, e);
@@ -190,8 +188,7 @@ export class TallyLifecycle {
             }
             for (const { type, config: pConfig } of config.producers) {
                 try {
-                    const producer = TallyFactory.createProducer(type, pConfig);
-                    await this.addProducer(producer);
+                    await this.addProducer(type, pConfig);
                 } catch (e) {
                     this.logger.error(`Failed to import producer:`, pConfig.id, e);
                 }
@@ -218,20 +215,24 @@ export class TallyLifecycle {
 
     // ? Producer methods
 
-    public async addProducer(producer: AbstractTallyProducer): Promise<void> {
-        if (this.orchestrator.hasProducer(producer.getId())) {
-            this.logger.warn(`Producer already exists, skipping add:`, producer.getId());
-            return;
-        }
-        this.db.saveProducer(producer);
+    private async _startProducer(type: string, config: ProducerConfig): Promise<void> {
+        const producer = TallyFactory.createProducer(type, config);
         await producer.init();
         this.orchestrator.addProducer(producer);
     }
 
+    public async addProducer(type: string, config: ProducerConfig): Promise<void> {
+        if (this.orchestrator.hasProducer(config.id)) {
+            this.logger.warn(`Producer already exists, skipping add:`, config.id);
+            return;
+        }
+        this.db.saveProducer({ type, config });
+        await this._startProducer(type, config);
+    }
+
     public async updateProducer(id: ProducerId, type: string, config: object): Promise<void> {
         await this.removeProducer(id);
-        const producer = TallyFactory.createProducer(type, { ...config, id });
-        await this.addProducer(producer);
+        await this.addProducer(type, { ...config, id } as ProducerConfig);
     }
 
     public async removeProducer(id: ProducerId): Promise<void> {
