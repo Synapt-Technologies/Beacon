@@ -486,7 +486,7 @@ export default function SettingsPage() {
             <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginTop: 1 }}>Raspberry Pi</div>
           </div>
           <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 99, background: 'var(--color-background-secondary)', color: 'var(--color-text-secondary)' }}>
-            v2.0.0
+            v3.0.0
           </span>
         </div>
       </div>
