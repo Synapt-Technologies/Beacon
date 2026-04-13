@@ -22,11 +22,6 @@ export class AppCore {
         await this.lifecycle.boot();
         this._wireAdminServer();
 
-        // TODO: Remove once the ui can configure producers and consumers.
-        if (!this.lifecycle.hasConfig()) {
-            await this._setupTestConfig();
-        }
-
         this.admin.start();
 
         this.logger.info("Beacon started.");
@@ -115,15 +110,6 @@ export class AppCore {
                 this.logger.error("Failed to import config:", err);
             });
         });
-    }
-
-    private async _setupTestConfig(): Promise<void> {
-        this.logger.info("No persisted config found, loading test config...");
-        await this.lifecycle.addProducer("AtemNetClientTallyProducer", {
-            id: "atem1",
-            name: "ATEM-TVSHD",
-            host: "127.0.0.1",
-        } as unknown as ProducerConfig);
     }
 
     private _registerShutdownHandlers(): void {
