@@ -34,7 +34,10 @@ export default class SystemInfoUtil {
                 .filter(pair => pair[0] === 'Hardware')
 
             this.logger.debug(`Hardware model: ${model[0][1]}`);
+            
+            const devtreeModel = fs.readFileSync('/sys/firmware/devicetree/base/model', { encoding: 'utf8' });
 
+            this.logger.debug(`Device tree model: ${devtreeModel}`);
 
             if (!model || model.length == 0) {
                 return false;
