@@ -7,6 +7,7 @@
 - [ ] Disconnect warning for tally
   - [ ] State on disconnect also on web interface
     - [ ] On disconnection from api
+      - [ ] Add some sort of connection timeout?  
     - [ ] On producer disconnect
 - [ ] Add "F11" fullscreen button
 - [ ] Show more source info, pimarily consumer:sourceid at the device source list.
