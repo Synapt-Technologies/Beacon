@@ -1,6 +1,7 @@
 import { AbstractConsumer, type ConsumerConfig } from "../AbstractConsumer";
 import { ConnectionType, DeviceTallyState, GlobalDeviceTools, type DeviceAddress, type DeviceAlertState, type DeviceAlertTarget, type DeviceId, type TallyDevice } from "../../types/ConsumerStates";
 import { HardwareVersion } from "../../../types/SystemInfo";
+import type { Gpio } from 'onoff';
 
 // TODO: check if this is the right GPIO library. Was rpi-gpio before, but it's not updated.
 
@@ -36,6 +37,7 @@ const DEFAULT_PINOUT: Record<HardwareVersion, Array<GpioTallyPins>> = {
         { program: 12, preview: 23 },
         { program: 13, preview: 24 },
     ],
+    [HardwareVersion.V3]: [],
     
 }
 
@@ -65,7 +67,7 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
         super(config);
     }
 
-    init(): void {
+    async init(): Promise<void> {
         this.info.version = this.getHardwareVersion();
 
         if (this.info.version == HardwareVersion.UNKNOWN)
@@ -75,7 +77,7 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
 
         try {
 
-            const { Gpio } = require('onoff') as typeof import('onoff');
+            const { Gpio } = await import('onoff');
 
             for (let i = 0; i < pinMap.length; i++) {
 
