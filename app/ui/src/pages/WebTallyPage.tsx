@@ -151,10 +151,18 @@ export default function WebTallyPage() {
 
   const filterOptions = producers.map(p => ({ id: p.config.id, name: p.config.name ?? p.config.id }))
 
+  const sourceCount = producers.reduce((sum, prod) => sum + Object.keys(prod.info.sources as unknown as Record<string, SourceInfo>).length, 0)
+
   return (
     <div>
-      <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginBottom: 12 }}>
+      {/* <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginBottom: 12 }}>
         Source states from all producers — click to view, then go fullscreen
+      </div> */}
+      
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
+        <span style={{ fontSize: 11, color: 'var(--color-text-tertiary)' }}>
+          {sourceCount} sources{sourceCount !== 1 ? 's' : ''} across {producers.length} producer{producers.length !== 1 ? 's' : ''}
+        </span>
       </div>
 
       {producers.length > 1 && (
