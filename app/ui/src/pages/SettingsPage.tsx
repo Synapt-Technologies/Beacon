@@ -9,6 +9,7 @@ import type { AlertSlot, AlertAction, AlertTarget } from '../types/beacon'
 import { ALERT_COLORS, ALERT_SHORT, ALERT_LONG } from '../types/beacon'
 import type { OrchestratorConfig } from '../../../src/tally/TallyLifecycle'
 import type { AedesConsumerConfig } from '../../../src/tally/consumer/networkConsumer/AedesNetworkConsumer'
+import { HARDWARE_VERSION_STRING, HardwareVersion } from '../../../src/types/SystemInfo'
 
 // ? Enum ↔ string bridge helpers
 
@@ -275,7 +276,10 @@ export default function SettingsPage() {
     resetAlertSlot,
     exportConfig,
     importConfig,
+    system,
   } = useBeacon()
+
+  console.log('System:', JSON.stringify(system))
 
   const aedesConfig = consumers.aedes?.config as Partial<AedesConsumerConfig> | undefined
 
@@ -477,11 +481,20 @@ export default function SettingsPage() {
       <div className="s-card">
         <div className="s-row">
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 13, color: 'var(--color-text-primary)' }}>Version</div>
-            <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginTop: 1 }}>Raspberry Pi</div>
+            <div style={{ fontSize: 13, color: 'var(--color-text-primary)' }}>Beacon</div>
+            <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginTop: 1 }}>Firmware Version</div>
           </div>
           <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 99, background: 'var(--color-background-secondary)', color: 'var(--color-text-secondary)' }}>
             v3.0.0
+          </span>
+        </div>
+        <div className="s-row">
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 13, color: 'var(--color-text-primary)' }}>Hardware</div>
+            <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginTop: 1 }}>Hardware Type</div>
+          </div>
+          <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 99, background: 'var(--color-background-secondary)', color: 'var(--color-text-secondary)' }}>
+            {HARDWARE_VERSION_STRING[system.hardware ?? HardwareVersion.UNKNOWN]}
           </span>
         </div>
       </div>
