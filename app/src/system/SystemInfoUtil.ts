@@ -25,27 +25,28 @@ export default class SystemInfoUtil {
         try {
             const cpuInfo: string = fs.readFileSync('/proc/cpuinfo', { encoding: 'utf8' });
 
-            const model = cpuInfo
-                .split('\n')
-                .map(line => line.replace(/\t/g, ''))
-                .filter(line => line.length > 0)
-                .map(line => line.split(':'))
-                .map(pair => pair.map(entry => entry.trim()))
-                .filter(pair => pair[0] === 'Hardware')
+            // const model = cpuInfo
+            //     .split('\n')
+            //     .map(line => line.replace(/\t/g, ''))
+            //     .filter(line => line.length > 0)
+            //     .map(line => line.split(':'))
+            //     .map(pair => pair.map(entry => entry.trim()))
+            //     .filter(pair => pair[0] === 'Hardware')
 
-            this.logger.debug(`Hardware model: ${model[0][1]}`);
+            // this.logger.debug(`Hardware model: ${model[0][1]}`);
             
             const devtreeModel = fs.readFileSync('/sys/firmware/devicetree/base/model', { encoding: 'utf8' });
 
             this.logger.debug(`Device tree model: ${devtreeModel}`);
 
-            if (!model || model.length == 0) {
-                return false;
-            }
+            // if (!model || model.length == 0) {
+            //     return false;
+            // }
 
 
-            const processor = model[0][1];
-            return PI_MODEL_NO.indexOf(processor) > -1;
+            // const processor = model[0][1];
+            // return PI_MODEL_NO.indexOf(processor) > -1;
+            return false;
 
         } catch (e) {
             this.logger.debug(`Error reading /proc/cpuinfo: ${e}`);
