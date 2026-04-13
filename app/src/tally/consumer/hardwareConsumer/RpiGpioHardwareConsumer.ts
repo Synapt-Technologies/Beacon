@@ -1,7 +1,7 @@
 import { AbstractConsumer, type ConsumerConfig } from "../AbstractConsumer";
 import { ConnectionType, DeviceTallyState, GlobalDeviceTools, type DeviceAddress, type DeviceAlertState, type DeviceAlertTarget, type DeviceId, type TallyDevice } from "../../types/ConsumerStates";
 import { HardwareVersion } from "../../../types/SystemInfo";
-import { Chip, Line } from 'node-libgpiod';
+import { execSync } from 'child_process';
 
 // TODO: check if this is the right GPIO library. Was rpi-gpio before, but it's not updated.
 
@@ -20,8 +20,8 @@ export interface GpioTallyPins {
 }
 
 interface GpioTallyOutput {
-    program: Line,
-    preview: Line,
+    program: number,
+    preview: number,
 }
 
 
@@ -79,12 +79,7 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
 
         try {
 
-            let chip;
-            try {
-                chip = new Chip(4); 
-            } catch {
-                chip = new Chip(0);
-            }
+
 
             for (let i = 0; i < pinMap.length; i++) {
                 
@@ -95,16 +90,13 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
                 
                 const pins = pinMap[i];
 
-                const programLine = new Line(chip, pins.program);
-                const previewLine = new Line(chip, pins.preview);
-
-                // Request the lines as outputs
-                programLine.requestOutputMode();
-                previewLine.requestOutputMode();
+                // Format: pinctrl set <gpio> op dl (op=output, dl=drive low)
+                execSync(`pinctrl set ${pins.program} op dl`);
+                execSync(`pinctrl set ${pins.preview} op dl`);
 
                 const gpioPins: GpioTallyOutput = {
-                    program: programLine,
-                    preview: previewLine
+                    program: pins.program,
+                    preview: pins.preview
                 };
 
                 this.gpioMap.set(GlobalDeviceTools.create(devIndx.consumer, devIndx.device), gpioPins);
@@ -165,21 +157,21 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
 
             switch(device.state){
                 case DeviceTallyState.PROGRAM:
-                    outputs.preview.setValue(0);
-                    outputs.program.setValue(1);
+                    execSync(`pinctrl set ${outputs.program} 1`);
+                    execSync(`pinctrl set ${outputs.preview} 0`);
                     break;
                 case DeviceTallyState.PREVIEW:
-                    outputs.preview.setValue(1);
-                    outputs.program.setValue(0);
+                    execSync(`pinctrl set ${outputs.preview} 1`);
+                    execSync(`pinctrl set ${outputs.program} 0`);
                     break;
                 case DeviceTallyState.DANGER: // TODO: Maybe different state? No PWM though, not sure if possible.
                 case DeviceTallyState.WARNING:
-                    outputs.preview.setValue(1);
-                    outputs.program.setValue(1);
+                    execSync(`pinctrl set ${outputs.preview} 1`);
+                    execSync(`pinctrl set ${outputs.program} 1`);
                     break;
                 default:
-                    outputs.preview.setValue(0);
-                    outputs.program.setValue(0);
+                    execSync(`pinctrl set ${outputs.preview} 0`);
+                    execSync(`pinctrl set ${outputs.program} 0`);
             }
 
             this.logger.debug(`Set Tally GPIO for device:`, device);
