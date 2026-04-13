@@ -1,7 +1,7 @@
 import { AbstractConsumer, type ConsumerConfig } from "../AbstractConsumer";
 import { ConnectionType, DeviceTallyState, GlobalDeviceTools, type DeviceAddress, type DeviceAlertState, type DeviceAlertTarget, type DeviceId, type TallyDevice } from "../../types/ConsumerStates";
 import { HardwareVersion } from "../../../types/SystemInfo";
-import type { Gpio } from 'onoff';
+import { Chip, Line } from 'node-libgpiod';
 
 // TODO: check if this is the right GPIO library. Was rpi-gpio before, but it's not updated.
 
@@ -20,24 +20,24 @@ export interface GpioTallyPins {
 }
 
 interface GpioTallyOutput {
-    program: InstanceType<typeof import('onoff').Gpio>,
-    preview: InstanceType<typeof import('onoff').Gpio>,
+    program: Line,
+    preview: Line,
 }
 
 
 const DEFAULT_PINOUT: Record<HardwareVersion, Array<GpioTallyPins>> = {
     [HardwareVersion.UNKNOWN]: [],
     [HardwareVersion.V2]: [           // Board pin numbers:
-        // { program:  2, preview: 22 }, // 3,  15
-        // { program:  3, preview: 23 }, // 5,  16
+        { program:  2, preview: 22 }, // 3,  15
+        { program:  3, preview: 23 }, // 5,  16
         { program:  4, preview: 24 }, // 7,  18
         { program: 14, preview: 10 }, // 8,  19
         { program: 15, preview:  9 }, // 10, 21
         { program: 17, preview: 25 }, // 11, 22
         { program: 18, preview: 11 }, // 12, 23
         { program: 27, preview:  8 }, // 13, 24
-        { program: 22, preview:  7 }, // 15, 26
-        { program: 23, preview:  5 }, // 16, 29
+        // { program: 22, preview:  7 }, // 15, 26
+        // { program: 23, preview:  5 }, // 16, 29
     ],
     [HardwareVersion.V3]: [],
     
@@ -79,7 +79,12 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
 
         try {
 
-            const { Gpio } = await import('onoff');
+            let chip;
+            try {
+                chip = new Chip(4); 
+            } catch {
+                chip = new Chip(0);
+            }
 
             for (let i = 0; i < pinMap.length; i++) {
                 
@@ -90,10 +95,17 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
                 
                 const pins = pinMap[i];
 
+                const programLine = new Line(chip, pins.program);
+                const previewLine = new Line(chip, pins.preview);
+
+                // Request the lines as outputs
+                programLine.requestOutputMode();
+                previewLine.requestOutputMode();
+
                 const gpioPins: GpioTallyOutput = {
-                    program:  new Gpio(pins.program, 'out'),
-                    preview:  new Gpio(pins.preview, 'out'),
-                }
+                    program: programLine,
+                    preview: previewLine
+                };
 
                 this.gpioMap.set(GlobalDeviceTools.create(devIndx.consumer, devIndx.device), gpioPins);
 
@@ -153,21 +165,21 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
 
             switch(device.state){
                 case DeviceTallyState.PROGRAM:
-                    outputs.preview.write(0);
-                    outputs.program.write(1);
+                    outputs.preview.setValue(0);
+                    outputs.program.setValue(1);
                     break;
                 case DeviceTallyState.PREVIEW:
-                    outputs.preview.write(1);
-                    outputs.program.write(0);
+                    outputs.preview.setValue(1);
+                    outputs.program.setValue(0);
                     break;
                 case DeviceTallyState.DANGER: // TODO: Maybe different state? No PWM though, not sure if possible.
                 case DeviceTallyState.WARNING:
-                    outputs.preview.write(1);
-                    outputs.program.write(1);
+                    outputs.preview.setValue(1);
+                    outputs.program.setValue(1);
                     break;
                 default:
-                    outputs.preview.write(0);
-                    outputs.program.write(0);
+                    outputs.preview.setValue(0);
+                    outputs.program.setValue(0);
             }
 
             this.logger.debug(`Set Tally GPIO for device:`, device);
