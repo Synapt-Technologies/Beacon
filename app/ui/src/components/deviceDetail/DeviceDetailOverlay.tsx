@@ -52,7 +52,7 @@ export function DeviceDetailOverlay({ device, backPath, backLabel }: DeviceDetai
     const stateStr    = tallyStr(device.state)
     const deviceKey   = GlobalDeviceTools.create(device.id.consumer, device.id.device)
     const deviceLong  = device.name.long
-    const deviceShort = device.name.short ?? device.id.device
+    const deviceShort = device.name.short ?? device.name.long ?? device.id.device
 
     const handlePatchApply = async (patch: GlobalTallySource[]) => {
         setPatchOpen(false)
