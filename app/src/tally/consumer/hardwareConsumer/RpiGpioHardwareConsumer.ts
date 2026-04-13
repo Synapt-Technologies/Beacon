@@ -91,8 +91,8 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
                     const newDevice: TallyDevice = {
                         id: devIndx,
                         name: {
-                            short: "1",
-                            long: "Output 1"
+                            short: `OUT ${i+1}`,
+                            long: `Local ${i+1}`
                         },
                         connection: ConnectionType.HARDWARE,
                         patch: new Array(),
