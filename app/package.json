@@ -1,6 +1,6 @@
 {
     "name": "beacon-tally",
-    "version": "2.0.0",
+    "version": "3.0.0",
     "type": "module",
     "main": "app.ts",
     "author": "Synapt <contact@synapt.nl>",
