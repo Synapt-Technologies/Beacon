@@ -5,17 +5,23 @@ import { TallyBlock, stateSub } from '../components/TallyBlock'
 import { FullscreenOverlay } from '../components/FullscreenOverlay'
 import { IconChevronLeft, IconChevronRight, IconFullscreen } from '../components/icons'
 import type { SourceInfo } from '../../../src/tally/types/ProducerStates'
+import { useTallyState } from '../hooks/useTallyState'
 
 interface SelectedSource extends SourceInfo {
   prodName: string
 }
 
-// TODO: replace with live tally state from WebSocket / SSE once available
-const sourceState = (_key: string): 'pgm' | 'pvw' | 'none' => 'none'
-
 // ? Source detail view
 
-function SourceDetail({ source, basePath }: { source: SelectedSource; basePath: string }) {
+function SourceDetail({
+  source,
+  basePath,
+  sourceState,
+}: {
+  source: SelectedSource
+  basePath: string
+  sourceState: (key: string) => 'pgm' | 'pvw' | 'none'
+}) {
   const navigate = useNavigate()
   const location = useLocation()
 
@@ -125,6 +131,8 @@ export default function WebTallyPage() {
   const { producer: producerId, source: sourceId } = useParams()
   const { producers } = useBeacon()
   const [filterProducer, setFilterProducer] = useState<string | null>(null)
+  const { states, connected } = useTallyState()
+  const sourceState = (key: string): 'pgm' | 'pvw' | 'none' => states.get(key) ?? 'none'
 
   // Reconstruct SelectedSource from URL params + loaded producers
   let selectedSource: SelectedSource | null = null
@@ -142,7 +150,7 @@ export default function WebTallyPage() {
   const basePath = producerId && sourceId ? `/web-tally/${producerId}/${sourceId}` : '/web-tally'
 
   if (selectedSource) {
-    return <SourceDetail source={selectedSource} basePath={basePath} />
+    return <SourceDetail source={selectedSource} basePath={basePath} sourceState={sourceState} />
   }
 
   const visibleProducers = filterProducer
@@ -160,8 +168,12 @@ export default function WebTallyPage() {
       </div> */}
       
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
-        <span style={{ fontSize: 11, color: 'var(--color-text-tertiary)' }}>
-          {sourceCount} sources{sourceCount !== 1 ? 's' : ''} across {producers.length} producer{producers.length !== 1 ? 's' : ''}
+        <span style={{ display: 'flex', alignItems: 'center', fontSize: 11, color: 'var(--color-text-tertiary)' }}>
+          <span style={{
+            display: 'inline-block', width: 6, height: 6, borderRadius: '50%', marginRight: 6, flexShrink: 0,
+            background: connected ? 'var(--pvw)' : 'var(--color-border-secondary)',
+          }} />
+          {sourceCount} source{sourceCount !== 1 ? 's' : ''} across {producers.length} producer{producers.length !== 1 ? 's' : ''}
         </span>
       </div>
 
