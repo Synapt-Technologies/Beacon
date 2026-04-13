@@ -43,3 +43,5 @@
 - [ ] Add the option for advanced tally logic -> user can setup logic for tally states.
   - [ ] Select 'default' sources and add option to add conditions on top?
 - [ ] Implement alert state blinking in GPIOConsumer
+- [ ] Add pagewide haptics ( Currently in context and alert buttons. )
+  - [ ] Context the right place?

@@ -768,6 +768,7 @@ __metadata:
     typescript: "npm:^5.9.3"
     vite: "npm:^8.0.7"
     vite-express: "npm:^0.22.1"
+    web-haptics: "npm:^0.0.6"
     ws: "npm:^8.18.3"
   languageName: unknown
   linkType: soft
@@ -3437,6 +3438,27 @@ __metadata:
   bin:
     wavefile: ./bin/wavefile.js
   checksum: 10c0/8f82d4cbbe82fd6859c7aa96a273f7629d3b45c9e68112e6d3a4a04a1acb3ad485e166c15afb60b515031ba72837484dcb699265418e7ccf8220d3c6c725046f
+  languageName: node
+  linkType: hard
+
+"web-haptics@npm:^0.0.6":
+  version: 0.0.6
+  resolution: "web-haptics@npm:0.0.6"
+  peerDependencies:
+    react: ">=18"
+    react-dom: ">=18"
+    svelte: ">=4"
+    vue: ">=3"
+  peerDependenciesMeta:
+    react:
+      optional: true
+    react-dom:
+      optional: true
+    svelte:
+      optional: true
+    vue:
+      optional: true
+  checksum: 10c0/71d3bfb0299469362e23ef177337f2cf665ed66aa49b6d5e7afc9d97fc05af9a2056263c17766eb929eb86ec1f526fba21502e926ea3cc39175f251c5c9374db
   languageName: node
   linkType: hard
 

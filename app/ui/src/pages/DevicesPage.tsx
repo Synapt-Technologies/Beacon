@@ -9,6 +9,7 @@ import { UITallyDevice } from '../types/DeviceStates'
 import { DeviceTallyState, GlobalDeviceTools } from '../../../src/tally/types/ConsumerStates'
 import type { GlobalTallySource } from '../../../src/tally/types/ProducerStates'
 
+
 export default function DevicesPage() {
   const navigate = useNavigate()
   const { consumer, device: deviceId } = useParams()
@@ -52,6 +53,7 @@ export default function DevicesPage() {
     setEditing(null)
     await removeDevice(dev.id)
   }
+
 
   return (
     <div>
