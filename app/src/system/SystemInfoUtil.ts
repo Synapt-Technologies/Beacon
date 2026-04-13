@@ -22,38 +22,41 @@ export default class SystemInfoUtil {
     protected static logger = new Logger(["System", "InfoUtil"]);
 
     static isPi() {
+
+        // Check on old 32 bit os.
         try {
             const cpuInfo: string = fs.readFileSync('/proc/cpuinfo', { encoding: 'utf8' });
 
-            // const model = cpuInfo
-            //     .split('\n')
-            //     .map(line => line.replace(/\t/g, ''))
-            //     .filter(line => line.length > 0)
-            //     .map(line => line.split(':'))
-            //     .map(pair => pair.map(entry => entry.trim()))
-            //     .filter(pair => pair[0] === 'Hardware')
-
-            // this.logger.debug(`Hardware model: ${model[0][1]}`);
-            
-            const devtreeModel = fs.readFileSync('/sys/firmware/devicetree/base/model', { encoding: 'utf8' });
-
-            this.logger.debug(`Device tree model: ${devtreeModel}`);
-
-            // if (!model || model.length == 0) {
-            //     return false;
-            // }
+            const model = cpuInfo
+                .split('\n')
+                .map(line => line.replace(/\t/g, ''))
+                .filter(line => line.length > 0)
+                .map(line => line.split(':'))
+                .map(pair => pair.map(entry => entry.trim()))
+                .filter(pair => pair[0] === 'Hardware')
 
 
-            // const processor = model[0][1];
-            // return PI_MODEL_NO.indexOf(processor) > -1;
-            return false;
+            if (model && model.length !== 0) {
+                const processor = model[0][1];
+                if (PI_MODEL_NO.indexOf(processor) > -1)
+                    return true;
+            }
 
         } catch (e) {
             this.logger.debug(`Error reading /proc/cpuinfo: ${e}`);
-            // if this fails, this is probably not a pi
-            return false;
         }
 
+        try {
+            const devtreeModel = fs.readFileSync('/sys/firmware/devicetree/base/model', { encoding: 'utf8' });
+
+
+            if(devtreeModel.toLowerCase().includes('raspberry pi')) 
+                return true;
+        } catch (e) {
+            this.logger.debug(`Error reading /sys/firmware/devicetree/base/model: ${e}`);
+        }
+
+        return false;
     }
 
     static getHwModel(): HardwareVersion {
