@@ -1,5 +1,7 @@
 import fs from 'fs';
-import { HardwareVersion } from '../types/SystemInfo';
+import pkg from '../../package.json' with { type: 'json' };
+import { HardwareVersion, type SystemInfo } from '../types/SystemInfo';
+import { Logger } from '../logging/Logger';
 
 const PI_MODEL_NO = [ // TODO: Make a record.
     // https://www.raspberrypi.com/documentation/computers/processors.html
@@ -15,7 +17,10 @@ const PI_MODEL_NO = [ // TODO: Make a record.
 ];
 
 
-export default class HardwareDetector {
+export default class SystemInfoUtil {
+
+    protected static logger = new Logger(["System", "InfoUtil"]);
+
     static isPi() {
         try {
             const cpuInfo: string = fs.readFileSync('/proc/cpuinfo', { encoding: 'utf8' });
@@ -44,7 +49,7 @@ export default class HardwareDetector {
 
     static getHwModel(): HardwareVersion {
         try {
-            if (!HardwareDetector.isPi())
+            if (!SystemInfoUtil.isPi())
                 return HardwareVersion.UNKNOWN;
 
             // Check GPIO pin config for newer versions.
@@ -53,6 +58,21 @@ export default class HardwareDetector {
         } catch (e) {
             // if this fails, this is probably not a pi
             return HardwareVersion.UNKNOWN;
+        }
+    }
+
+    static getFirmwareVersion(): string {
+        try {
+            return pkg.version;
+        } catch (e) {
+            return 'Unknown';
+        }
+    }
+
+    static getSystemInfo(): SystemInfo {
+        return {
+            hardware: SystemInfoUtil.getHwModel(),
+            firmware: SystemInfoUtil.getFirmwareVersion()
         }
     }
 }

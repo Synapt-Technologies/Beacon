@@ -41,9 +41,7 @@ export class AppCore {
                 consumers:          this.lifecycle.getConfig().consumers,
                 devices:            this.lifecycle.getDevices(),
                 orchestratorConfig: this.lifecycle.getOrchestratorConfig(),
-                info:               {
-                    hardware: this.lifecycle.getInfo().hardware,
-                },
+                info:               this.lifecycle.getInfo().system
             });
         };
 

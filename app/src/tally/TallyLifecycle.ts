@@ -10,8 +10,8 @@ import type { GpioConsumerConfig } from "./consumer/hardwareConsumer/RpiGpioHard
 import type { AbstractConsumer, ConsumerConfig } from "./consumer/AbstractConsumer";
 import type { ConsumerId, DeviceAddress, DeviceAlertState, DeviceAlertTarget, DeviceName, TallyDevice } from "./types/ConsumerStates";
 import type { GlobalTallySource } from "./types/ProducerStates";
-import { HardwareVersion } from "../types/SystemInfo";
-import HardwareDetector from "../hardware/HardwareDetector";
+import { HardwareVersion, type SystemInfo } from "../types/SystemInfo";
+import SystemInfoUtil from "../system/SystemInfoUtil";
 
 // ? Mutations
 export interface ConsumerUpdate<T extends ConsumerConfig = ConsumerConfig> extends LifeCycleConsumerConfig<T> {
@@ -62,7 +62,7 @@ export interface LifecycleConfig {
 
 //? Info
 export interface LifeCycleInfo {
-    hardware?: HardwareVersion;
+    system: SystemInfo
 }
 
 export class TallyLifecycle {
@@ -74,7 +74,9 @@ export class TallyLifecycle {
     private logger = new Logger(["Tally", "Lifecycle"]);
     private _restarting = new Set<ConsumerId>();
 
-    public info: LifeCycleInfo = {};
+    public info: LifeCycleInfo = {
+        system: {}
+    };
 
     private _config: LifecycleConfigInternal = {
         orchestrator: {} as Partial<OrchestratorConfig>,
@@ -88,7 +90,7 @@ export class TallyLifecycle {
             },
             gpio: {
                 factory: (config: GpioConsumerConfig) => TallyFactory.createConsumer('RpiGpioHardwareConsumer', config),
-                isAvailable: () => this.info.hardware == HardwareVersion.V2,
+                isAvailable: () => this.info.system.hardware == HardwareVersion.V2,
                 isDisableable: () => true,
                 enabled: true,
                 config: {},
@@ -103,8 +105,8 @@ export class TallyLifecycle {
         // this.info = ? // TODO load hw info.
         this.logger.info(`Initializing TallyLifecycle...`);
 
-        this.info.hardware = HardwareDetector.getHwModel();
-        this.logger.info(`Hardware version:`, HardwareVersion[this.info.hardware]);
+        this.info.system = SystemInfoUtil.getSystemInfo();
+        this.logger.info(`System Info:`, this.info);
 
 
         this._config.orchestrator = { ...this.db.getSetting(SettingKey.orchestrator) };
