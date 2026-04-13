@@ -50,7 +50,7 @@ export class AdminServer extends EventEmitter<AdminServerEvents> {
         this.state = state;
     }
 
-    public start(port: number = 3000): void {
+    public start(port: number = 80): void {
         this.app.use(express.json());
         ViteExpress.config({ verbosity: ViteExpress.Verbosity.Silent });
         this._registerRoutes();
