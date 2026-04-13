@@ -485,7 +485,7 @@ export default function SettingsPage() {
             <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginTop: 1 }}>Firmware Version</div>
           </div>
           <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 99, background: 'var(--color-background-secondary)', color: 'var(--color-text-secondary)' }}>
-            v3.0.0
+            {system.firmware ?? "Unknown"}
           </span>
         </div>
         <div className="s-row">
