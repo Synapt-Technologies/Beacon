@@ -279,8 +279,6 @@ export default function SettingsPage() {
     system,
   } = useBeacon()
 
-  console.log('System:', JSON.stringify(system))
-
   const aedesConfig = consumers.aedes?.config as Partial<AedesConsumerConfig> | undefined
 
   // ? Pending state for savebar — network and tally behaviour fields
