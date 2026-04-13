@@ -37,10 +37,13 @@ export default class SystemInfoUtil {
                 return false;
             }
 
+            this.logger.debug(`Hardware model: ${model[0][1]}`);
+
             const processor = model[0][1];
             return PI_MODEL_NO.indexOf(processor) > -1;
 
         } catch (e) {
+            this.logger.debug(`Error reading /proc/cpuinfo: ${e}`);
             // if this fails, this is probably not a pi
             return false;
         }
