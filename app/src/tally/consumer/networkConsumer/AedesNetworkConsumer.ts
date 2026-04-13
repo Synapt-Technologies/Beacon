@@ -105,14 +105,14 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer implements IGl
         //     id: { consumer: this.config.id, device: 'ad322df69708' },
         //     name: {long: 'Test Device 1' },
         //     state: DeviceTallyState.NONE,
-        //     connection: ConnectionType.NETWORK,
+        //     connection: 2,
         //     patch: [],
         // };
         // const testTallyDevice2: TallyDevice = {
         //     id: { consumer: this.config.id, device: '9862eef93c9e' },
         //     name: {long: 'Test Device 2' },
         //     state: DeviceTallyState.NONE,
-        //     connection: ConnectionType.NETWORK,
+        //     connection: 3,
         //     patch: [],
         // };
 
