@@ -31,9 +31,9 @@ export abstract class AbstractNetClientTallyProducer<T extends NetClientTallyPro
         super(config);
     }
 
-    protected info: NetClientProducerInfo = {
+    protected info: NetClientProducerInfo = { // TODO make partial?
         update_moment: null,
-        model: "UNKNOWN",
+        model: {},
         sources: new Map(),
         connected: false,
     };

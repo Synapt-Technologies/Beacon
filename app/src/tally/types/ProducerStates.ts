@@ -1,7 +1,13 @@
+import type { ProducerConfig, ProducerInfo } from "../producer/AbstractTallyProducer";
 
 
 export type ProducerId = string;
 export type SourceId = string;
+
+export interface ProducerModel {
+    short?: string;
+    long?: string;
+}
 
 export interface GlobalTallySource {
     producer: ProducerId;
@@ -22,6 +28,13 @@ export interface TallyState { // Use GlobalSourceTools to parse GlobalTallySourc
 }
 
 export type SourceMap = Map<string, SourceInfo>;
+
+export interface ProducerBundle {
+    type: string,
+    config: ProducerConfig,
+    info: ProducerInfo
+}
+
 
 export abstract class GlobalSourceTools {
     static create (producer: ProducerId, source: SourceId): string {

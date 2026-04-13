@@ -3,11 +3,13 @@ import { GlobalSourceTools, type GlobalTallySource, type TallyState } from "../t
 import { Logger } from "../../logging/Logger";
 import { type ConsumerId, type DeviceAddress, DeviceAlertState, DeviceAlertTarget, type DeviceName, DeviceTallyState, type TallyDevice } from "../types/ConsumerStates";
 import { ConsumerStore } from "../../database/ConsumerStore";
+import type { SystemInfo } from "../../types/SystemInfo";
 
 
 export interface ConsumerConfig {
-    id: ConsumerId;
+    id?: ConsumerId;
     name?: string;
+    system_info?: SystemInfo;
 }
 
 export type ConsumerEvents = {
@@ -32,6 +34,10 @@ export abstract class AbstractConsumer<T extends ConsumerEvents & Record<string,
     public static readonly DefaultConfig: Required<ConsumerConfig> = {
         id: "",
         name: "Consumer",
+        // system_info: null, // TODO: Remove default system info.
+        system_info: {
+            name: "Beacon-Tally Base"
+        }
     };
 
     protected abstract getDefaultConfig(): Required<ConsumerConfig>;
@@ -45,7 +51,7 @@ export abstract class AbstractConsumer<T extends ConsumerEvents & Record<string,
 
         this.config = {...this.getDefaultConfig(), ...config};
 
-        this.logger = new Logger(["Tally", this.conType, this.config.name]);
+        this.logger = new Logger(["Tally", this.conType, this.config.id]);
 
         this.store = new ConsumerStore(this.config.id);
 
@@ -65,7 +71,9 @@ export abstract class AbstractConsumer<T extends ConsumerEvents & Record<string,
         
     protected checkConfig(config: ConsumerConfig) {
         if (!config.id || config.id == "")
-            this.logger.fatal(`Invalid producer ID provided. Submitted config:`, config);
+            this.logger.fatal(`Invalid consumer ID provided. Submitted config:`, config);
+        if (config.system_info == null)
+            this.logger.fatal(`System info was not provided. Submitted config:`, config);
     }
 
     protected getDeviceKey(address: DeviceAddress): string {
@@ -172,7 +180,7 @@ export abstract class AbstractConsumer<T extends ConsumerEvents & Record<string,
     consumeTally(state: TallyState): void {
         this.tallyState = state;
 
-        this.logger.debug('Consumed TallyState:', state);
+        this.logger.debug('Consumed TallyState:', GlobalSourceTools.serialize(state));
 
         for (const device of this.devices.values()) {
             this.setTallyDevice(device);

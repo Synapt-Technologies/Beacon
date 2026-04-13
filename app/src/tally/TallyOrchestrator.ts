@@ -36,10 +36,10 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
     };
 
 
-    private producers: Map<string, AbstractTallyProducer> = new Map();
-    private consumers: Map<string, AbstractConsumer> = new Map();
+    private producers: Map<ProducerId, AbstractTallyProducer> = new Map();
+    private consumers: Map<ConsumerId, AbstractConsumer> = new Map();
 
-    private producerTallyStates: Map<string, TallyState> = new Map();
+    private producerTallyStates: Map<ProducerId, TallyState> = new Map();
     private globalTallyState: TallyState = {
         preview: new Set(),
         program: new Set()
@@ -91,6 +91,10 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
         producer.on('disconnected', () => {
             this.producerTallyStates.delete(producer.getId());
             this._parseGlobalTally();
+        });
+
+        producer.on('info_update', (newInfo: ProducerInfo) => {
+            this.emit('producer_info', newInfo);
         });
     }
 
@@ -144,12 +148,29 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
         return this.producers.has(id);
     }
 
+    getProducerInfo(id: ProducerId): ProducerInfo {
+        const producer = this.producers.get(id);
+        return producer?.getInfo() || { update_moment: null, model: {}, sources: new Map() };
+    }
+
     getProducerIds(): ProducerId[] {
         return Array.from(this.producers.keys());
     }
 
+    getProducerInfos(): Map<ProducerId, ProducerInfo> {
+        const info = new Map<ProducerId, ProducerInfo>();
+        for (const [id, producer] of this.producers) {
+            info.set(id, producer.getInfo());
+        }
+        return info;
+    }
+
     hasConsumer(id: ConsumerId): boolean {
         return this.consumers.has(id);
+    }
+
+    getConsumer(id: ConsumerId): AbstractConsumer | null {
+        return this.consumers.get(id) ?? null;
     }
 
     getConsumerIds(): ConsumerId[] {

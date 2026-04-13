@@ -2,7 +2,7 @@ import { AbstractNetworkConsumer, type NetworkConsumerConfig } from "./AbstractN
 
 import { Aedes, type Client, type Subscription } from "aedes";
 import { createServer, Server } from "node:net";
-import { type DeviceAddress, DeviceAlertState, DeviceAlertTarget, DeviceTallyState, type TallyDevice } from "../../types/ConsumerStates";
+import { ConnectionType, type DeviceAddress, DeviceAlertState, DeviceAlertTarget, DeviceTallyState, type TallyDevice } from "../../types/ConsumerStates";
 
 export interface AedesConsumerConfig extends NetworkConsumerConfig {
     serve_tcp?: boolean;
@@ -17,12 +17,11 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer {
     
     public static readonly DefaultConfig: Required<AedesConsumerConfig> = {
         ...AbstractNetworkConsumer.DefaultConfig,
-        name: "Aedes",
+        id: "aedes",
+        name: "MQTT Consumer",
         port: 1883,
-        keep_alive: true,
-        keep_alive_ms: 1000,
         serve_tcp: true, // Right term?
-        serve_ws: true,
+        serve_ws: true, // TODO Implement.
         ws_port: 80,
     };
     
@@ -43,7 +42,7 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer {
         if (config.ws_port == null || config.ws_port < 0 || config.ws_port > 65535)
             this.logger.fatal(`Valid websocket Port is required. Submitted config:`, config);
     }
-
+ 
     async init(): Promise<void> {
         this.aedes = await Aedes.createBroker();
         this.server = createServer(this.aedes.handle);
@@ -73,16 +72,45 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer {
         }});
 
         super.init();
+
+
+        // const testTallyDevice1: TallyDevice = {
+        //     id: { consumer: this.config.id, device: 'ad322df69708' },
+        //     name: {long: 'Test Device 1' },
+        //     state: DeviceTallyState.NONE,
+        //     connection: ConnectionType.NETWORK,
+        //     patch: [],
+        // };
+        // const testTallyDevice2: TallyDevice = {
+        //     id: { consumer: this.config.id, device: '9862eef93c9e' },
+        //     name: {long: 'Test Device 2' },
+        //     state: DeviceTallyState.NONE,
+        //     connection: ConnectionType.NETWORK,
+        //     patch: [],
+        // };
+
+        // this._addDevice(testTallyDevice1);
+        // this._addDevice(testTallyDevice2);
     }
 
     async destroy(): Promise<void> {
         super.destroy();
 
-        await new Promise<void>((resolve) => {
-            this.server.close(() => resolve());
-        });
+        try {
+
+            await new Promise<void>((resolve) => {
+                this.aedes.close(() => resolve());
+            });
+
+            await new Promise<void>((resolve) => {
+                this.server.close(() => resolve());
+            });
+
+            this.logger.debug('Destroyed successfully.');
+        } catch (err) {
+            this.logger.error('Error during shutdown:', err);
+        }
         
-        await this.aedes.close();
     }
 
     broadcastTally(): void {
@@ -94,7 +122,7 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer {
         const payload = JSON.stringify({
             program: Array.from(this.tallyState.program),
             preview: Array.from(this.tallyState.preview),
-            ts: Date.now()
+            moment: Date.now()
         });
 
         this.aedes.publish({
@@ -106,6 +134,29 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer {
             retain: true
         }, () => {});
     }
+
+    broadcastKeepAlive(): void {
+        if (!this.aedes) {
+            this.logger.warn("Discarding Keep-Alive: Attempted to send before initialization.");
+            return;
+        }
+
+        const payload = JSON.stringify({
+            moment: Date.now(),
+            system: this.config.system_info
+        });
+
+        this.aedes.publish({
+            cmd: 'publish',
+            qos: 1, // At least once, or more
+            dup: false,
+            topic: 'system/info',
+            payload: Buffer.from(payload),
+            retain: false
+        }, () => {});
+
+    }
+
 
     protected sendTallyDevice(device: TallyDevice): void {
         if (!this.aedes) {

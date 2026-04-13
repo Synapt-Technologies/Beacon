@@ -20,6 +20,7 @@ export class Logger {
     public static GlobalFileLevel: LogLevel = LogLevel.DEBUG;
 
     protected static instanceCount = 0;
+    private static readonly INIT_KEY = Symbol.for("beacon.logger.initialized");
 
     
     private static readonly MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
@@ -47,10 +48,11 @@ export class Logger {
             fs.mkdirSync(Logger.LOG_DIR, { recursive: true });
         }
 
-        if (Logger.instanceCount === 0) {
+        ++Logger.instanceCount;
+        if (!(globalThis as Record<symbol, boolean>)[Logger.INIT_KEY]) {
+            (globalThis as Record<symbol, boolean>)[Logger.INIT_KEY] = true;
             this.logToFile(`\n\n-----===== Logger Initialized at ${new Date().toISOString()} =====-----`);
         }
-        Logger.instanceCount++;
     }
 
     private print(level: LogLevel, ...data: any[]) {
@@ -59,11 +61,7 @@ export class Logger {
 
         const { label, color } = Logger.LOG_LEVEL_MAP[level];
         const time = new Date().toLocaleTimeString("en-NL");
-        const message = data.map(item => {
-            if (item instanceof Error) return item.stack || item.message;
-            if (typeof item === 'object') return JSON.stringify(item);
-            return item;
-        }).join(" ");
+        const message = this.parseData(data);
 
         if (level >= Logger.GlobalConsoleLevel) {
             console.log(`${Logger.LOG_GREY_COLOR}${time}${Logger.LOG_RESET_COLOR} [${this.prefix}] ${color}${label}${Logger.LOG_RESET_COLOR}: ${message}`);
@@ -73,6 +71,25 @@ export class Logger {
             this.logToFile(`${time} [${this.prefix}] ${label}: ${message}`);
         }
     }
+
+    private parseData(data: any): string {
+        return data.map((item: any) => {
+            if (item instanceof Error) return item.stack || item.message;
+
+            if (typeof item === 'object' && item !== null) {
+                return JSON.stringify(item, (key, value) => {
+                    // Check if the current value being stringified is a Map
+                    if (value instanceof Map || (value && value.constructor && value.constructor.name === 'Map')) {
+                        return Object.fromEntries(value);
+                    }
+                    return value;
+                });
+            }
+
+            return String(item);
+        }).join(" ");
+    }
+    
 
     private logToFile(line: string) {
         try {

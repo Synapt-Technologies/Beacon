@@ -1,12 +1,53 @@
 import Database from 'better-sqlite3';
 import fs from 'node:fs';
 import path from 'path';
-import type { AbstractTallyProducer, ProducerConfig, ProducerInfo } from '../tally/producer/AbstractTallyProducer';
-import { GlobalSourceTools, type SourceInfo } from '../tally/types/ProducerStates';
+import type { ProducerConfig, ProducerInfo } from '../tally/producer/AbstractTallyProducer';
+import { GlobalSourceTools, type ProducerBundle, type SourceInfo } from '../tally/types/ProducerStates';
 import { DeviceTallyState, GlobalDeviceTools, type DeviceAddress, type TallyDevice } from '../tally/types/ConsumerStates';
 import { Logger } from '../logging/Logger';
-import type { AbstractConsumer, ConsumerConfig } from '../tally/consumer/AbstractConsumer';
+import type { LifecycleConfig, LifeCycleConsumerConfig } from '../tally/TallyLifecycle';
+import { TallyOrchestrator, type OrchestratorConfig } from '../tally/TallyOrchestrator';
+import type { UIAlertSlot } from '../types/UIStates';
 
+
+export const SettingKey = {
+    consumers: {
+        aedes: "consumers.aedes",
+        gpio: "consumers.gpio",
+    },
+    orchestrator: "orchestrator",
+    ui: {
+        alert: "ui.alert"
+    }
+    
+} as const;
+
+export type SettingKey = LeafValues<typeof SettingKey>;
+
+type LeafValues<T> = T extends string
+    ? T
+    : { [K in keyof T]: LeafValues<T[K]> }[keyof T];
+
+
+interface SettingMap { // ?Note: String if not set.
+    consumers: {
+        aedes: LifeCycleConsumerConfig;
+        gpio: LifeCycleConsumerConfig;
+    }
+    orchestrator: OrchestratorConfig;
+    ui: {
+        alert: UIAlertSlot[];
+    }
+}
+
+type SettingType<K extends string, T = SettingMap> =
+    K extends `${infer Head}.${infer Tail}`
+        ? Head extends keyof T ? SettingType<Tail, T[Head]> : never
+        : K extends keyof T ? T[K] : never;
+
+
+
+        
 // TODO add more try catch.
 export class CoreDatabase {
     private static instance: CoreDatabase;
@@ -44,7 +85,6 @@ export class CoreDatabase {
                 type TEXT NOT NULL,
                 config TEXT NOT NULL
             );
-
             CREATE TABLE IF NOT EXISTS producer_info (
                 id TEXT PRIMARY KEY,
                 info TEXT NOT NULL,
@@ -52,35 +92,34 @@ export class CoreDatabase {
             );
 
             
-            CREATE TABLE IF NOT EXISTS consumers (
-                id TEXT PRIMARY KEY,
-                type TEXT NOT NULL,
-                config TEXT NOT NULL
-            );
             CREATE TABLE IF NOT EXISTS consumer_devices (
                 id TEXT PRIMARY KEY,
                 consumer_id TEXT NOT NULL,
-                data TEXT NOT NULL,
-                FOREIGN KEY(consumer_id) REFERENCES consumers(id) ON DELETE CASCADE
+                data TEXT NOT NULL
             );
+
+            CREATE TABLE IF NOT EXISTS settings (
+                key TEXT PRIMARY KEY,
+                value TEXT NOT NULL
+            )
             
         `);
     }
 
 
     // ? Producer Methods
-    public saveProducer(producer: AbstractTallyProducer): void {
+    public saveProducer(entry: { type: string; config: ProducerConfig }): void {
         const stmt = this.db.prepare(`
             INSERT INTO producers (id, type, config)
             VALUES (?, ?, ?)
             ON CONFLICT(id) DO UPDATE SET config=excluded.config
         `);
-        stmt.run(producer.getId(), producer.constructor.name, JSON.stringify(producer.getConfig()));
+        stmt.run(entry.config.id, entry.type, JSON.stringify(entry.config));
     }
 
-    public getProducers(): {id: string, type: string, config: ProducerConfig}[] {
-        const rows = this.db.prepare('SELECT * FROM producers').all() as {id: string, type: string, config: string}[];
-        return rows.map(row => ({ ...row, config: JSON.parse(row.config) }));
+    public getProducers(): Required<Omit<ProducerBundle, "info">>[] {
+        const rows = this.db.prepare('SELECT * FROM producers').all() as { id: string, type: string, config: string }[];
+        return rows.map(row => ({ type: row.type, config: JSON.parse(row.config) }));
     }
 
     public saveProducerInventory(id: string, info: ProducerInfo) {
@@ -116,24 +155,7 @@ export class CoreDatabase {
         this.db.prepare('DELETE FROM producers WHERE id = ?').run(id);
     }
 
-    // ? Consumer Methods
-    public saveConsumer(consumer: AbstractConsumer): void {
-        const stmt = this.db.prepare(`
-            INSERT INTO consumers (id, type, config)
-            VALUES (?, ?, ?)
-            ON CONFLICT(id) DO UPDATE SET config=excluded.config
-        `);
-        stmt.run(consumer.getId(), consumer.constructor.name, JSON.stringify(consumer.getConfig()));
-    }
-    public getConsumers(): {id: string, type: string, config: ConsumerConfig}[] {
-        const rows = this.db.prepare('SELECT * FROM consumers').all() as {id: string, type: string, config: string}[];
-        return rows.map(row => ({ ...row, config: JSON.parse(row.config) }));
-    }
-
-    public deleteConsumer(id: string): void {
-        this.db.prepare('DELETE FROM consumers WHERE id = ?').run(id);
-    }
-
+    // ? Consumer Device Methods
     public saveConsumerDevices(devices: TallyDevice[]) {
         devices.forEach(device => this.saveConsumerDevice(device));
     }
@@ -173,7 +195,10 @@ export class CoreDatabase {
 
         for (const row of rows) {
             try {
-                const device: TallyDevice = { ...JSON.parse(row.data), state: DeviceTallyState.NONE };
+                const parsed = JSON.parse(row.data);
+                // Migration: devices stored before name was required get a default.
+                if (!parsed.name) parsed.name = { long: parsed.id?.device ?? row.id };
+                const device: TallyDevice = { ...parsed, state: DeviceTallyState.NONE };
                 output.set(row.id, device);
             } catch {
                 this.logger.error(`Failed to parse device with ID:`, row.id);
@@ -181,6 +206,28 @@ export class CoreDatabase {
         }
 
         return output;
+    }
+
+    // ? Settings Methods
+    public getSetting<K extends SettingKey>(key: K): SettingType<K> | null {
+        const row = this.db.prepare('SELECT value FROM settings WHERE key = ?').get(key) as { value: string } | undefined;
+        if (!row) return null;
+
+        try {
+            return JSON.parse(row.value) as SettingType<K>;
+        } catch {
+            this.logger.error(`Failed to parse setting:`, key);
+            return null;
+        }
+    }
+
+    public setSetting<K extends SettingKey>(key: K, value: SettingType<K>): void {
+        const stmt = this.db.prepare(`
+            INSERT INTO settings (key, value)
+            VALUES (?, ?)
+            ON CONFLICT(key) DO UPDATE SET value=excluded.value
+        `);
+        stmt.run(key, JSON.stringify(value));
     }
 
     public static destroy(): void {
