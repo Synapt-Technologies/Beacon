@@ -157,21 +157,21 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
 
             switch(device.state){
                 case DeviceTallyState.PROGRAM:
-                    execSync(`pinctrl set ${outputs.program} 1`);
-                    execSync(`pinctrl set ${outputs.preview} 0`);
+                    execSync(`pinctrl set ${outputs.program} dh`);
+                    execSync(`pinctrl set ${outputs.preview} dl`);
                     break;
                 case DeviceTallyState.PREVIEW:
-                    execSync(`pinctrl set ${outputs.preview} 1`);
-                    execSync(`pinctrl set ${outputs.program} 0`);
+                    execSync(`pinctrl set ${outputs.program} dl`);
+                    execSync(`pinctrl set ${outputs.preview} dh`);
                     break;
                 case DeviceTallyState.DANGER: // TODO: Maybe different state? No PWM though, not sure if possible.
                 case DeviceTallyState.WARNING:
-                    execSync(`pinctrl set ${outputs.preview} 1`);
-                    execSync(`pinctrl set ${outputs.program} 1`);
+                    execSync(`pinctrl set ${outputs.program} dh`);
+                    execSync(`pinctrl set ${outputs.preview} dh`);
                     break;
                 default:
-                    execSync(`pinctrl set ${outputs.preview} 0`);
-                    execSync(`pinctrl set ${outputs.program} 0`);
+                    execSync(`pinctrl set ${outputs.program} dl`);
+                    execSync(`pinctrl set ${outputs.preview} dl`);
             }
 
             this.logger.debug(`Set Tally GPIO for device:`, device);
