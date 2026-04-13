@@ -56,7 +56,7 @@ export class CoreDatabase {
     private logger: Logger;
 
     private constructor() {
-        const dbPath = path.join(process.cwd(), '/db/tally.db');
+        const dbPath = path.join(process.cwd(), '/db/beacon.db');
         const dbDir = path.dirname(dbPath);
         if (!fs.existsSync(dbDir)) {
             fs.mkdirSync(dbDir, { recursive: true });
