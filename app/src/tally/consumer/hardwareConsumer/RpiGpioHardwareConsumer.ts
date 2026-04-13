@@ -27,15 +27,15 @@ interface GpioTallyOutput {
 
 const DEFAULT_PINOUT: Record<HardwareVersion, Array<GpioTallyPins>> = {
     [HardwareVersion.UNKNOWN]: [],
-    [HardwareVersion.V2]: [
-        { program:  3, preview: 15 },
-        { program:  5, preview: 16 },
-        { program:  7, preview: 18 },
-        { program:  8, preview: 19 },
-        { program: 10, preview: 21 },
-        { program: 11, preview: 22 },
-        { program: 12, preview: 23 },
-        { program: 13, preview: 24 },
+    [HardwareVersion.V2]: [           // Board pin numbers:
+        { program:  2, preview: 22 }, // 3,  15
+        { program:  3, preview: 23 }, // 5,  16
+        { program:  4, preview: 24 }, // 7,  18
+        { program: 14, preview: 10 }, // 8,  19
+        { program: 15, preview:  9 }, // 10, 21
+        { program: 17, preview: 25 }, // 11, 22
+        { program: 18, preview: 11 }, // 12, 23
+        { program: 27, preview:  8 }, // 13, 24
     ],
     [HardwareVersion.V3]: [],
     
