@@ -11,6 +11,7 @@ import type { AbstractConsumer, ConsumerConfig } from "./consumer/AbstractConsum
 import type { ConsumerId, DeviceAddress, DeviceAlertState, DeviceAlertTarget, DeviceName, TallyDevice } from "./types/ConsumerStates";
 import type { GlobalTallySource } from "./types/ProducerStates";
 import { HardwareVersion } from "../types/SystemInfo";
+import HardwareDetector from "../hardware/HardwareDetector";
 
 // ? Mutations
 export interface ConsumerUpdate<T extends ConsumerConfig = ConsumerConfig> extends LifeCycleConsumerConfig<T> {
@@ -101,6 +102,9 @@ export class TallyLifecycle {
     public async boot(): Promise<void> {
         // this.info = ? // TODO load hw info.
         this.logger.info(`Initializing TallyLifecycle...`);
+
+        this.info.hardware = HardwareDetector.getHwModel();
+        this.logger.info(`Hardware version:`, HardwareVersion[this.info.hardware]);
 
 
         this._config.orchestrator = { ...this.db.getSetting(SettingKey.orchestrator) };
