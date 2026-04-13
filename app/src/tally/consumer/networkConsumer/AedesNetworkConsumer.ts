@@ -1,7 +1,10 @@
 import { AbstractNetworkConsumer, type NetworkConsumerConfig } from "./AbstractNetworkConsumer";
+import { type IGlobalBroadcastConsumer } from "../IGlobalBroadcastConsumer";
 
 import { Aedes, type Client, type Subscription } from "aedes";
 import { createServer, Server } from "node:net";
+import { createServer as createHttpServer, type Server as HttpServer } from "node:http";
+import { WebSocketServer, createWebSocketStream } from "ws";
 import { ConnectionType, type DeviceAddress, DeviceAlertState, DeviceAlertTarget, DeviceTallyState, type TallyDevice } from "../../types/ConsumerStates";
 
 export interface AedesConsumerConfig extends NetworkConsumerConfig {
@@ -11,7 +14,7 @@ export interface AedesConsumerConfig extends NetworkConsumerConfig {
 }
 
 
-export class AedesNetworkConsumer extends AbstractNetworkConsumer {
+export class AedesNetworkConsumer extends AbstractNetworkConsumer implements IGlobalBroadcastConsumer {
     
     protected declare config: Required<AedesConsumerConfig>; // Declare to indicate it overwrites the parent's type.
     
@@ -21,7 +24,7 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer {
         name: "MQTT Consumer",
         port: 1883,
         serve_tcp: true, // Right term?
-        serve_ws: true, // TODO Implement.
+        serve_ws: true,
         ws_port: 80,
     };
     
@@ -35,6 +38,8 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer {
     
     private aedes!: Aedes;
     private server!: Server;
+    private wsHttpServer?: HttpServer;
+    private wss?: WebSocketServer;
 
     protected checkConfig(config: AedesConsumerConfig) {
         super.checkConfig(config);
@@ -59,6 +64,25 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer {
             });
         });
 
+
+        if (this.config.serve_ws) {
+            this.wsHttpServer = createHttpServer();
+            this.wss = new WebSocketServer({ server: this.wsHttpServer });
+            this.wss.on('connection', (websocket, req) => {
+                const stream = createWebSocketStream(websocket);
+                this.aedes.handle(stream, req);
+            });
+            await new Promise<void>((resolve, reject) => {
+                this.wsHttpServer!.listen(this.config.ws_port, () => {
+                    this.logger.info('WebSocket MQTT listening on port', this.config.ws_port);
+                    resolve();
+                });
+                this.wsHttpServer!.once('error', (err) => {
+                    this.logger.error('Error starting WebSocket server:', err);
+                    reject(err);
+                });
+            });
+        }
 
         this.aedes.on('subscribe', (subscriptions: Subscription[], client: Client) => {
             this.logger.debug('Subscription:', subscriptions);
@@ -98,6 +122,9 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer {
 
         try {
 
+            if (this.wss) await new Promise<void>((r) => this.wss!.close(() => r()));
+            if (this.wsHttpServer) await new Promise<void>((r) => this.wsHttpServer!.close(() => r()));
+
             await new Promise<void>((resolve) => {
                 this.aedes.close(() => resolve());
             });
@@ -111,6 +138,10 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer {
             this.logger.error('Error during shutdown:', err);
         }
         
+    }
+
+    public publishDeviceTally(device: TallyDevice): void {
+        this.sendTallyDevice(device);
     }
 
     broadcastTally(): void {

@@ -558,6 +558,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/ws@npm:^8.5.14":
+  version: 8.18.1
+  resolution: "@types/ws@npm:8.18.1"
+  dependencies:
+    "@types/node": "npm:*"
+  checksum: 10c0/61aff1129143fcc4312f083bc9e9e168aa3026b7dd6e70796276dcfb2c8211c4292603f9c4864fae702f2ed86e4abd4d38aa421831c2fd7f856c931a481afbab
+  languageName: node
+  linkType: hard
+
 "@vitejs/plugin-react@npm:^6.0.1":
   version: 6.0.1
   resolution: "@vitejs/plugin-react@npm:6.0.1"
@@ -743,6 +752,7 @@ __metadata:
     "@types/node": "npm:^25.5.0"
     "@types/react": "npm:^19.2.14"
     "@types/react-dom": "npm:^19.2.3"
+    "@types/ws": "npm:^8.5.14"
     "@vitejs/plugin-react": "npm:^6.0.1"
     aedes: "npm:^1.0.1"
     atem-connection: "npm:^3.9.0"
@@ -757,6 +767,7 @@ __metadata:
     typescript: "npm:^5.9.3"
     vite: "npm:^8.0.7"
     vite-express: "npm:^0.22.1"
+    ws: "npm:^8.18.3"
   languageName: unknown
   linkType: soft
 
@@ -3360,6 +3371,21 @@ __metadata:
   version: 1.0.2
   resolution: "wrappy@npm:1.0.2"
   checksum: 10c0/56fece1a4018c6a6c8e28fbc88c87e0fbf4ea8fd64fc6c63b18f4acc4bd13e0ad2515189786dd2c30d3eec9663d70f4ecf699330002f8ccb547e4a18231fc9f0
+  languageName: node
+  linkType: hard
+
+"ws@npm:^8.18.3":
+  version: 8.20.0
+  resolution: "ws@npm:8.20.0"
+  peerDependencies:
+    bufferutil: ^4.0.1
+    utf-8-validate: ">=5.0.2"
+  peerDependenciesMeta:
+    bufferutil:
+      optional: true
+    utf-8-validate:
+      optional: true
+  checksum: 10c0/956ac5f11738c914089b65878b9223692ace77337ba55379ae68e1ecbeae9b47a0c6eb9403688f609999a58c80d83d99865fe0029b229d308b08c1ef93d4ea14
   languageName: node
   linkType: hard
 

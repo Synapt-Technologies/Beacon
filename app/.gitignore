@@ -20,3 +20,7 @@ node_modules
 logs/*
 # DB:
 db/*
+
+
+# Build:
+dist/*
