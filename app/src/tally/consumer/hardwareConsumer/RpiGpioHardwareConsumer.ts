@@ -80,12 +80,21 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
             const { Gpio } = await import('onoff');
 
             for (let i = 0; i < pinMap.length; i++) {
-
-
-                const devIndx: DeviceAddress = { // Todo: Helper function?
+                
+                const devIndx: DeviceAddress = { 
                     consumer: this.config.id, 
                     device: String(i)
                 };
+                
+                const pins = pinMap[i];
+
+                const gpioPins: GpioTallyOutput = {
+                    program:  new Gpio(pins.program, 'out'),
+                    preview:  new Gpio(pins.preview, 'out'),
+                }
+
+                this.gpioMap.set(GlobalDeviceTools.create(devIndx.consumer, devIndx.device), gpioPins);
+
                 const storedDevice = this.devices.get(GlobalDeviceTools.create(devIndx.consumer, devIndx.device));
 
                 if(!storedDevice){
@@ -104,14 +113,6 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
                     this._addDevice(newDevice)
                 }
 
-                const pins = pinMap[i];
-
-                const gpioPins: GpioTallyOutput = {
-                    program:  new Gpio(pins.program, 'out'),
-                    preview:  new Gpio(pins.preview, 'out'),
-                }
-
-                this.gpioMap.set(GlobalDeviceTools.create(devIndx.consumer, devIndx.device), gpioPins);
             }
 
             //TODO: Delete other devices?
