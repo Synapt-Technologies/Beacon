@@ -4,7 +4,8 @@
       "mcp__vexp__get_skeleton",
       "mcp__vexp__run_pipeline",
       "Bash(npx tsc:*)",
-      "mcp__vexp__index_status"
+      "mcp__vexp__index_status",
+      "Bash(curl -s \"https://raw.githubusercontent.com/raspberrypi/rpi-image-gen/main/README.adoc\")"
     ]
   }
 }

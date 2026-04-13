@@ -1,2 +1,3 @@
-# pi-gen clone and build artifacts — do not commit
-.pi-gen/
+# rpi-image-gen clone and build output
+.rpi-image-gen/
+work/

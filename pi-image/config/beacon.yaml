@@ -1,0 +1,14 @@
+device:
+  layer: rpi4   # arm64 — Pi 3 / 4 / 5 (rpi3/rpi5/zero2w also valid)
+  hostname: beacon
+  user1: beacon
+  user1pass: Welcome@Beacon3   # change after first login — must match: 8+ chars, upper+lower+digit+special(@$!%*?&)
+  user1sudo: nopasswd
+
+image:
+  layer: image-rpios
+  name: Beacon
+  root_part_size: 500%   # ~2.5 GB — room for Node.js + packages
+
+layer:
+  custom: beacon-suite
