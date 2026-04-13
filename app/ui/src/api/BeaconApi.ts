@@ -2,6 +2,7 @@ import type { ProducerBundle, ProducerId, GlobalTallySource } from '../../../src
 import type { ConsumerExportMap, LifeCycleConsumerConfig, LifecycleConfig, OrchestratorConfig } from '../../../src/tally/TallyLifecycle'
 import type { TallyDevice, DeviceAddress, DeviceAlertState, DeviceAlertTarget } from '../../../src/tally/types/ConsumerStates'
 import type { ConsumerId } from '../types/beacon'
+import { SystemInfo } from '../../../src/types/SystemInfo'
 
 const BASE = '/api'
 
@@ -115,4 +116,11 @@ export function importConfig(config: LifecycleConfig): Promise<void> {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(config),
     })
+}
+
+
+// ? Info
+
+export function getSystemInfo(): Promise<Partial<SystemInfo>> {
+    return request('/info');
 }

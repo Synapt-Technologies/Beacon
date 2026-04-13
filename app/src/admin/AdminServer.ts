@@ -7,12 +7,14 @@ import type { ConsumerUpdate, LifecycleConfig } from "../tally/TallyLifecycle";
 import  { type DeviceAddress,  DeviceAlertState, DeviceAlertTarget, type DeviceName, type TallyDevice } from "../tally/types/ConsumerStates";
 import type { GlobalTallySource, ProducerBundle, ProducerId } from "../tally/types/ProducerStates";
 import type { OrchestratorConfig } from "../tally/TallyLifecycle";
+import type { SystemInfo } from "../types/SystemInfo";
 
 export interface AdminState {
     producers: ProducerBundle[];
     consumers: LifecycleConfig["consumers"];
     devices: Map<string, TallyDevice[]>;
     orchestratorConfig: Partial<OrchestratorConfig>;
+    info: SystemInfo;
 }
 
 export interface AdminServerEvents {
@@ -36,7 +38,13 @@ export class AdminServer extends EventEmitter<AdminServerEvents> {
 
     private app = express();
     private logger = new Logger(["ADMIN"]);
-    private state: AdminState = { producers: [], consumers: undefined, devices: new Map(), orchestratorConfig: {} };
+    private state: AdminState = { 
+        producers: [], 
+        consumers: undefined, 
+        devices: new Map(), 
+        orchestratorConfig: {},
+        info: {}
+    };
 
     public setState(state: AdminState): void {
         this.state = state;
@@ -54,6 +62,10 @@ export class AdminServer extends EventEmitter<AdminServerEvents> {
     private _registerRoutes(): void {
 
         // ? Producers
+
+        this.app.get("/api/info", (_req, res) => {
+            res.json(this.state.info);
+        });
 
         this.app.get("/api/producers", (_req, res) => {
             const parsed = this.state.producers.map(p => ({

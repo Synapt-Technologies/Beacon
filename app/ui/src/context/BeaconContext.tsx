@@ -66,7 +66,7 @@ export function BeaconProvider({ children }: { children: ReactNode }) {
     const [consumers, setConsumers]                   = useState<Partial<ConsumerExportMap>>({})
     const [devices, setDevices]                       = useState<UITallyDevice[]>([])
     const [orchestratorConfig, setOrchestratorConfig] = useState<Partial<OrchestratorConfig>>({})
-    const [system]                                    = useState<SystemInfo>({})
+    const [system, setSystem]                          = useState<SystemInfo>({})
     const [uiConfig, setUiConfig]                     = useState<UIConfig>({ alerts: DEFAULT_UI_ALERT_CONFIG })
     const [loading, setLoading]                       = useState(false)
     const [error, setError]                           = useState<string | null>(null)
@@ -98,6 +98,9 @@ export function BeaconProvider({ children }: { children: ReactNode }) {
           } catch {
             setDevices([])
           }
+
+          const sys = await api.getSystemInfo();
+          setSystem(sys);
 
           setError(null)
         } catch (e) {
