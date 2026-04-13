@@ -33,11 +33,13 @@ export default class SystemInfoUtil {
                 .map(pair => pair.map(entry => entry.trim()))
                 .filter(pair => pair[0] === 'Hardware')
 
+            this.logger.debug(`Hardware model: ${model[0][1]}`);
+
+
             if (!model || model.length == 0) {
                 return false;
             }
 
-            this.logger.debug(`Hardware model: ${model[0][1]}`);
 
             const processor = model[0][1];
             return PI_MODEL_NO.indexOf(processor) > -1;
@@ -51,7 +53,7 @@ export default class SystemInfoUtil {
     }
 
     static getHwModel(): HardwareVersion {
-        try {
+        try { // TODO double try. Might be needed when checking GPIO
             if (!SystemInfoUtil.isPi())
                 return HardwareVersion.UNKNOWN;
 
