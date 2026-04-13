@@ -31,15 +31,22 @@
   /* Beacon brand */
   --acc:  #E85D30;
   /* --acc:  #CC0033; */
-  --pgm:  #E24B4A;
-  --pvw:  #1D9E75;
+  
+  /* --pgm:  #E24B4A; */
+  --pgm:  #E93838;
+  /* --pvw:  #1D9E75; */
+  --pvw:  #16B658;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --color-background-primary:   #1e1e1c;
+    --color-background-primary:   #1c1c1c;
+    --color-background-secondary: #272727;
+    --color-background-tertiary:  #111111;
+    /* --color-background-primary:   #1e1e1c;
     --color-background-secondary: #272724;
-    --color-background-tertiary:  #111110;
+    --color-background-tertiary:  #111110; */
+
     --color-background-success:   #04342c;
     --color-background-danger:    #501313;
     --color-background-warning:   #412402;
