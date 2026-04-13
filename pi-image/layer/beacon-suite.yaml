@@ -1,0 +1,16 @@
+# METABEGIN
+# X-Env-Layer-Name: beacon-suite
+# X-Env-Layer-Category: application
+# X-Env-Layer-Desc: Beacon Tally — full composition layer for a headless Pi
+# X-Env-Layer-Version: 1.0.0
+# X-Env-Layer-Requires: debian-bookworm-arm64-multi,
+#  rpi-debian-bookworm,
+#  rpi-essential-base,
+#  rpi-misc-utils,
+#  rpi-misc-skel,
+#  rpi-user-credentials,
+#  systemd-net-min,
+#  fake-hwclock,
+#  beacon-app
+# METAEND
+---

@@ -1,0 +1,48 @@
+# METABEGIN
+# X-Env-Layer-Name: beacon-app
+# X-Env-Layer-Category: application
+# X-Env-Layer-Desc: Installs Node.js 20 LTS, clones Beacon Tally, builds the
+#  React frontend, and enables the systemd service.
+# X-Env-Layer-Version: 1.0.0
+# X-Env-Layer-Requires: rpi-essential-base
+# METAEND
+---
+mmdebstrap:
+  packages:
+    - git
+    - openssh-server
+
+  customize-hooks:
+    - |-
+      # Enable SSH
+      chroot $1 systemctl enable ssh
+
+    - |-
+      # Install Node.js 20 LTS ARM64 by extracting the pre-built binary directly
+      # into the rootfs — no chroot execution needed, works without QEMU.
+      echo "==> Installing Node.js 20 LTS (ARM64 binary)..."
+      curl -fsSL https://nodejs.org/dist/v20.19.0/node-v20.19.0-linux-arm64.tar.xz \
+        | tar -xJ -C $1/usr/local --strip-components=1 --no-same-owner
+
+    - |-
+      # Enable corepack and pre-download the pinned Yarn version so there is no
+      # interactive prompt when yarn install runs later.
+      chroot $1 bash -c "corepack enable && COREPACK_YES=1 corepack prepare yarn@4.13.0 --activate"
+
+    - |-
+      # Clone Beacon, install dependencies, and build the React frontend.
+      # This runs inside the ARM64 chroot via QEMU (qemu-aarch64-static + binfmt).
+      chroot $1 bash -c "
+        set -e
+        export COREPACK_YES=1
+        git clone --depth 1 --branch dev https://github.com/IJIJI/Beacon.git /opt/Beacon-tally
+        cd /opt/Beacon-tally/app
+        yarn install --immutable
+        yarn build
+      "
+
+    - |-
+      # Install and enable the Beacon systemd service
+      mkdir -p $1/lib/systemd/system
+      install -m 644 "${SRCROOT}/files/beacon.service" "$1/lib/systemd/system/beacon.service"
+      chroot $1 systemctl enable beacon.service
