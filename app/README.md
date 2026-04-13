@@ -4,6 +4,7 @@
 ## TODO
 - [ ] Implement mqtt ws tally for devices
   - [ ] Add alerts
+- [ ] Persist alert config to settings
 - [ ] Disconnect warning for tally
   - [ ] State on disconnect also on web interface
     - [ ] On disconnection from api
