@@ -18,6 +18,7 @@ import { ProducerConfig } from '../../../src/tally/producer/AbstractTallyProduce
 import { ConsumerId } from '../types/beacon'
 import { ConsumerConfig } from '../../../src/tally/consumer/AbstractConsumer'
 import { CONSUMER_META } from '../config/consumers'
+import { WebHaptics, defaultPatterns } from "web-haptics";
 
 // ? Context Data Shape
 
@@ -70,6 +71,8 @@ export function BeaconProvider({ children }: { children: ReactNode }) {
     const [uiConfig, setUiConfig]                     = useState<UIConfig>({ alerts: DEFAULT_UI_ALERT_CONFIG })
     const [loading, setLoading]                       = useState(false)
     const [error, setError]                           = useState<string | null>(null)
+
+    const haptics = new WebHaptics();
 
     const fetchAll = useCallback(async () => {
         setLoading(true)
@@ -193,6 +196,7 @@ export function BeaconProvider({ children }: { children: ReactNode }) {
     }
     const sendAlert = async (device: DeviceAddress, type: DeviceAlertState, target: DeviceAlertTarget) => {
       try {
+        haptics.trigger(defaultPatterns.heavy);
         await api.sendAlert(device, type, target)
       } catch (e) { toast.error(e instanceof Error ? e.message : 'Failed to send alert') ; throw e }
     }

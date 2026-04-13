@@ -58,6 +58,7 @@ export function DeviceDetailOverlay({ device, backPath, backLabel }: DeviceDetai
         setPatchOpen(false)
         await patchDevice(device.id, patch)
     }
+    
 
     return (
         <>

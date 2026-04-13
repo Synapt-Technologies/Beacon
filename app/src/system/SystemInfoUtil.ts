@@ -22,6 +22,8 @@ export default class SystemInfoUtil {
     protected static logger = new Logger(["System", "InfoUtil"]);
 
     static isPi() {
+
+        // Check on old 32 bit os.
         try {
             const cpuInfo: string = fs.readFileSync('/proc/cpuinfo', { encoding: 'utf8' });
 
@@ -33,22 +35,32 @@ export default class SystemInfoUtil {
                 .map(pair => pair.map(entry => entry.trim()))
                 .filter(pair => pair[0] === 'Hardware')
 
-            if (!model || model.length == 0) {
-                return false;
+
+            if (model && model.length !== 0) {
+                const processor = model[0][1];
+                if (PI_MODEL_NO.indexOf(processor) > -1)
+                    return true;
             }
 
-            const processor = model[0][1];
-            return PI_MODEL_NO.indexOf(processor) > -1;
-
         } catch (e) {
-            // if this fails, this is probably not a pi
-            return false;
+            this.logger.debug(`Error reading /proc/cpuinfo: ${e}`);
         }
 
+        try {
+            const devtreeModel = fs.readFileSync('/sys/firmware/devicetree/base/model', { encoding: 'utf8' });
+
+
+            if(devtreeModel.toLowerCase().includes('raspberry pi')) 
+                return true;
+        } catch (e) {
+            this.logger.debug(`Error reading /sys/firmware/devicetree/base/model: ${e}`);
+        }
+
+        return false;
     }
 
     static getHwModel(): HardwareVersion {
-        try {
+        try { // TODO double try. Might be needed when checking GPIO
             if (!SystemInfoUtil.isPi())
                 return HardwareVersion.UNKNOWN;
 

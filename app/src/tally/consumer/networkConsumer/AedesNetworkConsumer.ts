@@ -1,8 +1,11 @@
 import { AbstractNetworkConsumer, type NetworkConsumerConfig } from "./AbstractNetworkConsumer";
+import { type IGlobalBroadcastConsumer } from "../IGlobalBroadcastConsumer";
 
 import { Aedes, type Client, type Subscription } from "aedes";
 import { createServer, Server } from "node:net";
-import { ConnectionType, type DeviceAddress, DeviceAlertState, DeviceAlertTarget, DeviceTallyState, type TallyDevice } from "../../types/ConsumerStates";
+import { createServer as createHttpServer, type Server as HttpServer } from "node:http";
+import { WebSocketServer, createWebSocketStream } from "ws";
+import { type DeviceAddress, DeviceAlertState, DeviceAlertTarget, DeviceTallyState, type TallyDevice } from "../../types/ConsumerStates";
 
 export interface AedesConsumerConfig extends NetworkConsumerConfig {
     serve_tcp?: boolean;
@@ -11,7 +14,7 @@ export interface AedesConsumerConfig extends NetworkConsumerConfig {
 }
 
 
-export class AedesNetworkConsumer extends AbstractNetworkConsumer {
+export class AedesNetworkConsumer extends AbstractNetworkConsumer implements IGlobalBroadcastConsumer {
     
     protected declare config: Required<AedesConsumerConfig>; // Declare to indicate it overwrites the parent's type.
     
@@ -21,8 +24,8 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer {
         name: "MQTT Consumer",
         port: 1883,
         serve_tcp: true, // Right term?
-        serve_ws: true, // TODO Implement.
-        ws_port: 80,
+        serve_ws: true,
+        ws_port: 9001,
     };
     
     protected getDefaultConfig(): Required<AedesConsumerConfig> {
@@ -35,30 +38,54 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer {
     
     private aedes!: Aedes;
     private server!: Server;
+    private wsHttpServer?: HttpServer;
+    private wss?: WebSocketServer;
 
     protected checkConfig(config: AedesConsumerConfig) {
         super.checkConfig(config);
-        
-        if (config.ws_port == null || config.ws_port < 0 || config.ws_port > 65535)
+
+        if (config.serve_ws && (config.ws_port == null || config.ws_port < 0 || config.ws_port > 65535))
             this.logger.fatal(`Valid websocket Port is required. Submitted config:`, config);
     }
  
     async init(): Promise<void> {
         this.aedes = await Aedes.createBroker();
-        this.server = createServer(this.aedes.handle);
 
-        await new Promise<void>((resolve, reject) => {
-            this.server.listen(this.config.port,  () => {
-                this.logger.info('Started and listening on port ', this.config.port);
-                resolve();
+        if (this.config.serve_tcp) {
+            this.server = createServer(this.aedes.handle);
+
+            await new Promise<void>((resolve, reject) => {
+                this.server.listen(this.config.port, () => {
+                    this.logger.info('Started and listening on port ', this.config.port);
+                    resolve();
+                });
+
+                this.server.once('error', (err) => { // Pesky boot errors
+                    this.logger.error('Error starting server:', err);
+                    reject(err);
+                });
             });
+        }
 
-            this.server.once('error', (err) => { // Pesky boot errors
-                this.logger.error('Error starting server:', err);
-                reject(err);
+
+        if (this.config.serve_ws) {
+            this.wsHttpServer = createHttpServer();
+            this.wss = new WebSocketServer({ server: this.wsHttpServer });
+            this.wss.on('connection', (websocket, req) => {
+                const stream = createWebSocketStream(websocket);
+                this.aedes.handle(stream, req);
             });
-        });
-
+            await new Promise<void>((resolve, reject) => {
+                this.wsHttpServer!.listen(this.config.ws_port, () => {
+                    this.logger.info('WebSocket MQTT listening on port', this.config.ws_port);
+                    resolve();
+                });
+                this.wsHttpServer!.once('error', (err) => {
+                    this.logger.error('Error starting WebSocket server:', err);
+                    reject(err);
+                });
+            });
+        }
 
         this.aedes.on('subscribe', (subscriptions: Subscription[], client: Client) => {
             this.logger.debug('Subscription:', subscriptions);
@@ -78,14 +105,14 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer {
         //     id: { consumer: this.config.id, device: 'ad322df69708' },
         //     name: {long: 'Test Device 1' },
         //     state: DeviceTallyState.NONE,
-        //     connection: ConnectionType.NETWORK,
+        //     connection: 2,
         //     patch: [],
         // };
         // const testTallyDevice2: TallyDevice = {
         //     id: { consumer: this.config.id, device: '9862eef93c9e' },
         //     name: {long: 'Test Device 2' },
         //     state: DeviceTallyState.NONE,
-        //     connection: ConnectionType.NETWORK,
+        //     connection: 3,
         //     patch: [],
         // };
 
@@ -98,12 +125,12 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer {
 
         try {
 
-            await new Promise<void>((resolve) => {
-                this.aedes.close(() => resolve());
-            });
+            if (this.server) await new Promise<void>((r) => this.server.close(() => r()));
+            if (this.wss) await new Promise<void>((r) => this.wss!.close(() => r()));
+            if (this.wsHttpServer) await new Promise<void>((r) => this.wsHttpServer!.close(() => r()));
 
             await new Promise<void>((resolve) => {
-                this.server.close(() => resolve());
+                this.aedes.close(() => resolve());
             });
 
             this.logger.debug('Destroyed successfully.');
@@ -111,6 +138,10 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer {
             this.logger.error('Error during shutdown:', err);
         }
         
+    }
+
+    public publishDeviceTally(device: TallyDevice): void {
+        this.sendTallyDevice(device);
     }
 
     broadcastTally(): void {

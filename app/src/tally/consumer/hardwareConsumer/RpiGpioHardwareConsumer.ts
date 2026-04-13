@@ -1,6 +1,7 @@
 import { AbstractConsumer, type ConsumerConfig } from "../AbstractConsumer";
 import { ConnectionType, DeviceTallyState, GlobalDeviceTools, type DeviceAddress, type DeviceAlertState, type DeviceAlertTarget, type DeviceId, type TallyDevice } from "../../types/ConsumerStates";
 import { HardwareVersion } from "../../../types/SystemInfo";
+import { execSync } from 'child_process';
 
 // TODO: check if this is the right GPIO library. Was rpi-gpio before, but it's not updated.
 
@@ -19,23 +20,26 @@ export interface GpioTallyPins {
 }
 
 interface GpioTallyOutput {
-    program: InstanceType<typeof import('onoff').Gpio>,
-    preview: InstanceType<typeof import('onoff').Gpio>,
+    program: number,
+    preview: number,
 }
 
 
 const DEFAULT_PINOUT: Record<HardwareVersion, Array<GpioTallyPins>> = {
     [HardwareVersion.UNKNOWN]: [],
-    [HardwareVersion.V2]: [
-        { program:  3, preview: 15 },
-        { program:  5, preview: 16 },
-        { program:  7, preview: 18 },
-        { program:  8, preview: 19 },
-        { program: 10, preview: 21 },
-        { program: 11, preview: 22 },
-        { program: 12, preview: 23 },
-        { program: 13, preview: 24 },
+    [HardwareVersion.V2]: [           // Board pin numbers:
+        { program:  2, preview: 22 }, // 3,  15
+        { program:  3, preview: 23 }, // 5,  16
+        { program:  4, preview: 24 }, // 7,  18
+        { program: 14, preview: 10 }, // 8,  19
+        { program: 15, preview:  9 }, // 10, 21
+        { program: 17, preview: 25 }, // 11, 22
+        { program: 18, preview: 11 }, // 12, 23
+        { program: 27, preview:  8 }, // 13, 24
+        // { program: 22, preview:  7 }, // 15, 26
+        // { program: 23, preview:  5 }, // 16, 29
     ],
+    [HardwareVersion.V3]: [],
     
 }
 
@@ -65,7 +69,7 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
         super(config);
     }
 
-    init(): void {
+    async init(): Promise<void> {
         this.info.version = this.getHardwareVersion();
 
         if (this.info.version == HardwareVersion.UNKNOWN)
@@ -75,15 +79,28 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
 
         try {
 
-            const { Gpio } = require('onoff') as typeof import('onoff');
+
 
             for (let i = 0; i < pinMap.length; i++) {
-
-
-                const devIndx: DeviceAddress = { // Todo: Helper function?
+                
+                const devIndx: DeviceAddress = { 
                     consumer: this.config.id, 
                     device: String(i)
                 };
+                
+                const pins = pinMap[i];
+
+                // Format: pinctrl set <gpio> op dl (op=output, dl=drive low)
+                execSync(`pinctrl set ${pins.program} op dl`);
+                execSync(`pinctrl set ${pins.preview} op dl`);
+
+                const gpioPins: GpioTallyOutput = {
+                    program: pins.program,
+                    preview: pins.preview
+                };
+
+                this.gpioMap.set(GlobalDeviceTools.create(devIndx.consumer, devIndx.device), gpioPins);
+
                 const storedDevice = this.devices.get(GlobalDeviceTools.create(devIndx.consumer, devIndx.device));
 
                 if(!storedDevice){
@@ -102,14 +119,6 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
                     this._addDevice(newDevice)
                 }
 
-                const pins = pinMap[i];
-
-                const gpioPins: GpioTallyOutput = {
-                    program:  new Gpio(pins.program, 'out'),
-                    preview:  new Gpio(pins.preview, 'out'),
-                }
-
-                this.gpioMap.set(GlobalDeviceTools.create(devIndx.consumer, devIndx.device), gpioPins);
             }
 
             //TODO: Delete other devices?
@@ -148,21 +157,21 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
 
             switch(device.state){
                 case DeviceTallyState.PROGRAM:
-                    outputs.preview.write(0);
-                    outputs.program.write(1);
+                    execSync(`pinctrl set ${outputs.program} dh`);
+                    execSync(`pinctrl set ${outputs.preview} dl`);
                     break;
                 case DeviceTallyState.PREVIEW:
-                    outputs.preview.write(1);
-                    outputs.program.write(0);
+                    execSync(`pinctrl set ${outputs.program} dl`);
+                    execSync(`pinctrl set ${outputs.preview} dh`);
                     break;
                 case DeviceTallyState.DANGER: // TODO: Maybe different state? No PWM though, not sure if possible.
                 case DeviceTallyState.WARNING:
-                    outputs.preview.write(1);
-                    outputs.program.write(1);
+                    execSync(`pinctrl set ${outputs.program} dh`);
+                    execSync(`pinctrl set ${outputs.preview} dh`);
                     break;
                 default:
-                    outputs.preview.write(0);
-                    outputs.program.write(0);
+                    execSync(`pinctrl set ${outputs.program} dl`);
+                    execSync(`pinctrl set ${outputs.preview} dl`);
             }
 
             this.logger.debug(`Set Tally GPIO for device:`, device);

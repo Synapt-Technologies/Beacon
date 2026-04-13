@@ -1,5 +1,6 @@
 import { EventEmitter } from "events";
 import { AbstractConsumer } from "./consumer/AbstractConsumer";
+import { isGlobalBroadcastConsumer } from "./consumer/IGlobalBroadcastConsumer";
 import { GlobalSourceTools, type ProducerId, type TallyState } from "./types/ProducerStates";
 import { AbstractTallyProducer, type ProducerInfo } from "./producer/AbstractTallyProducer";
 import { DeviceTallyState, type ConsumerId, type TallyDevice } from "./types/ConsumerStates";
@@ -64,8 +65,20 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
 
     addConsumer(consumer: AbstractConsumer): void {
         this.consumers.set(consumer.getId(), consumer);
+        consumer.on('device_update', (device: TallyDevice) => {
+            this._notifyBroadcasters(consumer.getId(), device);
+        });
         this.emit('consumer_added', consumer.getId());
         this._parseGlobalTally();
+    }
+
+    private _notifyBroadcasters(exclude: ConsumerId, device: TallyDevice): void {
+        for (const [id, consumer] of this.consumers) {
+            if (id === exclude) continue;
+            if (isGlobalBroadcastConsumer(consumer)) {
+                consumer.publishDeviceTally(device);
+            }
+        }
     }
 
     async removeConsumer(id: ConsumerId): Promise<void> {
