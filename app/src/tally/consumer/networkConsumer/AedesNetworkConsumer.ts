@@ -5,7 +5,7 @@ import { Aedes, type Client, type Subscription } from "aedes";
 import { createServer, Server } from "node:net";
 import { createServer as createHttpServer, type Server as HttpServer } from "node:http";
 import { WebSocketServer, createWebSocketStream } from "ws";
-import { ConnectionType, type DeviceAddress, DeviceAlertState, DeviceAlertTarget, DeviceTallyState, type TallyDevice } from "../../types/ConsumerStates";
+import { type DeviceAddress, DeviceAlertState, DeviceAlertTarget, DeviceTallyState, type TallyDevice } from "../../types/ConsumerStates";
 
 export interface AedesConsumerConfig extends NetworkConsumerConfig {
     serve_tcp?: boolean;
@@ -25,7 +25,7 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer implements IGl
         port: 1883,
         serve_tcp: true, // Right term?
         serve_ws: true,
-        ws_port: 80,
+        ws_port: 9001,
     };
     
     protected getDefaultConfig(): Required<AedesConsumerConfig> {
@@ -43,26 +43,29 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer implements IGl
 
     protected checkConfig(config: AedesConsumerConfig) {
         super.checkConfig(config);
-        
-        if (config.ws_port == null || config.ws_port < 0 || config.ws_port > 65535)
+
+        if (config.serve_ws && (config.ws_port == null || config.ws_port < 0 || config.ws_port > 65535))
             this.logger.fatal(`Valid websocket Port is required. Submitted config:`, config);
     }
  
     async init(): Promise<void> {
         this.aedes = await Aedes.createBroker();
-        this.server = createServer(this.aedes.handle);
 
-        await new Promise<void>((resolve, reject) => {
-            this.server.listen(this.config.port,  () => {
-                this.logger.info('Started and listening on port ', this.config.port);
-                resolve();
-            });
+        if (this.config.serve_tcp) {
+            this.server = createServer(this.aedes.handle);
 
-            this.server.once('error', (err) => { // Pesky boot errors
-                this.logger.error('Error starting server:', err);
-                reject(err);
+            await new Promise<void>((resolve, reject) => {
+                this.server.listen(this.config.port, () => {
+                    this.logger.info('Started and listening on port ', this.config.port);
+                    resolve();
+                });
+
+                this.server.once('error', (err) => { // Pesky boot errors
+                    this.logger.error('Error starting server:', err);
+                    reject(err);
+                });
             });
-        });
+        }
 
 
         if (this.config.serve_ws) {
@@ -122,15 +125,12 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer implements IGl
 
         try {
 
+            if (this.server) await new Promise<void>((r) => this.server.close(() => r()));
             if (this.wss) await new Promise<void>((r) => this.wss!.close(() => r()));
             if (this.wsHttpServer) await new Promise<void>((r) => this.wsHttpServer!.close(() => r()));
 
             await new Promise<void>((resolve) => {
                 this.aedes.close(() => resolve());
-            });
-
-            await new Promise<void>((resolve) => {
-                this.server.close(() => resolve());
             });
 
             this.logger.debug('Destroyed successfully.');
