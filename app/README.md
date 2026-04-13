@@ -8,6 +8,7 @@
   - [ ] State on disconnect also on web interface
     - [ ] On disconnection from api
     - [ ] On producer disconnect
+- [ ] Add "F11" fullscreen button
 - [ ] Show more source info, pimarily consumer:sourceid at the device source list.
 - [ ] Fix add connection to show the added connection without reload
   - [ ] Maybe background poll for changes?
