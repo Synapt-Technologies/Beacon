@@ -15,8 +15,9 @@ import { stateFromValue } from '../types/beacon'
 export default function DevicesPage() {
   const navigate = useNavigate()
   const { consumer, device: deviceId } = useParams()
-  const { devices, producers, consumers, renameDevice, patchDevice, removeDevice } = useBeacon()
-  const { states, deviceStates } = useTallyState()
+  const { devices, producers, consumers, orchestratorConfig, renameDevice, patchDevice, removeDevice } = useBeacon()
+  const { states, deviceStates, systemConnected } = useTallyState()
+  const disconnectState = stateFromValue(orchestratorConfig.state_on_disconnect ?? 0)
 
   function shortName(producer: string, source: string): string {
     const key = `${producer}:${source}`
@@ -85,7 +86,9 @@ export default function DevicesPage() {
               ) : (
                 sectionDevices.map((dev, idx) => {
                   const isLast = idx === sectionDevices.length - 1
-                  const liveDotState = deviceStates.get(GlobalDeviceTools.create(dev.id.consumer, dev.id.device)) ?? stateFromValue(dev.state)
+                  const liveDotState = systemConnected
+                    ? (deviceStates.get(GlobalDeviceTools.create(dev.id.consumer, dev.id.device)) ?? stateFromValue(dev.state))
+                    : disconnectState
 
                   return (
                     <div

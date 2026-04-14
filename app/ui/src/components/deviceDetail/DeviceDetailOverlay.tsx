@@ -40,14 +40,16 @@ function formatTs(ms?: number): string { // TODO: move to shared util
 export function DeviceDetailOverlay({ device, backPath, backLabel }: DeviceDetailOverlayProps) {
     const navigate = useNavigate()
     const location = useLocation()
-    const { producers, uiConfig, patchDevice } = useBeacon()
-    const { states, deviceStates } = useTallyState()
+    const { producers, uiConfig, orchestratorConfig, patchDevice } = useBeacon()
+    const { states, deviceStates, systemConnected } = useTallyState()
+    const disconnectState = stateFromValue(orchestratorConfig.state_on_disconnect ?? 0)
     const [patchOpen, setPatchOpen] = useState(false)
 
     const basePath    = `${backPath}/${device.id.consumer}/${device.id.device}`
     const fsOpen      = location.pathname.endsWith('/fullscreen')
-    const liveState: DeviceDisplayState =
-        deviceStates.get(GlobalDeviceTools.create(device.id.consumer, device.id.device)) ?? stateFromValue(device.state)
+    const liveState: DeviceDisplayState = systemConnected
+        ? (deviceStates.get(GlobalDeviceTools.create(device.id.consumer, device.id.device)) ?? stateFromValue(device.state))
+        : disconnectState
     const stateStr = liveState
     const deviceKey   = GlobalDeviceTools.create(device.id.consumer, device.id.device)
     const deviceLong  = device.name.long

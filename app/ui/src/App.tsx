@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import { BeaconProvider } from "./context/BeaconContext";
+import { TallyStateProvider } from "./context/TallyStateContext";
 import Layout from "./components/layout/Layout";
 import OverviewPage from "./pages/OverviewPage";
 import WebTallyPage from "./pages/WebTallyPage";
@@ -12,6 +13,7 @@ import './styles/global.css';
 export default function App() {
     return (
         <BeaconProvider>
+          <TallyStateProvider>
             <Toaster
                 position="bottom-right"
                 containerStyle={{ bottom: 16, right: 16 }}
@@ -49,6 +51,7 @@ export default function App() {
                     </Route>
                 </Routes>
             </BrowserRouter>
+          </TallyStateProvider>
         </BeaconProvider>
     );
 }

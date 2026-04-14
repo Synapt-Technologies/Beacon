@@ -6,6 +6,7 @@ import { FullscreenOverlay } from '../components/FullscreenOverlay'
 import { IconChevronLeft, IconChevronRight, IconFullscreen } from '../components/icons'
 import type { SourceInfo } from '../../../src/tally/types/ProducerStates'
 import { useTallyState } from '../hooks/useTallyState'
+import { stateFromValue, type DeviceDisplayState } from '../types/beacon'
 
 interface SelectedSource extends SourceInfo {
   prodName: string
@@ -20,7 +21,7 @@ function SourceDetail({
 }: {
   source: SelectedSource
   basePath: string
-  sourceState: (key: string) => 'pgm' | 'pvw' | 'none'
+  sourceState: (key: string) => DeviceDisplayState
 }) {
   const navigate = useNavigate()
   const location = useLocation()
@@ -61,7 +62,7 @@ function SourceDetail({
           ['Producer',   source.prodName],
           ['Short name', source.short],
           ['Source ID',  `${source.source.producer}:${source.source.source}`],
-          ['State',      state === 'pgm' ? 'Program' : state === 'pvw' ? 'Preview' : 'Idle'],
+          ['State',      stateSub(state)],
         ] as [string, string][]).map(([label, value]) => (
           <div key={label} style={{
             background: 'var(--color-background-primary)',
@@ -129,10 +130,13 @@ function FilterChips({ producers, active, onChange }: FilterChipsProps) {
 export default function WebTallyPage() {
   const navigate = useNavigate()
   const { producer: producerId, source: sourceId } = useParams()
-  const { producers } = useBeacon()
+  const { producers, orchestratorConfig } = useBeacon()
   const [filterProducer, setFilterProducer] = useState<string | null>(null)
-  const { states, connected } = useTallyState()
-  const sourceState = (key: string): 'pgm' | 'pvw' | 'none' => states.get(key) ?? 'none'
+  const { states, connected, systemConnected } = useTallyState()
+
+  const disconnectState = stateFromValue(orchestratorConfig.state_on_disconnect ?? 0)
+  const sourceState = (key: string): DeviceDisplayState =>
+    systemConnected ? (states.get(key) ?? 'none') : disconnectState
 
   // Reconstruct SelectedSource from URL params + loaded producers
   let selectedSource: SelectedSource | null = null
