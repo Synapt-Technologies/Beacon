@@ -28,6 +28,15 @@ export enum DeviceTallyState { // TODO maybe add an warning state that is yellow
     PROGRAM = 7
 }
 
+/** Maps each DeviceTallyState enum key (as published on the MQTT wire) to the UI display string. */
+export const DeviceTallyDisplayName: { readonly [K in keyof typeof DeviceTallyState]: string } = {
+    NONE:    'none',
+    WARNING: 'warning',
+    DANGER:  'danger',
+    PREVIEW: 'pvw',
+    PROGRAM: 'pgm',
+} as const
+
 export interface DeviceAddress {
     consumer: ConsumerId;
     device: DeviceId;

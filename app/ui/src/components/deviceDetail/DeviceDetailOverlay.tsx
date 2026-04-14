@@ -41,15 +41,13 @@ export function DeviceDetailOverlay({ device, backPath, backLabel }: DeviceDetai
     const navigate = useNavigate()
     const location = useLocation()
     const { producers, uiConfig, patchDevice } = useBeacon()
-    const { states } = useTallyState()
+    const { states, deviceStates } = useTallyState()
     const [patchOpen, setPatchOpen] = useState(false)
 
     const basePath    = `${backPath}/${device.id.consumer}/${device.id.device}`
     const fsOpen      = location.pathname.endsWith('/fullscreen')
     const liveState: DeviceDisplayState =
-        device.patch.some(s => states.get(`${s.producer}:${s.source}`) === 'pgm') ? 'pgm'
-      : device.patch.some(s => states.get(`${s.producer}:${s.source}`) === 'pvw') ? 'pvw'
-      : stateFromValue(device.state)
+        deviceStates.get(GlobalDeviceTools.create(device.id.consumer, device.id.device)) ?? stateFromValue(device.state)
     const stateStr = liveState
     const deviceKey   = GlobalDeviceTools.create(device.id.consumer, device.id.device)
     const deviceLong  = device.name.long

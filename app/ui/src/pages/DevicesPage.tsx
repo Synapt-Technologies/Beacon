@@ -16,7 +16,7 @@ export default function DevicesPage() {
   const navigate = useNavigate()
   const { consumer, device: deviceId } = useParams()
   const { devices, producers, consumers, renameDevice, patchDevice, removeDevice } = useBeacon()
-  const { states } = useTallyState()
+  const { states, deviceStates } = useTallyState()
 
   function shortName(producer: string, source: string): string {
     const key = `${producer}:${source}`
@@ -85,9 +85,7 @@ export default function DevicesPage() {
               ) : (
                 sectionDevices.map((dev, idx) => {
                   const isLast = idx === sectionDevices.length - 1
-                  const liveDotState = dev.patch.some(s => states.get(`${s.producer}:${s.source}`) === 'pgm') ? 'pgm'
-                                     : dev.patch.some(s => states.get(`${s.producer}:${s.source}`) === 'pvw') ? 'pvw'
-                                     : stateFromValue(dev.state)
+                  const liveDotState = deviceStates.get(GlobalDeviceTools.create(dev.id.consumer, dev.id.device)) ?? stateFromValue(dev.state)
 
                   return (
                     <div
