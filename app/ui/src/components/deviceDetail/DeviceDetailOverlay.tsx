@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useBeacon } from '../../context/BeaconContext'
+import { useTallyState } from '../../hooks/useTallyState'
 import { TallyBlock, stateSub } from '../TallyBlock'
 import { PatchModal } from '../PatchModal'
 import { FullscreenOverlay } from '../FullscreenOverlay'
@@ -45,11 +46,15 @@ export function DeviceDetailOverlay({ device, backPath, backLabel }: DeviceDetai
     const navigate = useNavigate()
     const location = useLocation()
     const { producers, uiConfig, patchDevice } = useBeacon()
+    const { states } = useTallyState()
     const [patchOpen, setPatchOpen] = useState(false)
 
     const basePath    = `${backPath}/${device.id.consumer}/${device.id.device}`
     const fsOpen      = location.pathname.endsWith('/fullscreen')
-    const stateStr    = tallyStr(device.state)
+    const liveState   = device.patch.some(s => states.get(`${s.producer}:${s.source}`) === 'pgm') ? 'pgm'
+                      : device.patch.some(s => states.get(`${s.producer}:${s.source}`) === 'pvw') ? 'pvw'
+                      : states.size > 0 ? 'none' : tallyStr(device.state)
+    const stateStr    = liveState
     const deviceKey   = GlobalDeviceTools.create(device.id.consumer, device.id.device)
     const deviceLong  = device.name.long
     const deviceShort = device.name.short ?? device.name.long ?? device.id.device
@@ -114,7 +119,12 @@ export function DeviceDetailOverlay({ device, backPath, backLabel }: DeviceDetai
                         </div>
                     ) : (
                         device.patch.map((src, i) => (
-                            <PatchedSourceRow key={i} src={src} producers={producers} />
+                            <PatchedSourceRow
+                                key={i}
+                                src={src}
+                                producers={producers}
+                                tallyState={states.get(`${src.producer}:${src.source}`) ?? 'none'}
+                            />
                         ))
                     )}
 

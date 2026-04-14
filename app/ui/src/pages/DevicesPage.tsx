@@ -6,14 +6,25 @@ import { DeviceEditModal } from '../components/devices/DeviceEditPanel'
 import { PatchModal } from '../components/PatchModal'
 import { CONSUMER_SECTIONS } from '../config/consumers'
 import { UITallyDevice } from '../types/DeviceStates'
-import { DeviceTallyState, GlobalDeviceTools } from '../../../src/tally/types/ConsumerStates'
-import type { GlobalTallySource } from '../../../src/tally/types/ProducerStates'
+import { GlobalDeviceTools } from '../../../src/tally/types/ConsumerStates'
+import type { GlobalTallySource, SourceInfo } from '../../../src/tally/types/ProducerStates'
+import { useTallyState } from '../hooks/useTallyState'
 
 
 export default function DevicesPage() {
   const navigate = useNavigate()
   const { consumer, device: deviceId } = useParams()
   const { devices, producers, consumers, renameDevice, patchDevice, removeDevice } = useBeacon()
+  const { states } = useTallyState()
+
+  function shortName(producer: string, source: string): string {
+    const key = `${producer}:${source}`
+    for (const p of producers) {
+      const sources = p.info?.sources as unknown as Record<string, SourceInfo>
+      if (sources?.[key]) return sources[key].short ?? source
+    }
+    return source
+  }
 
   const [editing,      setEditing]      = useState<UITallyDevice | null>(null)
   const [patching,     setPatching]     = useState<UITallyDevice | null>(null)
@@ -73,6 +84,9 @@ export default function DevicesPage() {
               ) : (
                 sectionDevices.map((dev, idx) => {
                   const isLast = idx === sectionDevices.length - 1
+                  const liveDotState = dev.patch.some(s => states.get(`${s.producer}:${s.source}`) === 'pgm') ? 'pgm'
+                                     : dev.patch.some(s => states.get(`${s.producer}:${s.source}`) === 'pvw') ? 'pvw'
+                                     : 'none'
 
                   return (
                     <div
@@ -84,7 +98,7 @@ export default function DevicesPage() {
                     >
                       <div
                         style={{ width: 8, height: 8, borderRadius: '50%', flexShrink: 0 }}
-                        className={`dot-${DeviceTallyState[dev.state].toLowerCase()}`}
+                        className={`dot-${liveDotState}`}
                       />
                       <div style={{ width: 88, flexShrink: 0 }}>
                         <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -100,16 +114,22 @@ export default function DevicesPage() {
                         {dev.patch.length === 0 ? (
                           <span style={{ fontSize: 11, color: 'var(--color-text-tertiary)' }}>No sources</span>
                         ) : (
-                          dev.patch.map((src, i) => (
-                            <span key={i} style={{
-                              fontSize: 10, padding: '2px 7px', borderRadius: 99,
-                              background: 'var(--color-background-secondary)',
-                              color: 'var(--color-text-secondary)',
-                              border: '0.5px solid var(--color-border-tertiary)',
-                            }}>
-                              {src.source}
-                            </span>
-                          ))
+                          dev.patch.map((src, i) => {
+                            const key = `${src.producer}:${src.source}`
+                            const srcState = states.get(key)
+                            const active = srcState === 'pgm' || srcState === 'pvw'
+                            return (
+                              <span key={i} style={{
+                                fontSize: 10, padding: '2px 7px', borderRadius: 99,
+                                border: '0.5px solid',
+                                background: srcState === 'pgm' ? 'var(--pgm)' : srcState === 'pvw' ? 'var(--pvw)' : 'var(--color-background-secondary)',
+                                color:      active ? '#fff' : 'var(--color-text-secondary)',
+                                borderColor: srcState === 'pgm' ? 'var(--pgm)' : srcState === 'pvw' ? 'var(--pvw)' : 'var(--color-border-tertiary)',
+                              }}>
+                                {shortName(src.producer, src.source)}
+                              </span>
+                            )
+                          })
                         )}
                       </div>
                       <button className="sm-btn" onClick={() => setEditing(dev)}>Edit</button>

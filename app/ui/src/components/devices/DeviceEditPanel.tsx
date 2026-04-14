@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { UITallyDevice } from '../../types/DeviceStates'
-import type { GlobalTallySource } from '../../../../src/tally/types/ProducerStates'
+import type { GlobalTallySource, SourceInfo } from '../../../../src/tally/types/ProducerStates'
+import { useBeacon } from '../../context/BeaconContext'
 
 // ? Consumer-specific config sections
 // Add a case here when a consumer type gets configurable device fields.
@@ -68,10 +69,20 @@ export interface DeviceEditModalProps {
 export function DeviceEditModal({ device, open, onSave, onPatch, onRemove, onClose }: DeviceEditModalProps) {
   const [short, setShort] = useState(device.name.short ?? '')
   const [long,  setLong]  = useState(device.name.long)
+  const { producers } = useBeacon()
 
   if (!open) return null
 
   const patch = device.patch
+
+  function shortName(producer: string, source: string): string {
+    const key = `${producer}:${source}`
+    for (const p of producers) {
+      const sources = p.info?.sources as unknown as Record<string, SourceInfo>
+      if (sources?.[key]) return sources[key].short ?? source
+    }
+    return source
+  }
 
   const handleSave = () => {
     onSave({ long, short: short || undefined })
@@ -149,7 +160,7 @@ export function DeviceEditModal({ device, open, onSave, onPatch, onRemove, onClo
                       color: 'var(--color-text-secondary)',
                       border: '0.5px solid var(--color-border-tertiary)',
                     }}>
-                      {src.source}
+                      {shortName(src.producer, src.source)}
                     </span>
                   ))
                 )}

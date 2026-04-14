@@ -1,11 +1,20 @@
 import type { GlobalTallySource, ProducerBundle, SourceInfo } from '../../../../src/tally/types/ProducerStates'
 
+type TallyState = 'pgm' | 'pvw' | 'none'
+
+const TALLY_COLOR: Record<TallyState, string> = {
+    pgm:  'var(--pgm)',
+    pvw:  'var(--pvw)',
+    none: 'var(--color-border-tertiary)',
+}
+
 interface PatchedSourceRowProps {
     src: GlobalTallySource
     producers: ProducerBundle[]
+    tallyState?: TallyState
 }
 
-export default function PatchedSourceRow({ src, producers }: PatchedSourceRowProps) {
+export default function PatchedSourceRow({ src, producers, tallyState = 'none' }: PatchedSourceRowProps) {
     const globalKey = `${src.producer}:${src.source}`
 
     // sources are plain objects at runtime (serialized from Map by the server)
@@ -19,14 +28,17 @@ export default function PatchedSourceRow({ src, producers }: PatchedSourceRowPro
     return (
         <div style={{
             border: '0.5px solid var(--color-border-tertiary)',
+            borderLeft: `3px solid ${TALLY_COLOR[tallyState]}`,
             borderRadius: 'var(--border-radius-md)',
             padding: '8px 11px', display: 'flex', alignItems: 'center', gap: 10, marginBottom: 5,
+            transition: 'border-color .2s',
         }}>
             <span style={{
                 fontSize: 10, fontWeight: 500, padding: '2px 7px',
                 borderRadius: 4, border: '0.5px solid currentColor',
                 flexShrink: 0, minWidth: 30, textAlign: 'center',
-                color: 'var(--color-text-secondary)',
+                color: tallyState !== 'none' ? TALLY_COLOR[tallyState] : 'var(--color-text-secondary)',
+                transition: 'color .2s',
             }}>
                 {srcInfo?.short ?? src.source}
             </span>
