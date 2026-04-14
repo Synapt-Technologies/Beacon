@@ -14,7 +14,8 @@ If you are compiling the image on windows, you must use WSL.
   - [ ] State on disconnect also on web interface
     - [ ] On disconnection from api
       - [ ] Add some sort of connection timeout?  
-    - [ ] On producer disconnect
+    - [x] On producer disconnect
+    - [ ] Only the devices that include sources from the disconnected source?
 - [ ] Add "F11" fullscreen button
 - [ ] Show more source info, pimarily consumer:sourceid at the device source list.
 - [ ] Fix add connection to show the added connection without reload
