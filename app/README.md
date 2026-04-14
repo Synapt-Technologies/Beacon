@@ -10,6 +10,7 @@ If you are compiling the image on windows, you must use WSL.
 - [ ] Implement mqtt ws tally for devices
   - [ ] Add alerts
 - [ ] Persist alert config to settings
+- [ ] On patch change the web tally does not update.
 - [ ] Disconnect warning for tally
   - [ ] State on disconnect also on web interface
     - [ ] On disconnection from api
