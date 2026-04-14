@@ -14,6 +14,7 @@ export default function App() {
         <BeaconProvider>
             <Toaster
                 position="bottom-right"
+                containerStyle={{ bottom: 16, right: 16 }}
                 toastOptions={{
                     error: {
                         duration: 5000,
