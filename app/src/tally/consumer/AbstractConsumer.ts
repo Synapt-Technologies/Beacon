@@ -68,6 +68,15 @@ export abstract class AbstractConsumer<T extends ConsumerEvents & Record<string,
         program: new Set<string>(),
         preview: new Set<string>()
     };
+
+    protected baseState: DeviceTallyState = DeviceTallyState.NONE;
+
+    setBaseState(state: DeviceTallyState): void {
+        this.baseState = state;
+        for (const device of this.devices.values()) {
+            this.setTallyDevice(device);
+        }
+    }
         
     protected checkConfig(config: ConsumerConfig) {
         if (!config.id || config.id == "")
@@ -151,7 +160,7 @@ export abstract class AbstractConsumer<T extends ConsumerEvents & Record<string,
     
     protected setTallyDevice(device: TallyDevice): void {
 
-        let newState = DeviceTallyState.NONE; // Default state
+        let newState = this.baseState; // Default: NONE, or configured state-on-disconnect
 
         for (const patch of device.patch) {
 

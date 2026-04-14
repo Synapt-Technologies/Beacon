@@ -219,6 +219,7 @@ export class TallyLifecycle {
     public async updateOrchestratorConfig(config: Partial<OrchestratorConfig>): Promise<void> {
         this._config.orchestrator = { ...this._config.orchestrator, ...config };
         this.db.setSetting(SettingKey.orchestrator, this._config.orchestrator);
+        this.orchestrator.updateConfig(config);
         this.logger.info(`Orchestrator config updated:`, this._config.orchestrator);
     }
 

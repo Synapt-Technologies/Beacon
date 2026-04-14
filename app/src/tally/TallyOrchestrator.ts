@@ -41,6 +41,7 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
     private consumers: Map<ConsumerId, AbstractConsumer> = new Map();
 
     private producerTallyStates: Map<ProducerId, TallyState> = new Map();
+    private disconnectedProducers: Set<ProducerId> = new Set();
     private globalTallyState: TallyState = {
         preview: new Set(),
         program: new Set()
@@ -54,9 +55,10 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
         this.logger = new Logger(["Tally", "Orchestrator"]);
 
         this.checkConfig(this.config);
-        
+    }
 
-        // TODO Add set tally off / alert (setting) on switcher disconnect!
+    updateConfig(config: Partial<OrchestratorConfig>): void {
+        this.config = { ...this.config, ...config };
     }
 
     protected checkConfig(config: OrchestratorConfig){
@@ -101,9 +103,26 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
             this._parseGlobalTally();
         });
 
-        producer.on('disconnected', () => {
-            this.producerTallyStates.delete(producer.getId());
+        producer.on('connected', () => {
+            this.disconnectedProducers.delete(producer.getId());
             this._parseGlobalTally();
+            if (this.disconnectedProducers.size === 0) {
+                for (const consumer of this.consumers.values()) {
+                    consumer.setBaseState(DeviceTallyState.NONE);
+                }
+            }
+            this.emit('producer_connected', producer.getId());
+        });
+
+        producer.on('disconnected', () => {
+            this.disconnectedProducers.add(producer.getId());
+            this._parseGlobalTally();
+            if (this.config.state_on_disconnect !== DeviceTallyState.NONE) {
+                for (const consumer of this.consumers.values()) {
+                    consumer.setBaseState(this.config.state_on_disconnect);
+                }
+            }
+            this.emit('producer_disconnected', producer.getId());
         });
 
         producer.on('info_update', (newInfo: ProducerInfo) => {
@@ -131,7 +150,8 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
             preview: new Set(),
         }
 
-        for (const state of this.producerTallyStates.values()) {
+        for (const [producerId, state] of this.producerTallyStates.entries()) {
+            if (this.disconnectedProducers.has(producerId)) continue;
             if (!state.moment || state.moment == 0)
                 continue;
             
@@ -142,7 +162,9 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
                 newGlobalTally.moment = state.moment;
         }
 
-        if (newGlobalTally.moment == 0){
+        const hasConnectedProducers = [...this.producers.keys()].some(id => !this.disconnectedProducers.has(id));
+
+        if (newGlobalTally.moment == 0 && hasConnectedProducers) {
             this.logger.warn(`Did not set tally, because of invalid payload. Might be due to init. Global Tally:`, GlobalSourceTools.serialize(newGlobalTally));
             return;
         }
