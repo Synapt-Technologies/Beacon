@@ -36,6 +36,7 @@ If you are compiling the image on windows, you must use WSL.
       - [ ] Reset alert buttons
     - [ ] Add
       - [ ] Reset to factory settings
+- [ ] SHow more producer info
 - [ ] Add System info to settings
   - [ ] System name
   - [ ] More info?
