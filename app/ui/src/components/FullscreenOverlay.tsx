@@ -1,8 +1,8 @@
-import type { TallyState } from '../types/beacon'
+import type { DeviceDisplayState } from '../types/beacon'
 
 interface FullscreenOverlayProps {
   open: boolean
-  state: TallyState
+  state: DeviceDisplayState
   name: string
   sub: string
   onClose: () => void
@@ -12,8 +12,10 @@ export function FullscreenOverlay({ open, state, name, sub, onClose }: Fullscree
   if (!open) return null
 
   const bg =
-    state === 'pgm' ? 'var(--pgm)' :
-    state === 'pvw' ? 'var(--pvw)' :
+    state === 'pgm'     ? 'var(--pgm)'     :
+    state === 'pvw'     ? 'var(--pvw)'     :
+    state === 'danger'  ? 'var(--danger)'  :
+    state === 'warning' ? 'var(--warning)' :
     '#111'
 
   const color =

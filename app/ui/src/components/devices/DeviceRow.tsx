@@ -1,6 +1,6 @@
 import { IconChevronRight } from '../icons'
 import { UITallyDevice } from '../../types/DeviceStates'
-import { stateFromValue } from '../../types/beacon'
+import { stateFromValue, type DeviceDisplayState } from '../../types/beacon'
 import { useBeacon } from '../../context/BeaconContext'
 import type { SourceInfo } from '../../../../src/tally/types/ProducerStates'
 
@@ -23,11 +23,11 @@ export default function DeviceRow({
 }) {
     const { producers } = useBeacon()
 
-    const liveState: SourceState = tallyStates
+    const liveState: DeviceDisplayState = tallyStates
         ? (device.patch.some(s => tallyStates.get(`${s.producer}:${s.source}`) === 'pgm') ? 'pgm'
           : device.patch.some(s => tallyStates.get(`${s.producer}:${s.source}`) === 'pvw') ? 'pvw'
-          : 'none')
-        : stateFromValue(device.state) as SourceState
+          : stateFromValue(device.state))
+        : stateFromValue(device.state)
 
     function shortName(producer: string, source: string): string {
         const key = `${producer}:${source}`

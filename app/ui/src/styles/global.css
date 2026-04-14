@@ -31,11 +31,13 @@
   /* Beacon brand */
   --acc:  #E85D30;
   /* --acc:  #CC0033; */
-  
+
   /* --pgm:  #E24B4A; */
-  --pgm:  #E93838;
+  --pgm:     #E93838;
   /* --pvw:  #1D9E75; */
-  --pvw:  #16B658;
+  --pvw:     #16B658;
+  --danger:  #E57373;
+  --warning: #D4930A;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -63,6 +65,9 @@
     --color-border-tertiary:  rgba(255,255,255,.1);
     --color-border-secondary: rgba(255,255,255,.16);
     --color-border-primary:   rgba(255,255,255,.24);
+
+    --danger:  #E88080;
+    --warning: #F0A830;
   }
 }
 
@@ -92,21 +97,27 @@ input, select { font-family: inherit; }
 
 /* ─── Tally state colours ──────────────────────────────────────────────────── */
 
-.tl-pgm { border-left-color: var(--pgm) !important; }
-.tl-pvw { border-left-color: var(--pvw) !important; }
-.tl-none { border-left-color: var(--color-border-tertiary) !important; }
+.tl-pgm     { border-left-color: var(--pgm)     !important; }
+.tl-pvw     { border-left-color: var(--pvw)     !important; }
+.tl-danger  { border-left-color: var(--danger)  !important; }
+.tl-warning { border-left-color: var(--warning) !important; }
+.tl-none    { border-left-color: var(--color-border-tertiary) !important; }
 
 .blk-pgm { background: var(--pgm) !important; color: #fff !important; }
 .blk-pvw { background: var(--pvw) !important; color: #fff !important; }
+.blk-danger  { background: var(--danger)  !important; color: #fff !important; }
+.blk-warning { background: var(--warning) !important; color: #fff !important; }
 .blk-none {
   background: var(--color-background-tertiary) !important;
   color: var(--color-text-tertiary) !important;
   border: 0.5px solid var(--color-border-tertiary);
 }
 
-.dot-pgm { background: var(--pgm); }
-.dot-pvw { background: var(--pvw); }
-.dot-none { background: var(--color-border-secondary); }
+.dot-pgm     { background: var(--pgm); }
+.dot-pvw     { background: var(--pvw); }
+.dot-danger  { background: var(--danger); }
+.dot-warning { background: var(--warning); }
+.dot-none    { background: var(--color-border-secondary); }
 
 /* ─── Shared component primitives ──────────────────────────────────────────── */
 

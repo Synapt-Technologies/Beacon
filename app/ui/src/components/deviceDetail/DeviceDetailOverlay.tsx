@@ -10,9 +10,9 @@ import InfoBox from './InfoBox'
 import PatchedSourceRow from './PatchedSourceRow'
 import DeviceAlerts from './DeviceAlerts'
 import { UITallyDevice } from '../../types/DeviceStates'
-import { ConnectionType, DeviceTallyState, GlobalDeviceTools } from '../../../../src/tally/types/ConsumerStates'
+import { ConnectionType, GlobalDeviceTools } from '../../../../src/tally/types/ConsumerStates'
 import type { GlobalTallySource } from '../../../../src/tally/types/ProducerStates'
-import type { TallyState } from '../../types/beacon'
+import { stateFromValue, type DeviceDisplayState } from '../../types/beacon'
 
 interface DeviceDetailOverlayProps {
     device: UITallyDevice
@@ -36,11 +36,6 @@ function formatTs(ms?: number): string { // TODO: move to shared util
     return `${Math.round(s / 60)}m ago`
 }
 
-function tallyStr(state: DeviceTallyState): TallyState {
-    if (state === DeviceTallyState.PROGRAM || state === DeviceTallyState.DANGER) return 'pgm'
-    if (state === DeviceTallyState.PREVIEW || state === DeviceTallyState.WARNING) return 'pvw'
-    return 'none'
-}
 
 export function DeviceDetailOverlay({ device, backPath, backLabel }: DeviceDetailOverlayProps) {
     const navigate = useNavigate()
@@ -51,10 +46,11 @@ export function DeviceDetailOverlay({ device, backPath, backLabel }: DeviceDetai
 
     const basePath    = `${backPath}/${device.id.consumer}/${device.id.device}`
     const fsOpen      = location.pathname.endsWith('/fullscreen')
-    const liveState   = device.patch.some(s => states.get(`${s.producer}:${s.source}`) === 'pgm') ? 'pgm'
-                      : device.patch.some(s => states.get(`${s.producer}:${s.source}`) === 'pvw') ? 'pvw'
-                      : states.size > 0 ? 'none' : tallyStr(device.state)
-    const stateStr    = liveState
+    const liveState: DeviceDisplayState =
+        device.patch.some(s => states.get(`${s.producer}:${s.source}`) === 'pgm') ? 'pgm'
+      : device.patch.some(s => states.get(`${s.producer}:${s.source}`) === 'pvw') ? 'pvw'
+      : stateFromValue(device.state)
+    const stateStr = liveState
     const deviceKey   = GlobalDeviceTools.create(device.id.consumer, device.id.device)
     const deviceLong  = device.name.long
     const deviceShort = device.name.short ?? device.name.long ?? device.id.device

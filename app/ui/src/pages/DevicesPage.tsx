@@ -9,6 +9,7 @@ import { UITallyDevice } from '../types/DeviceStates'
 import { GlobalDeviceTools } from '../../../src/tally/types/ConsumerStates'
 import type { GlobalTallySource, SourceInfo } from '../../../src/tally/types/ProducerStates'
 import { useTallyState } from '../hooks/useTallyState'
+import { stateFromValue } from '../types/beacon'
 
 
 export default function DevicesPage() {
@@ -86,7 +87,7 @@ export default function DevicesPage() {
                   const isLast = idx === sectionDevices.length - 1
                   const liveDotState = dev.patch.some(s => states.get(`${s.producer}:${s.source}`) === 'pgm') ? 'pgm'
                                      : dev.patch.some(s => states.get(`${s.producer}:${s.source}`) === 'pvw') ? 'pvw'
-                                     : 'none'
+                                     : stateFromValue(dev.state)
 
                   return (
                     <div

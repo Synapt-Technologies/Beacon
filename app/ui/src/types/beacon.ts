@@ -1,6 +1,10 @@
 // ─── Tally state ─────────────────────────────────────────────────────────────
 
+/** Live MQTT source state — only what tally/global can carry */
 export type TallyState = 'pgm' | 'pvw' | 'none'
+
+/** Full device display state — includes static danger/warning REST states */
+export type DeviceDisplayState = TallyState | 'danger' | 'warning'
 
 /** Mirror of backend DeviceTallyState enum (ConsumerStates.ts) */
 export const DeviceTallyStateValue = {
@@ -11,9 +15,11 @@ export const DeviceTallyStateValue = {
   PROGRAM: 7,
 } as const
 
-export function stateFromValue(v: number): TallyState {
-  if (v === DeviceTallyStateValue.PROGRAM || v === DeviceTallyStateValue.DANGER) return 'pgm'
-  if (v === DeviceTallyStateValue.PREVIEW || v === DeviceTallyStateValue.WARNING) return 'pvw'
+export function stateFromValue(v: number): DeviceDisplayState {
+  if (v === DeviceTallyStateValue.PROGRAM) return 'pgm'
+  if (v === DeviceTallyStateValue.PREVIEW) return 'pvw'
+  if (v === DeviceTallyStateValue.DANGER)  return 'danger'
+  if (v === DeviceTallyStateValue.WARNING) return 'warning'
   return 'none'
 }
 
