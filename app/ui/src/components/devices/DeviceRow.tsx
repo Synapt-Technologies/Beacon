@@ -2,6 +2,8 @@ import { IconChevronRight } from '../icons'
 import { UITallyDevice } from '../../types/DeviceStates'
 import { stateFromValue, type DeviceDisplayState } from '../../types/beacon'
 import { useBeacon } from '../../context/BeaconContext'
+import { useTallyState } from '../../hooks/useTallyState'
+import { GlobalDeviceTools } from '../../../../src/tally/types/ConsumerStates'
 import type { SourceInfo } from '../../../../src/tally/types/ProducerStates'
 
 type SourceState = 'pgm' | 'pvw' | 'none'
@@ -15,19 +17,18 @@ const SOURCE_CHIP_STYLE: Record<SourceState, object> = {
 export default function DeviceRow({
     device,
     onSelect,
-    tallyStates,
 }: {
     device: UITallyDevice
     onSelect: () => void
-    tallyStates?: Map<string, SourceState>
 }) {
-    const { producers } = useBeacon()
+    const { producers, orchestratorConfig } = useBeacon()
+    const { states, deviceStates, systemConnected } = useTallyState()
 
-    const liveState: DeviceDisplayState = tallyStates
-        ? (device.patch.some(s => tallyStates.get(`${s.producer}:${s.source}`) === 'pgm') ? 'pgm'
-          : device.patch.some(s => tallyStates.get(`${s.producer}:${s.source}`) === 'pvw') ? 'pvw'
-          : stateFromValue(device.state))
-        : stateFromValue(device.state)
+    const disconnectState = stateFromValue(orchestratorConfig.state_on_disconnect ?? 0)
+    const deviceKey       = GlobalDeviceTools.create(device.id.consumer, device.id.device)
+    const liveState: DeviceDisplayState = systemConnected
+        ? (deviceStates.get(deviceKey) ?? 'none')
+        : disconnectState
 
     function shortName(producer: string, source: string): string {
         const key = `${producer}:${source}`
@@ -51,11 +52,11 @@ export default function DeviceRow({
                     <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginTop: 2 }}>
                         No sources patched
                     </div>
-                ) : tallyStates ? (
+                ) : (
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 3, marginTop: 4 }}>
                         {device.patch.map((src, i) => {
-                            const key = `${src.producer}:${src.source}`
-                            const state = tallyStates.get(key) ?? 'none'
+                            const key   = `${src.producer}:${src.source}`
+                            const state = systemConnected ? (states.get(key) ?? 'none') : 'none'
                             return (
                                 <span key={i} style={{
                                     fontSize: 10, padding: '1px 2px', borderRadius: 99,
@@ -66,10 +67,6 @@ export default function DeviceRow({
                                 </span>
                             )
                         })}
-                    </div>
-                ) : (
-                    <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {device.patch.map(s => s.source).join(', ')}
                     </div>
                 )}
             </div>

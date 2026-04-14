@@ -87,7 +87,7 @@ export default function DevicesPage() {
                 sectionDevices.map((dev, idx) => {
                   const isLast = idx === sectionDevices.length - 1
                   const liveDotState = systemConnected
-                    ? (deviceStates.get(GlobalDeviceTools.create(dev.id.consumer, dev.id.device)) ?? stateFromValue(dev.state))
+                    ? (deviceStates.get(GlobalDeviceTools.create(dev.id.consumer, dev.id.device)) ?? 'none')
                     : disconnectState
 
                   return (
@@ -118,7 +118,7 @@ export default function DevicesPage() {
                         ) : (
                           dev.patch.map((src, i) => {
                             const key = `${src.producer}:${src.source}`
-                            const srcState = states.get(key)
+                            const srcState = systemConnected ? states.get(key) : undefined
                             const active = srcState === 'pgm' || srcState === 'pvw'
                             return (
                               <span key={i} style={{

@@ -1,98 +1,22 @@
+import { DeviceTallyState, DeviceTallyDisplayName } from '../../../src/tally/types/ConsumerStates'
+
 // ─── Tally state ─────────────────────────────────────────────────────────────
 
 /** Live MQTT source state — only what tally/global can carry */
 export type TallyState = 'pgm' | 'pvw' | 'none'
 
-/** Full device display state — includes static danger/warning REST states */
+/** Full device display state — includes alert/disconnect states */
 export type DeviceDisplayState = TallyState | 'danger' | 'warning'
 
-/** Mirror of backend DeviceTallyState enum (ConsumerStates.ts) */
-export const DeviceTallyStateValue = {
-  NONE: 0,
-  WARNING: 1,
-  DANGER: 2,
-  PREVIEW: 4,
-  PROGRAM: 7,
-} as const
-
+/** Maps a numeric DeviceTallyState value (from REST or orchestratorConfig) to a display string. */
 export function stateFromValue(v: number): DeviceDisplayState {
-  if (v === DeviceTallyStateValue.PROGRAM) return 'pgm'
-  if (v === DeviceTallyStateValue.PREVIEW) return 'pvw'
-  if (v === DeviceTallyStateValue.DANGER)  return 'danger'
-  if (v === DeviceTallyStateValue.WARNING) return 'warning'
-  return 'none'
-}
-
-// ─── Producers ───────────────────────────────────────────────────────────────
-
-export interface GlobalTallySource {
-  producer: string
-  source: string
-}
-
-export interface SourceInfo {
-  source: GlobalTallySource
-  long: string
-  short: string
-}
-
-export interface ProducerConfig {
-  id: string
-  name?: string
-  host?: string
-  port?: number
-}
-
-/** Returned by GET /api/producers.
- *  NOTE: Add an `info` field to AdminState when wiring up ProducerInfo. */
-export interface ProducerEntry {
-  type: string
-  config: ProducerConfig
-  /** Populated once GET /api/producers returns enriched info */
-  info?: {
-    model: string
-    connected: boolean
-    update_moment: number | null
-    sources: Record<string, SourceInfo> // globalKey → SourceInfo
-  }
+  const key = DeviceTallyState[v] as keyof typeof DeviceTallyState | undefined
+  return ((key && DeviceTallyDisplayName[key]) ?? 'none') as DeviceDisplayState
 }
 
 // ─── Consumers ───────────────────────────────────────────────────────────────
 
 export type ConsumerId = 'gpio' | 'aedes'
-
-export interface ConsumerEntry {
-  enabled?: boolean
-  available?: boolean
-  config?: Record<string, unknown>
-}
-
-export type ConsumersState = Partial<Record<ConsumerId, ConsumerEntry>>
-
-// ─── Devices ─────────────────────────────────────────────────────────────────
-
-/** Mirror of backend TallyDevice (ConsumerStates.ts) */
-export interface TallyDevice {
-  id: { consumer: string; device: string }
-  name?: { short: string; long: string }
-  connection: number  // ConnectionType enum value
-  patch: GlobalTallySource[]
-  state: number       // DeviceTallyState enum value
-  last_update?: number
-}
-
-/** Flat shape used by the UI — computed from TallyDevice */
-export interface UIDevice {
-  key: string           // "consumer:device"
-  long: string
-  short: string
-  consumerId: ConsumerId
-  consumerName: string
-  connectionLabel: string
-  patch: GlobalTallySource[]
-  state: TallyState
-  lastUpdate: string
-}
 
 // ─── Alert buttons ───────────────────────────────────────────────────────────
 
@@ -107,13 +31,6 @@ export interface AlertSlot {
   target: AlertTarget | null  // null for CLEAR
   timeout: number | null      // seconds; 0 = hold until cleared; null for CLEAR
 }
-
-export const DEFAULT_ALERT_CONFIG: AlertSlot[] = [
-  { action: 'IDENT', target: 'ALL', timeout: 5 },
-  { action: 'PRIO',  target: 'OPERATOR', timeout: 0 },
-  { action: 'INFO',  target: 'ALL', timeout: 10 },
-  { action: 'CLEAR', target: null, timeout: null },
-]
 
 export const ALERT_COLORS: Record<AlertAction, string> = {
   IDENT:  '#378ADD',
@@ -137,20 +54,4 @@ export const ALERT_LONG: Record<AlertAction, string> = {
   NORMAL: 'Normal (NORMAL)',
   PRIO:   'Priority (PRIO)',
   CLEAR:  'Clear alert',
-}
-
-// ─── Settings ────────────────────────────────────────────────────────────────
-
-export interface AppSettings {
-  consumers: { gpio: boolean; aedes: boolean }
-  network: { adminPort: number; mqttPort: number; keepAliveMs: number }
-  behaviour: { stateOnDisconnect: 'None' | 'Preview' | 'Program' | 'Warning' }
-  alertConfig: AlertSlot[]
-}
-
-export const DEFAULT_SETTINGS: AppSettings = {
-  consumers: { gpio: true, aedes: true },
-  network: { adminPort: 3000, mqttPort: 1883, keepAliveMs: 500 },
-  behaviour: { stateOnDisconnect: 'None' },
-  alertConfig: DEFAULT_ALERT_CONFIG,
 }

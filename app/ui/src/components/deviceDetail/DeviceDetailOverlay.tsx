@@ -48,7 +48,7 @@ export function DeviceDetailOverlay({ device, backPath, backLabel }: DeviceDetai
     const basePath    = `${backPath}/${device.id.consumer}/${device.id.device}`
     const fsOpen      = location.pathname.endsWith('/fullscreen')
     const liveState: DeviceDisplayState = systemConnected
-        ? (deviceStates.get(GlobalDeviceTools.create(device.id.consumer, device.id.device)) ?? stateFromValue(device.state))
+        ? (deviceStates.get(GlobalDeviceTools.create(device.id.consumer, device.id.device)) ?? 'none')
         : disconnectState
     const stateStr = liveState
     const deviceKey   = GlobalDeviceTools.create(device.id.consumer, device.id.device)
@@ -119,7 +119,7 @@ export function DeviceDetailOverlay({ device, backPath, backLabel }: DeviceDetai
                                 key={i}
                                 src={src}
                                 producers={producers}
-                                tallyState={states.get(`${src.producer}:${src.source}`) ?? 'none'}
+                                tallyState={systemConnected ? (states.get(`${src.producer}:${src.source}`) ?? 'none') : 'none'}
                             />
                         ))
                     )}

@@ -3,13 +3,11 @@ import { useBeacon } from '../context/BeaconContext'
 import DeviceRow from '../components/devices/DeviceRow'
 import { DeviceDetailOverlay } from '../components/deviceDetail/DeviceDetailOverlay'
 import { GlobalDeviceTools } from '../../../src/tally/types/ConsumerStates'
-import { useTallyState } from '../hooks/useTallyState'
 
 export default function OverviewPage() {
   const navigate = useNavigate()
   const { consumer, device: deviceId } = useParams()
   const { devices } = useBeacon()
-  const { states } = useTallyState()
 
   const consumerCount  = new Set(devices.map(d => d.id.consumer)).size
   const selectedDevice = consumer && deviceId
@@ -37,7 +35,6 @@ export default function OverviewPage() {
         <DeviceRow
           key={GlobalDeviceTools.create(device.id.consumer, device.id.device)}
           device={device}
-          tallyStates={states}
           onSelect={() => navigate(`/overview/${device.id.consumer}/${device.id.device}`)}
         />
       ))}
