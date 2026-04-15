@@ -20,7 +20,6 @@ export function TallyStateProvider({ children }: { children: ReactNode }) {
   const { consumers } = useBeacon()
   const aedesCfg    = consumers.aedes?.config as Partial<AedesConsumerConfig> | undefined
   const wsPort      = aedesCfg?.ws_port        ?? 9001
-  const consumerId  = aedesCfg?.id             ?? 'aedes'
   const keepAliveMs = aedesCfg?.keep_alive_ms  ?? 500
   const wsUrl       = `ws://${window.location.hostname}:${wsPort}`
 
@@ -57,17 +56,18 @@ export function TallyStateProvider({ children }: { children: ReactNode }) {
           setStates(next)
         } else if (topic.startsWith('tally/device/')) {
           const deviceAddress = topic.slice('tally/device/'.length).split('/')
-          let rawDeviceId = deviceAddress[0]
-          let rawConsumerId = consumerId
-          if (deviceAddress.length > 1) {
-            rawConsumerId = deviceAddress[0]
-            rawDeviceId = deviceAddress[1]
+          if (deviceAddress.length != 2) {
+            console.warn(`Received device update with invalid topic: ${topic}`)
+            return
           }
-          console.log(`Received device update for ${rawConsumerId}/${rawDeviceId}`)
+          
+          const consumerId = deviceAddress[0]
+          const deviceId = deviceAddress[1]
+          console.log(`Received device update for ${consumerId}/${deviceId}`)
 
           const name        = (data as { state?: string }).state ?? ''
           const display     = (DeviceTallyDisplayName[name as keyof typeof DeviceTallyDisplayName] ?? 'none') as DeviceDisplayState
-          const fullKey     = GlobalDeviceTools.create(rawConsumerId, rawDeviceId)
+          const fullKey     = GlobalDeviceTools.create(consumerId, deviceId)
           setDeviceStates(prev => new Map(prev).set(fullKey, display))
         } else if (topic === 'system/info') {
           setLastKeepalive(Date.now())
@@ -88,7 +88,7 @@ export function TallyStateProvider({ children }: { children: ReactNode }) {
       cancelled = true
       client.end()
     }
-  }, [wsUrl, consumerId, keepAliveMs])
+  }, [wsUrl, keepAliveMs])
 
   // Staleness detection: flag if no keepalive received within keepAliveMs * 3
   useEffect(() => {
