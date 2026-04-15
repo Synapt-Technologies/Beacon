@@ -11,6 +11,8 @@ mmdebstrap:
   packages:
     - git
     - openssh-server
+    - pigpio
+    - build-essential
 
   customize-hooks:
     - |-
