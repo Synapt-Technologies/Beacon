@@ -116,10 +116,17 @@ export function BeaconProvider({ children }: { children: ReactNode }) {
 
     // ? Producers
     const addProducer = async (type: string, config: ProducerConfig & Record<string, unknown>) => {
-      try {
-        await api.addProducer(type, config)
-        await fetchAll()
-      } catch (e) { toast.error(e instanceof Error ? e.message : 'Failed to add connection') ; throw e }
+      await toast.promise(
+        (async () => {
+          await api.addProducer(type, config)
+          await fetchAll()
+        })(),
+        {
+          loading: 'Adding connection…',
+          success: 'Connection added',
+          error:   (e: unknown) => e instanceof Error ? e.message : 'Failed to add connection',
+        }
+      )
     }
     const removeProducer = async (id: ProducerId) => {
       try {

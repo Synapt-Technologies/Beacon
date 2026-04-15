@@ -1,4 +1,3 @@
-import { EventEmitter } from "events";
 import express from "express";
 import ViteExpress from "vite-express";
 import { Logger } from "../logging/Logger";
@@ -18,24 +17,23 @@ export interface AdminState {
     info: SystemInfo;
 }
 
-export interface AdminServerEvents {
-    add_producer:    [type: string, config: ProducerConfig];
-    update_producer: [id: ProducerId, type: string, config: ProducerConfig];
-    remove_producer: [id: ProducerId];
+export interface AdminMutationHandlers {
+    addProducer:    (type: string, config: ProducerConfig) => Promise<void>
+    updateProducer: (id: ProducerId, type: string, config: ProducerConfig) => Promise<void>
+    removeProducer: (id: ProducerId) => Promise<void>
 
-    update_consumer: [update: ConsumerUpdate];
+    updateConsumer: (update: ConsumerUpdate) => Promise<void>
 
-    patch_device:  [address: DeviceAddress, patch: GlobalTallySource[]];
-    rename_device: [address: DeviceAddress, name: DeviceName];
-    remove_device: [address: DeviceAddress];
-    send_alert:    [address: DeviceAddress, type: DeviceAlertState, target: DeviceAlertTarget];
+    patchDevice:  (address: DeviceAddress, patch: GlobalTallySource[]) => void
+    renameDevice: (address: DeviceAddress, name: DeviceName) => void
+    removeDevice: (address: DeviceAddress) => void
+    sendAlert:    (address: DeviceAddress, type: DeviceAlertState, target: DeviceAlertTarget) => void
 
-    import_config: [config: LifecycleConfig];
-
-    update_orchestrator: [config: Partial<OrchestratorConfig>];
+    updateOrchestrator: (config: Partial<OrchestratorConfig>) => Promise<void>
+    importConfig:       (config: LifecycleConfig) => Promise<void>
 }
 
-export class AdminServer extends EventEmitter<AdminServerEvents> {
+export class AdminServer {
 
     private app = express();
     private logger = new Logger(["ADMIN"]);
@@ -46,15 +44,19 @@ export class AdminServer extends EventEmitter<AdminServerEvents> {
         orchestratorConfig: {},
         info: {}
     };
+    private handlers!: AdminMutationHandlers;
     private updateManager: UpdateManager;
 
     constructor(updateManager: UpdateManager) {
-        super();
         this.updateManager = updateManager;
     }
 
     public setState(state: AdminState): void {
         this.state = state;
+    }
+
+    public setHandlers(handlers: AdminMutationHandlers): void {
+        this.handlers = handlers;
     }
 
     public start(port: number = 80): void {
@@ -82,33 +84,49 @@ export class AdminServer extends EventEmitter<AdminServerEvents> {
             res.json(parsed);
         });
 
-        this.app.post("/api/producers", (req, res) => {
+        this.app.post("/api/producers", async (req, res) => {
             const { type, config } = req.body;
             if (!type || !config?.id) {
                 res.status(400).json({ error: "type and config.id are required" });
                 return;
             }
-            this.emit("add_producer", type, config as ProducerConfig);
-            res.status(204).send();
-            this.logger.info(`Producer add requested:`, type, config.id);
+            try {
+                await this.handlers.addProducer(type, config as ProducerConfig);
+                res.status(204).send();
+                this.logger.info(`Producer added:`, type, config.id);
+            } catch (e) {
+                this.logger.error("Failed to add producer:", e);
+                res.status(500).json({ error: e instanceof Error ? e.message : "Failed to add producer" });
+            }
         });
 
-        this.app.patch("/api/producers/:id", (req, res) => {
+        this.app.patch("/api/producers/:id", async (req, res) => {
             const id = req.params.id;
             const { type, config } = req.body;
             if (!type || !config) {
                 res.status(400).json({ error: "type and config are required" });
                 return;
             }
-            this.emit("update_producer", id, type, { ...config, id } as ProducerConfig);
-            res.status(204).send();
-            this.logger.info(`Producer update requested:`, id);
+            try {
+                await this.handlers.updateProducer(id, type, { ...config, id } as ProducerConfig);
+                res.status(204).send();
+                this.logger.info(`Producer updated:`, id);
+            } catch (e) {
+                this.logger.error("Failed to update producer:", id, e);
+                res.status(500).json({ error: e instanceof Error ? e.message : "Failed to update producer" });
+            }
         });
 
-        this.app.delete("/api/producers/:id", (req, res) => {
-            this.emit("remove_producer", req.params.id);
-            res.status(204).send();
-            this.logger.info(`Producer delete requested:`, req.params.id);
+        this.app.delete("/api/producers/:id", async (req, res) => {
+            const id = req.params.id;
+            try {
+                await this.handlers.removeProducer(id);
+                res.status(204).send();
+                this.logger.info(`Producer removed:`, id);
+            } catch (e) {
+                this.logger.error("Failed to remove producer:", id, e);
+                res.status(500).json({ error: e instanceof Error ? e.message : "Failed to remove producer" });
+            }
         });
 
         // ? Consumers
@@ -117,15 +135,20 @@ export class AdminServer extends EventEmitter<AdminServerEvents> {
             res.json(this.state.consumers);
         });
 
-        this.app.patch("/api/consumers/:id", (req, res) => {
+        this.app.patch("/api/consumers/:id", async (req, res) => {
             const id = req.params.id;
             if (!this.state.consumers || !(id in this.state.consumers)) {
                 res.status(400).json({ error: `Unknown consumer: ${id}` });
                 return;
             }
-            this.emit("update_consumer", { id, ...req.body } as ConsumerUpdate);
-            res.status(204).send();
-            this.logger.info(`Consumer update requested:`, id, req.body);
+            try {
+                await this.handlers.updateConsumer({ id, ...req.body } as ConsumerUpdate);
+                res.status(204).send();
+                this.logger.info(`Consumer updated:`, id, req.body);
+            } catch (e) {
+                this.logger.error("Failed to update consumer:", id, e);
+                res.status(500).json({ error: e instanceof Error ? e.message : "Failed to update consumer" });
+            }
         });
 
         // ? Devices
@@ -141,9 +164,9 @@ export class AdminServer extends EventEmitter<AdminServerEvents> {
                 res.status(400).json({ error: "patch must be an array" });
                 return;
             }
-            this.emit("patch_device", { consumer, device }, patch);
+            this.handlers.patchDevice({ consumer, device }, patch);
             res.status(204).send();
-            this.logger.info(`Device patch requested:`, { consumer, device }, patch);
+            this.logger.info(`Device patched:`, { consumer, device }, patch);
         });
 
         this.app.patch("/api/devices/:consumer/:device/name", (req, res) => {
@@ -153,16 +176,16 @@ export class AdminServer extends EventEmitter<AdminServerEvents> {
                 res.status(400).json({ error: "name.long is required" });
                 return;
             }
-            this.emit("rename_device", { consumer, device }, name);
+            this.handlers.renameDevice({ consumer, device }, name);
             res.status(204).send();
-            this.logger.info(`Device rename requested:`, { consumer, device }, name);
+            this.logger.info(`Device renamed:`, { consumer, device }, name);
         });
 
         this.app.delete("/api/devices/:consumer/:device", (req, res) => {
             const { consumer, device } = req.params;
-            this.emit("remove_device", { consumer, device });
+            this.handlers.removeDevice({ consumer, device });
             res.status(204).send();
-            this.logger.info(`Device delete requested:`, { consumer, device });
+            this.logger.info(`Device removed:`, { consumer, device });
         });
 
         this.app.post("/api/devices/:consumer/:device/alert", (req, res) => {
@@ -172,9 +195,9 @@ export class AdminServer extends EventEmitter<AdminServerEvents> {
                 res.status(400).json({ error: "type and target are required" });
                 return;
             }
-            this.emit("send_alert", { consumer, device }, type as DeviceAlertState, target as DeviceAlertTarget);
+            this.handlers.sendAlert({ consumer, device }, type as DeviceAlertState, target as DeviceAlertTarget);
             res.status(204).send();
-            this.logger.info(`Device alert requested:`, { consumer, device }, DeviceAlertState[type], DeviceAlertTarget[target]);
+            this.logger.info(`Device alert sent:`, { consumer, device }, DeviceAlertState[type], DeviceAlertTarget[target]);
         });
 
         // ? Config
@@ -184,10 +207,15 @@ export class AdminServer extends EventEmitter<AdminServerEvents> {
             res.json({ producers, consumers: this.state.consumers });
         });
 
-        this.app.post("/api/config/import", (req, res) => {
-            this.emit("import_config", req.body as LifecycleConfig);
-            res.status(204).send();
-            this.logger.info(`Config import requested.`);
+        this.app.post("/api/config/import", async (req, res) => {
+            try {
+                await this.handlers.importConfig(req.body as LifecycleConfig);
+                res.status(204).send();
+                this.logger.info(`Config imported.`);
+            } catch (e) {
+                this.logger.error("Failed to import config:", e);
+                res.status(500).json({ error: e instanceof Error ? e.message : "Failed to import config" });
+            }
         });
 
         // ? Orchestrator config
@@ -196,10 +224,15 @@ export class AdminServer extends EventEmitter<AdminServerEvents> {
             res.json(this.state.orchestratorConfig);
         });
 
-        this.app.patch("/api/config/orchestrator", (req, res) => {
-            this.emit("update_orchestrator", req.body as Partial<OrchestratorConfig>);
-            res.status(204).send();
-            this.logger.info(`Orchestrator config update requested:`, req.body);
+        this.app.patch("/api/config/orchestrator", async (req, res) => {
+            try {
+                await this.handlers.updateOrchestrator(req.body as Partial<OrchestratorConfig>);
+                res.status(204).send();
+                this.logger.info(`Orchestrator config updated:`, req.body);
+            } catch (e) {
+                this.logger.error("Failed to update orchestrator config:", e);
+                res.status(500).json({ error: e instanceof Error ? e.message : "Failed to update orchestrator config" });
+            }
         });
 
         // ? Update

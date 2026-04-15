@@ -8,7 +8,11 @@ const BASE = '/api'
 
 async function request<T = void>(path: string, init?: RequestInit): Promise<T> {
     const res = await fetch(`${BASE}${path}`, init)
-    if (!res.ok) throw new Error(`${init?.method ?? 'GET'} ${path} failed: ${res.status}`)
+    if (!res.ok) {
+        let message = `${init?.method ?? 'GET'} ${path} failed: ${res.status}`
+        try { const body = await res.json(); if (body?.error) message = body.error } catch {}
+        throw new Error(message)
+    }
     if (res.status === 204) return undefined as T
     return res.json()
 }

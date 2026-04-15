@@ -56,67 +56,59 @@ export class AppCore {
 
         syncState();
 
-        // ? Producers
+        this.admin.setHandlers({
 
-        this.admin.on("add_producer", (type, config) => {
-            this.lifecycle.addProducer(type, config).then(syncState).catch((err) => {
-                this.logger.error("Failed to add producer:", err);
-            });
-        });
+            // ? Producers
 
-        this.admin.on("update_producer", (id, type, config) => {
-            this.lifecycle.updateProducer(id, type, config).then(syncState).catch((err) => {
-                this.logger.error("Failed to update producer:", id, err);
-            });
-        });
+            addProducer: async (type, config) => {
+                await this.lifecycle.addProducer(type, config);
+                syncState();
+            },
+            updateProducer: async (id, type, config) => {
+                await this.lifecycle.updateProducer(id, type, config);
+                syncState();
+            },
+            removeProducer: async (id) => {
+                await this.lifecycle.removeProducer(id);
+                syncState();
+            },
 
-        this.admin.on("remove_producer", (id) => {
-            this.lifecycle.removeProducer(id).catch((err) => {
-                this.logger.error("Failed to remove producer:", id, err);
-            });
-        });
+            // ? Consumers
 
-        // ? Consumers
+            updateConsumer: async (update) => {
+                await this.lifecycle.updateConsumer(update);
+                syncState();
+            },
 
-        this.admin.on("update_consumer", (update) => {
-            this.lifecycle.updateConsumer(update).then(syncState).catch((err) => {
-                this.logger.error("Failed to update consumer:", err);
-            });
-        });
+            // ? Devices
 
-        // ? Devices
+            patchDevice: (address, patch) => {
+                this.lifecycle.patchDevice(address, patch);
+                syncState();
+            },
+            renameDevice: (address, name) => {
+                this.lifecycle.renameDevice(address, name);
+                syncState();
+            },
+            removeDevice: (address) => {
+                this.lifecycle.removeDevice(address);
+                syncState();
+            },
+            sendAlert: (address, type, target) => {
+                this.lifecycle.sendAlert(address, type, target);
+            },
 
-        this.admin.on("patch_device", (address, patch) => {
-            this.lifecycle.patchDevice(address, patch);
-            syncState();
-        });
+            // ? Config
 
-        this.admin.on("rename_device", (address, name) => {
-            this.lifecycle.renameDevice(address, name);
-            syncState();
-        });
+            updateOrchestrator: async (config) => {
+                await this.lifecycle.updateOrchestratorConfig(config);
+                syncState();
+            },
+            importConfig: async (config) => {
+                await this.lifecycle.importConfig(config);
+                syncState();
+            },
 
-        this.admin.on("remove_device", (address) => {
-            this.lifecycle.removeDevice(address);
-            syncState();
-        });
-
-        this.admin.on("send_alert", (address, type, target) => {
-            this.lifecycle.sendAlert(address, type, target);
-        });
-
-        // ? Config
-
-        this.admin.on("update_orchestrator", (config) => {
-            this.lifecycle.updateOrchestratorConfig(config).then(syncState).catch((err) => {
-                this.logger.error("Failed to update orchestrator config:", err);
-            });
-        });
-
-        this.admin.on("import_config", (config) => {
-            this.lifecycle.importConfig(config).then(syncState).catch((err) => {
-                this.logger.error("Failed to import config:", err);
-            });
         });
     }
 
