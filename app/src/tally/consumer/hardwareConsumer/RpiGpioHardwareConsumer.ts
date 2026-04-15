@@ -1,7 +1,8 @@
 import { AbstractConsumer, type ConsumerConfig } from "../AbstractConsumer";
 import { ConnectionType, DeviceTallyState, GlobalDeviceTools, type DeviceAddress, type DeviceAlertState, type DeviceAlertTarget, type DeviceId, type TallyDevice } from "../../types/ConsumerStates";
 import { HardwareVersion } from "../../../types/SystemInfo";
-import fs from 'fs';
+import { execSync } from 'child_process';
+import { spawn } from 'child_process';
 
 // TODO: check if this is the right GPIO library. Was rpi-gpio before, but it's not updated.
 
@@ -70,22 +71,6 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
         super(config);
     }
 
-    /**
-     * Exports a GPIO pin via sysfs, configures it as output-low, and returns
-     * an open file descriptor to its value file for fast subsequent writes.
-     */
-    private setupPin(pin: number): number {
-        const gpioPath = `/sys/class/gpio/gpio${pin}`;
-        try {
-            fs.writeFileSync('/sys/class/gpio/export', String(pin));
-        } catch (e: any) {
-            if (e.code !== 'EBUSY') throw e; // EBUSY = already exported, that's fine
-        }
-        fs.writeFileSync(`${gpioPath}/direction`, 'out');
-        fs.writeFileSync(`${gpioPath}/value`, '0');
-        return fs.openSync(`${gpioPath}/value`, fs.constants.O_WRONLY);
-    }
-
     async init(): Promise<void> {
         this.info.version = this.getHardwareVersion();
 
@@ -105,9 +90,12 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
 
                 const pins = pinMap[i];
 
+                // Format: pinctrl set <gpio> op dl (op=output, dl=drive low)
+                execSync(`pinctrl set ${pins.program} op dl ${pins.preview} op dl`);
+
                 const gpioPins: GpioTallyOutput = {
-                    program: this.setupPin(pins.program),
-                    preview: this.setupPin(pins.preview),
+                    program: pins.program,
+                    preview: pins.preview
                 };
 
                 this.gpioMap.set(GlobalDeviceTools.create(devIndx.consumer, devIndx.device), gpioPins);
@@ -142,12 +130,7 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
         }
     }
 
-    destroy(): void {
-        for (const output of this.gpioMap.values()) {
-            try { fs.closeSync(output.program); } catch {}
-            try { fs.closeSync(output.preview); } catch {}
-        }
-    }
+    destroy(): void {}
 
     protected getHardwareVersion(): HardwareVersion {
         return HardwareVersion.V2;
@@ -174,36 +157,30 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
             return;
         }
 
-        try {
+        this.stateCache.set(devAddr, device.state);
 
-            // Write '1' (high) or '0' (low) directly to the sysfs value file.
-            // position=0 ensures pwrite() semantics — no seek needed between calls.
-            switch(device.state){
-                case DeviceTallyState.PROGRAM:
-                    fs.writeSync(outputs.program, '1', 0, 'utf8');
-                    fs.writeSync(outputs.preview, '0', 0, 'utf8');
-                    break;
-                case DeviceTallyState.PREVIEW:
-                    fs.writeSync(outputs.program, '0', 0, 'utf8');
-                    fs.writeSync(outputs.preview, '1', 0, 'utf8');
-                    break;
-                case DeviceTallyState.DANGER: // TODO: Maybe different state? No PWM though, not sure if possible.
-                case DeviceTallyState.WARNING:
-                    fs.writeSync(outputs.program, '1', 0, 'utf8');
-                    fs.writeSync(outputs.preview, '1', 0, 'utf8');
-                    break;
-                default:
-                    fs.writeSync(outputs.program, '0', 0, 'utf8');
-                    fs.writeSync(outputs.preview, '0', 0, 'utf8');
-            }
-
-            this.stateCache.set(devAddr, device.state);
-            this.logger.debug(`Set Tally GPIO for device:`, device);
-
-        } catch (e) {
-            this.logger.error("Failed sending tally to device:", devAddr, "Error:", e);
+        // spawn() calls execve() directly — no shell, non-blocking, returns void immediately.
+        // Both pins are set in a single pinctrl invocation to halve the number of processes.
+        let args: string[];
+        switch(device.state){
+            case DeviceTallyState.PROGRAM:
+                args = ['set', String(outputs.program), 'dh', String(outputs.preview), 'dl'];
+                break;
+            case DeviceTallyState.PREVIEW:
+                args = ['set', String(outputs.program), 'dl', String(outputs.preview), 'dh'];
+                break;
+            case DeviceTallyState.DANGER: // TODO: Maybe different state? No PWM though, not sure if possible.
+            case DeviceTallyState.WARNING:
+                args = ['set', String(outputs.program), 'dh', String(outputs.preview), 'dh'];
+                break;
+            default:
+                args = ['set', String(outputs.program), 'dl', String(outputs.preview), 'dl'];
         }
 
+        spawn('pinctrl', args, { stdio: 'ignore' })
+            .on('error', (e) => this.logger.error("Failed sending tally to device:", devAddr, "Error:", e));
+
+        this.logger.debug(`Set Tally GPIO for device:`, device);
     }
 
     setDeviceAlert(address: DeviceAddress, type: DeviceAlertState, target: DeviceAlertTarget): void {
