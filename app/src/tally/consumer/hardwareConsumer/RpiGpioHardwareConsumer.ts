@@ -54,6 +54,7 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
     }
     
     protected gpioMap: Map<DeviceId, GpioTallyOutput> = new Map();
+    protected stateCache: Map<DeviceId, DeviceTallyState> = new Map();
 
     public static readonly DefaultConfig: Required<GpioConsumerConfig> = {
         ...AbstractConsumer.DefaultConfig,
@@ -91,8 +92,7 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
                 const pins = pinMap[i];
 
                 // Format: pinctrl set <gpio> op dl (op=output, dl=drive low)
-                execSync(`pinctrl set ${pins.program} op dl`);
-                execSync(`pinctrl set ${pins.preview} op dl`);
+                execSync(`pinctrl set ${pins.program} op dl ${pins.preview} op dl`);
 
                 const gpioPins: GpioTallyOutput = {
                     program: pins.program,
@@ -153,27 +153,29 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
             return;
         }
 
+        if (this.stateCache.get(devAddr) === device.state) {
+            this.logger.debug(`Skipping GPIO write for device (state unchanged):`, device);
+            return;
+        }
+
         try {
 
             switch(device.state){
                 case DeviceTallyState.PROGRAM:
-                    execSync(`pinctrl set ${outputs.program} dh`);
-                    execSync(`pinctrl set ${outputs.preview} dl`);
+                    execSync(`pinctrl set ${outputs.program} dh ${outputs.preview} dl`);
                     break;
                 case DeviceTallyState.PREVIEW:
-                    execSync(`pinctrl set ${outputs.program} dl`);
-                    execSync(`pinctrl set ${outputs.preview} dh`);
+                    execSync(`pinctrl set ${outputs.program} dl ${outputs.preview} dh`);
                     break;
                 case DeviceTallyState.DANGER: // TODO: Maybe different state? No PWM though, not sure if possible.
                 case DeviceTallyState.WARNING:
-                    execSync(`pinctrl set ${outputs.program} dh`);
-                    execSync(`pinctrl set ${outputs.preview} dh`);
+                    execSync(`pinctrl set ${outputs.program} dh ${outputs.preview} dh`);
                     break;
                 default:
-                    execSync(`pinctrl set ${outputs.program} dl`);
-                    execSync(`pinctrl set ${outputs.preview} dl`);
+                    execSync(`pinctrl set ${outputs.program} dl ${outputs.preview} dl`);
             }
 
+            this.stateCache.set(devAddr, device.state);
             this.logger.debug(`Set Tally GPIO for device:`, device);
 
         } catch (e) {
