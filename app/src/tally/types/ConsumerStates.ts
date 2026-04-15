@@ -60,6 +60,13 @@ export interface AlertSlotConfig {
     timeout: number | null;
 }
 
+export const DEFAULT_ALERT_SLOTS: AlertSlotConfig[] = [
+    { action: DeviceAlertState.IDENT, target: DeviceAlertTarget.ALL,      timeout: 5    },
+    { action: DeviceAlertState.PRIO,  target: DeviceAlertTarget.OPERATOR, timeout: 0    },
+    { action: DeviceAlertState.INFO,  target: DeviceAlertTarget.ALL,      timeout: 10   },
+    { action: DeviceAlertState.CLEAR, target: null,                       timeout: null },
+]
+
 export interface TallyDevice {
     id: DeviceAddress;
     name: DeviceName;
