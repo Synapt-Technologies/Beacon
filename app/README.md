@@ -10,7 +10,7 @@ If you are compiling the image on windows, you must use WSL.
 - [ ] !! DB HAS TO BE RESET ON UPDATE !!
 - [x] Implement mqtt ws tally for devices
   - [ ] Add alerts
-- [ ] Persist alert config to settings
+- [x] Persist alert config to settings
 - [ ] On patch change the web tally does not update.
 - [ ] Disconnect warning for tally
   - [ ] State on disconnect also on web interface
@@ -21,8 +21,7 @@ If you are compiling the image on windows, you must use WSL.
     - [ ] Only the devices that include sources from the disconnected source?
 - [ ] Add "F11" fullscreen button
 - [ ] Show more source info, pimarily consumer:sourceid at the device source list.
-- [ ] Fix add connection to show the added connection without reload
-  - [ ] Maybe background poll for changes?
+- [x] Fix add connection to show the added connection without reload
 - [ ] Add Virtual tally
   - [ ] Display them at the top of the tally overview
     - [ ] Add tally type / consumer filter
@@ -56,7 +55,7 @@ If you are compiling the image on windows, you must use WSL.
 - [ ] **REFACTOR ORCHESTRATION**
   - [ ] Consumers don't own the tally process
   - [ ] Consumer exports tally devices. 
-  - [x] The orchestrator sets the tallystate 
+  - [ ] The orchestrator sets the tallystate 
   - [ ] The Consumer exposes sendTallyDevice (or similar)
   - [ ] No ConsumeTally
   - [ ] The orchestrator decides which devices to send
