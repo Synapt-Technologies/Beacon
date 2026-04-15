@@ -1,3 +1,4 @@
+import { Component, type ReactNode } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import { BeaconProvider } from "./context/BeaconContext";
@@ -11,8 +12,47 @@ import SettingsPage from "./pages/SettingsPage";
 import UpdatePage from "./pages/UpdatePage";
 import './styles/global.css';
 
+// Error boundary that catches render crashes caused by Vite HMR context
+// identity mismatches (e.g. BeaconContext recreated mid-reload during an update).
+// Rather than reloading immediately (which races with server restart), we poll
+// the API until the server is confirmed ready, then do a clean reload.
+class AppErrorBoundary extends Component<
+    { children: ReactNode },
+    { hasError: boolean }
+> {
+    state = { hasError: false }
+    private _poll?: ReturnType<typeof setInterval>
+
+    static getDerivedStateFromError() {
+        return { hasError: true }
+    }
+
+    componentDidUpdate(_: unknown, prev: { hasError: boolean }) {
+        if (!prev.hasError && this.state.hasError) {
+            this._poll = setInterval(async () => {
+                try {
+                    await fetch('/api/update/status')
+                    window.location.reload()
+                } catch {
+                    // server not ready yet — keep waiting
+                }
+            }, 2000)
+        }
+    }
+
+    componentWillUnmount() {
+        if (this._poll) clearInterval(this._poll)
+    }
+
+    render() {
+        if (this.state.hasError) return null
+        return this.props.children
+    }
+}
+
 export default function App() {
     return (
+        <AppErrorBoundary>
         <BeaconProvider>
           <TallyStateProvider>
             <Toaster
@@ -53,5 +93,6 @@ export default function App() {
             </BrowserRouter>
           </TallyStateProvider>
         </BeaconProvider>
+        </AppErrorBoundary>
     );
 }

@@ -14,6 +14,21 @@ export default function UpdatePage() {
     BeaconApi.getUpdateStatus().then(setStatus).catch(() => {})
   }, [])
 
+  // When an update is in progress, poll until the server comes back up,
+  // then hard-reload to pick up the new code.
+  useEffect(() => {
+    if (!status?.updating) return
+    const id = setInterval(async () => {
+      try {
+        await BeaconApi.getUpdateStatus()
+        window.location.reload()
+      } catch {
+        // server still restarting — keep polling
+      }
+    }, 2000)
+    return () => clearInterval(id)
+  }, [status?.updating])
+
   const handleCheck = async () => {
     setChecking(true)
     try {
