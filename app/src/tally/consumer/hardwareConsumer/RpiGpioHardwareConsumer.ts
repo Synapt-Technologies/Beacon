@@ -168,33 +168,31 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
 
         switch(state){
             case DeviceTallyState.PROGRAM:
-                this._execCmd(`pinctrl set ${output.program} dh`);
-                this._execCmd(`pinctrl dl ${output.preview} dl`);
+                this._execCmd(`pinctrl set ${output.program} dh && pinctrl dh ${output.preview} dl`);
                 break;
             case DeviceTallyState.PREVIEW:
-                this._execCmd(`pinctrl set ${output.program} dl`);
-                this._execCmd(`pinctrl dl ${output.preview} dh`);
+                this._execCmd(`pinctrl set ${output.program} dl && pinctrl dh ${output.preview} dh`);
                 break;
             case DeviceTallyState.DANGER: // TODO: Maybe different state? No PWM though, not sure if possible.
             case DeviceTallyState.WARNING:
-                this._execCmd(`pinctrl set ${output.program} dh`);
-                this._execCmd(`pinctrl dl ${output.preview} dh`);
+                this._execCmd(`pinctrl set ${output.program} && pinctrl dh ${output.preview} dh`);
                 break;
             default:
-                this._execCmd(`pinctrl set ${output.program} dl`);
-                this._execCmd(`pinctrl dl ${output.preview} dl`);
+                this._execCmd(`pinctrl set ${output.program} && pinctrl dl ${output.preview} dl`);
         }
 
         this.logger.debug(`Set GPIO for state ${state}:`, output);
     }
 
     private _execCmd(cmd: string): void {
-        exec(cmd, (error, stdout, stderr) => {
-            if (error) {
-                this.logger.error(`Exec error: ${error}`);
-                this.logger.error(`Stderr: ${stderr}`); // This contains the actual reason
-            }
-        });
+        // exec(cmd, (error, stdout, stderr) => {
+        //     if (error) {
+        //         this.logger.error(`Exec error: ${error}`);
+        //         this.logger.error(`Stderr: ${stderr}`); // This contains the actual reason
+        //     }
+        // });
+        
+        execSync(cmd);
     }
 
     setDeviceAlert(address: DeviceAddress, type: DeviceAlertState, target: DeviceAlertTarget): void {
