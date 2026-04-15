@@ -40,9 +40,6 @@ If you are compiling the image on windows, you must use WSL.
   - [ ] Add
     - [ ] Reset to factory settings
 - [ ] Show more producer info
-- [ ] Add System info to settings
-  - [ ] System name
-  - [ ] More info?
 - [ ] Add hooks for alerts
   - [ ] Http
   - [ ] Osc
