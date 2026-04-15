@@ -7,19 +7,12 @@ import { DeviceTallyState, GlobalDeviceTools, type DeviceAddress, type TallyDevi
 import { Logger } from '../logging/Logger';
 import type { LifecycleConfig, LifeCycleConsumerConfig } from '../tally/TallyLifecycle';
 import { TallyOrchestrator, type OrchestratorConfig } from '../tally/TallyOrchestrator';
-import type { UIAlertSlot } from '../types/UIStates';
-
-
 export const SettingKey = {
     consumers: {
         aedes: "consumers.aedes",
         gpio: "consumers.gpio",
     },
     orchestrator: "orchestrator",
-    ui: {
-        alert: "ui.alert"
-    }
-    
 } as const;
 
 export type SettingKey = LeafValues<typeof SettingKey>;
@@ -35,9 +28,6 @@ interface SettingMap { // ?Note: String if not set.
         gpio: LifeCycleConsumerConfig;
     }
     orchestrator: OrchestratorConfig;
-    ui: {
-        alert: UIAlertSlot[];
-    }
 }
 
 type SettingType<K extends string, T = SettingMap> =

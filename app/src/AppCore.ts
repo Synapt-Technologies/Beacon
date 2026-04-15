@@ -1,5 +1,4 @@
 import { TallyLifecycle } from "./tally/TallyLifecycle";
-import type { ProducerConfig } from "./tally/producer/AbstractTallyProducer";
 import { Logger } from "./logging/Logger";
 import { AdminServer } from "./admin/AdminServer";
 import { CoreDatabase } from "./database/CoreDatabase";

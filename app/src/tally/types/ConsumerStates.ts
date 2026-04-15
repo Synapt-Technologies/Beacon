@@ -54,6 +54,12 @@ export interface DeviceName {
     long: string;
 }
 
+export interface AlertSlotConfig {
+    action: DeviceAlertState;
+    target: DeviceAlertTarget | null;
+    timeout: number | null;
+}
+
 export interface TallyDevice {
     id: DeviceAddress;
     name: DeviceName;

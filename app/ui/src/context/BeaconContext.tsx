@@ -68,7 +68,6 @@ export function BeaconProvider({ children }: { children: ReactNode }) {
     const [devices, setDevices]                       = useState<UITallyDevice[]>([])
     const [orchestratorConfig, setOrchestratorConfig] = useState<Partial<OrchestratorConfig>>({})
     const [system, setSystem]                          = useState<SystemInfo>({})
-    const [uiConfig, setUiConfig]                     = useState<UIConfig>({ alerts: DEFAULT_UI_ALERT_CONFIG })
     const [loading, setLoading]                       = useState(false)
     const [error, setError]                           = useState<string | null>(null)
 
@@ -201,21 +200,19 @@ export function BeaconProvider({ children }: { children: ReactNode }) {
       } catch (e) { toast.error(e instanceof Error ? e.message : 'Failed to send alert') ; throw e }
     }
 
-    // ? Alert slots — applied immediately, no pending state
+    // ? Alert slots — derive from orchestratorConfig, persist via updateOrchestratorConfig
     const updateAlertSlot = (index: number, slot: UIAlertSlot) => {
-      setUiConfig(prev => {
-        const alerts = [...prev.alerts]
-        alerts[index] = slot
-        return { ...prev, alerts }
-      })
+      const alerts = [...(orchestratorConfig.alert_slots ?? DEFAULT_UI_ALERT_CONFIG)]
+      alerts[index] = slot
+      updateOrchestratorConfig({ alert_slots: alerts }).catch(() => {})
     }
     const resetAlertSlot = (index: number) => {
-      setUiConfig(prev => {
-        const alerts = [...prev.alerts]
-        alerts[index] = DEFAULT_UI_ALERT_CONFIG[index]
-        return { ...prev, alerts }
-      })
+      const alerts = [...(orchestratorConfig.alert_slots ?? DEFAULT_UI_ALERT_CONFIG)]
+      alerts[index] = DEFAULT_UI_ALERT_CONFIG[index]
+      updateOrchestratorConfig({ alert_slots: alerts }).catch(() => {})
     }
+
+    const uiConfig: UIConfig = { alerts: orchestratorConfig.alert_slots ?? DEFAULT_UI_ALERT_CONFIG }
 
     // ? Config
     const exportConfig = async () => {

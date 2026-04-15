@@ -3,12 +3,14 @@ import { AbstractConsumer } from "./consumer/AbstractConsumer";
 import { isGlobalBroadcastConsumer } from "./consumer/IGlobalBroadcastConsumer";
 import { GlobalSourceTools, type ProducerId, type TallyState } from "./types/ProducerStates";
 import { AbstractTallyProducer, type ProducerInfo } from "./producer/AbstractTallyProducer";
-import { DeviceTallyState, type ConsumerId, type TallyDevice } from "./types/ConsumerStates";
+import { type AlertSlotConfig, DeviceAlertState, DeviceAlertTarget, DeviceTallyState, type ConsumerId, type TallyDevice } from "./types/ConsumerStates";
 import { Logger } from "../logging/Logger";
 
+export type { AlertSlotConfig };
 
 export interface OrchestratorConfig {
     state_on_disconnect?: DeviceTallyState;
+    alert_slots?: AlertSlotConfig[];
 }
 
 
@@ -34,6 +36,12 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
 
     public static readonly DefaultConfig: Required<OrchestratorConfig> = {
         state_on_disconnect: DeviceTallyState.NONE,
+        alert_slots: [
+            { action: DeviceAlertState.IDENT, target: DeviceAlertTarget.ALL,      timeout: 5  },
+            { action: DeviceAlertState.PRIO,  target: DeviceAlertTarget.OPERATOR, timeout: 0  },
+            { action: DeviceAlertState.INFO,  target: DeviceAlertTarget.ALL,      timeout: 10 },
+            { action: DeviceAlertState.CLEAR, target: null,                       timeout: null },
+        ],
     };
 
 
