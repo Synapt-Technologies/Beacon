@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useBeacon } from '../context/BeaconContext'
 import { Toggle } from '../components/Toggle'
 import { IconReset } from '../components/icons'
@@ -10,8 +11,6 @@ import { ALERT_COLORS, ALERT_SHORT, ALERT_LONG } from '../types/beacon'
 import type { OrchestratorConfig } from '../../../src/tally/TallyLifecycle'
 import type { AedesConsumerConfig } from '../../../src/tally/consumer/networkConsumer/AedesNetworkConsumer'
 import { HARDWARE_VERSION_STRING, HardwareVersion } from '../../../src/types/SystemInfo'
-import type { UpdateStatus } from '../../../src/types/UpdateTypes'
-import * as BeaconApi from '../api/BeaconApi'
 
 // ? Enum ↔ string bridge helpers
 
@@ -264,152 +263,10 @@ function AlertRow({ slot, index, editing, onEdit, onSave, onReset, onCancel }: A
   )
 }
 
-// ? Update section
-
-function UpdateSection() {
-  const [status,       setStatus]       = useState<UpdateStatus | null>(null)
-  const [checking,     setChecking]     = useState(false)
-  const [showBranches, setShowBranches] = useState(false)
-
-  useEffect(() => {
-    BeaconApi.getUpdateStatus().then(setStatus).catch(() => {})
-  }, [])
-
-  const handleCheck = async () => {
-    setChecking(true)
-    try {
-      const s = await BeaconApi.checkForUpdates()
-      setStatus(s)
-    } finally {
-      setChecking(false)
-    }
-  }
-
-  const handleApply = async (ref: string, type: 'release' | 'branch') => {
-    if (!confirm(`Update to ${ref}? The app will restart.`)) return
-    try {
-      await BeaconApi.applyUpdate(ref, type)
-      setStatus(s => s ? { ...s, updating: true } : s)
-    } catch {
-      // error surfaced via status poll
-    }
-  }
-
-  if (status?.updating) {
-    return (
-      <>
-        <div className="sec-lbl">Update</div>
-        <div className="s-card">
-          <div className="s-row" style={{ justifyContent: 'center', padding: '18px 14px', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
-            <div style={{ fontSize: 13, color: 'var(--color-text-primary)', fontWeight: 500 }}>Updating...</div>
-            <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)' }}>The app is restarting, this page will be unavailable briefly.</div>
-          </div>
-        </div>
-      </>
-    )
-  }
-
-  return (
-    <>
-      <div className="sec-lbl">Update</div>
-      <div className="s-card">
-
-        {/* Header row */}
-        <div className="s-row">
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 13, color: 'var(--color-text-primary)' }}>Firmware updates</div>
-            <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginTop: 1 }}>
-              {status?.lastChecked
-                ? `Last checked ${new Date(status.lastChecked).toLocaleTimeString()}`
-                : 'Not yet checked'}
-            </div>
-          </div>
-          <button className="sm-btn" onClick={handleCheck} disabled={checking}>
-            {checking ? 'Checking...' : 'Check'}
-          </button>
-        </div>
-
-        {/* Error */}
-        {status?.updateError && (
-          <div style={{ padding: '8px 14px', fontSize: 11, color: '#E24B4A', borderTop: '0.5px solid var(--color-border-tertiary)' }}>
-            {status.updateError}
-          </div>
-        )}
-
-        {/* Releases */}
-        {status && status.releases.length === 0 && !status.updateError && (
-          <div style={{ padding: '8px 14px', fontSize: 11, color: 'var(--color-text-tertiary)', borderTop: '0.5px solid var(--color-border-tertiary)' }}>
-            No releases found.
-          </div>
-        )}
-
-        {status?.releases.map(r => {
-          const isCurrent = r.tag === `v${status.current}` || r.tag === status.current
-          return (
-            <div key={r.tag} className="s-row" style={{ borderTop: '0.5px solid var(--color-border-tertiary)' }}>
-              <div style={{ flex: 1 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <span style={{ fontSize: 13, color: 'var(--color-text-primary)', fontWeight: 500 }}>{r.name}</span>
-                  {r.prerelease && (
-                    <span style={{ fontSize: 10, padding: '1px 6px', borderRadius: 99, background: 'color-mix(in srgb, #E8A838 20%, transparent)', color: '#E8A838' }}>
-                      pre-release
-                    </span>
-                  )}
-                  {isCurrent && (
-                    <span style={{ fontSize: 10, padding: '1px 6px', borderRadius: 99, background: 'color-mix(in srgb, var(--acc) 20%, transparent)', color: 'var(--acc)' }}>
-                      current
-                    </span>
-                  )}
-                </div>
-                <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginTop: 1 }}>
-                  {new Date(r.publishedAt).toLocaleDateString()}
-                </div>
-              </div>
-              {!isCurrent && (
-                <button className="sm-btn" onClick={() => handleApply(r.tag, 'release')}>
-                  Update
-                </button>
-              )}
-            </div>
-          )
-        })}
-
-        {/* Branches — developer toggle */}
-        {status && status.branches.length > 0 && (
-          <div style={{ borderTop: '0.5px solid var(--color-border-tertiary)' }}>
-            <button
-              onClick={() => setShowBranches(v => !v)}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 6, width: '100%',
-                padding: '10px 14px', background: 'none', border: 'none', cursor: 'pointer',
-                fontSize: 11, color: 'var(--color-text-tertiary)', textAlign: 'left',
-              }}
-            >
-              <svg width="10" height="10" viewBox="0 0 10 10" style={{ transform: showBranches ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s' }}>
-                <path d="M3 2l4 3-4 3" stroke="currentColor" strokeWidth="1.3" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-              Developer — branches
-            </button>
-
-            {showBranches && status.branches.map(b => (
-              <div key={b.name} className="s-row" style={{ borderTop: '0.5px solid var(--color-border-tertiary)' }}>
-                <div style={{ flex: 1, fontSize: 13, color: 'var(--color-text-primary)' }}>{b.name}</div>
-                <button className="sm-btn" onClick={() => handleApply(b.name, 'branch')}>
-                  Switch
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-
-      </div>
-    </>
-  )
-}
-
 // ? Page
 
 export default function SettingsPage() {
+  const navigate = useNavigate()
   const {
     consumers,
     orchestratorConfig,
@@ -624,12 +481,12 @@ export default function SettingsPage() {
       <div className="s-card">
         <div className="s-row">
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 13, color: 'var(--color-text-primary)' }}>Beacon</div>
-            <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginTop: 1 }}>Firmware Version</div>
+            <div style={{ fontSize: 13, color: 'var(--color-text-primary)' }}>Firmware</div>
+            <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginTop: 1 }}>
+              {system.firmware ?? 'Unknown'}
+            </div>
           </div>
-          <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 99, background: 'var(--color-background-secondary)', color: 'var(--color-text-secondary)' }}>
-            {system.firmware ?? "Unknown"}
-          </span>
+          <button className="sm-btn" onClick={() => navigate('/settings/update')}>Update</button>
         </div>
         <div className="s-row">
           <div style={{ flex: 1 }}>
@@ -641,8 +498,6 @@ export default function SettingsPage() {
           </span>
         </div>
       </div>
-
-      <UpdateSection />
 
       {settingsUnsaved && (
         <Savebar onSave={handleSave} onDiscard={handleDiscard} saving={saving} />

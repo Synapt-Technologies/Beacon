@@ -16,6 +16,22 @@ const GH_API   = repoInfo
     ? `https://api.github.com/repos/${repoInfo.owner}/${repoInfo.repo}`
     : null;
 
+// Semver-aware comparison: returns true if tag `a` is strictly older than tag `b`.
+// Tags are expected in vX.Y.Z form; non-conforming tags are kept (not filtered out).
+function isOlderThan(a: string, b: string): boolean {
+    const parse = (t: string) => t.replace(/^v/, '').split('.').map(Number);
+    const [aMaj, aMin, aPat] = parse(a);
+    const [bMaj, bMin, bPat] = parse(b);
+    if (isNaN(aMaj) || isNaN(bMaj)) return false;
+    if (aMaj !== bMaj) return aMaj < bMaj;
+    if (aMin !== bMin) return aMin < bMin;
+    return aPat < bPat;
+}
+
+// Oldest release that includes the self-updater. Releases before this tag
+// are hidden from the update UI — updating to them would break self-update.
+const MIN_UPDATABLE_TAG = 'v3.0.0';
+
 export class UpdateManager {
 
     private logger      = new Logger(['System', 'Update']);
@@ -58,12 +74,14 @@ export class UpdateManager {
             const rawReleases = await releasesRes.json() as Array<Record<string, unknown>>;
             const rawBranches = await branchesRes.json() as Array<Record<string, unknown>>;
 
-            this.releases = rawReleases.map(r => ({
-                tag:         r['tag_name']    as string,
-                name:        (r['name'] as string) || (r['tag_name'] as string),
-                publishedAt: r['published_at'] as string,
-                prerelease:  r['prerelease']  as boolean,
-            }));
+            this.releases = rawReleases
+                .map(r => ({
+                    tag:         r['tag_name']    as string,
+                    name:        (r['name'] as string) || (r['tag_name'] as string),
+                    publishedAt: r['published_at'] as string,
+                    prerelease:  r['prerelease']  as boolean,
+                }))
+                .filter(r => !isOlderThan(r.tag, MIN_UPDATABLE_TAG));
 
             this.branches = rawBranches.map(b => ({
                 name: b['name'] as string,

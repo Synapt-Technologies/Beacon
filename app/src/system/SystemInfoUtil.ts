@@ -1,4 +1,5 @@
 import fs from 'fs';
+import { execSync } from 'child_process';
 import pkg from '../../package.json' with { type: 'json' };
 import { HardwareVersion, type SystemInfo } from '../types/SystemInfo';
 import { Logger } from '../logging/Logger';
@@ -75,9 +76,9 @@ export default class SystemInfoUtil {
 
     static getFirmwareVersion(): string {
         try {
+            return execSync('git describe --tags --always', { encoding: 'utf8' }).trim();
+        } catch {
             return pkg.version;
-        } catch (e) {
-            return 'Unknown';
         }
     }
 

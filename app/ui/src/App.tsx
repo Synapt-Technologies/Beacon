@@ -8,6 +8,7 @@ import WebTallyPage from "./pages/WebTallyPage";
 import DevicesPage from "./pages/DevicesPage";
 import ConnectionsPage from "./pages/ConnectionsPage";
 import SettingsPage from "./pages/SettingsPage";
+import UpdatePage from "./pages/UpdatePage";
 import './styles/global.css';
 
 export default function App() {
@@ -48,6 +49,7 @@ export default function App() {
 
                         <Route path="connections" element={<ConnectionsPage />} />
                         <Route path="settings" element={<SettingsPage />} />
+                        <Route path="settings/update" element={<UpdatePage />} />
                     </Route>
                 </Routes>
             </BrowserRouter>
