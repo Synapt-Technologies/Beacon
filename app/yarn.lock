@@ -498,6 +498,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/pigpio@npm:^3.1.0":
+  version: 3.1.0
+  resolution: "@types/pigpio@npm:3.1.0"
+  dependencies:
+    pigpio: "npm:*"
+  checksum: 10c0/1708c76f649404bf464b60f63e8408a51a74756ab08622e724d21addf9ff1c2785534b4ee6274ca8a7e7498897b3d110b0729e6374e7530bbf75abe75aeb01a8
+  languageName: node
+  linkType: hard
+
 "@types/qs@npm:*":
   version: 6.15.0
   resolution: "@types/qs@npm:6.15.0"
@@ -750,6 +759,7 @@ __metadata:
     "@types/better-sqlite3": "npm:^7.6.13"
     "@types/express": "npm:^5.0.6"
     "@types/node": "npm:^25.5.0"
+    "@types/pigpio": "npm:^3.1.0"
     "@types/react": "npm:^19.2.14"
     "@types/react-dom": "npm:^19.2.3"
     "@types/ws": "npm:^8.5.14"
@@ -760,6 +770,7 @@ __metadata:
     express: "npm:^5.2.1"
     less: "npm:^4.6.4"
     mqtt: "npm:^5.10.4"
+    pigpio: "npm:^3.3.1"
     react: "npm:^19.2.4"
     react-dom: "npm:^19.2.4"
     react-hot-toast: "npm:^2.6.0"
@@ -2270,6 +2281,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"nan@npm:^2.14.2":
+  version: 2.26.2
+  resolution: "nan@npm:2.26.2"
+  dependencies:
+    node-gyp: "npm:latest"
+  checksum: 10c0/ff204c964729279cf3abb8b170c77753ed36092e2235f11bfb0204dfd3e8cc2d5a3bcfdfd3b677f06a0743d7f835d873dce59f23a2dbf6fb671d9351cc655d73
+  languageName: node
+  linkType: hard
+
 "nanoid@npm:^3.3.11":
   version: 3.3.11
   resolution: "nanoid@npm:3.3.11"
@@ -2485,6 +2505,17 @@ __metadata:
   version: 4.0.1
   resolution: "pify@npm:4.0.1"
   checksum: 10c0/6f9d404b0d47a965437403c9b90eca8bb2536407f03de165940e62e72c8c8b75adda5516c6b9b23675a5877cc0bcac6bdfb0ef0e39414cd2476d5495da40e7cf
+  languageName: node
+  linkType: hard
+
+"pigpio@npm:*, pigpio@npm:^3.3.1":
+  version: 3.3.1
+  resolution: "pigpio@npm:3.3.1"
+  dependencies:
+    bindings: "npm:^1.5.0"
+    nan: "npm:^2.14.2"
+    node-gyp: "npm:latest"
+  checksum: 10c0/babfaba11d064a2859a599780abb0c1c10031158418d814523bcebb1cdba771f7ca26ee121622181f28ae85336b2352cbbad7829d8460a66fe06e0cbacdca2c0
   languageName: node
   linkType: hard
 

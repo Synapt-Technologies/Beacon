@@ -1,7 +1,7 @@
 import { AbstractConsumer, type ConsumerConfig } from "../AbstractConsumer";
 import { ConnectionType, DeviceTallyState, GlobalDeviceTools, type DeviceAddress, type DeviceAlertState, type DeviceAlertTarget, type DeviceId, type TallyDevice } from "../../types/ConsumerStates";
 import { HardwareVersion } from "../../../types/SystemInfo";
-import { execSync, exec } from 'child_process';
+import { Gpio } from 'pigpio';
 
 // TODO: check if this is the right GPIO library. Was rpi-gpio before, but it's not updated.
 
@@ -20,8 +20,8 @@ export interface GpioTallyPins {
 }
 
 interface GpioTallyOutput {
-    program: number,
-    preview: number,
+    program: Gpio,
+    preview: Gpio,
 }
 
 
@@ -89,13 +89,9 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
 
                 const pins = pinMap[i];
 
-                // Format: pinctrl set <gpio> op dl (op=output, dl=drive low)
-                execSync(`pinctrl set ${pins.program} op dl`);
-                execSync(`pinctrl set ${pins.preview} op dl`);
-
                 const gpioPins: GpioTallyOutput = {
-                    program: pins.program,
-                    preview: pins.preview
+                    program: new Gpio(pins.program, { mode: Gpio.OUTPUT }),
+                    preview: new Gpio(pins.preview, { mode: Gpio.OUTPUT }),
                 };
 
                 this.gpioMap.set(GlobalDeviceTools.create(devIndx.consumer, devIndx.device), gpioPins);
@@ -130,7 +126,13 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
         }
     }
 
-    destroy(): void {}
+    destroy(): void {
+        this.gpioMap.forEach((output) => {
+            output.program.digitalWrite(0);
+            output.preview.digitalWrite(0);
+        });
+        this.logger.info("GPIO Consumer destroyed and pins reset.");
+    }
 
     protected getHardwareVersion(): HardwareVersion {
         return HardwareVersion.V2;
@@ -166,33 +168,28 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
             return;
         }
 
+        // output.program.pwmWrite(128); // TODO
+
         switch(state){
             case DeviceTallyState.PROGRAM:
-                this._execCmd(`pinctrl set ${output.program} dh && pinctrl dh ${output.preview} dl`);
+                output.program.digitalWrite(1);
+                output.preview.digitalWrite(0);
                 break;
             case DeviceTallyState.PREVIEW:
-                this._execCmd(`pinctrl set ${output.program} dl && pinctrl dh ${output.preview} dh`);
+                output.program.digitalWrite(0);
+                output.preview.digitalWrite(1);
                 break;
             case DeviceTallyState.DANGER: // TODO: Maybe different state? No PWM though, not sure if possible.
             case DeviceTallyState.WARNING:
-                this._execCmd(`pinctrl set ${output.program} && pinctrl dh ${output.preview} dh`);
+                output.program.digitalWrite(1);
+                output.preview.digitalWrite(1);
                 break;
             default:
-                this._execCmd(`pinctrl set ${output.program} && pinctrl dl ${output.preview} dl`);
+                output.program.digitalWrite(0);
+                output.preview.digitalWrite(0);
         }
 
         this.logger.debug(`Set GPIO for state ${state}:`, output);
-    }
-
-    private _execCmd(cmd: string): void {
-        // exec(cmd, (error, stdout, stderr) => {
-        //     if (error) {
-        //         this.logger.error(`Exec error: ${error}`);
-        //         this.logger.error(`Stderr: ${stderr}`); // This contains the actual reason
-        //     }
-        // });
-        
-        execSync(cmd);
     }
 
     setDeviceAlert(address: DeviceAddress, type: DeviceAlertState, target: DeviceAlertTarget): void {
