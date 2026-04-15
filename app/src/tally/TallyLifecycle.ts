@@ -362,16 +362,26 @@ export class TallyLifecycle {
     // ? Shutdown
 
     public async shutdown(): Promise<void> {
+        this.logger.info("Stopping Producers...");
+
         for (const id of this.orchestrator.getProducerIds()) {
             try {
+                this.logger.info(`  -> Stopping Producer: ${id}`);
                 await this.orchestrator.removeProducer(id);
             } catch (e) {
                 this.logger.error(`Error destroying producer:`, id, e);
             }
         }
+
+        this.logger.info("Stopping Consumers...");
         for (const id of this.orchestrator.getConsumerIds()) {
+            this.logger.info(`  -> Stopping Consumer: ${id}`);
+            
             try {
-                await this.orchestrator.removeConsumer(id);
+                await Promise.race([
+                    this.orchestrator.removeConsumer(id),
+                    new Promise((_, reject) => setTimeout(() => reject(new Error(`TIMEOUT: ${id} failed to stop in 2s`)), 2000))
+                ]).catch(err => this.logger.error(err.message));
             } catch (e) {
                 this.logger.error(`Error destroying consumer:`, id, e);
             }

@@ -134,7 +134,15 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
             output.program.digitalWrite(0);
             output.preview.digitalWrite(0);
         });
-        this.logger.info("GPIO Consumer destroyed and pins reset.");
+
+        try {
+            const { terminate } = require('pigpio');
+            terminate(); 
+            this.logger.info("GPIO Consumer destroyed and pins reset.");
+        } catch (e) {
+            this.logger.error("Failed to terminate pigpio:", e);
+        }
+
     }
 
     protected getHardwareVersion(): HardwareVersion {
