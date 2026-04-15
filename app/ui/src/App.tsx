@@ -16,18 +16,16 @@ export default function App() {
         <BeaconProvider>
           <TallyStateProvider>
             <Toaster
-                position="bottom-right"
-                containerStyle={{ bottom: 16, right: 16 }}
+                position="top-right"
+                containerStyle={{ top: 70, right: 14 }}
                 toastOptions={{
-                    error: {
-                        duration: 5000,
-                        style: {
-                            background: 'var(--color-background-primary)',
-                            color: 'var(--color-text-primary)',
-                            border: '0.5px solid var(--color-border-secondary)',
-                            fontSize: 13,
-                        },
+                    style: {
+                        background: 'var(--color-background-primary)',
+                        color: 'var(--color-text-primary)',
+                        border: '0.5px solid var(--color-border-secondary)',
+                        fontSize: 13,
                     },
+                    error: { duration: 5000 },
                 }}
             />
             <BrowserRouter>

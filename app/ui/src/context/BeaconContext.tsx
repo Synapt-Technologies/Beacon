@@ -130,81 +130,92 @@ export function BeaconProvider({ children }: { children: ReactNode }) {
     }
     const removeProducer = async (id: ProducerId) => {
       try {
-        await api.removeProducer(id)
-        setProducers(prev => prev.filter(p => p.config.id !== id))
-      } catch (e) { toast.error(e instanceof Error ? e.message : 'Failed to remove connection') ; await fetchAll() ; throw e }
+        await toast.promise(
+          api.removeProducer(id).then(() => setProducers(prev => prev.filter(p => p.config.id !== id))),
+          { loading: 'Removing connection…', success: 'Connection removed', error: (e: unknown) => e instanceof Error ? e.message : 'Failed to remove connection' }
+        )
+      } catch (e) { await fetchAll(); throw e }
     }
     const updateProducer = async (id: ProducerId, config: ProducerConfig & Record<string, unknown>) => {
       const prod = producers.find(p => p.config.id === id)
       if (!prod) return
-      try {
-        await api.updateProducer(id, prod.type, config)
-        await fetchAll()
-      } catch (e) { toast.error(e instanceof Error ? e.message : 'Failed to update connection') ; throw e }
+      await toast.promise(
+        (async () => { await api.updateProducer(id, prod.type, config); await fetchAll() })(),
+        { loading: 'Saving connection…', success: 'Connection updated', error: (e: unknown) => e instanceof Error ? e.message : 'Failed to update connection' }
+      )
     }
 
     // ? Orchestrator
     const updateOrchestratorConfig = async (config: Partial<OrchestratorConfig>) => {
       try {
-        await api.updateOrchestratorConfig(config)
-        setOrchestratorConfig(prev => ({ ...prev, ...config }))
-      } catch (e) { toast.error(e instanceof Error ? e.message : 'Failed to save settings') ; await fetchAll() ; throw e }
+        await toast.promise(
+          api.updateOrchestratorConfig(config).then(() => setOrchestratorConfig(prev => ({ ...prev, ...config }))),
+          { loading: 'Saving…', success: 'Settings saved', error: (e: unknown) => e instanceof Error ? e.message : 'Failed to save settings' }
+        )
+      } catch (e) { await fetchAll(); throw e }
     }
 
     // ? Consumers
     const setConsumerEnabled = async (id: ConsumerId, enabled: boolean) => {
       try {
-        await api.patchConsumer(id, { enabled })
-        setConsumers(prev => ({
-          ...prev,
-          [id]: { ...prev[id as keyof ConsumerExportMap], enabled },
-        }))
-      } catch (e) { toast.error(e instanceof Error ? e.message : 'Failed to update consumer') ; await fetchAll() ; throw e }
+        await toast.promise(
+          api.patchConsumer(id, { enabled }).then(() => setConsumers(prev => ({
+            ...prev,
+            [id]: { ...prev[id as keyof ConsumerExportMap], enabled },
+          }))),
+          { loading: enabled ? 'Enabling…' : 'Disabling…', success: enabled ? 'Consumer enabled' : 'Consumer disabled', error: (e: unknown) => e instanceof Error ? e.message : 'Failed to update consumer' }
+        )
+      } catch (e) { await fetchAll(); throw e }
     }
     const updateConsumer = async (id: ConsumerId, config: ConsumerConfig) => {
       try {
-        await api.patchConsumer(id, { config })
-        setConsumers(prev => ({
-          ...prev,
-          [id]: { ...prev[id as keyof ConsumerExportMap], config: { ...prev[id as keyof ConsumerExportMap]?.config, ...config } },
-        }))
-      } catch (e) { toast.error(e instanceof Error ? e.message : 'Failed to save settings') ; await fetchAll() ; throw e }
+        await toast.promise(
+          api.patchConsumer(id, { config }).then(() => setConsumers(prev => ({
+            ...prev,
+            [id]: { ...prev[id as keyof ConsumerExportMap], config: { ...prev[id as keyof ConsumerExportMap]?.config, ...config } },
+          }))),
+          { loading: 'Saving…', success: 'Settings saved', error: (e: unknown) => e instanceof Error ? e.message : 'Failed to save settings' }
+        )
+      } catch (e) { await fetchAll(); throw e }
     }
 
     // ? Devices
     const patchDevice = async (device: DeviceAddress, patch: GlobalTallySource[]) => {
       try {
-        await api.patchDevice(device, patch)
-        setDevices(prev => prev.map(d =>
-          d.id.consumer === device.consumer && d.id.device === device.device
-            ? { ...d, patch }
-            : d
-        ))
-      } catch (e) { toast.error(e instanceof Error ? e.message : 'Failed to patch device') ; await fetchAll() ; throw e }
+        await toast.promise(
+          api.patchDevice(device, patch).then(() => setDevices(prev => prev.map(d =>
+            d.id.consumer === device.consumer && d.id.device === device.device ? { ...d, patch } : d
+          ))),
+          { loading: 'Saving…', success: 'Device updated', error: (e: unknown) => e instanceof Error ? e.message : 'Failed to patch device' }
+        )
+      } catch (e) { await fetchAll(); throw e }
     }
     const renameDevice = async (device: DeviceAddress, name: { short?: string; long: string }) => {
       try {
-        await api.renameDevice(device, name)
-        setDevices(prev => prev.map(d =>
-          d.id.consumer === device.consumer && d.id.device === device.device
-            ? { ...d, name }
-            : d
-        ))
-      } catch (e) { toast.error(e instanceof Error ? e.message : 'Failed to rename device') ; await fetchAll() ; throw e }
+        await toast.promise(
+          api.renameDevice(device, name).then(() => setDevices(prev => prev.map(d =>
+            d.id.consumer === device.consumer && d.id.device === device.device ? { ...d, name } : d
+          ))),
+          { loading: 'Renaming…', success: 'Device renamed', error: (e: unknown) => e instanceof Error ? e.message : 'Failed to rename device' }
+        )
+      } catch (e) { await fetchAll(); throw e }
     }
     const removeDevice = async (device: DeviceAddress) => {
       try {
-        await api.removeDevice(device)
-        setDevices(prev => prev.filter(d =>
-          !(d.id.consumer === device.consumer && d.id.device === device.device)
-        ))
-      } catch (e) { toast.error(e instanceof Error ? e.message : 'Failed to remove device') ; await fetchAll() ; throw e }
+        await toast.promise(
+          api.removeDevice(device).then(() => setDevices(prev => prev.filter(d =>
+            !(d.id.consumer === device.consumer && d.id.device === device.device)
+          ))),
+          { loading: 'Removing…', success: 'Device removed', error: (e: unknown) => e instanceof Error ? e.message : 'Failed to remove device' }
+        )
+      } catch (e) { await fetchAll(); throw e }
     }
     const sendAlert = async (device: DeviceAddress, type: DeviceAlertState, target: DeviceAlertTarget) => {
-      try {
-        haptics.trigger(defaultPatterns.heavy);
-        await api.sendAlert(device, type, target)
-      } catch (e) { toast.error(e instanceof Error ? e.message : 'Failed to send alert') ; throw e }
+      haptics.trigger(defaultPatterns.heavy)
+      await toast.promise(
+        api.sendAlert(device, type, target),
+        { loading: 'Sending alert…', success: 'Alert sent', error: (e: unknown) => e instanceof Error ? e.message : 'Failed to send alert' }
+      )
     }
 
     // ? Alert slots — derive from orchestratorConfig, persist via updateOrchestratorConfig
