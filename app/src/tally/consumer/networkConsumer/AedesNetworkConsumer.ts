@@ -213,7 +213,7 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer implements IGl
             cmd: 'publish',
             qos: 1,
             dup: false,
-            topic: `tally/device/${device.id.device}`,
+            topic: `tally/device/${device.id.consumer}/${device.id.device}`,
             payload: Buffer.from(payload),
             retain: true
         }, () => {});
@@ -232,7 +232,7 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer implements IGl
             cmd: 'publish',
             qos: 2, // High priority for alerts
             dup: false,
-            topic: `tally/device/${address.device}/alert`,
+            topic: `tally/device/${address.consumer}/${address.device}/alert`,
             payload: Buffer.from(JSON.stringify({ type, target })),
             retain: false // Alerts are momentary, no retain
         }, () => {});
