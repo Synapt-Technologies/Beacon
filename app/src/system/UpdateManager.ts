@@ -133,7 +133,9 @@ export class UpdateManager {
 
         // process.exit(0);
         this.logger.info('Update complete, triggering graceful restart...');
-        process.emit('SIGTERM' as any);
+        setTimeout(() => {
+            process.kill(process.pid, 'SIGTERM');
+        }, 500).unref();
     }
 
     private _exec(cmd: string): Promise<void> {
