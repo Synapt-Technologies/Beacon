@@ -51,10 +51,18 @@ function start(): void {
 function shutdown(signal: NodeJS.Signals): void {
     console.log(`[supervisor] Received ${signal}, shutting down...`);
     if (child) {
+        // The child shares our process group and already received the signal from
+        // the OS — sending it again races with the async DB shutdown and can cause
+        // the WAL checkpoint to be skipped. Just stop restarting and wait.
         child.removeAllListeners('exit');
-        child.kill(signal);
         child.on('exit', () => process.exit(0));
-        setTimeout(() => process.exit(0), 5000).unref();
+
+        // Force-kill only if the child ignores the signal for too long.
+        setTimeout(() => {
+            console.log('[supervisor] Child did not exit in time, force-killing...');
+            child?.kill();
+            setTimeout(() => process.exit(0), 1000).unref();
+        }, 5000).unref();
     } else {
         process.exit(0);
     }

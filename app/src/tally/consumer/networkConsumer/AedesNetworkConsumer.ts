@@ -124,20 +124,25 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer implements IGl
         super.destroy();
 
         try {
-
-            if (this.server) await new Promise<void>((r) => this.server.close(() => r()));
-            if (this.wss) await new Promise<void>((r) => this.wss!.close(() => r()));
-            if (this.wsHttpServer) await new Promise<void>((r) => this.wsHttpServer!.close(() => r()));
-
+            // Close aedes first — this sends DISCONNECT to all MQTT clients so
+            // their TCP/WS connections drain before we close the servers.
             await new Promise<void>((resolve) => {
                 this.aedes.close(() => resolve());
             });
+
+            // Terminate any remaining WebSocket clients that didn't disconnect.
+            if (this.wss) {
+                for (const client of this.wss.clients) client.terminate();
+                await new Promise<void>((r) => this.wss!.close(() => r()));
+            }
+
+            if (this.wsHttpServer) await new Promise<void>((r) => this.wsHttpServer!.close(() => r()));
+            if (this.server)       await new Promise<void>((r) => this.server.close(() => r()));
 
             this.logger.debug('Destroyed successfully.');
         } catch (err) {
             this.logger.error('Error during shutdown:', err);
         }
-        
     }
 
     public publishDeviceTally(device: TallyDevice): void {
