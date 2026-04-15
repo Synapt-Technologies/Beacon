@@ -7,6 +7,7 @@ If you are compiling the image on windows, you must use WSL.
 
 
 ## TODO
+- [ ] !! DB HAS TO BE RESET ON UPDATE !!
 - [x] Implement mqtt ws tally for devices
   - [ ] Add alerts
 - [ ] Persist alert config to settings
