@@ -1,7 +1,7 @@
 import { AbstractConsumer, type ConsumerConfig } from "../AbstractConsumer";
 import { ConnectionType, DeviceTallyState, GlobalDeviceTools, type DeviceAddress, type DeviceAlertState, type DeviceAlertTarget, type DeviceId, type TallyDevice } from "../../types/ConsumerStates";
 import { HardwareVersion } from "../../../types/SystemInfo";
-import { execSync, exec } from 'child_process';
+import { execSync, spawn } from 'child_process';
 
 // TODO: check if this is the right GPIO library. Was rpi-gpio before, but it's not updated.
 
@@ -160,7 +160,6 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
         this.stateCache.set(devAddr, device.state);
 
         // spawn() calls execve() directly — no shell, non-blocking, returns void immediately.
-        // Two concurrent spawns (one per pin) are still faster than two sequential execSync calls.
         let programState: string;
         let previewState: string;
         switch(device.state){
@@ -178,10 +177,10 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
                 programState = 'dl'; previewState = 'dl';
         }
 
-        // exec() is async (non-blocking) and runs both pinctrl calls sequentially in one shell,
-        // avoiding both event-loop blocking and concurrent register-write races.
-        exec(`pinctrl set ${outputs.program} ${programState}; pinctrl set ${outputs.preview} ${previewState}`,
-            (e) => { if (e) this.logger.error("Failed sending tally to device:", devAddr, "Error:", e); });
+        // spawn() is non-blocking and calls execve() directly (no shell overhead).
+        // Single invocation sets both pins atomically: pinctrl set <prog> <state> <prev> <state>
+        spawn('pinctrl', ['set', String(outputs.program), programState, String(outputs.preview), previewState], { stdio: 'ignore' })
+            .on('error', (e: Error) => this.logger.error("Failed sending tally to device:", devAddr, "Error:", e));
 
         this.logger.debug(`Set Tally GPIO for device:`, device);
     }
