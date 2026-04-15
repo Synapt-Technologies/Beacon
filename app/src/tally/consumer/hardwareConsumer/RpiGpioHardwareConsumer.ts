@@ -75,8 +75,9 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
 
         if (this.info.version == HardwareVersion.UNKNOWN)
             return this.logger.fatal(`Failed to initialize GPIO. UNKOWN hardware!`);
-        
-        const { Gpio } = require('pigpio');
+
+        const pigpio = await import('pigpio');
+        const Gpio = pigpio.default.Gpio;
 
         const pinMap = DEFAULT_PINOUT[this.info.version];
 
@@ -129,16 +130,23 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
         }
     }
 
-    destroy(): void {
+    async destroy(): Promise<void> {
         this.gpioMap.forEach((output) => {
             output.program.digitalWrite(0);
             output.preview.digitalWrite(0);
         });
 
         try {
-            const { terminate } = require('pigpio');
-            terminate(); 
-            this.logger.info("GPIO Consumer destroyed and pins reset.");
+            const pigpio = await import('pigpio');
+
+            if (pigpio.default && pigpio.default.terminate) {
+                pigpio.default.terminate();
+                this.logger.info("GPIO Consumer destroyed and pins reset.");
+            }
+            else {
+                this.logger.warn("Could not destroy PIGPIO");
+            }
+
         } catch (e) {
             this.logger.error("Failed to terminate pigpio:", e);
         }
