@@ -20,8 +20,10 @@ export default function UpdatePage() {
     if (!status?.updating) return
     const id = setInterval(async () => {
       try {
-        await BeaconApi.getUpdateStatus()
-        window.location.reload()
+        // Poll the root path — it goes through Vite middleware,
+        // so a 200 means both Express and Vite are fully ready.
+        const res = await fetch('/', { method: 'HEAD' })
+        if (res.ok) window.location.reload()
       } catch {
         // server still restarting — keep polling
       }

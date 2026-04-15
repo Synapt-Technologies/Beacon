@@ -31,8 +31,10 @@ class AppErrorBoundary extends Component<
         if (!prev.hasError && this.state.hasError) {
             this._poll = setInterval(async () => {
                 try {
-                    await fetch('/api/update/status')
-                    window.location.reload()
+                    // Poll the root path — it goes through Vite middleware,
+                    // so a 200 means both Express and Vite are fully ready.
+                    const res = await fetch('/', { method: 'HEAD' })
+                    if (res.ok) window.location.reload()
                 } catch {
                     // server not ready yet — keep waiting
                 }
