@@ -55,10 +55,15 @@ export function TallyStateProvider({ children }: { children: ReactNode }) {
           ;(data as { preview?: string[] }).preview?.forEach(key => { if (!next.has(key)) next.set(key, 'pvw') })
           setStates(next)
         } else if (topic.startsWith('tally/device/')) {
-          const rawDeviceId = topic.slice('tally/device/'.length)
+          const deviceAddress = topic.slice('tally/device/'.length).split('/')
+          const rawDeviceId = deviceAddress[0]
+          let rawConsumerId = consumerId
+          if (deviceAddress.length > 1) {
+            rawConsumerId = deviceAddress[1]
+          }
           const name        = (data as { state?: string }).state ?? ''
           const display     = (DeviceTallyDisplayName[name as keyof typeof DeviceTallyDisplayName] ?? 'none') as DeviceDisplayState
-          const fullKey     = GlobalDeviceTools.create(consumerId, rawDeviceId)
+          const fullKey     = GlobalDeviceTools.create(rawConsumerId, rawDeviceId)
           setDeviceStates(prev => new Map(prev).set(fullKey, display))
         } else if (topic === 'system/info') {
           setLastKeepalive(Date.now())
