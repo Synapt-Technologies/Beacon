@@ -185,7 +185,6 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
     }
 
     private _execCmd(cmd: string): void {
-        exec(cmd, (e) => { if (e) this.logger.error("GPIO flush error:", e); });
         exec(cmd, (error, stdout, stderr) => {
             if (error) {
                 this.logger.error(`Exec error: ${error}`);
