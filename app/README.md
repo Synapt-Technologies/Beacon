@@ -17,7 +17,7 @@ If you are compiling the image on windows, you must use WSL.
     - [x] On disconnection from api
       - [x] Add some sort of connection timeout?  
     - [x] On producer disconnect
-    - [ ] Changing the stage while disconnected does not work.
+    - [x] Changing the stage while disconnected does not work.
     - [ ] Only the devices that include sources from the disconnected source?
 - [ ] Add "F11" fullscreen button
 - [ ] Show more source info, pimarily consumer:sourceid at the device source list.

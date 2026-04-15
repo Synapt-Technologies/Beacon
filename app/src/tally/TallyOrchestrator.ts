@@ -61,7 +61,31 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
     }
 
     updateConfig(config: Partial<OrchestratorConfig>): void {
+
+        this.logger.info(`Updated config:`, config);
+
+        let state_on_disconnect_change = false;
+
+        if (config.state_on_disconnect != this.config.state_on_disconnect)
+            state_on_disconnect_change = true;
+        
+        
+
         this.config = { ...this.config, ...config };
+
+
+
+        if (state_on_disconnect_change) {
+            this.logger.info(`State on disconnect changed to ${DeviceTallyState[this.config.state_on_disconnect]}. Disconnected producers: ${this.disconnectedProducers.size}.`)
+
+            if (this.disconnectedProducers.size !== 0 && this.config.state_on_disconnect !== DeviceTallyState.NONE) {  // TODO Extract to function and use in restart
+                this.logger.info(`Updating consumer base state...`);
+
+                for (const consumer of this.consumers.values()) {
+                    consumer.setBaseState(this.config.state_on_disconnect);
+                }
+            }
+        }
     }
 
     protected checkConfig(config: OrchestratorConfig){
@@ -109,7 +133,7 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
         producer.on('connected', () => {
             this.disconnectedProducers.delete(producer.getId());
             this._parseGlobalTally();
-            if (this.disconnectedProducers.size === 0) {
+            if (this.disconnectedProducers.size === 0) { // TODO Extract to function and use in restart
                 for (const consumer of this.consumers.values()) {
                     consumer.setBaseState(DeviceTallyState.NONE);
                 }
@@ -120,7 +144,7 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
         producer.on('disconnected', () => {
             this.disconnectedProducers.add(producer.getId());
             this._parseGlobalTally();
-            if (this.config.state_on_disconnect !== DeviceTallyState.NONE) {
+            if (this.config.state_on_disconnect !== DeviceTallyState.NONE) {  // TODO Extract to function and use in restart
                 for (const consumer of this.consumers.values()) {
                     consumer.setBaseState(this.config.state_on_disconnect);
                 }
