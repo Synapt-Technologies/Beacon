@@ -191,19 +191,30 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
 
         switch(state){
             case DeviceTallyState.PROGRAM:
+                output.program.pwmWrite(0);
+                output.program.pwmWrite(0);
                 output.program.digitalWrite(1);
                 output.preview.digitalWrite(0);
                 break;
             case DeviceTallyState.PREVIEW:
+                output.program.pwmWrite(0);
+                output.program.pwmWrite(0);
                 output.program.digitalWrite(0);
                 output.preview.digitalWrite(1);
                 break;
             case DeviceTallyState.DANGER: // TODO: Maybe different state? No PWM though, not sure if possible.
+                output.program.pwmWrite(100);
+                output.program.pwmWrite(0);
+                break;
             case DeviceTallyState.WARNING:
+                output.program.pwmWrite(0);
+                output.program.pwmWrite(0);
                 output.program.digitalWrite(1);
                 output.preview.digitalWrite(1);
                 break;
             default:
+                output.program.pwmWrite(0);
+                output.program.pwmWrite(0);
                 output.program.digitalWrite(0);
                 output.preview.digitalWrite(0);
         }
