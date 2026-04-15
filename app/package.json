@@ -5,12 +5,12 @@
     "main": "app.ts",
     "author": "Synapt <contact@synapt.nl>",
     "repository": {
-        "url": "https://github.com/IJIJI/Beacon-Tally",
+        "url": "https://github.com/Synapt-Technologies/Beacon",
         "type": "git"
     },
     "license": "GPL-3.0-only",
     "scripts": {
-        "start": "tsx app.ts",
+        "start": "tsx supervisor.ts",
         "build": "vite build"
     },
     "packageManager": "yarn@4.13.0",
@@ -24,7 +24,6 @@
         "@vitejs/plugin-react": "^6.0.1",
         "react": "^19.2.4",
         "react-dom": "^19.2.4",
-        "tsx": "^4.21.0",
         "typescript": "^5.9.3",
         "vite": "^8.0.7"
     },
@@ -37,6 +36,7 @@
         "mqtt": "^5.10.4",
         "react-hot-toast": "^2.6.0",
         "react-router-dom": "^7.14.0",
+        "tsx": "^4.21.0",
         "vite-express": "^0.22.1",
         "web-haptics": "^0.0.6",
         "ws": "^8.18.3"

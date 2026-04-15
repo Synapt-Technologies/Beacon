@@ -124,3 +124,24 @@ export function importConfig(config: LifecycleConfig): Promise<void> {
 export function getSystemInfo(): Promise<Partial<SystemInfo>> {
     return request('/info');
 }
+
+
+// ? Update
+
+import type { UpdateStatus } from '../../../src/types/UpdateTypes'
+
+export function getUpdateStatus(): Promise<UpdateStatus> {
+    return request('/update/status');
+}
+
+export function checkForUpdates(): Promise<UpdateStatus> {
+    return request('/update/check', { method: 'POST' });
+}
+
+export function applyUpdate(ref: string, type: 'release' | 'branch'): Promise<void> {
+    return request('/update/apply', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ref, type }),
+    });
+}
