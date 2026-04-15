@@ -1,8 +1,7 @@
 import { AbstractConsumer, type ConsumerConfig } from "../AbstractConsumer";
 import { ConnectionType, DeviceTallyState, GlobalDeviceTools, type DeviceAddress, type DeviceAlertState, type DeviceAlertTarget, type DeviceId, type TallyDevice } from "../../types/ConsumerStates";
 import { HardwareVersion } from "../../../types/SystemInfo";
-import { execSync } from 'child_process';
-import { spawn } from 'child_process';
+import { execSync, exec } from 'child_process';
 
 // TODO: check if this is the right GPIO library. Was rpi-gpio before, but it's not updated.
 
@@ -179,9 +178,10 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
                 programState = 'dl'; previewState = 'dl';
         }
 
-        const onError = (e: Error) => this.logger.error("Failed sending tally to device:", devAddr, "Error:", e);
-        spawn('pinctrl', ['set', String(outputs.program), programState], { stdio: 'ignore' }).on('error', onError);
-        spawn('pinctrl', ['set', String(outputs.preview),  previewState], { stdio: 'ignore' }).on('error', onError);
+        // exec() is async (non-blocking) and runs both pinctrl calls sequentially in one shell,
+        // avoiding both event-loop blocking and concurrent register-write races.
+        exec(`pinctrl set ${outputs.program} ${programState}; pinctrl set ${outputs.preview} ${previewState}`,
+            (e) => { if (e) this.logger.error("Failed sending tally to device:", devAddr, "Error:", e); });
 
         this.logger.debug(`Set Tally GPIO for device:`, device);
     }
