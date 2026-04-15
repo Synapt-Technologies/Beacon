@@ -140,7 +140,7 @@ export class UpdateManager {
 
     private _exec(cmd: string): Promise<void> {
         return new Promise((resolve, reject) => {
-            this.logger.info(`[update] ${cmd}`);
+            this.logger.info(`${cmd}`);
             exec(cmd, { cwd: process.cwd() }, (err, _stdout, stderr) => {
                 if (err) {
                     reject(new Error(`Command failed: ${cmd}\n${stderr || err.message}`));
