@@ -7,14 +7,14 @@ If you are compiling the image on windows, you must use WSL.
 
 
 ## TODO
-- [ ] Implement mqtt ws tally for devices
+- [x] Implement mqtt ws tally for devices
   - [ ] Add alerts
 - [ ] Persist alert config to settings
 - [ ] On patch change the web tally does not update.
 - [ ] Disconnect warning for tally
   - [ ] State on disconnect also on web interface
-    - [ ] On disconnection from api
-      - [ ] Add some sort of connection timeout?  
+    - [x] On disconnection from api
+      - [x] Add some sort of connection timeout?  
     - [x] On producer disconnect
     - [ ] Changing the stage while disconnected does not work.
     - [ ] Only the devices that include sources from the disconnected source?
@@ -30,16 +30,16 @@ If you are compiling the image on windows, you must use WSL.
   - [ ] No issue on disabled
   - [ ] Monitor states
     - [ ] Issue on those
-  - [ ] Refactor settings
-    - [ ] Remove 
-      - [ ] Admin port
-      - [ ] MQTT Port
-      - [ ] Keep Alive
-      - [ ] Mqtt broker disable
-      - [ ] Reset alert buttons
-    - [ ] Add
-      - [ ] Reset to factory settings
-- [ ] SHow more producer info
+- [ ] Refactor UI settings
+  - [ ] Remove 
+    - [ ] Admin port
+    - [ ] MQTT Port
+    - [ ] Keep Alive
+    - [ ] Mqtt broker disable
+    - [ ] Reset alert buttons
+  - [ ] Add
+    - [ ] Reset to factory settings
+- [ ] Show more producer info
 - [ ] Add System info to settings
   - [ ] System name
   - [ ] More info?
@@ -55,3 +55,17 @@ If you are compiling the image on windows, you must use WSL.
 - [ ] Implement alert state blinking in GPIOConsumer
 - [ ] Add pagewide haptics ( Currently in context and alert buttons. )
   - [ ] Context the right place?
+- [ ] **REFACTOR ORCHESTRATION**
+  - [ ] Consumers don't own the tally process
+  - [ ] Consumer exports tally devices. 
+  - [x] The orchestrator sets the tallystate 
+  - [ ] The Consumer exposes sendTallyDevice (or similar)
+  - [ ] No ConsumeTally
+  - [ ] The orchestrator decides which devices to send
+  - [ ] GlobalConsumer gets all, non global only the devices mapped to their consumerId
+  - [ ] Aedes devices on the aedes topic -> Discovery:
+    - [ ] Device requests descivery on global topic: tally/discovery
+    - [ ] Aedes is the active consumer on that mqtt -> It assigns its ConsumerId + a DeviceId (mac based?)
+    - [ ] The device saves that and connects to the topic.
+  - [ ] The Orchestrator sends the relevant devices to the right consumers.
+- [ ] Add multi output devices!
