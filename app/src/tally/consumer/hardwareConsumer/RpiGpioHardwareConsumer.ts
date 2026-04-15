@@ -168,17 +168,21 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
 
         switch(state){
             case DeviceTallyState.PROGRAM:
-                this._execCmd(`pinctrl set ${output.program} dh ${output.preview} dl`);
+                this._execCmd(`pinctrl set ${output.program} dh`);
+                this._execCmd(`pinctrl dl ${output.preview} dl`);
                 break;
             case DeviceTallyState.PREVIEW:
-                this._execCmd(`pinctrl set ${output.program} dl ${output.preview} dh`);
+                this._execCmd(`pinctrl set ${output.program} dl`);
+                this._execCmd(`pinctrl dl ${output.preview} dh`);
                 break;
             case DeviceTallyState.DANGER: // TODO: Maybe different state? No PWM though, not sure if possible.
             case DeviceTallyState.WARNING:
-                this._execCmd(`pinctrl set ${output.program} dh ${output.preview} dh`);
+                this._execCmd(`pinctrl set ${output.program} dh`);
+                this._execCmd(`pinctrl dl ${output.preview} dh`);
                 break;
             default:
-                this._execCmd(`pinctrl set ${output.program} dl ${output.preview} dl`);
+                this._execCmd(`pinctrl set ${output.program} dl`);
+                this._execCmd(`pinctrl dl ${output.preview} dl`);
         }
 
         this.logger.debug(`Set GPIO for state ${state}:`, output);
