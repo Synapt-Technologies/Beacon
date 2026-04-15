@@ -1,7 +1,7 @@
 import { AbstractConsumer, type ConsumerConfig } from "../AbstractConsumer";
 import { ConnectionType, DeviceTallyState, GlobalDeviceTools, type DeviceAddress, type DeviceAlertState, type DeviceAlertTarget, type DeviceId, type TallyDevice } from "../../types/ConsumerStates";
 import { HardwareVersion } from "../../../types/SystemInfo";
-import { execSync, spawn } from 'child_process';
+import { execSync, exec } from 'child_process';
 
 // TODO: check if this is the right GPIO library. Was rpi-gpio before, but it's not updated.
 
@@ -145,12 +145,7 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
         }
 
         const devAddr = GlobalDeviceTools.create(device.id.consumer, device.id.device);
-        const outputs = this.gpioMap.get(devAddr);
 
-        if (!outputs){
-            this.logger.error("Attempted to send tally to device with an unknown or invalid GPIO! Device:", device);
-            return;
-        }
 
         if (this.stateCache.get(devAddr) === device.state) {
             this.logger.debug(`Skipping GPIO write for device (state unchanged):`, device);
@@ -158,31 +153,39 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
         }
 
         this.stateCache.set(devAddr, device.state);
+        this._setGpio(devAddr, device.state);
 
-        // spawn() calls execve() directly — no shell, non-blocking, returns void immediately.
-        let programState: string;
-        let previewState: string;
-        switch(device.state){
+    }
+
+    private _setGpio(address: string, state: DeviceTallyState): void {
+
+        const output = this.gpioMap.get(address);
+
+        if (!output){
+            this.logger.error("Attempted to send tally to device with an unknown or invalid GPIO! Device:", address);
+            return;
+        }
+
+        switch(state){
             case DeviceTallyState.PROGRAM:
-                programState = 'dh'; previewState = 'dl';
+                this._execCmd(`pinctrl set ${output.program} dh ${output.preview} dl`);
                 break;
             case DeviceTallyState.PREVIEW:
-                programState = 'dl'; previewState = 'dh';
+                this._execCmd(`pinctrl set ${output.program} dl ${output.preview} dh`);
                 break;
             case DeviceTallyState.DANGER: // TODO: Maybe different state? No PWM though, not sure if possible.
             case DeviceTallyState.WARNING:
-                programState = 'dh'; previewState = 'dh';
+                this._execCmd(`pinctrl set ${output.program} dh ${output.preview} dh`);
                 break;
             default:
-                programState = 'dl'; previewState = 'dl';
+                this._execCmd(`pinctrl set ${output.program} dl ${output.preview} dl`);
         }
 
-        // spawn() is non-blocking and calls execve() directly (no shell overhead).
-        // Single invocation sets both pins atomically: pinctrl set <prog> <state> <prev> <state>
-        spawn('pinctrl', ['set', String(outputs.program), programState, String(outputs.preview), previewState], { stdio: 'ignore' })
-            .on('error', (e: Error) => this.logger.error("Failed sending tally to device:", devAddr, "Error:", e));
+        this.logger.debug(`Set GPIO for state ${state}:`, output);
+    }
 
-        this.logger.debug(`Set Tally GPIO for device:`, device);
+    private _execCmd(cmd: string): void {
+        exec(cmd, (e) => { if (e) this.logger.error("GPIO flush error:", e); });
     }
 
     setDeviceAlert(address: DeviceAddress, type: DeviceAlertState, target: DeviceAlertTarget): void {
