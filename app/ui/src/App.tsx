@@ -18,13 +18,13 @@ import './styles/global.css';
 // the API until the server is confirmed ready, then do a clean reload.
 class AppErrorBoundary extends Component<
     { children: ReactNode },
-    { hasError: boolean }
+    { hasError: boolean; error: string | null }
 > {
-    state = { hasError: false }
+    state = { hasError: false, error: null }
     private _poll?: ReturnType<typeof setInterval>
 
-    static getDerivedStateFromError() {
-        return { hasError: true }
+    static getDerivedStateFromError(error: Error) {
+        return { hasError: true, error: error.message }
     }
 
     componentDidUpdate(_: unknown, prev: { hasError: boolean }) {
@@ -45,8 +45,32 @@ class AppErrorBoundary extends Component<
     }
 
     render() {
-        if (this.state.hasError) return null
-        return this.props.children
+        if (!this.state.hasError) return this.props.children
+
+        return (
+            <div style={{
+                display: 'flex', flexDirection: 'column', alignItems: 'center',
+                justifyContent: 'center', height: '100dvh', gap: 8,
+                background: 'var(--color-background-primary)',
+            }}>
+                <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--color-text-primary)' }}>
+                    Reconnecting…
+                </div>
+                <div style={{ fontSize: 12, color: 'var(--color-text-tertiary)' }}>
+                    Waiting for the server to come back up.
+                </div>
+                {this.state.error && (
+                    <div style={{
+                        marginTop: 12, padding: '8px 12px', borderRadius: 6, maxWidth: 420,
+                        background: 'color-mix(in srgb, #E24B4A 10%, transparent)',
+                        border: '0.5px solid color-mix(in srgb, #E24B4A 40%, transparent)',
+                        fontSize: 11, color: '#E24B4A', textAlign: 'center', wordBreak: 'break-word',
+                    }}>
+                        {this.state.error}
+                    </div>
+                )}
+            </div>
+        )
     }
 }
 
