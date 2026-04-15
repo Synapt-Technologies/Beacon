@@ -78,6 +78,8 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
 
         const pinMap = DEFAULT_PINOUT[this.info.version];
 
+        // TODO add pinmap check!
+
         try {
 
             for (let i = 0; i < pinMap.length; i++) {
