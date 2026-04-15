@@ -40,6 +40,7 @@ export function TallyStateProvider({ children }: { children: ReactNode }) {
       setConnected(true)
       setInitialized(true)
       client.subscribe('tally/global')
+      client.subscribe('tally/device/+/+')
       client.subscribe('tally/device/+')
       client.subscribe('system/info')
     })
@@ -56,11 +57,14 @@ export function TallyStateProvider({ children }: { children: ReactNode }) {
           setStates(next)
         } else if (topic.startsWith('tally/device/')) {
           const deviceAddress = topic.slice('tally/device/'.length).split('/')
-          const rawDeviceId = deviceAddress[0]
+          let rawDeviceId = deviceAddress[0]
           let rawConsumerId = consumerId
           if (deviceAddress.length > 1) {
-            rawConsumerId = deviceAddress[1]
+            rawConsumerId = deviceAddress[0]
+            rawDeviceId = deviceAddress[1]
           }
+          console.log(`Received device update for ${rawConsumerId}/${rawDeviceId}`)
+
           const name        = (data as { state?: string }).state ?? ''
           const display     = (DeviceTallyDisplayName[name as keyof typeof DeviceTallyDisplayName] ?? 'none') as DeviceDisplayState
           const fullKey     = GlobalDeviceTools.create(rawConsumerId, rawDeviceId)
