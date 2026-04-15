@@ -1,7 +1,7 @@
 import { AbstractConsumer, type ConsumerConfig } from "../AbstractConsumer";
 import { ConnectionType, DeviceTallyState, GlobalDeviceTools, type DeviceAddress, type DeviceAlertState, type DeviceAlertTarget, type DeviceId, type TallyDevice } from "../../types/ConsumerStates";
 import { HardwareVersion } from "../../../types/SystemInfo";
-import { Gpio } from 'pigpio';
+import type { Gpio } from 'pigpio';
 
 // TODO: check if this is the right GPIO library. Was rpi-gpio before, but it's not updated.
 
@@ -74,12 +74,13 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
         this.info.version = this.getHardwareVersion();
 
         if (this.info.version == HardwareVersion.UNKNOWN)
-            this.logger.error(`Failed to initialize GPIO. UNKOWN hardware!`);
+            return this.logger.fatal(`Failed to initialize GPIO. UNKOWN hardware!`);
+        
+        const { Gpio } = require('pigpio');
 
         const pinMap = DEFAULT_PINOUT[this.info.version];
 
         // TODO add pinmap check!
-
         try {
 
             for (let i = 0; i < pinMap.length; i++) {
