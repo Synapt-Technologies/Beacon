@@ -91,7 +91,8 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
                 const pins = pinMap[i];
 
                 // Format: pinctrl set <gpio> op dl (op=output, dl=drive low)
-                execSync(`pinctrl set ${pins.program} op dl ${pins.preview} op dl`);
+                execSync(`pinctrl set ${pins.program} op dl`);
+                execSync(`pinctrl set ${pins.preview} op dl`);
 
                 const gpioPins: GpioTallyOutput = {
                     program: pins.program,
@@ -160,25 +161,27 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
         this.stateCache.set(devAddr, device.state);
 
         // spawn() calls execve() directly — no shell, non-blocking, returns void immediately.
-        // Both pins are set in a single pinctrl invocation to halve the number of processes.
-        let args: string[];
+        // Two concurrent spawns (one per pin) are still faster than two sequential execSync calls.
+        let programState: string;
+        let previewState: string;
         switch(device.state){
             case DeviceTallyState.PROGRAM:
-                args = ['set', String(outputs.program), 'dh', String(outputs.preview), 'dl'];
+                programState = 'dh'; previewState = 'dl';
                 break;
             case DeviceTallyState.PREVIEW:
-                args = ['set', String(outputs.program), 'dl', String(outputs.preview), 'dh'];
+                programState = 'dl'; previewState = 'dh';
                 break;
             case DeviceTallyState.DANGER: // TODO: Maybe different state? No PWM though, not sure if possible.
             case DeviceTallyState.WARNING:
-                args = ['set', String(outputs.program), 'dh', String(outputs.preview), 'dh'];
+                programState = 'dh'; previewState = 'dh';
                 break;
             default:
-                args = ['set', String(outputs.program), 'dl', String(outputs.preview), 'dl'];
+                programState = 'dl'; previewState = 'dl';
         }
 
-        spawn('pinctrl', args, { stdio: 'ignore' })
-            .on('error', (e) => this.logger.error("Failed sending tally to device:", devAddr, "Error:", e));
+        const onError = (e: Error) => this.logger.error("Failed sending tally to device:", devAddr, "Error:", e);
+        spawn('pinctrl', ['set', String(outputs.program), programState], { stdio: 'ignore' }).on('error', onError);
+        spawn('pinctrl', ['set', String(outputs.preview),  previewState], { stdio: 'ignore' }).on('error', onError);
 
         this.logger.debug(`Set Tally GPIO for device:`, device);
     }
