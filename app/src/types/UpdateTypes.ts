@@ -16,4 +16,5 @@ export interface UpdateStatus {
     lastChecked: number | null;
     updating:    boolean;
     updateError: string | null;
+    hasUpdate:   boolean;
 }

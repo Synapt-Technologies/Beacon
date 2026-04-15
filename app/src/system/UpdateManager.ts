@@ -1,6 +1,7 @@
 import { exec } from 'child_process';
 import pkg from '../../package.json' with { type: 'json' };
 import { Logger } from '../logging/Logger';
+import SystemInfoUtil from './SystemInfoUtil';
 import type { UpdateStatus, GitHubRelease, GitHubBranch } from '../types/UpdateTypes';
 
 // Parse owner/repo from the repository URL in package.json.
@@ -17,9 +18,10 @@ const GH_API   = repoInfo
     : null;
 
 // Semver-aware comparison: returns true if tag `a` is strictly older than tag `b`.
-// Tags are expected in vX.Y.Z form; non-conforming tags are kept (not filtered out).
+// Tags are expected in vX.Y.Z form; strips git-describe suffixes (e.g. v3.0.0-14-gabcdef).
+// Non-conforming tags are not filtered out / treated as not-older.
 function isOlderThan(a: string, b: string): boolean {
-    const parse = (t: string) => t.replace(/^v/, '').split('.').map(Number);
+    const parse = (t: string) => t.replace(/^v/, '').split('-')[0].split('.').map(Number);
     const [aMaj, aMin, aPat] = parse(a);
     const [bMaj, bMin, bPat] = parse(b);
     if (isNaN(aMaj) || isNaN(bMaj)) return false;
@@ -42,13 +44,18 @@ export class UpdateManager {
     private updateError: string | null   = null;
 
     getStatus(): UpdateStatus {
+        const current = SystemInfoUtil.getFirmwareVersion();
+        const hasUpdate = this.releases
+            .filter(r => !r.prerelease)
+            .some(r => isOlderThan(current, r.tag));
         return {
-            current:     pkg.version,
+            current,
             releases:    this.releases,
             branches:    this.branches,
             lastChecked: this.lastChecked,
             updating:    this.updating,
             updateError: this.updateError,
+            hasUpdate,
         };
     }
 

@@ -105,7 +105,7 @@ export default function UpdatePage() {
                   <span style={{ fontSize: 13, color: 'var(--color-text-primary)', fontWeight: 500 }}>{r.name}</span>
                   {r.prerelease && (
                     <span style={{ fontSize: 10, padding: '1px 6px', borderRadius: 99, background: 'color-mix(in srgb, #E8A838 20%, transparent)', color: '#E8A838' }}>
-                      pre-release
+                      beta
                     </span>
                   )}
                   {isCurrent && (
