@@ -8,6 +8,7 @@ import  { type DeviceAddress,  DeviceAlertState, DeviceAlertTarget, type DeviceN
 import type { GlobalTallySource, ProducerBundle, ProducerId } from "../tally/types/ProducerStates";
 import type { OrchestratorConfig } from "../tally/TallyLifecycle";
 import type { SystemInfo } from "../types/SystemInfo";
+import { UpdateManager } from "../system/UpdateManager";
 
 export interface AdminState {
     producers: ProducerBundle[];
@@ -38,13 +39,19 @@ export class AdminServer extends EventEmitter<AdminServerEvents> {
 
     private app = express();
     private logger = new Logger(["ADMIN"]);
-    private state: AdminState = { 
-        producers: [], 
-        consumers: undefined, 
-        devices: new Map(), 
+    private state: AdminState = {
+        producers: [],
+        consumers: undefined,
+        devices: new Map(),
         orchestratorConfig: {},
         info: {}
     };
+    private updateManager: UpdateManager;
+
+    constructor(updateManager: UpdateManager) {
+        super();
+        this.updateManager = updateManager;
+    }
 
     public setState(state: AdminState): void {
         this.state = state;
@@ -193,6 +200,30 @@ export class AdminServer extends EventEmitter<AdminServerEvents> {
             this.emit("update_orchestrator", req.body as Partial<OrchestratorConfig>);
             res.status(204).send();
             this.logger.info(`Orchestrator config update requested:`, req.body);
+        });
+
+        // ? Update
+
+        this.app.get("/api/update/status", (_req, res) => {
+            res.json(this.updateManager.getStatus());
+        });
+
+        this.app.post("/api/update/check", async (_req, res) => {
+            const status = await this.updateManager.checkForUpdates();
+            res.json(status);
+        });
+
+        this.app.post("/api/update/apply", (req, res) => {
+            const { ref, type } = req.body as { ref: string; type: 'release' | 'branch' };
+            if (!ref || !type) {
+                res.status(400).json({ error: "ref and type are required" });
+                return;
+            }
+            res.status(204).send();
+            this.updateManager.applyUpdate(ref, type).catch((err) => {
+                this.logger.error("Update failed:", err);
+            });
+            this.logger.info(`Update requested: ${type} "${ref}"`);
         });
     }
 }

@@ -3,15 +3,21 @@ import type { ProducerConfig } from "./tally/producer/AbstractTallyProducer";
 import { Logger } from "./logging/Logger";
 import { AdminServer } from "./admin/AdminServer";
 import { CoreDatabase } from "./database/CoreDatabase";
+import { UpdateManager } from "./system/UpdateManager";
+
+const UPDATE_POLL_INTERVAL_MS = 60 * 60 * 1000; // 1 hour
 
 export class AppCore {
 
-    private lifecycle: TallyLifecycle;
-    private admin = new AdminServer();
+    private lifecycle:     TallyLifecycle;
+    private updateManager: UpdateManager;
+    private admin:         AdminServer;
     private logger = new Logger(["CORE"]);
 
     constructor() {
-        this.lifecycle = new TallyLifecycle();
+        this.lifecycle     = new TallyLifecycle();
+        this.updateManager = new UpdateManager();
+        this.admin         = new AdminServer(this.updateManager);
     }
 
     public async start(): Promise<void> {
@@ -23,6 +29,9 @@ export class AppCore {
         this._wireAdminServer();
 
         this.admin.start();
+
+        this.updateManager.checkForUpdates().catch(() => {});
+        setInterval(() => this.updateManager.checkForUpdates().catch(() => {}), UPDATE_POLL_INTERVAL_MS).unref();
 
         this.logger.info("Beacon started.");
     }

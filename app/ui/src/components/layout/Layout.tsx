@@ -12,7 +12,8 @@ const PAGE_TITLES: Record<string, string> = {
     '/web-tally':   'Web tally',
     '/devices':     'Devices',
     '/connections': 'Connections',
-    '/settings':    'Settings',
+    '/settings':        'Settings',
+    '/settings/update': 'Update',
 }
 
 const MOBILE_BREAKPOINT = 768

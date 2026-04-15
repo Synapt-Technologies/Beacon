@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useBeacon } from '../context/BeaconContext'
 import { Toggle } from '../components/Toggle'
 import { IconReset } from '../components/icons'
@@ -10,6 +11,7 @@ import { ALERT_COLORS, ALERT_SHORT, ALERT_LONG } from '../types/beacon'
 import type { OrchestratorConfig } from '../../../src/tally/TallyLifecycle'
 import type { AedesConsumerConfig } from '../../../src/tally/consumer/networkConsumer/AedesNetworkConsumer'
 import { HARDWARE_VERSION_STRING, HardwareVersion } from '../../../src/types/SystemInfo'
+import * as BeaconApi from '../api/BeaconApi'
 
 // ? Enum ↔ string bridge helpers
 
@@ -265,6 +267,13 @@ function AlertRow({ slot, index, editing, onEdit, onSave, onReset, onCancel }: A
 // ? Page
 
 export default function SettingsPage() {
+  const navigate = useNavigate()
+  const [hasUpdate, setHasUpdate] = useState(false)
+
+  useEffect(() => {
+    BeaconApi.getUpdateStatus().then(s => setHasUpdate(s.hasUpdate)).catch(() => {})
+  }, [])
+
   const {
     consumers,
     orchestratorConfig,
@@ -479,12 +488,22 @@ export default function SettingsPage() {
       <div className="s-card">
         <div className="s-row">
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 13, color: 'var(--color-text-primary)' }}>Beacon</div>
-            <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginTop: 1 }}>Firmware Version</div>
+            <div style={{ fontSize: 13, color: 'var(--color-text-primary)' }}>Firmware</div>
+            <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginTop: 1 }}>
+              {system.firmware ?? 'Unknown'}
+            </div>
           </div>
-          <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 99, background: 'var(--color-background-secondary)', color: 'var(--color-text-secondary)' }}>
-            {system.firmware ?? "Unknown"}
-          </span>
+          <button className="sm-btn" onClick={() => navigate('/settings/update')} style={{ position: 'relative' }}>
+            Update
+            {hasUpdate && (
+              <span style={{
+                position: 'absolute', top: -3, right: -3,
+                width: 7, height: 7, borderRadius: '50%',
+                background: 'var(--acc)',
+                border: '1.5px solid var(--color-background-primary)',
+              }} />
+            )}
+          </button>
         </div>
         <div className="s-row">
           <div style={{ flex: 1 }}>
