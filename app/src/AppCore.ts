@@ -121,16 +121,39 @@ export class AppCore {
     }
 
     private _registerShutdownHandlers(): void {
+        let isShuttingDown = false;
+
         const shutdown = async () => {
+            if (isShuttingDown) 
+                return;
+            isShuttingDown = true;
+
             this.logger.info("Shutting down...");
-            await this.lifecycle.shutdown();
-            CoreDatabase.destroy();
-            process.exit(0);
+            
+            const forceQuit = setTimeout(() => {
+                this.logger.fatal("Shutdown timed out, forcing exit.");
+                process.exit(1);
+            }, 4000); 
+            forceQuit.unref();
+
+            try {
+                this.logger.info("Stopping lifecycle services...");
+                await this.lifecycle.shutdown();
+                this.logger.info("Services stopped. Closing database...");
+
+                CoreDatabase.destroy(); 
+                
+                this.logger.info("Shutdown complete.");
+                process.exit(0);
+            } catch (err) {
+                this.logger.error("Error during shutdown:", err);
+                process.exit(1);
+            }
         };
 
         process.prependListener("SIGINT", shutdown);
         process.prependListener("SIGTERM", shutdown);
-        process.on("exit", () => { CoreDatabase.destroy(); });
+        // process.on("exit", () => { CoreDatabase.destroy(); });
         process.on("uncaughtException", (err) => { this.logger.fatal("Uncaught exception", err); });
         process.on("unhandledRejection", (reason) => { this.logger.fatal("Unhandled rejection", reason); });
     }

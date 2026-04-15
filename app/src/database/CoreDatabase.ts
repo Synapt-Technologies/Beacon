@@ -222,11 +222,22 @@ export class CoreDatabase {
 
     public static destroy(): void {
         // TODO Strengthen this with a try catch and make sure to handle errors properly.
-        if (CoreDatabase.instance) {
+        if (!CoreDatabase.instance) 
+            return;
+        
+        try{
             CoreDatabase.instance.logger.info(`Closing database.`);
-            CoreDatabase.instance.db.close();
+            const db = CoreDatabase.instance.db;
+            if (db && db.open) {
+                db.close(); 
+            }
+            CoreDatabase.instance.logger.info(`Database closed successfully.`);
+        } catch (err) {
+            this.instance.logger.error(`Error closing database:`, err);
+        } finally {
             CoreDatabase.instance = undefined as any;
         }
+    
     }
 
 }
