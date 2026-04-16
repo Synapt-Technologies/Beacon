@@ -20,9 +20,9 @@ export default function UpdatePage() {
     if (!status?.updating) return
     const id = setInterval(async () => {
       try {
-        // Poll a real Express API route — it only responds once
-        // the app is fully initialised (no Vite pre-bundling race).
-        const res = await fetch('/api/info')
+        // 204 only after ViteExpress middleware is fully set up,
+        // so the reload never hits the pre-middleware window.
+        const res = await fetch('/api/ready')
         if (res.ok) window.location.reload()
       } catch {
         // server still restarting — keep polling

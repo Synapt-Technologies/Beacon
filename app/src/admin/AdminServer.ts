@@ -37,6 +37,7 @@ export class AdminServer {
 
     private app = express();
     private logger = new Logger(["ADMIN"]);
+    private _ready = false;
     private state: AdminState = {
         producers: [],
         consumers: undefined,
@@ -67,11 +68,18 @@ export class AdminServer {
         });
         this._registerRoutes();
         ViteExpress.listen(this.app, port, () => {
+            this._ready = true;
             this.logger.info(`Admin server running on http://localhost:${port}`);
         });
     }
 
     private _registerRoutes(): void {
+
+        // ? Readiness — only 200 once ViteExpress middleware is fully set up
+        this.app.get("/api/ready", (_req, res) => {
+            if (this._ready) res.status(204).send();
+            else res.status(503).send();
+        });
 
         // ? Producers
 

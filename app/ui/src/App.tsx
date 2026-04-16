@@ -31,9 +31,9 @@ class AppErrorBoundary extends Component<
         if (!prev.hasError && this.state.hasError) {
             this._poll = setInterval(async () => {
                 try {
-                    // Poll a real Express API route — it only responds once
-                    // the app is fully initialised (no Vite pre-bundling race).
-                    const res = await fetch('/api/info')
+                    // 204 only after ViteExpress middleware is fully set up,
+                    // so the reload never hits the pre-middleware window.
+                    const res = await fetch('/api/ready')
                     if (res.ok) window.location.reload()
                 } catch {
                     // server not ready yet — keep waiting
