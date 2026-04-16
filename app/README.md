@@ -7,7 +7,8 @@ If you are compiling the image on windows, you must use WSL.
 
 
 ## TODO
-- [ ] !! DB HAS TO BE RESET ON UPDATE !!
+- [ ] !! PLATFORM NEED MANUAL RESTART ON UI CHANGE AFTER UPDATE !!
+  - [ ] Supervisor library?
 - [x] Implement mqtt ws tally for devices
   - [ ] Add alerts
 - [x] Persist alert config to settings
