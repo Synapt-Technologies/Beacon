@@ -4,8 +4,11 @@
       "type": "stdio",
       "command": "node",
       "args": [
-        "c:\\Users\\ijssl\\.vscode\\extensions\\vexp.vexp-vscode-2.0.4-win32-x64\\dist\\mcp-server.cjs"
-      ]
+        "c:\\Users\\ijssl\\.vscode\\extensions\\vexp.vexp-vscode-2.0.10-win32-x64\\dist\\mcp-server.cjs"
+      ],
+      "env": {
+        "VEXP_WORKSPACE": "c:\\Users\\ijssl\\Programming Projects\\Beacon"
+      }
     }
   }
 }
