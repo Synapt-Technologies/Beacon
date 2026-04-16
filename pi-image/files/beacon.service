@@ -8,7 +8,10 @@ Type=simple
 Restart=on-failure
 RestartSec=3
 WorkingDirectory=/opt/Beacon-tally/app
-ExecStart=/opt/Beacon-tally/app/node_modules/.bin/tsx /opt/Beacon-tally/app/app.ts
+Environment=PATH=/usr/local/bin:/usr/bin:/bin
+StandardOutput=journal
+StandardError=journal
+ExecStart=/usr/local/bin/node /opt/Beacon-tally/app/node_modules/tsx/dist/cli.js /opt/Beacon-tally/app/app.ts
 
 [Install]
 WantedBy=multi-user.target
