@@ -4,6 +4,10 @@ Find the light in your darkness. Highly configurable networked tally system.
 
 [UI Demo](https://synapt.nl/)
 
+> [!CAUTION]  
+> While this version is actively being tested, it is still an early release and may contain bugs. Keep that in mind while using it in production. If you are looking for a battle-tested version, please use v2.0.0 for now. While it is a big step back, it is stable. If you do find a bug, let us know! We might be able to fix it quickly :)
+
+
 # Features
 * Decentralised Tally management.
 * Multi-switcher configuration.
