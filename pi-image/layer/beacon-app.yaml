@@ -49,6 +49,5 @@ mmdebstrap:
       # systemd-networkd-wait-online so network-online.target actually blocks.
       mkdir -p $1/lib/systemd/system
       install -m 644 "${SRCROOT}/files/beacon.service" "$1/lib/systemd/system/beacon.service"
-      chroot $1 systemctl enable pigpiod.service
       chroot $1 systemctl enable beacon.service
       chroot $1 systemctl enable systemd-networkd-wait-online.service
