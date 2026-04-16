@@ -2,21 +2,33 @@
 
 Find the light in your darkness. Highly configurable Tally for Blackmagic Atem switchers.
 
-# Features
+[UI Demo](https://synapt.nl/)
 
+# Features
+* Decentralised Tally management.
+* Multi-switcher configuration.
+* Source combination.
 * Hardware tally output.
-* Online settings configuration.
-* Outputs that can show multiple Atem sources.
-* Web view of tally.
+* Expansive web UI configuration.
+* Tally and Device web view.
+* Companion module. **WIP**
+* Device alerting.
 
 <p style="width:100%; box-sizing: border-box; display: flex; gap: 10px; flex-wrap: nowrap">
   <img style="width:75%; border-radius: 5px" alt="BEACON CONTROL HOME" src="https://raw.githubusercontent.com/IJIJI/Beacon/refs/heads/main/assets/Main-Page.png" />
   <img style="width:24%; border-radius: 5px" alt="BEACON PHONE TALLY" src="https://raw.githubusercontent.com/IJIJI/Beacon/refs/heads/main/assets/Phone-Tally.png" /> 
 </p>
 
-# Hardware
+# Architecture
 
-Beacon runs on a Raspberry pi. It has been tested a lot on a pi 2, but also works on newer versions. It uses the gpio as hardware tally outputs. The pins are:
+Beacon is a modular system. This repository is for the main server, the Beacon Base. It is made for our custom hardware, available on [synapt.nl](https://synapt.nl/). The base can connect to multiple so called *producers*. Currently we support Blackmagic Atem switchers, and we are working on VMIX, OBS, Hyperdeck and Web presenter support. These *producers* supply sources and their states to *consumers*. We currently have two types of *consumers*. The *network consumer* that provides access to tally over the network, and our *hardware consumer* that enables hardware outputs on supported platforms (see #Hardware). Each consumer supplies *devices*, which can be configured in the web interface. A user can assign sources to each *device*, which are combined to produce a *device*'s tally state. We are working on a state builder to allow for even more complex logic.
+
+## Network Devices
+The *network consumer* allows *networked devices* over mqtt. We offer multiple *networked devices* on [synapt.nl](https://synapt.nl/). These include hardware extenders, offering more outputs, but also wireless tally *devices* operating on a mesh network.
+
+# Hardware
+Beacon runs on Node.js, which enables it to run on a lot of places. To get the *Beacon Base* setup you can follow the instructions at #Installation. We also offer pre-build images for Raspberry Pi. These work on the 64 bit Raspberry Pis, which includes all models starting from the Pi 3. When Beacon runs on a Pi it exposes the local GPIO outputs as *devices*. We are working on a newer hardware version to offer better output control. By default this uses the *Beacon Base V2* gpio configuration:
+
 
 |       Tally | Program | Preview |
 | ----------: | :-----: | ------- |
@@ -29,105 +41,48 @@ Beacon runs on a Raspberry pi. It has been tested a lot on a pi 2, but also work
 | **7** |   12   | 23      |
 | **8** |   13   | 24      |
 
-### Beacon Hardware
+## Beacon Hardware
+We have developed first-party hardware for this system. We are currently working on the transistion between our V2 and V3 system. The V3 will soon be available on [synapt.nl](https://synapt.nl/). The system consists of the following components.
 
-I have developed hardware for this system. The base Beacon Hardware consist of the Base and the Lighthouses. The Base is a rack mount device that has 8 XLR outputs. The Lighthouses are the lamps that you connect to the base. They have 4-pin mini xlr connectors and a switch to toggle the front leds. [I sell them on my site beacon.synapt.net](https://beacon.synapt.net/).
 
-##### Beacon Base:
-
+### Beacon Base:
+The Base is the core of the system. This runs the Beacon Base software. It has a POE network connection and four XLR hardware outputs, where Lighthouses can be connected.
 [link]()
 
-##### Beacon Lighthouse:
-
+### Beacon Lighthouse: **WIP**
+The Lighthouse is an analog light. It has a 4 pin min-xlr input and can be connected to hardware outputs on the Base or a Relay. They have a switch on the back, which disables the light on the front for situations where the tally should only be seen by the camera operator. We offer both 1/4" and magnet mounts.
 [link]()
 
-##### Live Sign (WIP):
+### Beacon Node: **WIP**
+The relay is a networked extender. It has a POE network connection and four hardware outputs. It and connects to the Base to extend it.
+[link]()
 
-##### Work in Progress:
+### Beacon Relay: **WIP**
+The Relay is a wireless bridge. It has a POE network connection and connects to the Base. It sets up the wireless mesh network for Satelites to connect to and coördinates Lighthouse discovery.
+[link]()
 
-I am currently in the development of a wireless version of the lighthouses and battery packs to make the current lighthouses wireless. They will communicate over 2.4ghz in a mesh network, with a POE base station.
+### Beacon Satelite: **WIP**
+This is a wireless tally light. It connects to the mesh network set up by the relay, and is discovered by the Base. It also contains a small display on the back, to display camera information.
+[link]()
+
+### Beacon Satelite Pro: **WIP**
+The Satelite Pro is a wireless tally display. It offers a 64x32 pixel display on the front, where camera information can be displayed. It also offers tally light and an information display on the back.
+
+### Beacon Display: **WIP**
+This connects to the network with a POE connection. It offers a 128x64 matrix display and can be configured to show information and it is discovered by the Base as tally light.
+
 
 # Installation
+This system can be installed on all platforms that support Node.js. To install this on a Raspberry Pi we offer pre-built images. We are also working on a docker image.
 
-Update your Raspberry pi:
+## Raspberry Pi
+The image we offer supports all 64-bit capable models. That means all Pis starting from the Pi 3 should work, though we recommend using at least a Pi 4. To get started, download the latest image from the releases and flash it to your sd card. This can be done with the [Raspberry Pi Imager](https://www.raspberrypi.com/software/), or another software of your choice.
 
-```bash
-sudo apt-get update &&
-sudo apt-get upgrade
-```
+## Node
+To run this on other systems, you can follow these steps:
+ 1. Clone the repository.
+ 2. Enter the app directory.
+ 3. Run `yarn`
+ 4. Start with `yarn start`
 
-Install Git, NodeJS, NPM, Yarn and TSX:
-
-```bash
-sudo apt install git -y &&
-sudo apt install nodejs &&
-sudo apt install npm -y &&
-sudo npm install --global yarn &&
-sudo npm install --global tsx
-```
-
-> Note. The last two installs might give the error "ENOENT: no such file or directory, uv_cwd". Re-opening the terminal will resolve this.
-
-Make a directory:
-
-```bash
-sudo mkdir /opt/Beacon-tally
-```
-
-Clone and initialize repository:
-
-```bash
-sudo git clone https://github.com/IJIJI/Beacon.git /opt/Beacon-tally &&
-cd /opt/Beacon-tally &&
-sudo yarn install
-```
-
-Create startup service:
-
-```bash
-sudo nano /lib/systemd/system/beacon.service
-```
-
-Paste startup service into file, then press Ctrl + S to save and Ctrl + X to exit:
-
-```yaml
-#/lib/systemd/system/beacon.service
-[Unit]
-Description=Beacon Tally
-After=network-online.target
-
-[Service]
-Type=simple
-Restart=always
-RestartSec=3
-Restart=on-failure
-WorkingDirectory= /opt/Beacon-tally/
-ExecStart=yarn start /opt/Beacon-tally/
-
-[Install]
-WantedBy=multi-user.target
-```
-
-Enable and start service:
-
-```bash
-sudo systemctl daemon-reload &&
-sudo systemctl enable beacon &&
-sudo systemctl start beacon
-```
-
-Congratulations, you can now access your Beacon tally via the browser! To see your ip address you can use this command:
-
-```bash
-ifconfig | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*'
-```
-
-### Automatic install
-
-You can install Beacon Tally automatically with this install script:
-
-***WARNING! This script does not allways work. The manual method is still recommended.***
-
-```bash
-bash -c "$(wget -qLO - https://raw.githubusercontent.com/IJIJI/Beacon/main/install.sh)"
-```
+Running beacon on your own hardware requires understanding of Node.js. If you struggle running it, we recommend getting started on a Raspberry Pi, or looking at our pre-built hardware.
