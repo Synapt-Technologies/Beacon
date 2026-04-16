@@ -18,14 +18,17 @@ export default function UpdatePage() {
   // then hard-reload to pick up the new code.
   useEffect(() => {
     if (!status?.updating) return
+    // Wait for the server to go DOWN first, then come back up.
+    // Without this, the poll fires while the build is still running
+    // (server is up), gets 204, reloads immediately, and loops.
+    let serverWentDown = false
     const id = setInterval(async () => {
       try {
-        // 204 only after ViteExpress middleware is fully set up,
-        // so the reload never hits the pre-middleware window.
         const res = await fetch('/api/ready')
-        if (res.ok) window.location.reload()
+        if (res.ok && serverWentDown) window.location.reload()
       } catch {
-        // server still restarting — keep polling
+        // connection refused / network error = server is down
+        serverWentDown = true
       }
     }, 2000)
     return () => clearInterval(id)
