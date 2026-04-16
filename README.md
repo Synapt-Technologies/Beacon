@@ -49,7 +49,7 @@ Due to the MQTT support, it is easy to add a DIY device to the system. We offer 
 We have developed first-party hardware for this system. We are currently working on the transition between our V2 and V3 systems. The V3 will soon be available on [synapt.nl](https://synapt.nl/). The system consists of the following components.
 
 
-### Beacon Base:
+### Beacon Base: **WIP**
 The Base is the core of the system. This runs the Beacon Base software. It has a POE network connection and four XLR hardware outputs, where Lighthouses can be connected.
 [link]()
 
