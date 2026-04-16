@@ -1,6 +1,6 @@
 # Beacon
 
-Find the light in your darkness. Highly configurable Tally for Blackmagic Atem switchers.
+Find the light in your darkness. Highly configurable networked tally system.
 
 [UI Demo](https://synapt.nl/)
 
