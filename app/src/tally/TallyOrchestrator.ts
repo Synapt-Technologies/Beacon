@@ -69,7 +69,7 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
         if (config.state_on_disconnect != this.config.state_on_disconnect)
             state_on_disconnect_change = true;
         
-        
+
 
         this.config = { ...this.config, ...config };
 
@@ -78,7 +78,7 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
         if (state_on_disconnect_change) {
             this.logger.info(`State on disconnect changed to ${DeviceTallyState[this.config.state_on_disconnect]}. Disconnected producers: ${this.disconnectedProducers.size}.`)
 
-            if (this.disconnectedProducers.size !== 0 && this.config.state_on_disconnect !== DeviceTallyState.NONE) {  // TODO Extract to function and use in restart
+            if (this.disconnectedProducers.size !== 0) {  // TODO Extract to function and use in restart
                 this.logger.info(`Updating consumer base state...`);
 
                 for (const consumer of this.consumers.values()) {
