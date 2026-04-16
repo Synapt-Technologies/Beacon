@@ -20,9 +20,9 @@ export default function UpdatePage() {
     if (!status?.updating) return
     const id = setInterval(async () => {
       try {
-        // Poll the root path — it goes through Vite middleware,
-        // so a 200 means both Express and Vite are fully ready.
-        const res = await fetch('/', { method: 'HEAD' })
+        // Poll a real Express API route — it only responds once
+        // the app is fully initialised (no Vite pre-bundling race).
+        const res = await fetch('/api/info')
         if (res.ok) window.location.reload()
       } catch {
         // server still restarting — keep polling
