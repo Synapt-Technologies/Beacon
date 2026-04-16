@@ -37,7 +37,7 @@ mmdebstrap:
       chroot $1 bash -c "
         set -e
         export COREPACK_YES=1
-        git clone --depth 1 --branch dev https://github.com/IJIJI/Beacon.git /opt/Beacon-tally
+        git clone --depth 1 --branch dev https://github.com/Synapt-Technologies/Beacon.git /opt/Beacon-tally
         cd /opt/Beacon-tally/app
         yarn install --immutable
         yarn build
