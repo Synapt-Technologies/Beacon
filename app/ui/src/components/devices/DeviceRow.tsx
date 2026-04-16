@@ -4,7 +4,7 @@ import { stateFromValue, type DeviceDisplayState } from '../../types/beacon'
 import { useBeacon } from '../../context/BeaconContext'
 import { useTallyState } from '../../hooks/useTallyState'
 import { GlobalDeviceTools } from '../../../../src/tally/types/ConsumerStates'
-import type { SourceInfo } from '../../../../src/tally/types/ProducerStates'
+import type { ProducerId, SourceId, SourceInfo } from '../../../../src/tally/types/ProducerStates'
 
 type SourceState = 'pgm' | 'pvw' | 'none'
 
@@ -30,13 +30,14 @@ export default function DeviceRow({
         ? (deviceStates.get(deviceKey) ?? 'none')
         : disconnectState
 
-    function shortName(producer: string, source: string): string {
-        const key = `${producer}:${source}`
+    function shortName(producer: ProducerId, source: SourceId): string {
+        const key = `${producer}:${source}`; // TODO: GlobalSourceTools?
+        
         for (const p of producers) {
             const sources = p.info?.sources as unknown as Record<string, SourceInfo>
             if (sources?.[key]) return sources[key].short ?? source
         }
-        return source
+        return key
     }
 
     return (

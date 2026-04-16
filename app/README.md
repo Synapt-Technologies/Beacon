@@ -7,7 +7,8 @@ If you are compiling the image on windows, you must use WSL.
 
 
 ## TODO
-- [ ] !! DB HAS TO BE RESET ON UPDATE !!
+- [ ] !! PLATFORM NEED MANUAL RESTART ON UI CHANGE AFTER UPDATE !!
+  - [ ] Supervisor library?
 - [x] Implement mqtt ws tally for devices
   - [ ] Add alerts
 - [x] Persist alert config to settings
@@ -17,7 +18,7 @@ If you are compiling the image on windows, you must use WSL.
     - [x] On disconnection from api
       - [x] Add some sort of connection timeout?  
     - [x] On producer disconnect
-    - [ ] Changing the stage while disconnected does not work.
+    - [x] Changing the stage while disconnected does not work.
     - [ ] Only the devices that include sources from the disconnected source?
 - [ ] Add "F11" fullscreen button
 - [ ] Show more source info, pimarily consumer:sourceid at the device source list.
