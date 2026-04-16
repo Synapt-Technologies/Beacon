@@ -41,6 +41,10 @@ Beacon runs on Node.js, which enables it to run on a lot of places. To get the *
 | **7** |   12   | 23      |
 | **8** |   13   | 24      |
 
+## DIY Hardware **WIP**
+Due to the MQTT support it is easy to add a DIY device to the system. We offer code for M5Stack products **WIP** and a bare ESP32. These work over WIFI. For a completely stable wireless device we suggest our Beacon hardware. You can find the DIY repositories here:
+* Still **WIP**
+
 ## Beacon Hardware
 We have developed first-party hardware for this system. We are currently working on the transistion between our V2 and V3 system. The V3 will soon be available on [synapt.nl](https://synapt.nl/). The system consists of the following components.
 
