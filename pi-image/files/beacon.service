@@ -11,7 +11,7 @@ WorkingDirectory=/opt/Beacon-tally/app
 Environment=PATH=/usr/local/bin:/usr/bin:/bin
 StandardOutput=journal
 StandardError=journal
-ExecStart=/usr/local/bin/node /opt/Beacon-tally/app/node_modules/tsx/dist/cli.js /opt/Beacon-tally/app/app.ts
+ExecStart=/usr/local/bin/node /opt/Beacon-tally/app/node_modules/tsx/dist/cli.js /opt/Beacon-tally/app/supervisor.ts
 
 [Install]
 WantedBy=multi-user.target
