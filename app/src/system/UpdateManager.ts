@@ -126,13 +126,18 @@ export class UpdateManager {
 
             await this._exec('yarn install');
 
-            // Clear Vite's pre-bundle cache so the next startup always does a
-            // clean rebuild. Without this, Vite serves stale pre-bundled deps
-            // after package changes, causing module fetches to fail on first boot.
-            const viteCache = join(process.cwd(), 'ui', '.vite');
-            if (existsSync(viteCache)) {
-                rmSync(viteCache, { recursive: true, force: true });
-                this.logger.info('Cleared Vite dep cache.');
+            if (process.env.NODE_ENV === 'production') {
+                // Build the UI so the new code is served immediately on restart,
+                // with no Vite pre-bundling race on first page load.
+                await this._exec('yarn build');
+            } else {
+                // In dev mode, clear Vite's pre-bundle cache so the next startup
+                // does a clean rebuild rather than serving stale deps.
+                const viteCache = join(process.cwd(), 'ui', '.vite');
+                if (existsSync(viteCache)) {
+                    rmSync(viteCache, { recursive: true, force: true });
+                    this.logger.info('Cleared Vite dep cache.');
+                }
             }
 
             this.logger.info('Update complete, restarting...');

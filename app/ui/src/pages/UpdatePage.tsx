@@ -3,29 +3,42 @@ import { useNavigate } from 'react-router-dom'
 import type { UpdateStatus } from '../../../src/types/UpdateTypes'
 import * as BeaconApi from '../api/BeaconApi'
 
+const SESSION_KEY = 'beacon_update_success'
+
 export default function UpdatePage() {
   const navigate = useNavigate()
 
   const [status,       setStatus]       = useState<UpdateStatus | null>(null)
   const [checking,     setChecking]     = useState(false)
   const [showBranches, setShowBranches] = useState(false)
+  const [showSuccess,  setShowSuccess]  = useState(false)
 
   useEffect(() => {
     BeaconApi.getUpdateStatus().then(setStatus).catch(() => {})
+    if (sessionStorage.getItem(SESSION_KEY)) {
+      sessionStorage.removeItem(SESSION_KEY)
+      setShowSuccess(true)
+    }
   }, [])
 
   // When an update is in progress, poll until the server comes back up,
   // then hard-reload to pick up the new code.
   useEffect(() => {
     if (!status?.updating) return
+    // Wait for the server to go DOWN first, then come back up.
+    // Without this, the poll fires while the build is still running
+    // (server is up), gets 204, reloads immediately, and loops.
+    let serverWentDown = false
     const id = setInterval(async () => {
       try {
-        // Poll the root path — it goes through Vite middleware,
-        // so a 200 means both Express and Vite are fully ready.
-        const res = await fetch('/', { method: 'HEAD' })
-        if (res.ok) window.location.reload()
+        const res = await fetch('/api/ready')
+        if (res.ok && serverWentDown) {
+          sessionStorage.setItem(SESSION_KEY, '1')
+          window.location.reload()
+        }
       } catch {
-        // server still restarting — keep polling
+        // connection refused / network error = server is down
+        serverWentDown = true
       }
     }, 2000)
     return () => clearInterval(id)
@@ -60,6 +73,64 @@ export default function UpdatePage() {
   }
 
   return (
+    <>
+    {showSuccess && (
+      <div style={{
+        position: 'fixed', inset: 0, zIndex: 50,
+        background: 'rgba(0,0,0,.45)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+      }}>
+        <div style={{
+          background: 'var(--color-background-primary)',
+          borderRadius: 'var(--border-radius-lg)',
+          border: '0.5px solid var(--color-border-tertiary)',
+          width: 320, overflow: 'hidden',
+          display: 'flex', flexDirection: 'column', alignItems: 'center',
+          padding: '32px 24px 24px',
+          gap: 8,
+        }}>
+          <div style={{
+            width: 48, height: 48, borderRadius: '50%',
+            background: 'color-mix(in srgb, var(--acc) 15%, transparent)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            marginBottom: 4,
+          }}>
+            <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+              <path d="M4 11.5L9 16.5L18 6" stroke="var(--acc)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </div>
+          <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--color-text-primary)' }}>
+            Update complete
+          </div>
+          <div style={{ fontSize: 12, color: 'var(--color-text-tertiary)', textAlign: 'center', lineHeight: 1.5 }}>
+            Beacon is running the latest version.
+          </div>
+          <div style={{ display: 'flex', gap: 8, marginTop: 16, width: '100%' }}>
+            <button
+              onClick={() => setShowSuccess(false)}
+              style={{
+                flex: 1, fontSize: 12, padding: '7px 0',
+                borderRadius: 'var(--border-radius-md)',
+                border: '0.5px solid var(--color-border-tertiary)',
+                background: 'none', color: 'var(--color-text-secondary)', cursor: 'pointer',
+              }}
+            >
+              Stay here
+            </button>
+            <button
+              onClick={() => navigate('/overview')}
+              style={{
+                flex: 1, fontSize: 12, padding: '7px 0',
+                borderRadius: 'var(--border-radius-md)',
+                border: 'none', background: 'var(--acc)', color: '#fff', cursor: 'pointer',
+              }}
+            >
+              Go to overview
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
     <div>
       {/* Back + check */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
@@ -181,5 +252,6 @@ export default function UpdatePage() {
         </>
       )}
     </div>
+    </>
   )
 }
