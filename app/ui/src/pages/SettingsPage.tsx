@@ -134,7 +134,7 @@ function AlertRow({ slot, index, editing, onEdit, onSave, onReset, onCancel }: A
   const summaryParts = [ALERT_LONG[slot.action]]
   if (!isClr) {
     if (slot.target)  summaryParts.push(slot.target)
-    if (slot.timeout && slot.timeout > 0) summaryParts.push(`${slot.timeout}s`)
+    if (slot.timeout && slot.timeout > 0) summaryParts.push(`${(slot.timeout / 1000).toFixed(2)}s`)
   }
 
   if (!editing) {

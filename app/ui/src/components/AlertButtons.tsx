@@ -78,7 +78,7 @@ function AlertBtn({ slot, onAlert }: AlertBtnProps) {
   const col = ALERT_COLORS[slot.action] ?? '#888'
   const sub = slot.action === 'CLEAR'
     ? 'Cancel alert'
-    : `${slot.target ?? 'All'}${slot.timeout && slot.timeout > 0 ? ` · ${slot.timeout}s` : ''}`
+    : `${slot.target ?? 'All'}${slot.timeout && slot.timeout > 0 ? ` · ${(slot.timeout / 1000).toFixed(2)}s` : ''}`
 
   return (
     <button
