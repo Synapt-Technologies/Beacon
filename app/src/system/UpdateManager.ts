@@ -131,6 +131,11 @@ export class UpdateManager {
                 // Build the UI so the new code is served immediately on restart,
                 // with no Vite pre-bundling race on first page load.
                 await this._exec('yarn build');
+
+                const uiEntry = join(process.cwd(), 'dist', 'ui', 'index.html');
+                if (!existsSync(uiEntry)) {
+                    throw new Error(`UI build output missing after update: ${uiEntry}`);
+                }
             } else {
                 // In dev mode, clear Vite's pre-bundle cache so the next startup
                 // does a clean rebuild rather than serving stale deps.

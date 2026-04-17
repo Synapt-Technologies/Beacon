@@ -1,5 +1,7 @@
 import express from "express";
 import ViteExpress from "vite-express";
+import { existsSync } from "node:fs";
+import { join } from "node:path";
 import { Logger } from "../logging/Logger";
 import type { ProducerConfig } from "../tally/producer/AbstractTallyProducer";
 import type { ConsumerUpdate, LifecycleConfig } from "../tally/TallyLifecycle";
@@ -62,14 +64,54 @@ export class AdminServer {
 
     public start(port: number = 80): void {
         this.app.use(express.json());
+        this._registerRoutes();
+
+        if (process.env.NODE_ENV === 'production') {
+            this._registerProductionUiRoutes();
+            const server = this.app.listen(port, () => {
+                this._ready = true;
+                this.logger.info(`Admin server running on http://localhost:${port}`);
+            });
+
+            server.on("error", (err) => {
+                this.logger.error("Admin server failed to start:", err);
+            });
+            return;
+        }
+
         ViteExpress.config({
             verbosity: ViteExpress.Verbosity.Silent,
-            mode: process.env.NODE_ENV === 'production' ? 'production' : 'development',
+            mode: 'development',
         });
-        this._registerRoutes();
-        ViteExpress.listen(this.app, port, () => {
+
+        const server = ViteExpress.listen(this.app, port, () => {
             this._ready = true;
             this.logger.info(`Admin server running on http://localhost:${port}`);
+        });
+
+        server.on("error", (err) => {
+            this.logger.error("Admin server failed to start:", err);
+        });
+    }
+
+    private _registerProductionUiRoutes(): void {
+        const uiDistPath = join(process.cwd(), "dist", "ui");
+
+        if (!existsSync(uiDistPath)) {
+            this.logger.error(`Production UI build not found at: ${uiDistPath}`);
+            this.app.get(/^(?!\/api(?:\/|$)).*/, (_req, res) => {
+                res.status(503).json({
+                    error: "Web UI is unavailable: dist build missing. Run yarn build.",
+                });
+            });
+            return;
+        }
+
+        this.app.use(express.static(uiDistPath));
+
+        // Non-API GET requests are served by the SPA entrypoint.
+        this.app.get(/^(?!\/api(?:\/|$)).*/, (_req, res) => {
+            res.sendFile(join(uiDistPath, "index.html"));
         });
     }
 
