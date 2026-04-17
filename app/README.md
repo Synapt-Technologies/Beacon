@@ -14,12 +14,12 @@ If you are compiling the image on windows, you must use WSL.
 - [x] Persist alert config to settings
 - [ ] On patch change the web tally does not update.
 - [ ] Disconnect warning for tally
-  - [ ] State on disconnect also on web interface
+  - [x] State on disconnect also on web interface
     - [x] On disconnection from api
       - [x] Add some sort of connection timeout?  
     - [x] On producer disconnect
     - [x] Changing the stage while disconnected does not work.
-    - [ ] Only the devices that include sources from the disconnected source?
+  - [ ] Only the devices that include sources from the disconnected source?
 - [ ] Add "F11" fullscreen button
 - [ ] Show more source info, pimarily consumer:sourceid at the device source list.
 - [x] Fix add connection to show the added connection without reload
