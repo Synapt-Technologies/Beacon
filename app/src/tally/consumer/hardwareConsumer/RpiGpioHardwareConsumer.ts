@@ -229,42 +229,50 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
             return;
         }
 
-        this._setGpio(devAddr, device.state);
-        this.stateCache.set(devAddr, device.state);
+        if (this._setGpio(devAddr, device.state)) {
+            this.stateCache.set(devAddr, device.state);
+        }
 
     }
 
-    private _setGpio(address: string, state: DeviceTallyState): void {
+    private _setGpio(address: string, state: DeviceTallyState): boolean {
 
         const output = this.gpioMap.get(address);
 
         if (!output){
             this.logger.error("Attempted to send tally to device with an unknown or invalid GPIO! Device:", address);
-            return;
+            return false;
         }
 
         // output.program.pwmWrite(128); // TODO
 
-        switch(state){
-            case DeviceTallyState.PROGRAM:
-                output.program.digitalWrite(1);
-                output.preview.digitalWrite(0);
-                break;
-            case DeviceTallyState.PREVIEW:
-                output.program.digitalWrite(0);
-                output.preview.digitalWrite(1);
-                break;
-            case DeviceTallyState.DANGER: // TODO: Maybe different state? No PWM though, not sure if possible.
-            case DeviceTallyState.WARNING:
-                output.program.digitalWrite(1);
-                output.preview.digitalWrite(1);
-                break;
-            default:
-                output.program.digitalWrite(0);
-                output.preview.digitalWrite(0);
+        try {
+            switch(state){
+                case DeviceTallyState.PROGRAM:
+                    output.program.digitalWrite(1);
+                    output.preview.digitalWrite(0);
+                    break;
+                case DeviceTallyState.PREVIEW:
+                    output.program.digitalWrite(0);
+                    output.preview.digitalWrite(1);
+                    break;
+                case DeviceTallyState.DANGER: // TODO: Maybe different state? No PWM though, not sure if possible.
+                case DeviceTallyState.WARNING:
+                    output.program.digitalWrite(1);
+                    output.preview.digitalWrite(1);
+                    break;
+                default:
+                    output.program.digitalWrite(0);
+                    output.preview.digitalWrite(0);
+            }
+        }
+        catch (e) {
+            this.logger.error(`GPIO write failed for ${address} state=${DeviceTallyState[state] ?? state}:`, e);
+            return false;
         }
 
         // this.logger.debug(`Set GPIO for state ${state}:`, output);
+        return true;
     }
 
     setDeviceAlert(address: DeviceAddress, type: DeviceAlertState, target: DeviceAlertTarget, time: number): void {
@@ -314,6 +322,10 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
         const intervalHandle = setInterval(tick, alertConfig.speedMs);
         const timeoutHandle = time > 0
             ? setTimeout(() => {
+                const runtime = this.activeAlerts.get(key);
+                if (!runtime || runtime.token !== alertToken) {
+                    return;
+                }
                 this.clearDeviceAlert(key, true);
                 this.logger.debug(`Alert timeout reached for device:`, address);
             }, time)
@@ -339,8 +351,9 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
             if (restoreTally) {
                 const device = this.devices.get(key);
                 if (device) {
-                    this.stateCache.set(key, device.state);
-                    this._setGpio(key, device.state);
+                    if (this._setGpio(key, device.state)) {
+                        this.stateCache.set(key, device.state);
+                    }
                 }
             }
             return;
@@ -356,11 +369,14 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
         if (restoreTally) {
             const device = this.devices.get(key);
             if (device) {
-                this.stateCache.set(key, device.state);
-                this._setGpio(key, device.state);
+                if (this._setGpio(key, device.state)) {
+                    this.stateCache.set(key, device.state);
+                }
             }
             else {
-                this._setGpio(key, DeviceTallyState.NONE);
+                if (this._setGpio(key, DeviceTallyState.NONE)) {
+                    this.stateCache.set(key, DeviceTallyState.NONE);
+                }
             }
         }
     }
