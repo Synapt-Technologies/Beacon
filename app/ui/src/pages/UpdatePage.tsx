@@ -103,7 +103,7 @@ export default function UpdatePage() {
             Update complete
           </div>
           <div style={{ fontSize: 12, color: 'var(--color-text-tertiary)', textAlign: 'center', lineHeight: 1.5 }}>
-            Beacon is running the latest version.
+            Beacon is now running the selected version.
           </div>
           <div style={{ display: 'flex', gap: 8, marginTop: 16, width: '100%' }}>
             <button
