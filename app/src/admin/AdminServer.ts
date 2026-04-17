@@ -107,10 +107,29 @@ export class AdminServer {
             return;
         }
 
-        this.app.use(express.static(uiDistPath));
+        this.app.use(express.static(uiDistPath, {
+            setHeaders: (res, filePath) => {
+                // Always revalidate HTML so clients don't keep stale index.html
+                // after an OTA update with new hashed asset filenames.
+                if (filePath.endsWith('.html')) {
+                    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+                }
+            },
+        }));
 
-        // Non-API GET requests are served by the SPA entrypoint.
-        this.app.get(/^(?!\/api(?:\/|$)).*/, (_req, res) => {
+        // Non-API navigation requests are served by the SPA entrypoint.
+        // Requests that look like static assets (have an extension) should not
+        // receive index.html, otherwise browsers may parse HTML as JS/CSS.
+        this.app.get(/^(?!\/api(?:\/|$)).*/, (req, res) => {
+            const acceptsHtml = req.accepts('html');
+            const hasExtension = req.path.lastIndexOf('.') > req.path.lastIndexOf('/');
+
+            if (!acceptsHtml || hasExtension) {
+                res.status(404).send();
+                return;
+            }
+
+            res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
             res.sendFile(join(uiDistPath, "index.html"));
         });
     }
