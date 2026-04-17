@@ -37,12 +37,10 @@ interface AlertPatternConfig {
 
 const ALERT_PATTERNS: Record<DeviceAlertState, AlertPatternConfig | null> = {
     [DeviceAlertState.IDENT]: {
-        speedMs: 500,
+        speedMs: 400,
         pattern: [
             DeviceTallyState.PREVIEW,
             DeviceTallyState.PROGRAM,
-            DeviceTallyState.WARNING,
-            null,
         ],
     },
     [DeviceAlertState.INFO]: {
@@ -319,7 +317,7 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
             timeoutHandle,
         });
 
-        this.logger.debug(`Set alert ${DeviceAlertState[type]} for device:`, address, `timeout(s):`, time);
+        // this.logger.debug(`Set alert ${DeviceAlertState[type]} for device:`, address, `timeout(s):`, time);
 
     }
 
