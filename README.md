@@ -7,7 +7,6 @@ Find the light in your darkness. Highly configurable networked tally system.
 > [!CAUTION]  
 > While this version is actively being tested, it is still an early release and may contain bugs. Keep that in mind while using it in production. If you are looking for a battle-tested version, please use v2.0.0 for now. While it is a big step back, it is stable. If you do find a bug, let us know! We might be able to fix it quickly :)
 
-
 # Features
 * Decentralised Tally management.
 * Multi-switcher configuration.
@@ -54,7 +53,7 @@ We have developed first-party hardware for this system. We are currently working
 
 
 ### Beacon Base: **WIP**
-The Base is the core of the system. This runs the Beacon Base software. It has a POE network connection and four XLR hardware outputs, where Lighthouses can be connected.
+This is the third version of the Base, and it is the core of the system. This runs the Beacon Base software. It has a POE network connection and four XLR hardware outputs, where Lighthouses can be connected.
 [link]()
 
 ### Beacon Lighthouse: **WIP**

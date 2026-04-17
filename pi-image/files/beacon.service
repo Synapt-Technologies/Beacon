@@ -8,12 +8,8 @@ Type=simple
 Restart=on-failure
 RestartSec=3
 WorkingDirectory=/opt/Beacon-tally/app
-Environment=PATH=/usr/local/bin:/usr/bin:/bin
 Environment=NODE_ENV=production
-#StandardOutput=journal
-#StandardError=journal
-ExecStart=/usr/local/bin/node /opt/Beacon-tally/app/node_modules/tsx/dist/cli.js /opt/Beacon-tally/app/supervisor.ts
-#ExecStart=/usr/local/bin/yarn --cwd /opt/Beacon-tally/app/ start
+ExecStart=/opt/Beacon-tally/app/node_modules/.bin/tsx /opt/Beacon-tally/app/supervisor.ts
 
 [Install]
 WantedBy=multi-user.target
