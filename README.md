@@ -4,6 +4,9 @@ Find the light in your darkness. Highly configurable networked tally system.
 
 [UI Demo](https://synapt.nl/)
 
+> [!CAUTION]  
+> While this version is actively being tested, it is still an early release and may contain bugs. Keep that in mind while using it in production. If you are looking for a battle-tested version, please use v2.0.0 for now. While it is a big step back, it is stable. If you do find a bug, let us know! We might be able to fix it quickly :)
+
 # Features
 * Decentralised Tally management.
 * Multi-switcher configuration.
@@ -49,8 +52,8 @@ Due to the MQTT support, it is easy to add a DIY device to the system. We offer 
 We have developed first-party hardware for this system. We are currently working on the transition between our V2 and V3 systems. The V3 will soon be available on [synapt.nl](https://synapt.nl/). The system consists of the following components.
 
 
-### Beacon Base:
-The Base is the core of the system. This runs the Beacon Base software. It has a POE network connection and four XLR hardware outputs, where Lighthouses can be connected.
+### Beacon Base: **WIP**
+This is the third version of the Base, and it is the core of the system. This runs the Beacon Base software. It has a POE network connection and four XLR hardware outputs, where Lighthouses can be connected.
 [link]()
 
 ### Beacon Lighthouse: **WIP**
