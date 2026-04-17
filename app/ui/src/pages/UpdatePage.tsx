@@ -31,7 +31,13 @@ export default function UpdatePage() {
     let serverWentDown = false
     const id = setInterval(async () => {
       try {
-        const res = await fetch('/api/ready')
+        const res = await fetch('/api/ready', { cache: 'no-store' })
+        if (!res.ok) {
+          // 503 during startup means backend is restarting.
+          serverWentDown = true
+          return
+        }
+
         if (res.ok && serverWentDown) {
           sessionStorage.setItem(SESSION_KEY, '1')
           window.location.reload()
