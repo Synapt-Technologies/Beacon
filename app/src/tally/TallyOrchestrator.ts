@@ -98,6 +98,11 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
             this._notifyBroadcasters(consumer.getId(), device);
         });
         this.emit('consumer_added', consumer.getId());
+
+        if (this.disconnectedProducers.size !== 0) {
+            consumer.setBaseState(this.config.state_on_disconnect);
+        }
+
         this._parseGlobalTally();
     }
 
@@ -144,10 +149,8 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
         producer.on('disconnected', () => {
             this.disconnectedProducers.add(producer.getId());
             this._parseGlobalTally();
-            if (this.config.state_on_disconnect !== DeviceTallyState.NONE) {  // TODO Extract to function and use in restart
-                for (const consumer of this.consumers.values()) {
-                    consumer.setBaseState(this.config.state_on_disconnect);
-                }
+            for (const consumer of this.consumers.values()) {
+                consumer.setBaseState(this.config.state_on_disconnect);
             }
             this.emit('producer_disconnected', producer.getId());
         });
