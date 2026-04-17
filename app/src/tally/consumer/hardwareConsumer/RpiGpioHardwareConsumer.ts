@@ -1,5 +1,5 @@
 import { AbstractConsumer, type ConsumerConfig } from "../AbstractConsumer";
-import { ConnectionType, DeviceTallyState, GlobalDeviceTools, type DeviceAddress, type DeviceAlertState, type DeviceAlertTarget, type DeviceId, type TallyDevice } from "../../types/ConsumerStates";
+import { ConnectionType, DeviceAlertState, DeviceTallyState, GlobalDeviceTools, type DeviceAddress, type DeviceAlertTarget, type DeviceId, type TallyDevice } from "../../types/ConsumerStates";
 import { HardwareVersion } from "../../../types/SystemInfo";
 import type { Gpio } from 'pigpio';
 
@@ -23,6 +23,58 @@ interface GpioTallyOutput {
     program: Gpio,
     preview: Gpio,
 }
+
+interface DeviceAlertRuntime {
+    type: DeviceAlertState,
+    intervalHandle: NodeJS.Timeout,
+    timeoutHandle: NodeJS.Timeout | null,
+}
+
+interface AlertPatternConfig {
+    speedMs: number,
+    pattern: Array<DeviceTallyState | null>,
+}
+
+const ALERT_PATTERNS: Record<DeviceAlertState, AlertPatternConfig | null> = {
+    [DeviceAlertState.IDENT]: {
+        speedMs: 750,
+        pattern: [
+            DeviceTallyState.PREVIEW,
+            DeviceTallyState.PROGRAM,
+            DeviceTallyState.WARNING,
+            null,
+            DeviceTallyState.PREVIEW,
+            null,
+            DeviceTallyState.PROGRAM,
+            null,
+            DeviceTallyState.WARNING
+        ],
+    },
+    [DeviceAlertState.INFO]: {
+        speedMs: 800,
+        pattern: [
+            null,
+            DeviceTallyState.NONE,
+        ],
+    },
+    [DeviceAlertState.NORMAL]: {
+        speedMs: 500,
+        pattern: [
+            DeviceTallyState.PROGRAM,
+            DeviceTallyState.WARNING,
+        ],
+    },
+    [DeviceAlertState.PRIO]: {
+        speedMs: 400,
+        pattern: [
+            DeviceTallyState.PREVIEW,
+            DeviceTallyState.WARNING,
+            null,
+            null,
+        ],
+    },
+    [DeviceAlertState.CLEAR]: null,
+};
 
 
 const DEFAULT_PINOUT: Record<HardwareVersion, Array<GpioTallyPins>> = {
@@ -55,6 +107,7 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
 
     protected gpioMap: Map<DeviceId, GpioTallyOutput> = new Map();
     protected stateCache: Map<DeviceId, DeviceTallyState> = new Map();
+    protected activeAlerts: Map<DeviceId, DeviceAlertRuntime> = new Map();
 
     public static readonly DefaultConfig: Required<GpioConsumerConfig> = {
         ...AbstractConsumer.DefaultConfig,
@@ -131,6 +184,10 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
     }
 
     async destroy(): Promise<void> {
+        this.activeAlerts.forEach((_runtime, key) => {
+            this.clearDeviceAlert(key, false);
+        });
+
         this.gpioMap.forEach((output) => {
             output.program.digitalWrite(0);
             output.preview.digitalWrite(0);
@@ -166,6 +223,12 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
         }
 
         const devAddr = GlobalDeviceTools.create(device.id.consumer, device.id.device);
+        this.stateCache.set(devAddr, device.state);
+
+        if (this.activeAlerts.has(devAddr)) {
+            this.logger.debug(`Skipping GPIO tally write for alerting device:`, device.id);
+            return;
+        }
 
 
         if (this.stateCache.get(devAddr) === device.state) {
@@ -173,7 +236,6 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
             return;
         }
 
-        this.stateCache.set(devAddr, device.state);
         this._setGpio(devAddr, device.state);
 
     }
@@ -212,9 +274,91 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
     }
 
     setDeviceAlert(address: DeviceAddress, type: DeviceAlertState, target: DeviceAlertTarget, time: number): void {
+        const key = GlobalDeviceTools.create(address.consumer, address.device);
+        const device = this.devices.get(key);
 
-        this.logger.debug(`Set Alert GPIO for address:`, address);
-        this.logger.warn(`Atempted alert. Alert is not yet implemented!`);
+        if (!device) {
+            this.logger.warn(`Attempted to set alert for unknown device:`, address);
+            return;
+        }
 
+        // GPIO alerts are device-level and do not differentiate operator/talent hardware lanes.
+        void target;
+
+        if (type === DeviceAlertState.CLEAR) {
+            this.clearDeviceAlert(key, true);
+            this.logger.debug(`Cleared alert for device:`, address);
+            return;
+        }
+
+        const alertConfig = ALERT_PATTERNS[type];
+
+        if (!alertConfig) {
+            this.logger.warn(`Unsupported alert type for GPIO: ${type}`);
+            return;
+        }
+
+        this.clearDeviceAlert(key, false);
+
+        let stepIndex = 0;
+        const tick = () => {
+            const patternValue = alertConfig.pattern[stepIndex];
+            const currentDeviceState = this.devices.get(key)?.state ?? DeviceTallyState.NONE;
+            const state = patternValue === null ? currentDeviceState : patternValue;
+            this._setGpio(key, state);
+            stepIndex = (stepIndex + 1) % alertConfig.pattern.length;
+        };
+
+        tick();
+
+        const intervalHandle = setInterval(tick, alertConfig.speedMs);
+        const timeoutHandle = time > 0
+            ? setTimeout(() => {
+                this.clearDeviceAlert(key, true);
+                this.logger.debug(`Alert timeout reached for device:`, address);
+            }, time * 1000)
+            : null;
+
+        this.activeAlerts.set(key, {
+            type,
+            intervalHandle,
+            timeoutHandle,
+        });
+
+        this.logger.debug(`Set alert ${DeviceAlertState[type]} for device:`, address, `timeout(s):`, time);
+
+    }
+
+    private clearDeviceAlert(key: DeviceId, restoreTally: boolean): void {
+        const runtime = this.activeAlerts.get(key);
+
+        if (!runtime) {
+            if (restoreTally) {
+                const device = this.devices.get(key);
+                if (device) {
+                    this.stateCache.set(key, device.state);
+                    this._setGpio(key, device.state);
+                }
+            }
+            return;
+        }
+
+        clearInterval(runtime.intervalHandle);
+        if (runtime.timeoutHandle) {
+            clearTimeout(runtime.timeoutHandle);
+        }
+
+        this.activeAlerts.delete(key);
+
+        if (restoreTally) {
+            const device = this.devices.get(key);
+            if (device) {
+                this.stateCache.set(key, device.state);
+                this._setGpio(key, device.state);
+            }
+            else {
+                this._setGpio(key, DeviceTallyState.NONE);
+            }
+        }
     }
 }
