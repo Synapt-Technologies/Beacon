@@ -310,7 +310,7 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
             ? setTimeout(() => {
                 this.clearDeviceAlert(key, true);
                 this.logger.debug(`Alert timeout reached for device:`, address);
-            }, time * 1000)
+            }, time)
             : null;
 
         this.activeAlerts.set(key, {
