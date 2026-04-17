@@ -21,33 +21,46 @@ export default function UpdatePage() {
     }
   }, [])
 
-  // When an update is in progress, poll until the server comes back up,
-  // then hard-reload to pick up the new code.
+  // While an update is in progress, poll update status until completion.
+  // This avoids missing very fast restarts where a down/up edge is never observed.
   useEffect(() => {
     if (!status?.updating) return
-    // Wait for the server to go DOWN first, then come back up.
-    // Without this, the poll fires while the build is still running
-    // (server is up), gets 204, reloads immediately, and loops.
-    let serverWentDown = false
-    const id = setInterval(async () => {
+
+    let active = true
+
+    const pollStatus = async () => {
       try {
-        const res = await fetch('/api/ready', { cache: 'no-store' })
+        const res = await fetch('/api/update/status', { cache: 'no-store' })
         if (!res.ok) {
-          // 503 during startup means backend is restarting.
-          serverWentDown = true
+          // During restart, this can briefly fail/non-OK.
           return
         }
 
-        if (res.ok && serverWentDown) {
+        const next = (await res.json()) as UpdateStatus
+        if (!active) return
+
+        if (next.updating) {
+          return
+        }
+
+        setStatus(next)
+
+        if (!next.updateError) {
           sessionStorage.setItem(SESSION_KEY, '1')
           window.location.reload()
         }
       } catch {
-        // connection refused / network error = server is down
-        serverWentDown = true
+        // connection refused / network error during restart; keep polling
       }
-    }, 2000)
-    return () => clearInterval(id)
+    }
+
+    const id = setInterval(() => { void pollStatus() }, 1000)
+    void pollStatus()
+
+    return () => {
+      active = false
+      clearInterval(id)
+    }
   }, [status?.updating])
 
   const handleCheck = async () => {
