@@ -72,7 +72,7 @@ function AlertBtn({ slot, onAlert }: AlertBtnProps) {
       lbl.style.color  = orig
     }, 750)
 
-    onAlert(slot.action, slot.target, (slot.timeout ?? 1500))
+    onAlert(slot.action, slot.target, slot.timeout ?? 1500)
   }
 
   const col = ALERT_COLORS[slot.action] ?? '#888'
