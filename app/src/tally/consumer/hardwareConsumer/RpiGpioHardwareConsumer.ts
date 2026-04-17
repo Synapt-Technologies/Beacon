@@ -263,7 +263,7 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
                 output.preview.digitalWrite(0);
         }
 
-        this.logger.debug(`Set GPIO for state ${state}:`, output);
+        // this.logger.debug(`Set GPIO for state ${state}:`, output);
     }
 
     setDeviceAlert(address: DeviceAddress, type: DeviceAlertState, target: DeviceAlertTarget, time: number): void {
@@ -327,7 +327,7 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
 
         tick();
 
-        // this.logger.debug(`Set alert ${DeviceAlertState[type]} for device:`, address, `timeout(s):`, time);
+        this.logger.debug(`Set alert ${DeviceAlertState[type]} for device:`, address, `timeout(s):`, time);
 
     }
 
