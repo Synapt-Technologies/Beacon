@@ -2,14 +2,38 @@ import type { ProducerBundle, ProducerId, GlobalTallySource } from '../../../src
 import type { ConsumerExportMap, LifeCycleConsumerConfig, LifecycleConfig, OrchestratorConfig } from '../../../src/tally/TallyLifecycle'
 import type { TallyDevice, DeviceAddress, DeviceAlertState, DeviceAlertTarget } from '../../../src/tally/types/ConsumerStates'
 import type { ConsumerId } from '../types/beacon'
-import { SystemInfo } from '../../../src/types/SystemInfo'
+import type { SystemInfo } from '../../../src/types/SystemInfo'
 
 const BASE = '/api'
+const REQUEST_TIMEOUT_MS = 8000
+
+async function withTimeout<T>(promise: Promise<T>, ms: number, message: string): Promise<T> {
+    let timeoutId: ReturnType<typeof setTimeout> | undefined
+    const timeout = new Promise<never>((_resolve, reject) => {
+        timeoutId = setTimeout(() => reject(new Error(message)), ms)
+    })
+
+    try {
+        return await Promise.race([promise, timeout])
+    } finally {
+        if (timeoutId !== undefined) clearTimeout(timeoutId)
+    }
+}
 
 async function request<T = void>(path: string, init?: RequestInit): Promise<T> {
-    const res = await fetch(`${BASE}${path}`, init)
+    const method = init?.method ?? 'GET'
+    const timeoutMessage = `${method} ${path} timed out after ${REQUEST_TIMEOUT_MS}ms`
+    let res: Response
+
+    try {
+        res = await withTimeout(fetch(`${BASE}${path}`, init), REQUEST_TIMEOUT_MS, timeoutMessage)
+    } catch (err) {
+        if (err instanceof Error && err.message === timeoutMessage) throw err
+        throw new Error(`${method} ${path} failed: ${err instanceof Error ? err.message : 'network error'}`)
+    }
+
     if (!res.ok) {
-        let message = `${init?.method ?? 'GET'} ${path} failed: ${res.status}`
+        let message = `${method} ${path} failed: ${res.status}`
         try { const body = await res.json(); if (body?.error) message = body.error } catch {}
         throw new Error(message)
     }

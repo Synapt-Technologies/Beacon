@@ -5,6 +5,11 @@ import * as BeaconApi from '../api/BeaconApi'
 
 const SESSION_KEY = 'beacon_update_success'
 
+function toErrorMessage(value: unknown, fallback: string): string {
+  if (value instanceof Error && value.message) return value.message
+  return fallback
+}
+
 export default function UpdatePage() {
   const navigate = useNavigate()
 
@@ -12,12 +17,32 @@ export default function UpdatePage() {
   const [checking,     setChecking]     = useState(false)
   const [showBranches, setShowBranches] = useState(false)
   const [showSuccess,  setShowSuccess]  = useState(false)
+  const [initialLoadError, setInitialLoadError] = useState<string | null>(null)
 
   useEffect(() => {
-    BeaconApi.getUpdateStatus().then(setStatus).catch(() => {})
+    let active = true
+
+    const load = async () => {
+      try {
+        setInitialLoadError(null)
+        const next = await BeaconApi.getUpdateStatus()
+        if (!active) return
+        setStatus(next)
+      } catch (e) {
+        if (!active) return
+        setInitialLoadError(toErrorMessage(e, 'Failed to load update status'))
+      }
+    }
+
+    void load()
+
     if (sessionStorage.getItem(SESSION_KEY)) {
       sessionStorage.removeItem(SESSION_KEY)
       setShowSuccess(true)
+    }
+
+    return () => {
+      active = false
     }
   }, [])
 
@@ -66,11 +91,17 @@ export default function UpdatePage() {
   const handleCheck = async () => {
     setChecking(true)
     try {
+      setInitialLoadError(null)
       setStatus(await BeaconApi.checkForUpdates())
+    } catch (e) {
+      setInitialLoadError(toErrorMessage(e, 'Failed to check for updates'))
     } finally {
       setChecking(false)
     }
   }
+
+  const noStatusMessage = initialLoadError ?? 'Loading...'
+  const noStatusColor = initialLoadError ? '#E24B4A' : 'var(--color-text-tertiary)'
 
   const handleApply = async (ref: string, type: 'release' | 'branch') => {
     if (!confirm(`Update to ${ref}? The app will restart.`)) return
@@ -190,8 +221,8 @@ export default function UpdatePage() {
       <div className="sec-lbl">Releases</div>
       <div className="s-card">
         {!status && (
-          <div style={{ padding: '12px 14px', fontSize: 12, color: 'var(--color-text-tertiary)' }}>
-            Loading...
+          <div style={{ padding: '12px 14px', fontSize: 12, color: noStatusColor }}>
+            {noStatusMessage}
           </div>
         )}
         {status && status.releases.length === 0 && !status.updateError && (

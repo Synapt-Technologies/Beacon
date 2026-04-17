@@ -12,13 +12,44 @@ import { SystemInfo } from '../../../src/types/SystemInfo'
 import { GlobalTallySource, ProducerBundle, ProducerId } from '../../../src/tally/types/ProducerStates'
 import { ConsumerExportMap, type OrchestratorConfig, type LifecycleConfig } from '../../../src/tally/TallyLifecycle'
 import { UITallyDevice } from '../types/DeviceStates'
-import { DeviceAddress, DeviceAlertState, DeviceAlertTarget } from '../../../src/tally/types/ConsumerStates'
+import { DeviceAddress, DeviceAlertState, DeviceAlertTarget, type TallyDevice } from '../../../src/tally/types/ConsumerStates'
 import { DEFAULT_UI_ALERT_CONFIG, UIAlertSlot, UIConfig } from '../../../src/types/UIStates'
 import { ProducerConfig } from '../../../src/tally/producer/AbstractTallyProducer'
 import { ConsumerId } from '../types/beacon'
 import { ConsumerConfig } from '../../../src/tally/consumer/AbstractConsumer'
 import { CONSUMER_META } from '../config/consumers'
 import { WebHaptics, defaultPatterns } from "web-haptics";
+
+function toErrorMessage(value: unknown, fallback: string): string {
+  if (value instanceof Error && value.message) return value.message
+  return fallback
+}
+
+function settledValue<T>(
+  result: PromiseSettledResult<T>,
+  fallback: T,
+  errors: string[],
+  fallbackMessage: string,
+): T {
+  if (result.status === 'fulfilled') return result.value
+  errors.push(toErrorMessage(result.reason, fallbackMessage))
+  return fallback
+}
+
+function toUiDevices(rawDevices: Record<string, TallyDevice[]>): UITallyDevice[] {
+  const ui: UITallyDevice[] = []
+
+  for (const [consumerId, devList] of Object.entries(rawDevices)) {
+    for (const dev of devList) {
+      ui.push({
+        ...dev,
+        consumer: { name: CONSUMER_META[consumerId as keyof typeof CONSUMER_META]?.name ?? consumerId },
+      })
+    }
+  }
+
+  return ui
+}
 
 // ? Context Data Shape
 
@@ -76,43 +107,35 @@ export function BeaconProvider({ children }: { children: ReactNode }) {
     const fetchAll = useCallback(async () => {
         setLoading(true)
         try {
-          const [prods, cons, orchConfig] = await Promise.all([
+          const [prodsRes, consRes, orchConfigRes, devicesRes, sysRes] = await Promise.allSettled([
             api.getProducers(),
             api.getConsumers(),
             api.getOrchestratorConfig(),
+            api.getDevices(),
+            api.getSystemInfo(),
           ])
-          setProducers(prods)
-          setConsumers(cons)
-          setOrchestratorConfig(orchConfig)
 
-          try {
-            const rawDevices = await api.getDevices()
-            const ui: UITallyDevice[] = []
-            for (const [consumerId, devList] of Object.entries(rawDevices)) {
-              for (const dev of devList) {
-                ui.push({
-                  ...dev,
-                  consumer: { name: CONSUMER_META[consumerId as keyof typeof CONSUMER_META]?.name ?? consumerId },
-                })
-              }
-            }
-            setDevices(ui)
-          } catch {
-            setDevices([])
-          }
+          const errors: string[] = []
 
-          const sys = await api.getSystemInfo();
-          setSystem(sys);
+          setProducers(settledValue(prodsRes, [], errors, 'Failed to load producers'))
+          setConsumers(settledValue(consRes, {}, errors, 'Failed to load consumers'))
+          setOrchestratorConfig(settledValue(orchConfigRes, {}, errors, 'Failed to load orchestrator config'))
+          setDevices(toUiDevices(settledValue(devicesRes, {}, errors, 'Failed to load devices')))
+          setSystem(settledValue(sysRes, {}, errors, 'Failed to load system info'))
 
-          setError(null)
-        } catch (e) {
-          setError(e instanceof Error ? e.message : 'Failed to load data')
+          setError(errors[0] ?? null)
         } finally {
           setLoading(false)
         }
     }, [])
 
     useEffect(() => { fetchAll() }, [fetchAll])
+
+    useEffect(() => {
+      if (!error) return
+      const retryId = setInterval(() => { void fetchAll() }, 5000)
+      return () => clearInterval(retryId)
+    }, [error, fetchAll])
 
     // ? Producers
     const addProducer = async (type: string, config: ProducerConfig & Record<string, unknown>) => {
