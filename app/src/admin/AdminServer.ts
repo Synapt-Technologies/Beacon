@@ -27,7 +27,7 @@ export interface AdminMutationHandlers {
     patchDevice:  (address: DeviceAddress, patch: GlobalTallySource[]) => void
     renameDevice: (address: DeviceAddress, name: DeviceName) => void
     removeDevice: (address: DeviceAddress) => void
-    sendAlert:    (address: DeviceAddress, type: DeviceAlertState, target: DeviceAlertTarget) => void
+    sendAlert:    (address: DeviceAddress, type: DeviceAlertState, target: DeviceAlertTarget, time: number) => void
 
     updateOrchestrator: (config: Partial<OrchestratorConfig>) => Promise<void>
     importConfig:       (config: LifecycleConfig) => Promise<void>
@@ -201,12 +201,12 @@ export class AdminServer {
 
         this.app.post("/api/devices/:consumer/:device/alert", (req, res) => {
             const { consumer, device } = req.params;
-            const { type, target } = req.body;
-            if (type === undefined || target === undefined) {
-                res.status(400).json({ error: "type and target are required" });
+            const { type, target, time } = req.body;
+            if (type === undefined || target === undefined || time === undefined) {
+                res.status(400).json({ error: "type, target, and time are required" });
                 return;
             }
-            this.handlers.sendAlert({ consumer, device }, type as DeviceAlertState, target as DeviceAlertTarget);
+            this.handlers.sendAlert({ consumer, device }, type as DeviceAlertState, target as DeviceAlertTarget, time);
             res.status(204).send();
             this.logger.info(`Device alert sent:`, { consumer, device }, DeviceAlertState[type], DeviceAlertTarget[target]);
         });

@@ -307,10 +307,10 @@ export class TallyLifecycle {
         consumer.deleteDevice(address);
     }
 
-    public sendAlert(address: DeviceAddress, type: DeviceAlertState, target: DeviceAlertTarget): void {
+    public sendAlert(address: DeviceAddress, type: DeviceAlertState, target: DeviceAlertTarget, time: number): void {
         const consumer = this.orchestrator.getConsumer(address.consumer);
         if (!consumer) { this.logger.warn(`sendAlert: no consumer for`, address.consumer); return; }
-        consumer.setDeviceAlert(address, type, target);
+        consumer.setDeviceAlert(address, type, target, time);
     }
 
     private async _restartConsumer(consumerId: ConsumerId): Promise<void> {

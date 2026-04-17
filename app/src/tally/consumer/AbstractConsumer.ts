@@ -156,7 +156,8 @@ export abstract class AbstractConsumer<T extends ConsumerEvents & Record<string,
         this.logger.debug(`Device ${key} deleted.`);
     }
 
-    abstract setDeviceAlert(address: DeviceAddress, type: DeviceAlertState, target: DeviceAlertTarget): void;
+    // TODO: Make into AlertPackage?
+    abstract setDeviceAlert(address: DeviceAddress, type: DeviceAlertState, target: DeviceAlertTarget, time: number): void;
     
     protected setTallyDevice(device: TallyDevice): void {
 
