@@ -37,40 +37,34 @@ interface AlertPatternConfig {
 
 const ALERT_PATTERNS: Record<DeviceAlertState, AlertPatternConfig | null> = {
     [DeviceAlertState.IDENT]: {
-        speedMs: 750,
+        speedMs: 500,
         pattern: [
             DeviceTallyState.PREVIEW,
             DeviceTallyState.PROGRAM,
             DeviceTallyState.WARNING,
             null,
-            DeviceTallyState.PREVIEW,
-            null,
-            DeviceTallyState.PROGRAM,
-            null,
-            DeviceTallyState.WARNING
         ],
     },
     [DeviceAlertState.INFO]: {
-        speedMs: 800,
-        pattern: [
-            null,
-            DeviceTallyState.NONE,
-        ],
-    },
-    [DeviceAlertState.NORMAL]: {
-        speedMs: 500,
-        pattern: [
-            DeviceTallyState.PROGRAM,
-            DeviceTallyState.WARNING,
-        ],
-    },
-    [DeviceAlertState.PRIO]: {
         speedMs: 400,
         pattern: [
             DeviceTallyState.PREVIEW,
+            null,
+            null,
+        ],
+    },
+    [DeviceAlertState.NORMAL]: {
+        speedMs: 300,
+        pattern: [
             DeviceTallyState.WARNING,
             null,
-            null,
+        ],
+    },
+    [DeviceAlertState.PRIO]: {
+        speedMs: 150,
+        pattern: [
+            DeviceTallyState.PROGRAM,
+            DeviceTallyState.WARNING,
         ],
     },
     [DeviceAlertState.CLEAR]: null,
