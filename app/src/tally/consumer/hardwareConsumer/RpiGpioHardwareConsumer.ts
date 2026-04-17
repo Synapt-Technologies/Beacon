@@ -45,15 +45,16 @@ const ALERT_PATTERNS: Record<DeviceAlertState, AlertPatternConfig | null> = {
         ],
     },
     [DeviceAlertState.INFO]: {
-        speedMs: 400,
+        speedMs: 300,
         pattern: [
             DeviceTallyState.PREVIEW,
+            null,
             null,
             null,
         ],
     },
     [DeviceAlertState.NORMAL]: {
-        speedMs: 300,
+        speedMs: 400,
         pattern: [
             DeviceTallyState.WARNING,
             null,
