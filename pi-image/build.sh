@@ -50,6 +50,13 @@ echo "==> Loading nbd module..."
 sudo modprobe nbd 2>/dev/null || echo "    WARNING: nbd module unavailable — image creation may fail on WSL2"
 
 # ---------------------------------------------------------------------------
+# Clean up previous build's root-owned chroot directories so bdebstrap can
+# start fresh (its --force flag can't remove files it doesn't own).
+# ---------------------------------------------------------------------------
+echo "==> Cleaning previous build artifacts..."
+sudo rm -rf "${WORK_DIR}/work"
+
+# ---------------------------------------------------------------------------
 # Run the build
 # ---------------------------------------------------------------------------
 echo "==> Starting Beacon image build..."
