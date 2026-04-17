@@ -75,10 +75,13 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
 
         if (this.info.version == HardwareVersion.UNKNOWN)
             return this.logger.fatal(`Failed to initialize GPIO. UNKOWN hardware!`);
+
         const pinMap = DEFAULT_PINOUT[this.info.version];
 
         // TODO add pinmap check!
         try {
+            const pigpio = await import('pigpio');
+            const Gpio = pigpio.default.Gpio;
 
             const pigpio = await import('pigpio');
             const Gpio = pigpio.default.Gpio;

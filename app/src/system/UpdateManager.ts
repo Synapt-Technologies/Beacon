@@ -125,6 +125,7 @@ export class UpdateManager {
             }
 
             await this._exec('yarn install');
+            
 
             if (process.env.NODE_ENV === 'production') {
                 // Build the UI so the new code is served immediately on restart,

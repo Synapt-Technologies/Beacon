@@ -44,7 +44,7 @@ mmdebstrap:
       "
 
     - |-
-      # Install and enable the Beacon systemd service
+      # Install and enable the Beacon systemd service.
       mkdir -p $1/lib/systemd/system
       install -m 644 "${SRCROOT}/files/beacon.service" "$1/lib/systemd/system/beacon.service"
       chroot $1 systemctl enable beacon.service

@@ -13,6 +13,7 @@
         "dev": "tsx app.ts",
         "dev:supervised": "tsx supervisor.ts",
         "start": "yarn build && NODE_ENV=production tsx supervisor.ts",
+        "run": "NODE_ENV=production tsx supervisor.ts",
         "build": "vite build"
     },
     "packageManager": "yarn@4.13.0",
