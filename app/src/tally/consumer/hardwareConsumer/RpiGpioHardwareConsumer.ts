@@ -83,9 +83,6 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
             const pigpio = await import('pigpio');
             const Gpio = pigpio.default.Gpio;
 
-            const pigpio = await import('pigpio');
-            const Gpio = pigpio.default.Gpio;
-
 
             for (let i = 0; i < pinMap.length; i++) {
 
