@@ -215,7 +215,6 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
         }
 
         const devAddr = GlobalDeviceTools.create(device.id.consumer, device.id.device);
-        this.stateCache.set(devAddr, device.state);
 
         if (this.activeAlerts.has(devAddr)) {
             this.logger.debug(`Skipping GPIO tally write for alerting device:`, device.id);
