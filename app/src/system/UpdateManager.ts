@@ -1,4 +1,6 @@
 import { exec } from 'child_process';
+import { rmSync, existsSync } from 'node:fs';
+import { join } from 'node:path';
 import pkg from '../../package.json' with { type: 'json' };
 import { Logger } from '../logging/Logger';
 import SystemInfoUtil from './SystemInfoUtil';
@@ -123,7 +125,21 @@ export class UpdateManager {
             }
 
             await this._exec('yarn install');
-            await this._exec('yarn build');
+            
+
+            if (process.env.NODE_ENV === 'production') {
+                // Build the UI so the new code is served immediately on restart,
+                // with no Vite pre-bundling race on first page load.
+                await this._exec('yarn build');
+            } else {
+                // In dev mode, clear Vite's pre-bundle cache so the next startup
+                // does a clean rebuild rather than serving stale deps.
+                const viteCache = join(process.cwd(), 'ui', '.vite');
+                if (existsSync(viteCache)) {
+                    rmSync(viteCache, { recursive: true, force: true });
+                    this.logger.info('Cleared Vite dep cache.');
+                }
+            }
 
             this.logger.info('Update complete, restarting...');
         } catch (err) {

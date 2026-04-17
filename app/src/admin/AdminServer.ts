@@ -1,7 +1,5 @@
 import express from "express";
 import ViteExpress from "vite-express";
-import { existsSync } from "node:fs";
-import { join } from "node:path";
 import { Logger } from "../logging/Logger";
 import type { ProducerConfig } from "../tally/producer/AbstractTallyProducer";
 import type { ConsumerUpdate, LifecycleConfig } from "../tally/TallyLifecycle";
@@ -64,10 +62,9 @@ export class AdminServer {
 
     public start(port: number = 80): void {
         this.app.use(express.json());
-        const isProduction = existsSync(join(process.cwd(), 'dist', 'ui', 'index.html'));
         ViteExpress.config({
             verbosity: ViteExpress.Verbosity.Silent,
-            mode: isProduction ? 'production' : 'development',
+            mode: process.env.NODE_ENV === 'production' ? 'production' : 'development',
         });
         this._registerRoutes();
         ViteExpress.listen(this.app, port, () => {
