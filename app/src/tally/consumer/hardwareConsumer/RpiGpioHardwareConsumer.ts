@@ -26,6 +26,7 @@ interface GpioTallyOutput {
 
 interface DeviceAlertRuntime {
     type: DeviceAlertState,
+    token: symbol,
     intervalHandle: NodeJS.Timeout,
     timeoutHandle: NodeJS.Timeout | null,
 }
@@ -228,6 +229,7 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
         }
 
         this._setGpio(devAddr, device.state);
+        this.stateCache.set(devAddr, device.state);
 
     }
 
@@ -291,16 +293,22 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
 
         this.clearDeviceAlert(key, false);
 
+        const alertToken = Symbol("gpio-alert");
         let stepIndex = 0;
         const tick = () => {
+            const runtime = this.activeAlerts.get(key);
+
+            // Ignore stale timer callbacks from a previous alert lifecycle.
+            if (!runtime || runtime.token !== alertToken) {
+                return;
+            }
+
             const patternValue = alertConfig.pattern[stepIndex];
             const currentDeviceState = this.devices.get(key)?.state ?? DeviceTallyState.NONE;
             const state = patternValue === null ? currentDeviceState : patternValue;
             this._setGpio(key, state);
             stepIndex = (stepIndex + 1) % alertConfig.pattern.length;
         };
-
-        tick();
 
         const intervalHandle = setInterval(tick, alertConfig.speedMs);
         const timeoutHandle = time > 0
@@ -312,9 +320,12 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
 
         this.activeAlerts.set(key, {
             type,
+            token: alertToken,
             intervalHandle,
             timeoutHandle,
         });
+
+        tick();
 
         // this.logger.debug(`Set alert ${DeviceAlertState[type]} for device:`, address, `timeout(s):`, time);
 
