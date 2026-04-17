@@ -36,23 +36,16 @@ export class AtemNetClientTallyProducer extends AbstractNetClientTallyProducer {
     constructor(config: AtemNetClientProducerConfig) {
         super(config);
 
-        const disableMultithreaded = process.platform === "linux" && process.arch.startsWith("arm");
-
         this.atem = new Atem({
-            address: this.config.host,
-            port: this.config.port,
-            disableMultithreaded,
+            address: config.host,
+            port: config.port
         });
-
-        if (disableMultithreaded) {
-            this.logger.info("ATEM client multithreading disabled for ARM/Linux runtime.");
-        }
 
         this.atem.on('info', (data) => {
             this.logger.debug("Info:", data);
         });
         this.atem.on('error', (data) => {
-            this.logger.error("Error:", data, `target=${this.config.host}:${this.config.port}`);
+            this.logger.error("Error:", data);
         });
 
         this.atem.on('connected', () => {
@@ -73,7 +66,7 @@ export class AtemNetClientTallyProducer extends AbstractNetClientTallyProducer {
             this.info.update_moment = Date.now();
             this.info.state = null;
             this.emit('disconnected');
-            this.logger.warn("Disconnected", `target=${this.config.host}:${this.config.port}`);
+            this.logger.warn("Disconnected");
             this._parseTallystate();
         })
 
@@ -124,7 +117,7 @@ export class AtemNetClientTallyProducer extends AbstractNetClientTallyProducer {
     }
 
     connect(): Promise<void> {
-        return this.atem.connect(this.config.host, this.config.port);
+        return this.atem.connect(this.config.host);
     }
     disconnect(): Promise<void> {
         return this.atem.disconnect();

@@ -50,7 +50,7 @@ interface BeaconState {
     patchDevice: (device: DeviceAddress, patch: GlobalTallySource[]) => Promise<void>
     renameDevice: (device: DeviceAddress, name: { short?: string; long: string }) => Promise<void>
     removeDevice: (device: DeviceAddress) => Promise<void>
-    sendAlert: (device: DeviceAddress, type: DeviceAlertState, target: DeviceAlertTarget, time: number) => Promise<void>
+    sendAlert: (device: DeviceAddress, type: DeviceAlertState, target: DeviceAlertTarget) => Promise<void>
 
     updateAlertSlot: (index: number, slot: UIAlertSlot) => void
     resetAlertSlot: (index: number) => void
@@ -210,10 +210,10 @@ export function BeaconProvider({ children }: { children: ReactNode }) {
         )
       } catch (e) { await fetchAll(); throw e }
     }
-    const sendAlert = async (device: DeviceAddress, type: DeviceAlertState, target: DeviceAlertTarget, time: number) => {
+    const sendAlert = async (device: DeviceAddress, type: DeviceAlertState, target: DeviceAlertTarget) => {
       haptics.trigger(defaultPatterns.heavy)
       await toast.promise(
-        api.sendAlert(device, type, target, time),
+        api.sendAlert(device, type, target),
         { loading: 'Sending alert…', success: 'Alert sent', error: (e: unknown) => e instanceof Error ? e.message : 'Failed to send alert' }
       )
     }

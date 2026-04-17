@@ -83,11 +83,11 @@ export function removeDevice(device: DeviceAddress): Promise<void> {
     return request(`/devices/${device.consumer}/${device.device}`, { method: 'DELETE' })
 }
 
-export function sendAlert(device: DeviceAddress, type: DeviceAlertState, target: DeviceAlertTarget, time: number): Promise<void> {
+export function sendAlert(device: DeviceAddress, type: DeviceAlertState, target: DeviceAlertTarget): Promise<void> {
     return request(`/devices/${device.consumer}/${device.device}/alert`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type, target, time }),
+        body: JSON.stringify({ type, target }),
     })
 }
 

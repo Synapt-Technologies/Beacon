@@ -37,12 +37,12 @@ const ALERT_ICONS: Record<string, React.ReactNode> = {
 
 interface AlertButtonsProps {
   slots: AlertSlot[]
-  onAlert: (action: string, target: string | null, time: number) => void
+  onAlert: (action: string, target: string | null) => void
 }
 
 interface AlertBtnProps {
   slot: AlertSlot
-  onAlert: (action: string, target: string | null, time: number) => void
+  onAlert: (action: string, target: string | null) => void
 }
 
 function AlertBtn({ slot, onAlert }: AlertBtnProps) {
@@ -72,7 +72,7 @@ function AlertBtn({ slot, onAlert }: AlertBtnProps) {
       lbl.style.color  = orig
     }, 750)
 
-    onAlert(slot.action, slot.target, (slot.timeout ?? 5)*1000)
+    onAlert(slot.action, slot.target)
   }
 
   const col = ALERT_COLORS[slot.action] ?? '#888'
