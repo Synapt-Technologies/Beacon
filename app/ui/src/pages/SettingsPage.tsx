@@ -218,13 +218,16 @@ function AlertRow({ slot, index, editing, onEdit, onSave, onReset, onCancel }: A
                 className="pf-input"
                 type="number"
                 min="0"
-                max="300000" 
-                step="250"
-                // step="0.25"
-                // value={timeout / 1000}
-                value={timeout / 1000}
+                max="3000" 
+                step="0.25"
+                value={(timeout / 1000).toFixed(2)}
+                onChange={e => {
+                  const seconds = parseFloat(e.target.value) || 0;
+                  setTimeout(Math.max(0, Math.round(seconds * 1000)));
+                }}
+                // value={timeout}
                 // onChange={e => setTimeout(Math.max(0, (1000 * parseFloat(e.target.value as string)) || 0))}
-                onChange={e => setTimeout(Math.max(0, parseInt(e.target.value) || 0))}
+                // onChange={e => setTimeout(Math.max(0, parseInt(e.target.value) || 0))}
                 style={{ width: 90, textAlign: 'right' }}
               />
               <span style={{ fontSize: 12, color: 'var(--color-text-tertiary)' }}>seconds</span>
