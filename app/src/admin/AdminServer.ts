@@ -371,6 +371,10 @@ export class AdminServer {
                 res.status(400).json({ error: "ref and type are required" });
                 return;
             }
+
+            const userAgent = req.get("user-agent") ?? "unknown";
+            this.logger.warn(`Update apply requested by ${req.ip} (${userAgent}) -> ${type} \"${ref}\"`);
+
             res.status(204).send();
             this.updateManager.applyUpdate(ref, type).catch((err) => {
                 this.logger.error("Update failed:", err);

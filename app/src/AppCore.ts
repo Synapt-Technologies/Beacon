@@ -12,6 +12,7 @@ export class AppCore {
     private updateManager: UpdateManager;
     private admin:         AdminServer;
     private logger = new Logger(["CORE"]);
+    private startedAt = Date.now();
 
     constructor() {
         this.lifecycle     = new TallyLifecycle();
@@ -115,12 +116,13 @@ export class AppCore {
     private _registerShutdownHandlers(): void {
         let isShuttingDown = false;
 
-        const shutdown = async () => {
+        const shutdown = async (signal: NodeJS.Signals | "INTERNAL") => {
             if (isShuttingDown) 
                 return;
             isShuttingDown = true;
 
-            this.logger.info("Shutting down...");
+            const uptimeMs = Date.now() - this.startedAt;
+            this.logger.warn(`Shutting down due to ${signal} after ${uptimeMs}ms uptime...`);
             
             const forceQuit = setTimeout(() => {
                 this.logger.fatal("Shutdown timed out, forcing exit.");
@@ -143,8 +145,18 @@ export class AppCore {
             }
         };
 
-        process.prependListener("SIGINT", shutdown);
-        process.prependListener("SIGTERM", shutdown);
+        process.prependListener("SIGINT",  () => { void shutdown("SIGINT"); });
+        process.prependListener("SIGTERM", () => { void shutdown("SIGTERM"); });
+        process.prependListener("SIGHUP",  () => { void shutdown("SIGHUP"); });
+
+        process.on("beforeExit", (code) => {
+            this.logger.warn(`beforeExit event with code=${code} after ${Date.now() - this.startedAt}ms uptime.`);
+        });
+
+        process.on("exit", (code) => {
+            this.logger.warn(`exit event with code=${code} after ${Date.now() - this.startedAt}ms uptime.`);
+        });
+
         // process.on("exit", () => { CoreDatabase.destroy(); });
         process.on("uncaughtException", (err) => { this.logger.fatal("Uncaught exception", err); });
         process.on("unhandledRejection", (reason) => { this.logger.fatal("Unhandled rejection", reason); });
