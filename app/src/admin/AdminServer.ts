@@ -11,6 +11,8 @@ import type { OrchestratorConfig } from "../tally/TallyLifecycle";
 import type { SystemInfo } from "../types/SystemInfo";
 import { UpdateManager } from "../system/UpdateManager";
 
+const PROD_BIND_HOST = "0.0.0.0";
+
 export interface AdminState {
     producers: ProducerBundle[];
     consumers: LifecycleConfig["consumers"];
@@ -40,6 +42,9 @@ export class AdminServer {
     private app = express();
     private logger = new Logger(["ADMIN"]);
     private _ready = false;
+    private _diagRequestLogsRemaining = 60;
+    private _readyProbeLogsRemaining = 20;
+    private _diagSuppressedLogged = false;
     private state: AdminState = {
         producers: [],
         consumers: undefined,
@@ -63,14 +68,23 @@ export class AdminServer {
     }
 
     public start(port: number = 80): void {
+        const mode = process.env.NODE_ENV === 'production' ? 'production' : 'development';
+        this.logger.info(`Starting admin HTTP stack (mode=${mode}, pid=${process.pid}, cwd=${process.cwd()}, port=${port})`);
+
         this.app.use(express.json());
+        this._registerDiagnostics();
         this._registerRoutes();
 
         if (process.env.NODE_ENV === 'production') {
             this._registerProductionUiRoutes();
-            const server = this.app.listen(port, () => {
+            const server = this.app.listen(port, PROD_BIND_HOST, () => {
                 this._ready = true;
-                this.logger.info(`Admin server running on http://localhost:${port}`);
+                this.logger.info(`Admin server running on 0.0.0.0:${port} (mode=production)`);
+
+                const address = server.address();
+                if (address && typeof address === "object") {
+                    this.logger.info(`Admin listener bound to ${address.address}:${address.port} (${address.family})`);
+                }
             });
 
             server.on("error", (err) => {
@@ -86,11 +100,38 @@ export class AdminServer {
 
         const server = ViteExpress.listen(this.app, port, () => {
             this._ready = true;
-            this.logger.info(`Admin server running on http://localhost:${port}`);
+            this.logger.info(`Admin server running on http://localhost:${port} (mode=development)`);
+
+            const address = server.address();
+            if (address && typeof address === "object") {
+                this.logger.info(`Admin listener bound to ${address.address}:${address.port} (${address.family})`);
+            }
         });
 
         server.on("error", (err) => {
             this.logger.error("Admin server failed to start:", err);
+        });
+    }
+
+    private _registerDiagnostics(): void {
+        this.app.use((req, res, next) => {
+            const shouldLog = this._diagRequestLogsRemaining > 0;
+            const started = Date.now();
+
+            if (shouldLog) {
+                this._diagRequestLogsRemaining--;
+            }
+
+            res.on("finish", () => {
+                if (shouldLog) {
+                    this.logger.info(`HTTP ${req.method} ${req.originalUrl} -> ${res.statusCode} (${Date.now() - started}ms) from ${req.ip}`);
+                } else if (!this._diagSuppressedLogged) {
+                    this._diagSuppressedLogged = true;
+                    this.logger.info("Startup HTTP request diagnostics suppressed after initial sample.");
+                }
+            });
+
+            next();
         });
     }
 
@@ -137,9 +178,15 @@ export class AdminServer {
     private _registerRoutes(): void {
 
         // ? Readiness — only 200 once ViteExpress middleware is fully set up
-        this.app.get("/api/ready", (_req, res) => {
-            if (this._ready) res.status(204).send();
-            else res.status(503).send();
+        this.app.get("/api/ready", (req, res) => {
+            const code = this._ready ? 204 : 503;
+
+            if (this._readyProbeLogsRemaining > 0) {
+                this._readyProbeLogsRemaining--;
+                this.logger.info(`Readiness probe from ${req.ip} -> ${code}`);
+            }
+
+            res.status(code).send();
         });
 
         // ? Producers
