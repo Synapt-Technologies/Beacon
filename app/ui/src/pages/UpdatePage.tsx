@@ -4,6 +4,7 @@ import type { UpdateStatus } from '../../../src/types/UpdateTypes'
 import * as BeaconApi from '../api/BeaconApi'
 
 const SESSION_KEY = 'beacon_update_success'
+const UPDATE_RECOVERY_TIMEOUT_MS = 45_000
 
 function toErrorMessage(value: unknown, fallback: string): string {
   if (value instanceof Error && value.message) return value.message
@@ -52,12 +53,20 @@ export default function UpdatePage() {
     if (!status?.updating) return
 
     let active = true
+    let sawDisconnect = false
+
+    const completeUpdate = () => {
+      if (!active) return
+      sessionStorage.setItem(SESSION_KEY, '1')
+      window.location.reload()
+    }
 
     const pollStatus = async () => {
       try {
         const res = await fetch('/api/update/status', { cache: 'no-store' })
         if (!res.ok) {
           // During restart, this can briefly fail/non-OK.
+          sawDisconnect = true
           return
         }
 
@@ -71,20 +80,39 @@ export default function UpdatePage() {
         setStatus(next)
 
         if (!next.updateError) {
-          sessionStorage.setItem(SESSION_KEY, '1')
-          window.location.reload()
+          completeUpdate()
+          return
         }
       } catch {
-        // connection refused / network error during restart; keep polling
+        // Connection refused / network error during restart.
+        sawDisconnect = true
+      }
+
+      // Fallback path: if we observed a disconnect and the backend readiness
+      // endpoint is back, force a hard reload even if status polling stalls.
+      if (sawDisconnect) {
+        try {
+          const ready = await fetch('/api/ready', { cache: 'no-store' })
+          if (ready.ok) {
+            completeUpdate()
+          }
+        } catch {
+          // keep polling
+        }
       }
     }
 
     const id = setInterval(() => { void pollStatus() }, 1000)
+    const fallbackId = setTimeout(() => {
+      completeUpdate()
+    }, UPDATE_RECOVERY_TIMEOUT_MS)
+
     void pollStatus()
 
     return () => {
       active = false
       clearInterval(id)
+      clearTimeout(fallbackId)
     }
   }, [status?.updating])
 

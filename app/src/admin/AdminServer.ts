@@ -177,6 +177,19 @@ export class AdminServer {
 
     private _registerRoutes(): void {
 
+        // API responses are dynamic; prevent cache revalidation/304 responses
+        // that can confuse the UI's JSON bootstrap/update flow after restarts.
+        this.app.use("/api", (req, res, next) => {
+            delete req.headers["if-none-match"];
+            delete req.headers["if-modified-since"];
+
+            res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
+            res.setHeader("Pragma", "no-cache");
+            res.setHeader("Expires", "0");
+
+            next();
+        });
+
         // ? Readiness — only 200 once ViteExpress middleware is fully set up
         this.app.get("/api/ready", (req, res) => {
             const code = this._ready ? 204 : 503;
