@@ -124,7 +124,7 @@ export class AppCore {
     private _registerShutdownHandlers(): void {
         let isShuttingDown = false;
 
-        const shutdown = async (signal: NodeJS.Signals | "INTERNAL") => {
+        const shutdown = async (signal: NodeJS.Signals | "INTERNAL" | "UNKNOWN" = "UNKNOWN") => {
             if (isShuttingDown) 
                 return;
             isShuttingDown = true;
