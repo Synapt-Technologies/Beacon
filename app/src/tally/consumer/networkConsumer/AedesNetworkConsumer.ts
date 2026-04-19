@@ -222,7 +222,7 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer implements IGl
        
     }
 
-    setDeviceAlert(address: DeviceAddress, type: DeviceAlertState, target: DeviceAlertTarget): void {
+    setDeviceAlert(address: DeviceAddress, type: DeviceAlertState, target: DeviceAlertTarget, time: number): void {
         if (!this.aedes) {
             this.logger.warn("Discarding Tally: Attempted to send before initialization.");
             return;
@@ -233,7 +233,7 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer implements IGl
             qos: 2, // High priority for alerts
             dup: false,
             topic: `tally/device/${address.consumer}/${address.device}/alert`,
-            payload: Buffer.from(JSON.stringify({ type, target })),
+            payload: Buffer.from(JSON.stringify({ type, target, time })),
             retain: false // Alerts are momentary, no retain
         }, () => {});
     }

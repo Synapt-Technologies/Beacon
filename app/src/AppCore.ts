@@ -103,8 +103,8 @@ export class AppCore {
                 this.lifecycle.removeDevice(address);
                 syncState();
             },
-            sendAlert: (address, type, target) => {
-                this.lifecycle.sendAlert(address, type, target);
+            sendAlert: (address, type, target, time) => {
+                this.lifecycle.sendAlert(address, type, target, time);
             },
 
             // ? Config

@@ -211,7 +211,7 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
         this.logger.debug(`Set GPIO for state ${state}:`, output);
     }
 
-    setDeviceAlert(address: DeviceAddress, type: DeviceAlertState, target: DeviceAlertTarget): void {
+    setDeviceAlert(address: DeviceAddress, type: DeviceAlertState, target: DeviceAlertTarget, time: number): void {
 
         this.logger.debug(`Set Alert GPIO for address:`, address);
         this.logger.warn(`Atempted alert. Alert is not yet implemented!`);
