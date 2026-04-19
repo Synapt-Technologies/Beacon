@@ -35,6 +35,8 @@ function isOlderThan(a: string, b: string): boolean {
 // Oldest release that includes the self-updater. Releases before this tag
 // are hidden from the update UI — updating to them would break self-update.
 const MIN_UPDATABLE_TAG = 'v3.0.0';
+const MIN_CHECK_INTERVAL_MS = 10 * 60 * 1000; // 10 MINS
+const UPDATE_HTTP_TIMEOUT_MS = 15 * 1000; // 15 SECS
 
 export class UpdateManager {
 
@@ -44,7 +46,8 @@ export class UpdateManager {
     private lastChecked: number | null   = null;
     private updating    = false;
     private updateError: string | null   = null;
-
+    private checking: Promise<UpdateStatus> | null = null;
+    
     getStatus(): UpdateStatus {
         const current = SystemInfoUtil.getFirmwareVersion();
         const hasUpdate = this.releases
@@ -62,6 +65,26 @@ export class UpdateManager {
     }
 
     async checkForUpdates(): Promise<UpdateStatus> {
+        if (this.checking) 
+            return this.checking;
+
+        if (this.lastChecked && Date.now() < this.lastChecked + MIN_CHECK_INTERVAL_MS) {
+            this.logger.info('Checked for updates recently, returning cached status.');
+            return this.getStatus();
+        }
+
+        this.checking = this._checkForUpdatesInternal();  
+        
+        try {
+            return await this.checking;
+        }
+        finally {
+            this.checking = null;
+        }
+    }
+
+    private async _checkForUpdatesInternal(): Promise<UpdateStatus> {
+
         this.logger.info('Checking for updates...');
         this.updateError = null;
 
@@ -72,10 +95,36 @@ export class UpdateManager {
         }
 
         try {
-            const [releasesRes, branchesRes] = await Promise.all([
-                fetch(`${GH_API}/releases`, { headers: { 'User-Agent': 'Beacon-Tally' } }),
-                fetch(`${GH_API}/branches`, { headers: { 'User-Agent': 'Beacon-Tally' } }),
-            ]);
+           
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), UPDATE_HTTP_TIMEOUT_MS);
+            timeoutId.unref();
+
+            let releasesRes: Response;
+            let branchesRes: Response;
+
+            try {
+                [releasesRes, branchesRes] = await Promise.all([
+                    fetch(`${GH_API}/releases`, { 
+                        headers: {
+                            'User-Agent': 'Beacon-Tally',
+                            'Accept': 'application/vnd.github+json',
+                        },
+                        signal: controller.signal 
+                    }),
+                    fetch(`${GH_API}/branches`, { 
+                        headers: {
+                            'User-Agent': 'Beacon-Tally',
+                            'Accept': 'application/vnd.github+json',
+                        },
+                        signal: controller.signal 
+                    }),
+                ]);
+
+            } finally {
+                clearTimeout(timeoutId);
+            }
+
 
             if (!releasesRes.ok) throw new Error(`GitHub releases API error: ${releasesRes.status}`);
             if (!branchesRes.ok) throw new Error(`GitHub branches API error: ${branchesRes.status}`);
@@ -135,7 +184,10 @@ export class UpdateManager {
                 this.logger.info('Cleared Vite dep cache.');
             }
 
-            this.logger.info('Update complete, restarting...');
+            if (process.env.NODE_ENV === 'production') {
+                await this._exec('yarn build');
+            }
+
         } catch (err) {
             this.updateError = (err as Error).message;
             this.updating    = false;
