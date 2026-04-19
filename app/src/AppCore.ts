@@ -4,7 +4,6 @@ import { AdminServer } from "./admin/AdminServer";
 import { CoreDatabase } from "./database/CoreDatabase";
 import { UpdateManager } from "./system/UpdateManager";
 
-const UPDATE_POLL_INTERVAL_MS = 60 * 60 * 1000; // 1 hour
 
 export interface CoreInfo {
     startTime: number;
@@ -37,8 +36,10 @@ export class AppCore {
 
         this.admin.start();
 
-        this.updateManager.checkForUpdates().catch(() => {});
-        setInterval(() => this.updateManager.checkForUpdates().catch(() => {}), UPDATE_POLL_INTERVAL_MS).unref();
+        this.updateManager.checkForUpdates().catch((reason) => {
+            this.logger.error("Failed to check for updates.", reason);
+        });
+        // setInterval(() => this.updateManager.checkForUpdates().catch(() => {}), 60 * 60 * 1000).unref();
 
         this.logger.info("Beacon started.");
     }
