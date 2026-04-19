@@ -124,7 +124,7 @@ export class AppCore {
                 return;
             isShuttingDown = true;
 
-            this.logger.info("Shutting down...");
+            this.logger.info("Shutting down. Signal:", signal, "Uptime:", ((Date.now() - this.info.startTime) / 1000).toFixed(2), "seconds.");
             
             const forceQuit = setTimeout(() => {
                 this.logger.fatal("Shutdown timed out, forcing exit.");
@@ -147,9 +147,18 @@ export class AppCore {
             }
         };
 
-        process.prependListener("SIGINT", shutdown);
-        process.prependListener("SIGTERM", shutdown);
-        // process.on("exit", () => { CoreDatabase.destroy(); });
+        process.prependListener("SIGINT",  () => { void shutdown("SIGINT"); });
+        process.prependListener("SIGTERM", () => { void shutdown("SIGTERM"); });
+        process.prependListener("SIGHUP",  () => { void shutdown("SIGHUP"); });
+
+        process.on("beforeExit", (code) => {
+            this.logger.warn(`beforeExit event with code=${code} after ${((Date.now() - this.info.startTime) / 1000).toFixed(2)} seconds uptime.`);
+        });
+
+        process.on("exit", (code) => {
+            this.logger.warn(`exit event with code=${code} after ${((Date.now() - this.info.startTime) / 1000).toFixed(2)} seconds uptime.`);
+        });
+        
         process.on("uncaughtException", (err) => { this.logger.fatal("Uncaught exception", err); });
         process.on("unhandledRejection", (reason) => { this.logger.fatal("Unhandled rejection", reason); });
     }
