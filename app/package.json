@@ -10,7 +10,9 @@
     },
     "license": "GPL-3.0-only",
     "scripts": {
-        "start": "tsx supervisor.ts",
+        "dev": "tsx supervisor.ts",
+        "start": "vite build && NODE_ENV=production tsx supervisor.ts",
+        "run": "NODE_ENV=production tsx supervisor.ts",
         "build": "vite build"
     },
     "packageManager": "yarn@4.13.0",
