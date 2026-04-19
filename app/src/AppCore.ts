@@ -6,6 +6,10 @@ import { UpdateManager } from "./system/UpdateManager";
 
 const UPDATE_POLL_INTERVAL_MS = 60 * 60 * 1000; // 1 hour
 
+export interface CoreInfo {
+    startTime: number;
+}
+
 export class AppCore {
 
     private lifecycle:     TallyLifecycle;
