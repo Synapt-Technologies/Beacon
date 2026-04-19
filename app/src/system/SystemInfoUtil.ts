@@ -74,7 +74,7 @@ export default class SystemInfoUtil {
         }
     }
 
-    static getFirmwareVersion(): string {
+    static getFirmwareVersion(): string { // TODO add branch info.
         try {
             return execSync('git describe --tags --always', { encoding: 'utf8' }).trim();
         } catch {
