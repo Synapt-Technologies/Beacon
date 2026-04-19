@@ -70,7 +70,7 @@ export default function Layout() {
     }, [location.pathname, isMobile])
 
     // Page title
-    const title = PAGE_TITLES[location.pathname] ?? 'Beacon'
+    const title = PAGE_TITLES[location.pathname] ? `Beacon - ${PAGE_TITLES[location.pathname]}` : 'Beacon'
     useEffect(() => { document.title = title }, [title])
 
     return (
