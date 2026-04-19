@@ -13,6 +13,10 @@ export class AppCore {
     private admin:         AdminServer;
     private logger = new Logger(["CORE"]);
 
+    private info: CoreInfo = {
+        startTime: Date.now()
+    };
+
     constructor() {
         this.lifecycle     = new TallyLifecycle();
         this.updateManager = new UpdateManager();
