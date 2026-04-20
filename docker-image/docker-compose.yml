@@ -1,0 +1,17 @@
+services:
+  beacon:
+    image: ghcr.io/synapt-technologies/beacon:latest
+    ports:
+      - "80:80"
+      - "1883:1883"
+      - "9001:9001"
+    volumes:
+      - beacon_db:/app/db
+      - beacon_logs:/app/logs
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+
+volumes:
+  beacon_db:
+  beacon_logs:
