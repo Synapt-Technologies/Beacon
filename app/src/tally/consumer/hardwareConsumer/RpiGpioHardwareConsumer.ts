@@ -173,7 +173,7 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
             
         } catch (e) {
             this.logger.error("Failed initialising GPIO. Error:", e);
-            
+            // this.info.status = HardwareStatus.ERROR; // TODO
         }
     }
     
