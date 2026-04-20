@@ -79,6 +79,9 @@ export class AdminServer {
     }
 
     public start(port: number = 80): void {
+
+        this.logger.info("Starting admin server...");
+
         this.app.use(express.json());
 
         //TODO: Serve static ui in production?
@@ -90,6 +93,8 @@ export class AdminServer {
         ViteExpress.listen(this.app, port, () => {
             this.logger.info(`Admin server running on http://localhost:${port}`);
         });
+
+        this.logger.info("Admin server started.");
     }
 
     private _registerRoutes(): void {
