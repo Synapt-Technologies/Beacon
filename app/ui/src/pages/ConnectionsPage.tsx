@@ -5,6 +5,7 @@ import type { ProducerBundle, SourceInfo } from '../../../src/tally/types/Produc
 import type { ProducerConfig } from '../../../src/tally/producer/AbstractTallyProducer'
 import { PRODUCER_TYPE_MAP } from '../config/producers'
 import { Toggle } from '../components/Toggle'
+import StatusPill from '../components/statusPill/StatusPill'
 
 export default function ConnectionsPage() {
   const { producers, removeProducer } = useBeacon()
@@ -103,12 +104,17 @@ function ProducerCard({ producer: prod, editing, onEdit, onRemove }: ProducerCar
         display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px',
         borderBottom: editing ? '0.5px solid var(--color-border-tertiary)' : 'none',
       }}>
-        <div style={{ width: 8, height: 8, borderRadius: '50%', flexShrink: 0, background: prod.enabled ? (prod.info.status === 'ONLINE' ? '#1D9E75' : '#E58C2A') : 'var(--color-border-secondary)' }} />
+        <div style={{ width: 8, height: 8, borderRadius: '50%', flexShrink: 0, background: prod.enabled ? (prod.info.status === 'Online' ? '#1D9E75' : '#E58C2A') : 'var(--color-border-secondary)' }} />
         <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-primary)', flex: 1 }}>
           {prod.config.name ?? prod.config.id}
         </div>
+        <StatusPill 
+          ok={prod.info.status === 'Online'} 
+          text={prod.info.status} 
+          disabled={!prod.enabled}
+        />
         <span style={{ fontSize: 11, color: 'var(--color-text-tertiary)' }}>
-          {[typeLabel, model, prod.enabled && prod.info.status !== 'ONLINE' ? 'Offline' : null, `${sources.length} source${sources.length !== 1 ? 's' : ''}`].filter(Boolean).join(' · ')}
+          {[typeLabel, model, prod.enabled && prod.info.status !== 'Online' ? 'Offline' : null, `${sources.length} source${sources.length !== 1 ? 's' : ''}`].filter(Boolean).join(' · ')}
         </span>
         <Toggle checked={prod.enabled} onChange={v => setProducerEnabled(prod.config.id, v)} />
         <button className="sm-btn" onClick={onEdit}>

@@ -9,10 +9,10 @@ export interface ProducerConfig {
 }
 
 export enum ProducerStatus {
-    DISABLED = "DISABLED",
-    OFFLINE = "OFFLINE",
-    ONLINE = "ONLINE",
-    ERROR = "ERROR"
+    DISABLED = "Disabled",
+    OFFLINE = "Offline",
+    ONLINE = "Online",
+    ERROR = "Error"
 }
 
 // export enum ProducerType { // Move to AbstractProducer once imp, or probably remove.
