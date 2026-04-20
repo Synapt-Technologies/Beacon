@@ -49,42 +49,56 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer implements IGl
     }
  
     async init(): Promise<void> {
-        this.aedes = await Aedes.createBroker();
-
-        if (this.config.serve_tcp) {
-            this.server = createServer(this.aedes.handle);
-
-            await new Promise<void>((resolve, reject) => {
-                this.server.listen(this.config.port, () => {
-                    this.logger.info('Started and listening on port ', this.config.port);
-                    resolve();
-                });
-
-                this.server.once('error', (err) => { // Pesky boot errors
-                    this.logger.error('Error starting server:', err);
-                    reject(err);
-                });
-            });
+        try {
+            this.aedes = await Aedes.createBroker();
+        } catch (err) {
+            return this.logger.fatal('Error starting Aedes broker:', err);
         }
 
+        if (this.config.serve_tcp) {
+            try {
+                this.server = createServer(this.aedes.handle);
+
+                await new Promise<void>((resolve, reject) => {
+                    this.server.listen(this.config.port, () => {
+                        this.logger.info('Started and listening on port ', this.config.port);
+                        resolve();
+                    });
+
+                    this.server.once('error', (err) => { // Pesky boot errors
+                        this.logger.error('Error starting server:', err);
+                        reject(err);
+                    });
+                });
+            } catch (err) {
+                this.logger.error('Error starting TCP server:', err);
+            }
+        }
 
         if (this.config.serve_ws) {
-            this.wsHttpServer = createHttpServer();
-            this.wss = new WebSocketServer({ server: this.wsHttpServer });
-            this.wss.on('connection', (websocket, req) => {
-                const stream = createWebSocketStream(websocket);
-                this.aedes.handle(stream, req);
-            });
-            await new Promise<void>((resolve, reject) => {
-                this.wsHttpServer!.listen(this.config.ws_port, () => {
-                    this.logger.info('WebSocket MQTT listening on port', this.config.ws_port);
-                    resolve();
+            try {
+
+                this.wsHttpServer = createHttpServer();
+                this.wss = new WebSocketServer({ server: this.wsHttpServer });
+                this.wss.on('connection', (websocket, req) => {
+                    const stream = createWebSocketStream(websocket);
+                    this.aedes.handle(stream, req);
                 });
-                this.wsHttpServer!.once('error', (err) => {
-                    this.logger.error('Error starting WebSocket server:', err);
-                    reject(err);
+                await new Promise<void>((resolve, reject) => {
+                    this.wsHttpServer!.listen(this.config.ws_port, () => {
+                        this.logger.info('WebSocket MQTT listening on port', this.config.ws_port);
+                        resolve();
+                    });
+                    this.wsHttpServer!.once('error', (err) => {
+                        this.logger.error('Error starting WebSocket server:', err);
+                        reject(err);
+                    });
                 });
-            });
+
+            }
+            catch (err) {
+                this.logger.error('Error starting WebSocket server:', err);
+            }
         }
 
         this.aedes.on('subscribe', (subscriptions: Subscription[], client: Client) => {
@@ -97,6 +111,26 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer implements IGl
         this.aedes.on('publish',  (packet, client) => {if (client) {
             this.logger.debug('Message: MQTT Client', (client ? client.id : 'UNKNOWN ID'), 'has published message on', packet.topic);
         }});
+        
+        this.aedes.on('clientReady', (client: Client) => {
+            this.logger.info(`MQTT client ready: ${client?.id ?? 'unknown'}`);
+        });
+
+        this.aedes.on('clientDisconnect', (client: Client) => {
+            this.logger.info(`MQTT client disconnected: ${client?.id ?? 'unknown'}`);
+        });
+
+        this.aedes.on('clientError', (client: Client, err: Error) => {
+            this.logger.warn(`MQTT client error: ${client?.id ?? 'unknown'}`, err);
+        });
+
+        this.aedes.on('connectionError', (client: Client, err: Error) => {
+            this.logger.warn(`MQTT connection error: ${client?.id ?? 'unknown'}`, err);
+        });
+
+        this.aedes.on('keepaliveTimeout', (client: Client) => {
+            this.logger.warn(`MQTT keepalive timeout: ${client?.id ?? 'unknown'}`);
+        });
 
         super.init();
 
