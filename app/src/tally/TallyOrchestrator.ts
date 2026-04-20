@@ -45,6 +45,7 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
 
     private producerTallyStates: Map<ProducerId, TallyState> = new Map();
     private disconnectedProducers: Set<ProducerId> = new Set();
+    private _connectGraceTimers: Map<ProducerId, ReturnType<typeof setTimeout>> = new Map();
     private globalTallyState: TallyState = {
         preview: new Set(),
         program: new Set()
@@ -132,9 +133,15 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
         this.emit('producer_added', producer.getId(), producer.getInfo());
 
         this.disconnectedProducers.add(producer.getId());
-        for (const consumer of this.consumers.values()) {
-            consumer.setBaseState(this.config.state_on_disconnect);
-        }
+        const graceTimer = setTimeout(() => {
+            this._connectGraceTimers.delete(producer.getId());
+            if (this.disconnectedProducers.has(producer.getId())) {
+                for (const consumer of this.consumers.values()) {
+                    consumer.setBaseState(this.config.state_on_disconnect);
+                }
+            }
+        }, 1000);
+        this._connectGraceTimers.set(producer.getId(), graceTimer);
 
         producer.on('tally_update', (newState: TallyState) => {
             this.producerTallyStates.set(producer.getId(), newState);
@@ -142,6 +149,11 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
         });
 
         producer.on('connected', () => {
+            const timer = this._connectGraceTimers.get(producer.getId());
+            if (timer) {
+                clearTimeout(timer);
+                this._connectGraceTimers.delete(producer.getId());
+            }
             this.disconnectedProducers.delete(producer.getId());
             this._parseGlobalTally();
             for (const consumer of this.consumers.values()) {
@@ -166,6 +178,11 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
     }
 
     async removeProducer(id: ProducerId): Promise<void> {
+        const timer = this._connectGraceTimers.get(id);
+        if (timer) {
+            clearTimeout(timer);
+            this._connectGraceTimers.delete(id);
+        }
         const producer = this.producers.get(id);
         if (!producer) {
             this.logger.warn(`Attempted to remove unknown producer:`, id);
