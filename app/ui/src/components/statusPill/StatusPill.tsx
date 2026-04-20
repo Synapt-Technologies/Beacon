@@ -6,19 +6,15 @@ interface StatusRow { label: string; ok: boolean }
 
 export default function StatusPill() {
     const { producers, consumers } = useBeacon();
-    //TODO Don't include disabled, only errored.
-    //   const rows: StatusRow[] = [
-    //     ...producers.map(p => ({
-    //       label: `${p.config.name ?? p.config.id} — ${p.info?.connected ? 'connected' : 'disconnected'}`,
-    //       ok: p.info?.connected ?? false,
-    //     })),
-    //     { label: `GPIO hardware — ${consumers.gpio?.enabled ? 'active' : 'disabled'}`, ok: !!consumers.gpio?.enabled },
-    //     { label: `MQTT broker — ${consumers.aedes?.enabled ? 'running' : 'disabled'}`, ok: !!consumers.aedes?.enabled },
-    //   ]
-    //TODO Better state handling!
     const rows: StatusRow[] = [
-        { label: `GPIO hardware — disabled`, ok: false },
-        { label: `MQTT broker — running`, ok: true }
+        ...producers
+            .filter(p => p.enabled)
+            .map(p => ({
+                label: `${p.config.name ?? p.config.id} — ${p.info.status === 'ONLINE' ? 'connected' : 'disconnected'}`,
+                ok: p.info.status === 'ONLINE',
+            })),
+        { label: `GPIO hardware — ${consumers.gpio?.enabled ? 'active' : 'disabled'}`, ok: !!consumers.gpio?.enabled },
+        { label: `MQTT broker — ${consumers.aedes?.enabled ? 'running' : 'disabled'}`, ok: !!consumers.aedes?.enabled },
     ]
     
     const allGood = rows.every(r => r.ok)
