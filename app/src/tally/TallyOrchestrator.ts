@@ -192,6 +192,12 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
             this.producers.delete(id);
         }
         this.producerTallyStates.delete(id);
+        this.disconnectedProducers.delete(id);
+        if (this.disconnectedProducers.size === 0) {
+            for (const consumer of this.consumers.values()) {
+                consumer.setBaseState(DeviceTallyState.NONE);
+            }
+        }
         this.emit('producer_removed', id);
         this._parseGlobalTally();
     }
