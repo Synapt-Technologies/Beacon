@@ -1,8 +1,9 @@
 FROM node:20-alpine
 WORKDIR /app
-RUN corepack enable
+RUN corepack enable && apk add --no-cache python3 make g++
 COPY .yarnrc.yml package.json yarn.lock ./
-RUN COREPACK_YES=1 yarn install --immutable
+RUN COREPACK_YES=1 YARN_ENABLE_SCRIPTS=false yarn install --immutable
+RUN yarn rebuild better-sqlite3
 COPY . .
 RUN yarn build
 ENV NODE_ENV=production
