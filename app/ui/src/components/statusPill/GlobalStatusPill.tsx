@@ -7,8 +7,8 @@ export default function GlobalStatusPill() {
         ...producers
             .filter(p => p.enabled)
             .map(p => ({
-                label: `${p.config.name ?? p.config.id} — ${p.info.status === 'ONLINE' ? 'connected' : 'disconnected'}`,
-                ok: p.info.status === 'ONLINE',
+                label: `${p.config.name ?? p.config.id} — ${p.info.status}`,
+                ok: p.info.status === 'Online',
             })),
     ];
 
