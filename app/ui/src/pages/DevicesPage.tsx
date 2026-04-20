@@ -156,7 +156,6 @@ export default function DevicesPage() {
           device={editing}
           open={!!editing}
           onSave={name => handleSaveName(editing, name)}
-          onPatch={() => handleOpenPatch(editing)}
           onRemove={() => handleRemove(editing)}
           onClose={() => setEditing(null)}
         />

@@ -13,6 +13,7 @@ import { UITallyDevice } from '../../types/DeviceStates'
 import { ConnectionType, GlobalDeviceTools } from '../../../../src/tally/types/ConsumerStates'
 import type { GlobalTallySource } from '../../../../src/tally/types/ProducerStates'
 import { stateFromValue, type DeviceDisplayState } from '../../types/beacon'
+import { DeviceEditModal } from '../devices/DeviceEditPanel'
 
 interface DeviceDetailOverlayProps {
     device: UITallyDevice
@@ -40,10 +41,11 @@ function formatTs(ms?: number): string { // TODO: move to shared util
 export function DeviceDetailOverlay({ device, backPath, backLabel }: DeviceDetailOverlayProps) {
     const navigate = useNavigate()
     const location = useLocation()
-    const { producers, uiConfig, orchestratorConfig, patchDevice } = useBeacon()
+    const { producers, uiConfig, orchestratorConfig, patchDevice, renameDevice, removeDevice } = useBeacon()
     const { states, deviceStates, systemConnected } = useTallyState()
     const disconnectState = stateFromValue(orchestratorConfig.state_on_disconnect ?? 0)
     const [patchOpen, setPatchOpen] = useState(false)
+    const [editOpen, setEditOpen] = useState(false)
 
     const basePath    = `${backPath}/${device.id.consumer}/${device.id.device}`
     const fsOpen      = location.pathname.endsWith('/fullscreen')
@@ -60,6 +62,15 @@ export function DeviceDetailOverlay({ device, backPath, backLabel }: DeviceDetai
         await patchDevice(device.id, patch)
     }
     
+    const handleSaveName = async (name: { short?: string; long: string }) => {
+        setEditOpen(false)
+        await renameDevice(device.id, name)
+    }
+
+    const handleRemove = async () => {
+        setEditOpen(false)
+        await removeDevice(device.id)
+    }
 
     return (
         <>
@@ -126,7 +137,10 @@ export function DeviceDetailOverlay({ device, backPath, backLabel }: DeviceDetai
 
                     <DeviceAlerts device={device.id} slots={uiConfig.alerts} />
 
-                    <div style={{ marginTop: 10, display: 'flex', justifyContent: 'flex-end' }}>
+                    <div style={{ marginTop: 10, display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
+                        <button className="sm-btn" onClick={() => setEditOpen(true)}>
+                            Edit Device
+                        </button>
                         <button className="sm-btn" onClick={() => setPatchOpen(true)}>
                             Edit patch
                         </button>
@@ -150,6 +164,15 @@ export function DeviceDetailOverlay({ device, backPath, backLabel }: DeviceDetai
                     producers={producers}
                     onApply={handlePatchApply}
                     onClose={() => setPatchOpen(false)}
+                />
+
+                
+                <DeviceEditModal
+                    device={device}
+                    open={editOpen}
+                    onSave={name => handleSaveName(name)}
+                    onRemove={() => handleRemove()}
+                    onClose={() => setEditOpen(false)}
                 />
             </div>
         </>

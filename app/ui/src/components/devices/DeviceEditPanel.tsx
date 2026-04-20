@@ -59,14 +59,13 @@ export interface DeviceEditModalProps {
   device:   UITallyDevice
   open:     boolean
   onSave:   (name: { short?: string; long: string }) => void
-  onPatch:  () => void
   onRemove: () => void
   onClose:  () => void
 }
 
 // ? Component
 
-export function DeviceEditModal({ device, open, onSave, onPatch, onRemove, onClose }: DeviceEditModalProps) {
+export function DeviceEditModal({ device, open, onSave, onRemove, onClose }: DeviceEditModalProps) {
   const [short, setShort] = useState(device.name.short ?? '')
   const [long,  setLong]  = useState(device.name.long)
   const { producers } = useBeacon()
@@ -146,40 +145,6 @@ export function DeviceEditModal({ device, open, onSave, onPatch, onRemove, onClo
             </div>
           </Section>
 
-          {/* Patch */}
-          <Section label="Source patch">
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, minHeight: 30 }}>
-              <div style={{ flex: 1, display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-                {patch.length === 0 ? (
-                  <span style={{ fontSize: 11, color: 'var(--color-text-tertiary)' }}>No sources patched</span>
-                ) : (
-                  patch.slice(0, 8).map((src: GlobalTallySource, i: number) => (
-                    <span key={i} style={{
-                      fontSize: 10, padding: '2px 7px', borderRadius: 99,
-                      background: 'var(--color-background-secondary)',
-                      color: 'var(--color-text-secondary)',
-                      border: '0.5px solid var(--color-border-tertiary)',
-                    }}>
-                      {shortName(src.producer, src.source)}
-                    </span>
-                  ))
-                )}
-                {patch.length > 8 && (
-                  <span style={{
-                    fontSize: 10, padding: '2px 7px', borderRadius: 99,
-                    background: 'var(--color-background-secondary)',
-                    color: 'var(--color-text-tertiary)',
-                    border: '0.5px solid var(--color-border-tertiary)',
-                  }}>
-                    +{patch.length - 8}
-                  </span>
-                )}
-              </div>
-              <button className="sm-btn" onClick={onPatch} style={{ flexShrink: 0 }}>
-                Edit patch
-              </button>
-            </div>
-          </Section>
 
           {/* Consumer-specific config */}
           <ConsumerConfigSection device={device} />
