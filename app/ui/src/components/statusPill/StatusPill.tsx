@@ -13,10 +13,15 @@ export default function StatusPill() {
                 label: `${p.config.name ?? p.config.id} — ${p.info.status === 'ONLINE' ? 'connected' : 'disconnected'}`,
                 ok: p.info.status === 'ONLINE',
             })),
-        { label: `GPIO hardware — ${consumers.gpio?.enabled ? 'active' : 'disabled'}`, ok: !!consumers.gpio?.enabled },
-        { label: `MQTT broker — ${consumers.aedes?.enabled ? 'running' : 'disabled'}`, ok: !!consumers.aedes?.enabled },
     ]
-    
+
+    if (consumers.gpio?.enabled) {
+        rows.push({ label: `GPIO hardware — active`, ok: true });
+    }
+    if (consumers.aedes?.enabled) {
+        rows.push({ label: `MQTT broker — running`, ok: true });
+    }
+
     const allGood = rows.every(r => r.ok)
     
     return (
