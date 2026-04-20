@@ -1,14 +1,15 @@
 [Unit]
 Description=Beacon Tally
-After=network-online.target
 Wants=network-online.target
+After=network-online.target
 
 [Service]
 Type=simple
 Restart=on-failure
 RestartSec=3
 WorkingDirectory=/opt/Beacon-tally/app
-ExecStart=/opt/Beacon-tally/app/node_modules/.bin/tsx /opt/Beacon-tally/app/app.ts
+Environment=NODE_ENV=production
+ExecStart=/opt/Beacon-tally/app/node_modules/.bin/tsx /opt/Beacon-tally/app/supervisor.ts
 
 [Install]
 WantedBy=multi-user.target
