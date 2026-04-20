@@ -1,4 +1,4 @@
-import { AbstractTallyProducer, type ProducerConfig, type ProducerInfo, type TallyProducerEvents } from "../AbstractTallyProducer";
+import { AbstractTallyProducer, type ProducerConfig, type ProducerInfo, type TallyProducerEvents, ProducerStatus } from "../AbstractTallyProducer";
 import net from "node:net";
 
 export interface NetClientProducerConfig extends ProducerConfig {
@@ -36,6 +36,7 @@ export abstract class AbstractNetClientTallyProducer<T extends NetClientTallyPro
         model: {},
         sources: new Map(),
         connected: false,
+        status: ProducerStatus.OFFLINE,
     };
 
     isConnected(): boolean {

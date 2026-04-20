@@ -8,6 +8,13 @@ export interface ProducerConfig {
     name?: string;
 }
 
+export enum ProducerStatus {
+    DISABLED = "DISABLED",
+    OFFLINE = "OFFLINE",
+    ONLINE = "ONLINE",
+    ERROR = "ERROR"
+}
+
 // export enum ProducerType { // Move to AbstractProducer once imp, or probably remove.
 //     UNKNOWN = "UNKNWN",
 //     SWITCHER = "SWTCHR",
@@ -18,6 +25,7 @@ export interface ProducerInfo {
     update_moment: number | null;
     model: ProducerModel;
     sources: SourceMap;
+    status: ProducerStatus;
     // Todo add multi bus support.
 }
 
@@ -84,6 +92,7 @@ export abstract class AbstractTallyProducer<T extends TallyProducerEvents & Reco
             long: "Unknown Model"
         },
         sources: new Map(),
+        status: ProducerStatus.OFFLINE,
     };
 
     protected tallyState: TallyState = {

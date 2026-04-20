@@ -1,5 +1,6 @@
 import { Atem, type AtemState } from "atem-connection";
 import { AbstractNetClientTallyProducer, type NetClientProducerConfig, type NetClientProducerInfo } from "./AbstractNetClientTallyProducer";
+import { ProducerStatus } from "../AbstractTallyProducer";
 import { Enums as AtemEnums } from "atem-connection";
 import { GlobalSourceTools, type ProducerModel, type SourceInfo, type SourceMap, type TallyState } from "../../types/ProducerStates";
 
@@ -50,6 +51,7 @@ export class AtemNetClientTallyProducer extends AbstractNetClientTallyProducer {
 
         this.atem.on('connected', () => {
             this.info.connected = true;
+            this.info.status = ProducerStatus.ONLINE;
             this.info.update_moment = Date.now();
             this.info.state = this.atem.state ?? null;
             this.info.model =  this._parseModel();
@@ -63,10 +65,12 @@ export class AtemNetClientTallyProducer extends AbstractNetClientTallyProducer {
 
         this.atem.on('disconnected', () => {
             this.info.connected = false;
+            this.info.status = ProducerStatus.OFFLINE;
             this.info.update_moment = Date.now();
             this.info.state = null;
             this.emit('disconnected');
             this.logger.warn("Disconnected", `target=${this.config.host}:${this.config.port}`);
+            this.emitInfoUpdate();
             this._parseTallystate();
         })
 
@@ -129,6 +133,7 @@ export class AtemNetClientTallyProducer extends AbstractNetClientTallyProducer {
             model: this.info.model,
             sources: this.info.sources,
             connected: this.info.connected,
+            status: this.info.status,
         } as AtemNetClientProducerInfo;
     }
 
