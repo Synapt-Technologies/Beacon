@@ -119,8 +119,10 @@ export default function UpdatePage() {
             setOverlay('error')
             sessionStorage.removeItem('beacon-update-pending')
           } else {
-            // Server restarted successfully — reload once to pick up the new bundle.
-            window.location.reload()
+            // Express is up, but wait for Vite middleware too before reloading —
+            // GET / goes through Vite so a 200 means both are ready.
+            const viteReady = await fetch('/', { method: 'HEAD' }).then(r => r.ok).catch(() => false)
+            if (viteReady) window.location.reload()
           }
         }
       } catch {
