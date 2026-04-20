@@ -333,10 +333,10 @@ export default function SettingsPage() {
 
   const [editingAlert, setEditingAlert] = useState<number | null>(null)
 
-  const gpioEnabled    = consumers.gpio?.enabled    ?? true
-  const aedesEnabled   = consumers.aedes?.enabled   ?? true
-  const gpioAvailable  = consumers.gpio?.available  ?? false
-  const aedesAvailable = consumers.aedes?.available ?? true
+  const gpioEnabled      = consumers.gpio?.enabled        ?? true
+  const aedesEnabled     = consumers.aedes?.enabled       ?? true
+  const gpioAvailable    = consumers.gpio?.available      ?? false
+  const aedesAvailable   = consumers.aedes?.available     ?? true
 
   const handleImport = async () => {
     const input = document.createElement('input')
@@ -360,6 +360,20 @@ export default function SettingsPage() {
       <div className="s-card">
         <div className="s-row">
           <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 13, color: 'var(--color-text-primary)' }}>MQTT broker</div>
+            <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginTop: 1 }}>
+              Network tally over MQTT{!aedesAvailable ? ' — not available' : ''}
+            </div>
+          </div>
+          {/* <Toggle
+            checked={aedesEnabled}
+            disabled={!aedesAvailable || (aedesEnabled && !aedesDisableable)}
+            onChange={v => setConsumerEnabled('aedes', v)}
+          /> */}
+        </div>
+
+        <div className="s-row">
+          <div style={{ flex: 1 }}>
             <div style={{ fontSize: 13, color: 'var(--color-text-primary)' }}>GPIO hardware</div>
             <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginTop: 1 }}>
               Raspberry Pi pin outputs{!gpioAvailable ? ' — not available on this hardware' : ''}
@@ -369,19 +383,6 @@ export default function SettingsPage() {
             checked={gpioEnabled}
             disabled={!gpioAvailable}
             onChange={v => setConsumerEnabled('gpio', v)}
-          />
-        </div>
-        <div className="s-row">
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 13, color: 'var(--color-text-primary)' }}>MQTT broker</div>
-            <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginTop: 1 }}>
-              Network tally over MQTT{!aedesAvailable ? ' — not available' : ''}
-            </div>
-          </div>
-          <Toggle
-            checked={aedesEnabled}
-            disabled={!aedesAvailable}
-            onChange={v => setConsumerEnabled('aedes', v)}
           />
         </div>
       </div>
