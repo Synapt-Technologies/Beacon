@@ -19,10 +19,10 @@ export default function DeviceAlerts({ device, slots }: DeviceAlertsProps) {
         timeout: slot.timeout,
     }))
 
-    const handleAlert = async (action: string, target: string | null) => {
+    const handleAlert = async (action: string, target: string | null, time: number) => {
         const type = DeviceAlertState[action as keyof typeof DeviceAlertState]
         const tgt  = target ? DeviceAlertTarget[target as keyof typeof DeviceAlertTarget] : DeviceAlertTarget.ALL
-        try { await sendAlert(device, type, tgt) } catch { /* fire-and-forget */ }
+        try { await sendAlert(device, type, tgt, time) } catch { /* fire-and-forget */ }
     }
 
     return (
