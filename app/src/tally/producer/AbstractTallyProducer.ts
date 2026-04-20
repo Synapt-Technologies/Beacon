@@ -115,6 +115,10 @@ export abstract class AbstractTallyProducer<T extends TallyProducerEvents & Reco
         this._destroying = true;
     }
 
+    isDestroying(): boolean {
+        return this._destroying;
+    }
+
     protected emitInfoUpdate(): void {
         if (this._destroying) return;
         this.store.saveInfo(this.info);
