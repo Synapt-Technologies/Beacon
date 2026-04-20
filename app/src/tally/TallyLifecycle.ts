@@ -240,13 +240,21 @@ export class TallyLifecycle {
             this.logger.warn(`Producer already exists, skipping add:`, config.id);
             return;
         }
-        this.db.saveProducer({ type, enabled: true, config });
         await this._startProducer(type, config);
+        this.db.saveProducer({ type, enabled: true, config });
     }
 
     public async updateProducer(id: ProducerId, type: string, config: object): Promise<void> {
+        const fullConfig = { ...config, id } as ProducerConfig;
+        const oldRecord = this.db.getProducers().find(p => p.config.id === id);
         await this.removeProducer(id);
-        await this.addProducer(type, { ...config, id } as ProducerConfig);
+        try {
+            await this.addProducer(type, fullConfig);
+        } catch (e) {
+            if (oldRecord)
+                await this.addProducer(oldRecord.type, oldRecord.config).catch(re => this.logger.error(`Failed to restore producer:`, id, re));
+            throw e;
+        }
     }
 
     public async removeProducer(id: ProducerId): Promise<void> {
@@ -296,12 +304,20 @@ export class TallyLifecycle {
             return;
         }
 
+        const prevEnabled = entry.enabled;
+        const prevConfig  = entry.config;
+
         entry.enabled = update.enabled ?? entry.enabled;
-        entry.config = { ...entry.config, ...update.config };
+        entry.config  = { ...entry.config, ...update.config };
 
-        this.db.setSetting(SettingKey.consumers[id], { enabled: entry.enabled, config: entry.config });
-
-        await this._restartConsumer(update.id);
+        try {
+            await this._restartConsumer(update.id);
+            this.db.setSetting(SettingKey.consumers[id], { enabled: entry.enabled, config: entry.config });
+        } catch (e) {
+            entry.enabled = prevEnabled;
+            entry.config  = prevConfig;
+            throw e;
+        }
 
     }
 
@@ -353,11 +369,6 @@ export class TallyLifecycle {
 
 
         try {
-            if (this.orchestrator.hasConsumer(id)) {
-                this.logger.info(`Stopping consumer:`, id);
-                await this.orchestrator.removeConsumer(id);
-                this.logger.info(`Stopped consumer:`, id);
-            }
             const entry = this._config.consumers[id];
             if (entry.enabled) {
 
@@ -367,16 +378,31 @@ export class TallyLifecycle {
                     return;
                 }
 
+                // Dry-construct: runs checkConfig() in ctor, no port binding until init().
+                // Throws here if config is invalid, before the old consumer is touched.
                 const consumer = entry.factory(entry.config);
 
+                if (this.orchestrator.hasConsumer(id)) {
+                    this.logger.info(`Stopping consumer:`, id);
+                    await this.orchestrator.removeConsumer(id);
+                    this.logger.info(`Stopped consumer:`, id);
+                }
+
                 await consumer.init();
-                
+
                 this.orchestrator.addConsumer(consumer);
 
                 this.logger.info(`Started consumer:`, id);
+            } else {
+                if (this.orchestrator.hasConsumer(id)) {
+                    this.logger.info(`Stopping consumer:`, id);
+                    await this.orchestrator.removeConsumer(id);
+                    this.logger.info(`Stopped consumer:`, id);
+                }
             }
         } catch (e) {
             this.logger.error(`Failed to (re)-start consumer:`, id, e);
+            throw e;
         } finally {
             this._restarting.delete(id);
         }
