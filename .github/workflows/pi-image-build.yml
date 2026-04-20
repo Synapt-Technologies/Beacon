@@ -1,0 +1,58 @@
+name: Build Pi Image
+
+on:
+  release:
+    types: [created, published]
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to build from'
+        required: false
+        default: 'dev'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      TARGET_BRANCH: ${{ github.event.release.target_commitish || inputs.branch }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TARGET_BRANCH }}
+
+      - name: Patch target branch into pi-image config
+        run: |
+          sed -i "s|--branch [^ ]*|--branch ${{ env.TARGET_BRANCH }}|" \
+            pi-image/layer/beacon-app.yaml
+
+      - name: Install QEMU and binfmt
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends qemu-user-static binfmt-support
+          sudo update-binfmts --enable qemu-aarch64 || true
+          sudo modprobe nbd || echo "WARNING: nbd module unavailable"
+
+      - name: Clone rpi-image-gen
+        run: git clone --depth 1 https://github.com/raspberrypi/rpi-image-gen.git /tmp/rpi-image-gen
+
+      - name: Install rpi-image-gen dependencies
+        run: sudo /tmp/rpi-image-gen/install_deps.sh
+
+      - name: Build
+        run: |
+          mkdir -p /tmp/beacon-work/work
+          /tmp/rpi-image-gen/rpi-image-gen build \
+            -S "${{ github.workspace }}/pi-image" \
+            -c beacon.yaml \
+            -B /tmp/beacon-work/work
+
+      - name: Upload to release
+        if: github.event_name == 'release'
+        run: |
+          gh release upload "${{ github.event.release.tag_name }}" \
+            /tmp/beacon-work/work/image-Beacon/*.img \
+            --clobber
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
