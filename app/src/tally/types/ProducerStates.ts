@@ -31,6 +31,7 @@ export type SourceMap = Map<string, SourceInfo>;
 
 export interface ProducerBundle {
     type: string,
+    enabled: boolean,
     config: ProducerConfig,
     info: ProducerInfo
 }

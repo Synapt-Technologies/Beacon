@@ -2,7 +2,7 @@ import { CoreDatabase, SettingKey } from "../database/CoreDatabase";
 import { TallyFactory } from "./TallyFactory";
 import { TallyOrchestrator, type OrchestratorConfig } from "./TallyOrchestrator";
 export type { OrchestratorConfig };
-import type { ProducerConfig } from "./producer/AbstractTallyProducer";
+import { ProducerStatus, type ProducerConfig } from "./producer/AbstractTallyProducer";
 import type { ProducerBundle, ProducerId } from "./types/ProducerStates";
 import { Logger } from "../logging/Logger";
 import type { AedesConsumerConfig } from "./consumer/networkConsumer/AedesNetworkConsumer";
@@ -122,7 +122,11 @@ export class TallyLifecycle {
 
         this.orchestrator = new TallyOrchestrator(this._config.orchestrator);
 
-        for (const { type, config } of this.db.getProducers()) {
+        for (const { type, enabled, config } of this.db.getProducers()) {
+            if (!enabled) {
+                this.logger.info(`Skipping disabled producer: ${config.id} (${type})`);
+                continue;
+            }
             try {
                 await this._startProducer(type, config);
                 this.logger.info(`Restored producer: ${config.id} (${type})`);
@@ -236,7 +240,7 @@ export class TallyLifecycle {
             this.logger.warn(`Producer already exists, skipping add:`, config.id);
             return;
         }
-        this.db.saveProducer({ type, config });
+        this.db.saveProducer({ type, enabled: true, config });
         await this._startProducer(type, config);
     }
 
@@ -252,7 +256,12 @@ export class TallyLifecycle {
 
     
     public getProducers(): ProducerBundle[] { // TODO: Check if a producer should have a getBundle?
-        return this.db.getProducers().map(({ type, config }) => ({ type, config, info: this.orchestrator.getProducerInfo(config.id) }));
+        return this.db.getProducers().map(({ type, enabled, config }) => {
+            const info = this.orchestrator.getProducerInfo(config.id);
+            if (!enabled)
+                return { type, enabled, config, info: { ...info, status: ProducerStatus.DISABLED } };
+            return { type, enabled, config, info };
+        });
     }
 
     // ? Consumer methods

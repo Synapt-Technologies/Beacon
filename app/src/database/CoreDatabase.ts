@@ -2,6 +2,7 @@ import Database from 'better-sqlite3';
 import fs from 'node:fs';
 import path from 'path';
 import type { ProducerConfig, ProducerInfo } from '../tally/producer/AbstractTallyProducer';
+import { ProducerStatus } from '../tally/producer/AbstractTallyProducer';
 import { GlobalSourceTools, type ProducerBundle, type SourceInfo } from '../tally/types/ProducerStates';
 import { DeviceTallyState, GlobalDeviceTools, type DeviceAddress, type TallyDevice } from '../tally/types/ConsumerStates';
 import { Logger } from '../logging/Logger';
@@ -73,8 +74,10 @@ export class CoreDatabase {
             CREATE TABLE IF NOT EXISTS producers (
                 id TEXT PRIMARY KEY,
                 type TEXT NOT NULL,
-                config TEXT NOT NULL
-            );
+                config TEXT NOT NULL,
+                enabled INTEGER NOT NULL DEFAULT 1
+            );`);
+        this.db.exec(`
             CREATE TABLE IF NOT EXISTS producer_info (
                 id TEXT PRIMARY KEY,
                 info TEXT NOT NULL,
@@ -98,18 +101,18 @@ export class CoreDatabase {
 
 
     // ? Producer Methods
-    public saveProducer(entry: { type: string; config: ProducerConfig }): void {
+    public saveProducer(entry: { type: string; enabled: boolean; config: ProducerConfig }): void {
         const stmt = this.db.prepare(`
-            INSERT INTO producers (id, type, config)
-            VALUES (?, ?, ?)
-            ON CONFLICT(id) DO UPDATE SET config=excluded.config
+            INSERT INTO producers (id, type, config, enabled)
+            VALUES (?, ?, ?, ?)
+            ON CONFLICT(id) DO UPDATE SET config=excluded.config, enabled=excluded.enabled
         `);
-        stmt.run(entry.config.id, entry.type, JSON.stringify(entry.config));
+        stmt.run(entry.config.id, entry.type, JSON.stringify(entry.config), entry.enabled ? 1 : 0);
     }
 
     public getProducers(): Required<Omit<ProducerBundle, "info">>[] {
-        const rows = this.db.prepare('SELECT * FROM producers').all() as { id: string, type: string, config: string }[];
-        return rows.map(row => ({ type: row.type, config: JSON.parse(row.config) }));
+        const rows = this.db.prepare('SELECT * FROM producers').all() as { id: string, type: string, config: string, enabled: number }[];
+        return rows.map(row => ({ type: row.type, enabled: row.enabled === 1, config: JSON.parse(row.config) }));
     }
 
     public saveProducerInventory(id: string, info: ProducerInfo) {
@@ -134,7 +137,7 @@ export class CoreDatabase {
                     s
                 ])
             );
-            return { ...parsed, sources };
+            return { ...parsed, sources, status: parsed.status ?? ProducerStatus.OFFLINE };
         } catch {
             this.logger.error(`Failed to parse producer inventory for:`, id);
             return null;
