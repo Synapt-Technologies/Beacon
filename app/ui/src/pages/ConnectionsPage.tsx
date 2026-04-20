@@ -97,7 +97,6 @@ function ProducerCard({ producer: prod, editing, onEdit, onRemove }: ProducerCar
       background: 'var(--color-background-primary)',
       border: '0.5px solid var(--color-border-tertiary)',
       borderRadius: 'var(--border-radius-lg)', marginBottom: 10, overflow: 'hidden',
-      opacity: prod.enabled ? 1 : 0.6,
     }}>
       {/* Header */}
       <div style={{
@@ -105,7 +104,13 @@ function ProducerCard({ producer: prod, editing, onEdit, onRemove }: ProducerCar
         borderBottom: editing ? '0.5px solid var(--color-border-tertiary)' : 'none',
       }}>
         <div style={{ width: 8, height: 8, borderRadius: '50%', flexShrink: 0, background: prod.enabled ? (prod.info.status === 'Online' ? '#1D9E75' : '#E58C2A') : 'var(--color-border-secondary)' }} />
-        <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-primary)', flex: 1 }}>
+        <div style={{ 
+          fontSize: 13, 
+          fontWeight: 500, 
+          color: 'var(--color-text-primary)', 
+          flex: 1,
+          opacity: prod.enabled ? 1 : 0.6,
+        }}>
           {prod.config.name ?? prod.config.id}
         </div>
         <StatusPill 
