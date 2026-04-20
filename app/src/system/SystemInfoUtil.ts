@@ -75,7 +75,7 @@ export default class SystemInfoUtil {
     }
 
     static getFirmwareVersion(): string {
-        if (process.env.APP_VERSION) return process.env.APP_VERSION;
+        if (process.env.APP_VERSION) return process.env.APP_VERSION; // For docker image.
         try {
             return execSync('git describe --tags --always', { encoding: 'utf8', stdio: 'pipe' }).trim();
         } catch {
