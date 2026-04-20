@@ -31,10 +31,20 @@ export class AppCore {
         this.logger.info("Starting Beacon...");
 
         this._registerShutdownHandlers();
-        await this.lifecycle.boot();
-        this._wireAdminServer();
+        try {
+            await this.lifecycle.boot();
+        } catch (error) {
+            this.logger.fatal("Failed to start Lifecycle.", error);
+        }
+        
+        try {
+            this._wireAdminServer();
 
-        this.admin.start();
+            this.admin.start();
+
+        } catch (error) {
+            this.logger.fatal("Failed to start admin server.", error);
+        }
 
         this.updateManager.checkForUpdates().catch((reason) => {
             this.logger.error("Failed to check for updates.", reason);
