@@ -1196,6 +1196,9 @@ __metadata:
     vite-express: "npm:^0.22.1"
     web-haptics: "npm:^0.0.6"
     ws: "npm:^8.18.3"
+  dependenciesMeta:
+    pigpio:
+      optional: true
   languageName: unknown
   linkType: soft
 
