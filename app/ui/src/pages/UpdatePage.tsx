@@ -3,33 +3,132 @@ import { useNavigate } from 'react-router-dom'
 import type { UpdateStatus } from '../../../src/types/UpdateTypes'
 import * as BeaconApi from '../api/BeaconApi'
 
+type OverlayState = 'updating' | 'done' | 'error'
+
+function UpdateOverlay({ state, version, error, onDone, onError }: {
+  state: OverlayState
+  version: string | null
+  error: string | null
+  onDone: () => void
+  onError: () => void
+}) {
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 9999,
+      display: 'flex', flexDirection: 'column', alignItems: 'center',
+      justifyContent: 'center', gap: 10,
+      background: 'var(--color-background-primary)',
+    }}>
+      {state === 'updating' && (
+        <>
+          <svg width="34" height="34" viewBox="0 0 34 34" fill="none" style={{ animation: 'spin 0.9s linear infinite', marginBottom: 2 }}>
+            <circle cx="17" cy="17" r="13" stroke="var(--color-border-secondary)" strokeWidth="2.5"/>
+            <path d="M17 4 A13 13 0 0 1 30 17" stroke="var(--acc)" strokeWidth="2.5" strokeLinecap="round"/>
+          </svg>
+          <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--color-text-primary)' }}>
+            Updating Beacon…
+          </div>
+          <div style={{ fontSize: 12, color: 'var(--color-text-tertiary)' }}>
+            The app is restarting. Please wait.
+          </div>
+        </>
+      )}
+
+      {state === 'done' && (
+        <>
+          <svg width="34" height="34" viewBox="0 0 34 34" fill="none" style={{ marginBottom: 2 }}>
+            <circle cx="17" cy="17" r="13" stroke="var(--pvw)" strokeWidth="2"/>
+            <path d="M11 17L15.5 22L23 12" stroke="var(--pvw)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--color-text-primary)' }}>
+            Update complete
+          </div>
+          {version && (
+            <div style={{ fontSize: 12, color: 'var(--color-text-tertiary)' }}>
+              Now running version {version}
+            </div>
+          )}
+          <button className="sm-btn" onClick={onDone} style={{ marginTop: 8 }}>
+            Go to Home
+          </button>
+        </>
+      )}
+
+      {state === 'error' && (
+        <>
+          <svg width="34" height="34" viewBox="0 0 34 34" fill="none" style={{ marginBottom: 2 }}>
+            <circle cx="17" cy="17" r="13" stroke="#E24B4A" strokeWidth="2"/>
+            <path d="M12 12L22 22M22 12L12 22" stroke="#E24B4A" strokeWidth="2" strokeLinecap="round"/>
+          </svg>
+          <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--color-text-primary)' }}>
+            Update failed
+          </div>
+          {error && (
+            <div style={{
+              marginTop: 4, padding: '8px 12px', borderRadius: 6, maxWidth: 400,
+              background: 'color-mix(in srgb, #E24B4A 10%, transparent)',
+              border: '0.5px solid color-mix(in srgb, #E24B4A 40%, transparent)',
+              fontSize: 11, color: '#E24B4A', textAlign: 'center', wordBreak: 'break-word',
+            }}>
+              {error}
+            </div>
+          )}
+          <button className="sm-btn" onClick={onError} style={{ marginTop: 8 }}>
+            Back to Settings
+          </button>
+        </>
+      )}
+    </div>
+  )
+}
+
 export default function UpdatePage() {
   const navigate = useNavigate()
 
   const [status,       setStatus]       = useState<UpdateStatus | null>(null)
   const [checking,     setChecking]     = useState(false)
   const [showBranches, setShowBranches] = useState(false)
+  const [overlay,      setOverlay]      = useState<OverlayState | null>(null)
+  const [newVersion,   setNewVersion]   = useState<string | null>(null)
 
   useEffect(() => {
-    BeaconApi.getUpdateStatus().then(setStatus).catch(() => {})
+    const isPending = sessionStorage.getItem('beacon-update-pending') === 'true'
+    if (isPending) {
+      sessionStorage.removeItem('beacon-update-pending')
+      BeaconApi.getUpdateStatus().then(s => {
+        setStatus(s)
+        setNewVersion(s.current)
+        setOverlay(s.updateError ? 'error' : 'done')
+      }).catch(() => setOverlay('error'))
+    } else {
+      BeaconApi.getUpdateStatus().then(setStatus).catch(() => {})
+    }
   }, [])
 
-  // When an update is in progress, poll until the server comes back up,
-  // then hard-reload to pick up the new code.
+  // Poll update status while an update is in progress.
+  // Distinguishes a pre-restart failure (server stays up, updateError set) from
+  // a successful restart (server goes down then comes back with updating=false).
   useEffect(() => {
-    if (!status?.updating) return
+    if (overlay !== 'updating') return
     const id = setInterval(async () => {
       try {
-        // Poll the root path — it goes through Vite middleware,
-        // so a 200 means both Express and Vite are fully ready.
-        const res = await fetch('/', { method: 'HEAD' })
-        if (res.ok) window.location.reload()
+        const s = await BeaconApi.getUpdateStatus()
+        if (!s.updating) {
+          if (s.updateError) {
+            setStatus(s)
+            setOverlay('error')
+            sessionStorage.removeItem('beacon-update-pending')
+          } else {
+            // Server restarted successfully — reload once to pick up the new bundle.
+            window.location.reload()
+          }
+        }
       } catch {
         // server still restarting — keep polling
       }
     }, 2000)
     return () => clearInterval(id)
-  }, [status?.updating])
+  }, [overlay])
 
   const handleCheck = async () => {
     setChecking(true)
@@ -43,19 +142,24 @@ export default function UpdatePage() {
   const handleApply = async (ref: string, type: 'release' | 'branch') => {
     if (!confirm(`Update to ${ref}? The app will restart.`)) return
     try {
+      sessionStorage.setItem('beacon-update-pending', 'true')
       await BeaconApi.applyUpdate(ref, type)
       setStatus(s => s ? { ...s, updating: true } : s)
+      setOverlay('updating')
     } catch {
-      // error will surface in status
+      sessionStorage.removeItem('beacon-update-pending')
     }
   }
 
-  if (status?.updating) {
+  if (overlay) {
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 12, paddingTop: 60 }}>
-        <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--color-text-primary)' }}>Updating...</div>
-        <div style={{ fontSize: 12, color: 'var(--color-text-tertiary)' }}>The app is restarting. This page will be unavailable briefly.</div>
-      </div>
+      <UpdateOverlay
+        state={overlay}
+        version={newVersion}
+        error={status?.updateError ?? null}
+        onDone={() => navigate('/')}
+        onError={() => setOverlay(null)}
+      />
     )
   }
 
