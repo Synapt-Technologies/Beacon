@@ -1,13 +1,15 @@
 
 export enum HardwareVersion {
     UNKNOWN,
+    DOCKER,
     V2,
     V3
 }
 
 
 export const HARDWARE_VERSION_STRING: Record<HardwareVersion, string> = {
-    [HardwareVersion.UNKNOWN]: "Unkown Hardware",
+    [HardwareVersion.UNKNOWN]: "Unknown Hardware",
+    [HardwareVersion.DOCKER]: "Docker Image",
     [HardwareVersion.V2]: "Beacon v2",
     [HardwareVersion.V3]: "Beacon v3",
 }

@@ -61,7 +61,9 @@ export default class SystemInfoUtil {
     }
 
     static getHwModel(): HardwareVersion {
-        try { // TODO double try. Might be needed when checking GPIO
+        try {
+            if (fs.existsSync('/.dockerenv')) return HardwareVersion.DOCKER;
+
             if (!SystemInfoUtil.isPi())
                 return HardwareVersion.UNKNOWN;
 
@@ -69,7 +71,6 @@ export default class SystemInfoUtil {
 
             return HardwareVersion.V2;
         } catch (e) {
-            // if this fails, this is probably not a pi
             return HardwareVersion.UNKNOWN;
         }
     }
