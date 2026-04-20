@@ -12,6 +12,7 @@ import type { OrchestratorConfig } from '../../../src/tally/TallyLifecycle'
 import type { AedesConsumerConfig } from '../../../src/tally/consumer/networkConsumer/AedesNetworkConsumer'
 import { HARDWARE_VERSION_STRING, HardwareVersion } from '../../../src/types/SystemInfo'
 import * as BeaconApi from '../api/BeaconApi'
+import StatusPill from '../components/statusPill/StatusPill'
 
 // ? Enum ↔ string bridge helpers
 
@@ -337,6 +338,7 @@ export default function SettingsPage() {
   const aedesEnabled     = consumers.aedes?.enabled       ?? true
   const gpioAvailable    = consumers.gpio?.available      ?? false
   const aedesAvailable   = consumers.aedes?.available     ?? true
+  const aedesDisableable  = consumers.aedes?.disableable  ?? true
 
   const handleImport = async () => {
     const input = document.createElement('input')
@@ -365,11 +367,12 @@ export default function SettingsPage() {
               Network tally over MQTT{!aedesAvailable ? ' — not available' : ''}
             </div>
           </div>
-          {/* <Toggle
+          <StatusPill ok={aedesEnabled} text="Running" />
+          <Toggle
             checked={aedesEnabled}
             disabled={!aedesAvailable || (aedesEnabled && !aedesDisableable)}
             onChange={v => setConsumerEnabled('aedes', v)}
-          /> */}
+          />
         </div>
 
         <div className="s-row">
@@ -379,6 +382,11 @@ export default function SettingsPage() {
               Raspberry Pi pin outputs{!gpioAvailable ? ' — not available on this hardware' : ''}
             </div>
           </div>
+          <StatusPill 
+            ok={gpioEnabled} 
+            text={gpioAvailable ? (gpioEnabled ? "Running" : "Disabled") : "Not available"} 
+            disabled={!gpioAvailable}
+          />
           <Toggle
             checked={gpioEnabled}
             disabled={!gpioAvailable}

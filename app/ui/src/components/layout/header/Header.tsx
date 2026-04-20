@@ -1,4 +1,4 @@
-import StatusPill from "../../statusPill/StatusPill"
+import GlobalStatusPill from "../../statusPill/GlobalStatusPill"
 
 interface HeaderProps {
     title:       string
@@ -37,7 +37,7 @@ export default function Header({ title, isMobile, onMenuClick }: HeaderProps) {
             <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--color-text-primary)', flex: 1 }}>
                 {title}
             </span>
-            <StatusPill />
+            <GlobalStatusPill />
         </div>
     )
 }
