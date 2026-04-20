@@ -1,4 +1,6 @@
 FROM node:20-slim
+ARG VERSION=dev
+ENV APP_VERSION=$VERSION
 WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends python3 make g++ && rm -rf /var/lib/apt/lists/*
 RUN corepack enable

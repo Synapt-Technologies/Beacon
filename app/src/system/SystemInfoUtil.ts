@@ -74,9 +74,10 @@ export default class SystemInfoUtil {
         }
     }
 
-    static getFirmwareVersion(): string { // TODO add branch info.
+    static getFirmwareVersion(): string {
+        if (process.env.APP_VERSION) return process.env.APP_VERSION;
         try {
-            return execSync('git describe --tags --always', { encoding: 'utf8' }).trim();
+            return execSync('git describe --tags --always', { encoding: 'utf8', stdio: 'pipe' }).trim();
         } catch {
             return pkg.version;
         }
