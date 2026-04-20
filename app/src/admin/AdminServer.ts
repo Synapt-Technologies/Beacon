@@ -47,13 +47,31 @@ export class AdminServer {
     };
     private handlers!: AdminMutationHandlers;
     private updateManager: UpdateManager;
+    private _sseClients: Set<express.Response> = new Set();
 
     constructor(updateManager: UpdateManager) {
         this.updateManager = updateManager;
     }
 
+    private _serializeState() {
+        return {
+            producers: this.state.producers.map(p => ({
+                ...p,
+                info: { ...p.info, sources: Object.fromEntries(p.info?.sources || {}) }
+            })),
+            consumers: this.state.consumers,
+            devices: Object.fromEntries(this.state.devices),
+            orchestratorConfig: this.state.orchestratorConfig,
+            info: this.state.info,
+        };
+    }
+
     public setState(state: AdminState): void {
         this.state = state;
+        if (this._sseClients.size > 0) {
+            const data = `data: ${JSON.stringify(this._serializeState())}\n\n`;
+            for (const res of this._sseClients) res.write(data);
+        }
     }
 
     public setHandlers(handlers: AdminMutationHandlers): void {
@@ -82,12 +100,22 @@ export class AdminServer {
             res.json(this.state.info);
         });
 
+        this.app.get("/api/events", (req, res) => {
+            res.setHeader('Content-Type', 'text/event-stream');
+            res.setHeader('Cache-Control', 'no-cache');
+            res.setHeader('Connection', 'keep-alive');
+            res.flushHeaders();
+            res.write(`data: ${JSON.stringify(this._serializeState())}\n\n`);
+            this._sseClients.add(res);
+            const ping = setInterval(() => res.write(': ping\n\n'), 25_000);
+            req.on('close', () => {
+                clearInterval(ping);
+                this._sseClients.delete(res);
+            });
+        });
+
         this.app.get("/api/producers", (_req, res) => {
-            const parsed = this.state.producers.map(p => ({
-                ...p,
-                info: { ...p.info, sources: Object.fromEntries(p.info?.sources || {}) }
-            }));
-            res.json(parsed);
+            res.json(this._serializeState().producers);
         });
 
         this.app.post("/api/producers", async (req, res) => {
