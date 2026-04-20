@@ -9,7 +9,7 @@ Restart=on-failure
 RestartSec=3
 WorkingDirectory=/opt/Beacon-tally/app
 Environment=NODE_ENV=production
-ExecStart=/opt/Beacon-tally/app/node_modules/.bin/tsx /opt/Beacon-tally/app/supervisor.ts
+ExecStart=/usr/local/bin/node /opt/Beacon-tally/app/dist/supervisor.js
 
 [Install]
 WantedBy=multi-user.target

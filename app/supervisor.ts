@@ -3,7 +3,9 @@ import { spawn, type ChildProcess } from 'child_process';
 // Use the current Node.js executable + tsx's ESM loader so we don't depend
 // on tsx being on PATH (it's a local devDependency).
 const APP_CMD  = process.execPath;
-const APP_ARGS = ['--import', 'tsx/esm', 'app.ts'];
+const APP_ARGS = process.env.NODE_ENV === 'production'
+    ? ['dist/app.js']
+    : ['--import', 'tsx/esm', 'app.ts'];
 
 const FAST_RESTART_WINDOW_MS = 10_000;
 const FAST_RESTART_THRESHOLD = 3;
