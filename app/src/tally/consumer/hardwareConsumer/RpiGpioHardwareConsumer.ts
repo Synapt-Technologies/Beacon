@@ -1,6 +1,6 @@
 import { AbstractConsumer, type ConsumerConfig } from "../AbstractConsumer";
 import { ConnectionType, DeviceAlertState, DeviceTallyState, GlobalDeviceTools, type DeviceAddress, type DeviceAlertTarget, type DeviceId, type TallyDevice } from "../../types/ConsumerStates";
-import { HardwareVersion } from "../../../types/SystemInfo";
+import { HARDWARE_VERSION_STRING, HardwareVersion } from "../../../types/SystemInfo";
 import type { Gpio } from 'pigpio';
 
 // TODO: check if this is the right GPIO library. Was rpi-gpio before, but it's not updated.
@@ -71,8 +71,7 @@ const ALERT_PATTERNS: Record<DeviceAlertState, AlertPatternConfig | null> = {
 };
 
 
-const DEFAULT_PINOUT: Record<HardwareVersion, Array<GpioTallyPins>> = {
-    [HardwareVersion.UNKNOWN]: [],
+const DEFAULT_PINOUT: Record<Exclude<HardwareVersion, HardwareVersion.UNKNOWN | HardwareVersion.DOCKER>, Array<GpioTallyPins>> = {
     [HardwareVersion.V2]: [           // Board pin numbers:
         { program:  2, preview: 22 }, // 3,  15
         { program:  3, preview: 23 }, // 5,  16
@@ -124,6 +123,10 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
             return this.logger.fatal(`Failed to initialize GPIO. UNKOWN hardware!`);
         
         
+        if (this.info.version !== HardwareVersion.V2) {
+            this.logger.fatal(`Unsupported hardware version for GPIO Consumer: ${HARDWARE_VERSION_STRING[this.info.version]}. Only Beacon v2 is supported at this time.`);
+        }
+
         const pinMap = DEFAULT_PINOUT[this.info.version];
         
         // TODO add pinmap check!
