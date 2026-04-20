@@ -40,6 +40,7 @@ mmdebstrap:
         git clone --depth 1 --branch dev https://github.com/Synapt-Technologies/Beacon.git /opt/Beacon-tally
         cd /opt/Beacon-tally/app
         yarn install --immutable
+        npm rebuild pigpio
         yarn build
       "
 
