@@ -47,5 +47,10 @@
     },
     "optionalDependencies": {
         "pigpio": "^3.3.1"
+    },
+    "dependenciesMeta": {
+        "pigpio": {
+            "built": false
+        }
     }
 }

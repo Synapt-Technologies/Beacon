@@ -1198,6 +1198,7 @@ __metadata:
     ws: "npm:^8.18.3"
   dependenciesMeta:
     pigpio:
+      built: false
       optional: true
   languageName: unknown
   linkType: soft

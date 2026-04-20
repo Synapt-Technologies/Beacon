@@ -1,9 +1,9 @@
-FROM node:20-alpine
+FROM node:20-slim
 WORKDIR /app
-RUN corepack enable && apk add --no-cache python3 make g++
+RUN apt-get update && apt-get install -y --no-install-recommends python3 make g++ && rm -rf /var/lib/apt/lists/*
+RUN corepack enable
 COPY .yarnrc.yml package.json yarn.lock ./
-RUN COREPACK_YES=1 YARN_ENABLE_SCRIPTS=false yarn install --immutable
-RUN yarn rebuild better-sqlite3
+RUN COREPACK_YES=1 yarn install --immutable
 COPY . .
 RUN yarn build
 ENV NODE_ENV=production
