@@ -131,6 +131,11 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
         this.producers.set(producer.getId(), producer);
         this.emit('producer_added', producer.getId(), producer.getInfo());
 
+        this.disconnectedProducers.add(producer.getId());
+        for (const consumer of this.consumers.values()) {
+            consumer.setBaseState(this.config.state_on_disconnect);
+        }
+
         producer.on('tally_update', (newState: TallyState) => {
             this.producerTallyStates.set(producer.getId(), newState);
             this._parseGlobalTally();
