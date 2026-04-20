@@ -166,6 +166,7 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
         if (!producer) {
             this.logger.warn(`Attempted to remove unknown producer:`, id);
         } else {
+            producer.markDestroying();
             await producer.destroy();
             this.producers.delete(id);
         }

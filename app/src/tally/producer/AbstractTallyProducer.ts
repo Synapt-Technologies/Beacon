@@ -109,7 +109,14 @@ export abstract class AbstractTallyProducer<T extends TallyProducerEvents & Reco
         return this.info;
     }
 
+    private _destroying = false;
+
+    markDestroying(): void {
+        this._destroying = true;
+    }
+
     protected emitInfoUpdate(): void {
+        if (this._destroying) return;
         this.store.saveInfo(this.info);
         (this as EventEmitter<TallyProducerEvents>).emit('info_update', this.info);
         this.logger.debug(`Persisted info to store.`);
