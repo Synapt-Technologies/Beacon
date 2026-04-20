@@ -86,10 +86,16 @@ function NetworkRow({ label, sub, value, defaultVal, readOnly, onChange }: {
       <input
         className="s-input"
         type="number"
+        min={1}
+        max={65535}
+        step={1}
         value={value ?? defaultVal}
         readOnly={readOnly}
         disabled={readOnly}
-        onChange={readOnly ? undefined : e => onChange?.(parseInt(e.target.value) || defaultVal)}
+        onChange={readOnly ? undefined : e => {
+          const v = parseInt(e.target.value)
+          if (!isNaN(v) && v >= 1 && v <= 65535) onChange?.(v)
+        }}
         style={readOnly ? { color: 'var(--color-text-tertiary)' } : undefined}
       />
     </div>

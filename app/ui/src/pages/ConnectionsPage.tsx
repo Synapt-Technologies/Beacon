@@ -1,5 +1,8 @@
 import { useState } from 'react'
+import toast from 'react-hot-toast'
 import { useBeacon } from '../context/BeaconContext'
+
+const IPV4_RE = /^((25[0-5]|2[0-4]\d|1\d{2}|[1-9]\d|\d)\.){3}(25[0-5]|2[0-4]\d|1\d{2}|[1-9]\d|\d)$/
 import { AddConnectionModal } from '../components/AddConnectionModal'
 import type { ProducerBundle, SourceInfo } from '../../../src/tally/types/ProducerStates'
 import type { ProducerConfig } from '../../../src/tally/producer/AbstractTallyProducer'
@@ -77,13 +80,22 @@ function ProducerCard({ producer: prod, editing, onEdit, onRemove }: ProducerCar
   const typeLabel  = PRODUCER_TYPE_MAP[prod.type]?.shortLabel ?? prod.type
 
   const handleSave = async () => {
+    if (cfg.host !== undefined && host && !IPV4_RE.test(host)) {
+      toast.error(`Invalid IPv4 address: ${host}`)
+      return
+    }
+    const portNum = parseInt(port)
+    if (cfg.port !== undefined && port && (isNaN(portNum) || portNum < 1 || portNum > 65535)) {
+      toast.error(`Invalid port: ${port}. Must be 1–65535.`)
+      return
+    }
     setSaving(true)
     try {
       const config: ProducerConfig & Record<string, unknown> = {
         id:   prod.config.id,
         name: name || undefined,
         ...(host ? { host } : {}),
-        ...(port ? { port: parseInt(port) } : {}),
+        ...(port ? { port: portNum } : {}),
       }
       await updateProducer(prod.config.id, config)
       onEdit()
@@ -141,7 +153,7 @@ function ProducerCard({ producer: prod, editing, onEdit, onRemove }: ProducerCar
             </Field>
             {cfg.host !== undefined && (
               <Field label="Host / IP">
-                <input className="pf-input" value={host} onChange={e => setHost(e.target.value)} placeholder="192.168.1.100" />
+                <input className="pf-input" value={host} onChange={e => setHost(e.target.value)} placeholder="192.168.1.100" pattern={IPV4_RE.source} />
               </Field>
             )}
             {cfg.port !== undefined && (
