@@ -41,6 +41,7 @@ interface BeaconState {
     addProducer: (type: string, config: ProducerConfig & Record<string, unknown>) => Promise<void>
     removeProducer: (id: ProducerId) => Promise<void>
     updateProducer: (id: ProducerId, config: ProducerConfig & Record<string, unknown>) => Promise<void>
+    setProducerEnabled: (id: ProducerId, enabled: boolean) => Promise<void>
 
     updateOrchestratorConfig: (config: Partial<OrchestratorConfig>) => Promise<void>
 
@@ -135,6 +136,14 @@ export function BeaconProvider({ children }: { children: ReactNode }) {
           { loading: 'Removing connection…', success: 'Connection removed', error: (e: unknown) => e instanceof Error ? e.message : 'Failed to remove connection' }
         )
       } catch (e) { await fetchAll(); throw e }
+    }
+    const setProducerEnabled = async (id: ProducerId, enabled: boolean) => {
+      await toast.promise(
+        api.setProducerEnabled(id, enabled).then(() => setProducers(prev => prev.map(p =>
+          p.config.id === id ? { ...p, enabled } : p
+        ))),
+        { loading: enabled ? 'Enabling…' : 'Disabling…', success: enabled ? 'Producer enabled' : 'Producer disabled', error: (e: unknown) => e instanceof Error ? e.message : 'Failed to update producer' }
+      )
     }
     const updateProducer = async (id: ProducerId, config: ProducerConfig & Record<string, unknown>) => {
       const prod = producers.find(p => p.config.id === id)
@@ -255,7 +264,7 @@ export function BeaconProvider({ children }: { children: ReactNode }) {
             system, uiConfig,
             loading, error,
             refresh: fetchAll,
-            addProducer, removeProducer, updateProducer,
+            addProducer, removeProducer, updateProducer, setProducerEnabled,
             updateOrchestratorConfig,
             setConsumerEnabled, updateConsumer,
             patchDevice, renameDevice, removeDevice, sendAlert,

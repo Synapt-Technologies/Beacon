@@ -254,6 +254,20 @@ export class TallyLifecycle {
         await this.orchestrator.removeProducer(id);
     }
 
+    public async setProducerEnabled(id: ProducerId, enabled: boolean): Promise<void> {
+        const record = this.db.getProducers().find(p => p.config.id === id);
+        if (!record) {
+            this.logger.warn(`setProducerEnabled: producer not found:`, id);
+            return;
+        }
+        this.db.saveProducer({ type: record.type, enabled, config: record.config });
+        if (enabled && !this.orchestrator.hasProducer(id)) {
+            await this._startProducer(record.type, record.config);
+        } else if (!enabled && this.orchestrator.hasProducer(id)) {
+            await this.orchestrator.removeProducer(id);
+        }
+    }
+
     
     public getProducers(): ProducerBundle[] { // TODO: Check if a producer should have a getBundle?
         return this.db.getProducers().map(({ type, enabled, config }) => {

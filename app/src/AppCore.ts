@@ -81,6 +81,10 @@ export class AppCore {
                 await this.lifecycle.removeProducer(id);
                 syncState();
             },
+            setProducerEnabled: async (id, enabled) => {
+                await this.lifecycle.setProducerEnabled(id, enabled);
+                syncState();
+            },
 
             // ? Consumers
 

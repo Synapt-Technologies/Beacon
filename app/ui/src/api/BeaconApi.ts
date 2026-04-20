@@ -43,6 +43,14 @@ export function removeProducer(id: ProducerId): Promise<void> {
     return request(`/producers/${encodeURIComponent(id)}`, { method: 'DELETE' })
 }
 
+export function setProducerEnabled(id: ProducerId, enabled: boolean): Promise<void> {
+    return request(`/producers/${encodeURIComponent(id)}/enabled`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ enabled }),
+    })
+}
+
 // ? Consumers
 
 export function getConsumers(): Promise<Partial<ConsumerExportMap>> {

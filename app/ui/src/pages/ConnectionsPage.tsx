@@ -60,7 +60,7 @@ interface ProducerCardProps {
 }
 
 function ProducerCard({ producer: prod, editing, onEdit, onRemove }: ProducerCardProps) {
-  const { updateProducer } = useBeacon()
+  const { updateProducer, setProducerEnabled } = useBeacon()
 
   // Cast config to access type-specific fields (host/port set by ATEM producer)
   const cfg = prod.config as unknown as Record<string, unknown>
@@ -95,19 +95,35 @@ function ProducerCard({ producer: prod, editing, onEdit, onRemove }: ProducerCar
       background: 'var(--color-background-primary)',
       border: '0.5px solid var(--color-border-tertiary)',
       borderRadius: 'var(--border-radius-lg)', marginBottom: 10, overflow: 'hidden',
+      opacity: prod.enabled ? 1 : 0.6,
     }}>
       {/* Header */}
       <div style={{
         display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px',
         borderBottom: editing ? '0.5px solid var(--color-border-tertiary)' : 'none',
       }}>
-        <div style={{ width: 8, height: 8, borderRadius: '50%', flexShrink: 0, background: prod.info.update_moment ? '#1D9E75' : 'var(--color-border-secondary)' }} />
+        <div style={{ width: 8, height: 8, borderRadius: '50%', flexShrink: 0, background: prod.enabled && prod.info.update_moment ? '#1D9E75' : 'var(--color-border-secondary)' }} />
         <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-primary)', flex: 1 }}>
           {prod.config.name ?? prod.config.id}
         </div>
         <span style={{ fontSize: 11, color: 'var(--color-text-tertiary)' }}>
           {[typeLabel, model, `${sources.length} source${sources.length !== 1 ? 's' : ''}`].filter(Boolean).join(' · ')}
         </span>
+        <div
+          onClick={() => setProducerEnabled(prod.config.id, !prod.enabled)}
+          title={prod.enabled ? 'Disable' : 'Enable'}
+          style={{
+            width: 28, height: 16, borderRadius: 99, flexShrink: 0, cursor: 'pointer',
+            background: prod.enabled ? 'var(--acc)' : 'var(--color-border-secondary)',
+            position: 'relative', transition: 'background 0.15s',
+          }}
+        >
+          <div style={{
+            position: 'absolute', top: 2, left: prod.enabled ? 12 : 2,
+            width: 12, height: 12, borderRadius: '50%', background: '#fff',
+            transition: 'left 0.15s',
+          }} />
+        </div>
         <button className="sm-btn" onClick={onEdit}>
           {editing ? 'Close' : 'Edit'}
         </button>

@@ -18,9 +18,10 @@ export interface AdminState {
 }
 
 export interface AdminMutationHandlers {
-    addProducer:    (type: string, config: ProducerConfig) => Promise<void>
-    updateProducer: (id: ProducerId, type: string, config: ProducerConfig) => Promise<void>
-    removeProducer: (id: ProducerId) => Promise<void>
+    addProducer:        (type: string, config: ProducerConfig) => Promise<void>
+    updateProducer:     (id: ProducerId, type: string, config: ProducerConfig) => Promise<void>
+    removeProducer:     (id: ProducerId) => Promise<void>
+    setProducerEnabled: (id: ProducerId, enabled: boolean) => Promise<void>
 
     updateConsumer: (update: ConsumerUpdate) => Promise<void>
 
@@ -118,6 +119,23 @@ export class AdminServer {
                 this.logger.info(`Producer updated:`, id);
             } catch (e) {
                 this.logger.error("Failed to update producer:", id, e);
+                res.status(500).json({ error: e instanceof Error ? e.message : "Failed to update producer" });
+            }
+        });
+
+        this.app.patch("/api/producers/:id/enabled", async (req, res) => {
+            const id = req.params.id;
+            const { enabled } = req.body;
+            if (typeof enabled !== 'boolean') {
+                res.status(400).json({ error: "enabled must be a boolean" });
+                return;
+            }
+            try {
+                await this.handlers.setProducerEnabled(id, enabled);
+                res.status(204).send();
+                this.logger.info(`Producer ${enabled ? 'enabled' : 'disabled'}:`, id);
+            } catch (e) {
+                this.logger.error("Failed to set producer enabled:", id, e);
                 res.status(500).json({ error: e instanceof Error ? e.message : "Failed to update producer" });
             }
         });
