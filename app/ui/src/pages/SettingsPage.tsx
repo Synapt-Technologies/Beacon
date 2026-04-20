@@ -506,7 +506,12 @@ export default function SettingsPage() {
               {system.firmware ?? 'Unknown'}
             </div>
           </div>
-          <button className="sm-btn" onClick={() => navigate('/settings/update')} style={{ position: 'relative' }}>
+          {system.hardware !== HardwareVersion.DOCKER ?
+          <button 
+            className="sm-btn" 
+            onClick={() => navigate('/settings/update')} 
+            style={{ position: 'relative' }}
+          >
             Update
             {hasUpdate && (
               <span style={{
@@ -517,6 +522,11 @@ export default function SettingsPage() {
               }} />
             )}
           </button>
+          :
+          <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 99, background: 'var(--color-background-secondary)', color: 'var(--color-text-secondary)' }}>
+            Docker image — Rebuild the container to update
+          </span>
+          }
         </div>
         <div className="s-row">
           <div style={{ flex: 1 }}>
