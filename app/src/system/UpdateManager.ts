@@ -167,10 +167,11 @@ export class UpdateManager {
 
         try {
             await this._exec('git fetch origin');
-            await this._exec(`git checkout ${ref}`);
 
             if (type === 'branch') {
-                await this._exec(`git pull origin ${ref}`);
+                await this._exec(`git checkout -B ${ref} origin/${ref}`);
+            } else {
+                await this._exec(`git checkout ${ref}`);
             }
 
             await this._exec('yarn install');
