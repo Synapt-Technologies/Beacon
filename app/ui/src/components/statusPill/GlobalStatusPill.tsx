@@ -1,5 +1,6 @@
 import { useBeacon } from '../../context/BeaconContext';
 import StatusPill, { type StatusPillRow } from './StatusPill';
+import { CONSUMER_META } from '../../config/consumers';
 
 export default function GlobalStatusPill() {
     const { producers, consumers } = useBeacon();
@@ -12,11 +13,14 @@ export default function GlobalStatusPill() {
             })),
     ];
 
-    if (consumers.gpio?.enabled) {
-        rows.push({ label: 'GPIO hardware — active', ok: true });
-    }
-    if (consumers.aedes?.enabled) {
-        rows.push({ label: 'MQTT broker — running', ok: true });
+    for (const [id, consumer] of Object.entries(consumers)) {
+        if (!consumer?.enabled) continue;
+        const meta = CONSUMER_META[id as keyof typeof CONSUMER_META];
+        const status = consumer.info?.status ?? 'Offline';
+        rows.push({
+            label: `${meta?.label ?? id} — ${status}`,
+            ok: status === 'Online',
+        });
     }
 
     const allGood = rows.every(row => row.ok);

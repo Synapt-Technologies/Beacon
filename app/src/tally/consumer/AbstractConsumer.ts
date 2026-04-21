@@ -63,6 +63,10 @@ export abstract class AbstractConsumer<T extends ConsumerEvents & Record<string,
         return this.config;
     }
 
+    getInfo(): ConsumerInfo {
+        return this.info;
+    }
+
     constructor(config: ConsumerConfig) {
         super();
 

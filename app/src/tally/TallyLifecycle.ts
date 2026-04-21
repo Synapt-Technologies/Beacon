@@ -7,7 +7,7 @@ import type { ProducerBundle, ProducerId } from "./types/ProducerStates";
 import { Logger } from "../logging/Logger";
 import type { AedesConsumerConfig } from "./consumer/networkConsumer/AedesNetworkConsumer";
 import type { GpioConsumerConfig } from "./consumer/hardwareConsumer/RpiGpioHardwareConsumer";
-import type { AbstractConsumer, ConsumerConfig } from "./consumer/AbstractConsumer";
+import type { AbstractConsumer, ConsumerConfig, ConsumerInfo } from "./consumer/AbstractConsumer";
 import type { ConsumerId, DeviceAddress, DeviceAlertState, DeviceAlertTarget, DeviceName, TallyDevice } from "./types/ConsumerStates";
 import type { GlobalTallySource } from "./types/ProducerStates";
 import { HardwareVersion, type SystemInfo } from "../types/SystemInfo";
@@ -44,6 +44,7 @@ type ConsumerRuntime = {
 type ConsumerExport = {
     available: boolean;
     disableable: boolean;
+    info?: ConsumerInfo;
 };
 
 type ConsumerEntryMap    = ConsumerMap<ConsumerRuntime>;
@@ -171,7 +172,8 @@ export class TallyLifecycle {
         const consumers = Object.fromEntries(
             Object.entries(this._config.consumers).map(([id, entry]) => {
                 const { factory: _, isAvailable, isDisableable, ...rest } = entry;
-                return [id, { ...rest, available: isAvailable(), disableable: isDisableable() }];
+                const info = this.orchestrator?.getConsumer(id)?.getInfo();
+                return [id, { ...rest, available: isAvailable(), disableable: isDisableable(), info }];
             })
         ) as ConsumerExportMap;
 
