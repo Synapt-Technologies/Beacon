@@ -166,11 +166,11 @@ export class UpdateManager {
         this.logger.info(`Applying update: ${type} "${ref}"...`);
 
         try {
-            await this._exec('git fetch origin');
-
             if (type === 'branch') {
-                await this._exec(`git checkout -B ${ref} origin/${ref}`);
+                await this._exec(`git fetch origin ${ref}`);
+                await this._exec(`git checkout -B ${ref} FETCH_HEAD`);
             } else {
+                await this._exec('git fetch origin --tags');
                 await this._exec(`git checkout ${ref}`);
             }
 
