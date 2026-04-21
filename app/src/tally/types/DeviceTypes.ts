@@ -70,13 +70,39 @@ export interface TallyDevice {
     last_update?: number;
 }
 
-export abstract class GlobalDeviceTools { // Todo: Maybe a device DTO?
-    static create (consumer: ConsumerId, device: DeviceId): DeviceKey { 
-        return `${consumer}:${device}`;
-    } 
+export class DeviceAddressDto implements DeviceAddress {
+    consumer: ConsumerId;
+    device: DeviceId;
 
-    static parse (key: DeviceKey): DeviceAddress {
-        const [consumer, ...deviceParts] = key.split(":");
-        return { consumer, device: deviceParts.join(":") };
+    constructor(consumer: ConsumerId, device: DeviceId) {
+        this.consumer = consumer;
+        this.device = device;
     }
-};
+
+    static from(address: DeviceAddress | DeviceKey): DeviceAddressDto {
+        if (typeof address === "string") {
+            return this.fromKey(address);
+        }
+        return new DeviceAddressDto(address.consumer, address.device);
+    }
+
+    static fromKey(key: DeviceKey): DeviceAddressDto {
+        const [consumer, ...deviceParts] = key.split(":");
+        return new DeviceAddressDto(consumer, deviceParts.join(":"));
+    }
+
+    toKey(): DeviceKey {
+        return `${this.consumer}:${this.device}` as DeviceKey;
+    }
+
+    toString(): string {
+        return this.toKey();
+    }
+
+    toJSON(): DeviceAddress {
+        return {
+            consumer: this.consumer,
+            device: this.device,
+        };
+    }
+}
