@@ -16,5 +16,6 @@
     "noUncheckedSideEffectImports": true,
     "isolatedModules": true,
     "verbatimModuleSyntax": true,
-  }
+  },
+  "include": ["src/**/*"]
 }
