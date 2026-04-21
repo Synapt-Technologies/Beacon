@@ -1,6 +1,11 @@
-import { AbstractConsumer, type ConsumerConfig, type ConsumerEvents } from "../AbstractConsumer";
+import { AbstractConsumer, ConsumerStatus, type ConsumerConfig, type ConsumerEvents, type ConsumerInfo } from "../AbstractConsumer";
 import type { TallyState } from "../../types/ProducerStates";
 
+
+export interface NetworkConsumerInfo extends ConsumerInfo {
+    port: number;
+    client_count: number;
+}
 
 export interface NetworkConsumerConfig extends ConsumerConfig {
     port?: number;
@@ -18,6 +23,12 @@ export type NetworkConsumerEvents = ConsumerEvents & {
 export abstract class AbstractNetworkConsumer<T extends NetworkConsumerEvents = NetworkConsumerEvents> extends AbstractConsumer<T> {
     
     protected declare config: Required<NetworkConsumerConfig>; // Declare to indicate it overwrites the parent's type.
+    protected info: NetworkConsumerInfo = { 
+        status: ConsumerStatus.OFFLINE, 
+        device_count: 0, 
+        port: -1, 
+        client_count: 0 
+    };
     
     public static readonly DefaultConfig: Required<NetworkConsumerConfig> = {
         ...AbstractConsumer.DefaultConfig,
@@ -56,18 +67,24 @@ export abstract class AbstractNetworkConsumer<T extends NetworkConsumerEvents = 
 
     init(): void | Promise<void> {
 
+        this.info.port = this.config.port;
+
         if (this.config.keep_alive) { // TODO add keepalive with server info instead
             this.timer = setInterval(() => {
                 this.broadcastKeepAlive();
             }, this.config.keep_alive_ms);
             this.logger.debug("Started keep alive at ms:", this.config.keep_alive_ms);
         }
+
+        this.info.status = ConsumerStatus.ONLINE;
     }
 
     destroy(): void | Promise<void> {
         this.logger.debug('Destroying...');
 
-        if (this.timer) 
+        if (this.timer)
             clearInterval(this.timer);
+
+        this.info.status = ConsumerStatus.OFFLINE;
     }
 }

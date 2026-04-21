@@ -1,4 +1,5 @@
-import { AbstractNetworkConsumer, type NetworkConsumerConfig } from "./AbstractNetworkConsumer";
+import { AbstractNetworkConsumer, type NetworkConsumerConfig, type NetworkConsumerInfo } from "./AbstractNetworkConsumer";
+import { ConsumerStatus } from "../AbstractConsumer";
 import { type IGlobalBroadcastConsumer } from "../IGlobalBroadcastConsumer";
 
 import { Aedes, type Client, type Subscription } from "aedes";
@@ -6,6 +7,12 @@ import { createServer, Server } from "node:net";
 import { createServer as createHttpServer, type Server as HttpServer } from "node:http";
 import { WebSocketServer, createWebSocketStream } from "ws";
 import { type DeviceAddress, DeviceAlertState, DeviceAlertTarget, DeviceTallyState, type TallyDevice } from "../../types/ConsumerStates";
+
+export interface AedesConsumerInfo extends NetworkConsumerInfo {
+    tcp_active: boolean;
+    ws_active: boolean;
+    ws_port: number;
+}
 
 export interface AedesConsumerConfig extends NetworkConsumerConfig {
     serve_tcp?: boolean;
@@ -15,8 +22,16 @@ export interface AedesConsumerConfig extends NetworkConsumerConfig {
 
 
 export class AedesNetworkConsumer extends AbstractNetworkConsumer implements IGlobalBroadcastConsumer {
-    
+
     protected declare config: Required<AedesConsumerConfig>; // Declare to indicate it overwrites the parent's type.
+    protected info: AedesConsumerInfo = { 
+        status: ConsumerStatus.OFFLINE, 
+        device_count: 0, port: -1, 
+        client_count: 0, 
+        tcp_active: false, 
+        ws_active: false, 
+        ws_port: -1 
+    };
     
     public static readonly DefaultConfig: Required<AedesConsumerConfig> = {
         ...AbstractNetworkConsumer.DefaultConfig,
@@ -52,6 +67,7 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer implements IGl
         try {
             this.aedes = await Aedes.createBroker();
         } catch (err) {
+            this.info.status = ConsumerStatus.ERROR;
             return this.logger.fatal('Error starting Aedes broker:', err);
         }
 
@@ -61,6 +77,7 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer implements IGl
 
                 await new Promise<void>((resolve, reject) => {
                     this.server.listen(this.config.port, () => {
+                        this.info.tcp_active = true;
                         this.logger.info('Started and listening on port ', this.config.port);
                         resolve();
                     });
@@ -71,11 +88,13 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer implements IGl
                     });
                 });
             } catch (err) {
+                this.info.status = ConsumerStatus.ERROR;
                 this.logger.error('Error starting TCP server:', err);
             }
         }
 
         if (this.config.serve_ws) {
+            this.info.ws_port = this.config.ws_port;
             try {
 
                 this.wsHttpServer = createHttpServer();
@@ -86,6 +105,7 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer implements IGl
                 });
                 await new Promise<void>((resolve, reject) => {
                     this.wsHttpServer!.listen(this.config.ws_port, () => {
+                        this.info.ws_active = true;
                         this.logger.info('WebSocket MQTT listening on port', this.config.ws_port);
                         resolve();
                     });
@@ -97,13 +117,14 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer implements IGl
 
             }
             catch (err) {
+                this.info.status = ConsumerStatus.ERROR;
                 this.logger.error('Error starting WebSocket server:', err);
             }
         }
 
         this.aedes.on('subscribe', (subscriptions: Subscription[], client: Client) => {
             this.logger.debug('Subscription:', subscriptions);
-            
+
             // if (subscriptions.some(sub => sub.topic == 'tally' || sub.topic.startsWith('tally/') ))
             //     this.emit('connection'); // TODO: Device Discovery
         });
@@ -111,12 +132,14 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer implements IGl
         this.aedes.on('publish',  (packet, client) => {if (client) {
             this.logger.debug('Message: MQTT Client', (client ? client.id : 'UNKNOWN ID'), 'has published message on', packet.topic);
         }});
-        
+
         this.aedes.on('clientReady', (client: Client) => {
+            this.info.client_count++;
             this.logger.info(`MQTT client ready: ${client?.id ?? 'unknown'}`);
         });
 
         this.aedes.on('clientDisconnect', (client: Client) => {
+            this.info.client_count = Math.max(0, this.info.client_count - 1);
             this.logger.info(`MQTT client disconnected: ${client?.id ?? 'unknown'}`);
         });
 
@@ -132,7 +155,7 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer implements IGl
             this.logger.warn(`MQTT keepalive timeout: ${client?.id ?? 'unknown'}`);
         });
 
-        super.init();
+        super.init(); // sets status ONLINE and starts keep-alive
 
 
         // const testTallyDevice1: TallyDevice = {
@@ -155,7 +178,7 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer implements IGl
     }
 
     async destroy(): Promise<void> {
-        super.destroy();
+        super.destroy(); // sets status OFFLINE and stops keep-alive
 
         try {
             // Close aedes first — this sends DISCONNECT to all MQTT clients so
@@ -177,6 +200,10 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer implements IGl
         } catch (err) {
             this.logger.error('Error during shutdown:', err);
         }
+
+        this.info.tcp_active = false;
+        this.info.ws_active = false;
+        this.info.client_count = 0;
     }
 
     public publishDeviceTally(device: TallyDevice): void {

@@ -6,6 +6,18 @@ import { ConsumerStore } from "../../database/ConsumerStore";
 import type { SystemInfo } from "../../types/SystemInfo";
 
 
+export enum ConsumerStatus {
+    DISABLED = "Disabled",
+    OFFLINE = "Offline",
+    ONLINE = "Online",
+    ERROR = "Error"
+}
+
+export interface ConsumerInfo {
+    status: ConsumerStatus;
+    device_count: number;
+}
+
 export interface ConsumerConfig {
     id?: ConsumerId;
     name?: string;
@@ -40,6 +52,11 @@ export abstract class AbstractConsumer<T extends ConsumerEvents & Record<string,
         }
     };
 
+    protected info: ConsumerInfo = { 
+        status: ConsumerStatus.OFFLINE, 
+        device_count: 0 
+    };
+
     protected abstract getDefaultConfig(): Required<ConsumerConfig>;
 
     getConfig(): ConsumerConfig {
@@ -58,6 +75,7 @@ export abstract class AbstractConsumer<T extends ConsumerEvents & Record<string,
         const storedDevices = this.store.loadDevices();
         if (storedDevices.size > 0) {
             this.devices = storedDevices;
+            this.info.device_count = storedDevices.size;
             this.logger.debug(`Loaded ${storedDevices.size} stored device(s).`);
         }
 
@@ -110,6 +128,7 @@ export abstract class AbstractConsumer<T extends ConsumerEvents & Record<string,
         const key = this.getDeviceKey(device.id);
 
         this.devices.set(key, device);
+        this.info.device_count = this.devices.size;
         this.store.saveDevice(device);
         this.setTallyDevice(device);
     }
@@ -151,6 +170,7 @@ export abstract class AbstractConsumer<T extends ConsumerEvents & Record<string,
         }
 
         this.devices.delete(key);
+        this.info.device_count = this.devices.size;
         this.store.deleteDevice(address);
         (this as EventEmitter<ConsumerEvents>).emit('device_removed', address);
         this.logger.debug(`Device ${key} deleted.`);

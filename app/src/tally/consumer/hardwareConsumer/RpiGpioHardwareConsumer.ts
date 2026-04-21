@@ -1,4 +1,4 @@
-import { AbstractConsumer, type ConsumerConfig } from "../AbstractConsumer";
+import { AbstractConsumer, ConsumerStatus, type ConsumerConfig, type ConsumerInfo } from "../AbstractConsumer";
 import { ConnectionType, DeviceAlertState, DeviceTallyState, GlobalDeviceTools, type DeviceAddress, type DeviceAlertTarget, type DeviceId, type TallyDevice } from "../../types/ConsumerStates";
 import { HARDWARE_VERSION_STRING, HardwareVersion } from "../../../types/SystemInfo";
 import type { Gpio } from 'pigpio';
@@ -10,8 +10,8 @@ export interface GpioConsumerConfig extends ConsumerConfig {
     // TODO move hw discovery to another class.
 }
 
-export interface GpioConsumerInfo {
-    version: HardwareVersion
+export interface GpioConsumerInfo extends ConsumerInfo {
+    version: HardwareVersion;
 }
 
 export interface GpioTallyPins {
@@ -94,7 +94,9 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
     
     protected readonly conType = "GPIO";
     
-    protected info: GpioConsumerInfo = { // TODO add to abstract?
+    protected info: GpioConsumerInfo = {
+        status: ConsumerStatus.OFFLINE,
+        device_count: 0,
         version: HardwareVersion.UNKNOWN,
     }
     
@@ -119,8 +121,10 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
     async init(): Promise<void> {
         this.info.version = this.getHardwareVersion();
         
-        if (this.info.version == HardwareVersion.UNKNOWN)
+        if (this.info.version == HardwareVersion.UNKNOWN) {
+            this.info.status = ConsumerStatus.ERROR;
             return this.logger.fatal(`Failed to initialize GPIO. UNKOWN hardware!`);
+        }
         
         
         if (this.info.version !== HardwareVersion.V2) {
@@ -171,10 +175,12 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
             }
             
             //TODO: Delete other devices?
-            
+
+            this.info.status = ConsumerStatus.ONLINE;
             this.logger.info('Initialised GPIO running on version:', this.info.version);
-            
+
         } catch (e) {
+            this.info.status = ConsumerStatus.ERROR;
             this.logger.error("Failed initialising GPIO. Error:", e);
             // this.info.status = HardwareStatus.ERROR; // TODO
         }
@@ -195,6 +201,7 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
             
             if (pigpio.default && pigpio.default.terminate) {
                 pigpio.default.terminate();
+                this.info.status = ConsumerStatus.OFFLINE;
                 this.logger.info("GPIO Consumer destroyed and pins reset.");
             }
             else {
