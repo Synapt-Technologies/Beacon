@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react'
-import type { ProducerBundle, GlobalTallySource, SourceInfo } from '../../../src/tally/types/ProducerStates'
+import type { ProducerBundle } from '../../../src/tally/types/ProducerTypes'
+import type { GlobalSource, SourceInfo } from '../../../src/tally/types/SourceTypes'
 
 interface PatchModalProps {
   open:         boolean
   deviceName:   string
   consumerName: string
-  currentPatch: GlobalTallySource[]
+  currentPatch: GlobalSource[]
   producers:    ProducerBundle[]
-  onApply:      (patch: GlobalTallySource[]) => void
+  onApply:      (patch: GlobalSource[]) => void
   onClose:      () => void
 }
 
@@ -35,7 +36,7 @@ export function PatchModal({
   }
 
   const handleApply = () => {
-    const patch: GlobalTallySource[] = [...selected].map(k => {
+    const patch: GlobalSource[] = [...selected].map(k => {
       const idx = k.indexOf(':')
       return { producer: k.slice(0, idx), source: k.slice(idx + 1) }
     })
@@ -89,8 +90,8 @@ export function PatchModal({
             const allSources = Object.values(prod.info.sources as unknown as Record<string, SourceInfo>)
             const sources = allSources.filter(s =>
               !q ||
-              s.short.toLowerCase().includes(q) ||
-              s.long.toLowerCase().includes(q)
+              s.name.short?.toLowerCase().includes(q) ||
+              s.name.long.toLowerCase().includes(q)
             )
             if (!sources.length) return null
             return (
@@ -124,10 +125,10 @@ export function PatchModal({
                         style={{ accentColor: 'var(--acc)', cursor: 'pointer', width: 15, height: 15, flexShrink: 0 }}
                       />
                       <span style={{ width: 38, fontSize: 11, fontWeight: 500, color: 'var(--color-text-secondary)', flexShrink: 0 }}>
-                        {src.short}
+                        {src.name.short}
                       </span>
                       <span style={{ fontSize: 13, color: 'var(--color-text-primary)' }}>
-                        {src.long}
+                        {src.name.long}
                       </span>
                     </div>
                   )

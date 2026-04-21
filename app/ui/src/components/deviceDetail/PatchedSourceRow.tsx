@@ -1,4 +1,5 @@
-import type { GlobalTallySource, ProducerBundle, SourceInfo } from '../../../../src/tally/types/ProducerStates'
+import type { ProducerBundle } from '../../../../src/tally/types/ProducerTypes'
+import type { GlobalSource, SourceInfo } from '../../../../src/tally/types/SourceTypes'
 
 type TallyState = 'pgm' | 'pvw' | 'none'
 
@@ -9,7 +10,7 @@ const TALLY_COLOR: Record<TallyState, string> = {
 }
 
 interface PatchedSourceRowProps {
-    src: GlobalTallySource
+    src: GlobalSource
     producers: ProducerBundle[]
     tallyState?: TallyState
 }
@@ -40,11 +41,11 @@ export default function PatchedSourceRow({ src, producers, tallyState = 'none' }
                 color: tallyState !== 'none' ? TALLY_COLOR[tallyState] : 'var(--color-text-secondary)',
                 transition: 'color .2s',
             }}>
-                {srcInfo?.short ?? src.source}
+                {srcInfo?.name?.short ?? src.source}
             </span>
             <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--color-text-primary)' }}>
-                    {srcInfo?.long ?? `Source ${src.source}`}
+                    {srcInfo?.name?.long ?? `Source ${src.source}`}
                 </div>
                 <div style={{ fontSize: 10, color: 'var(--color-text-tertiary)' }}>
                     {prod?.config.name ?? src.producer}

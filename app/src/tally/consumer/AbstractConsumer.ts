@@ -1,7 +1,8 @@
 import { EventEmitter } from "node:events";
-import { GlobalSourceTools, type GlobalTallySource, type TallyState } from "../types/ProducerStates";
+import { GlobalSourceDto, SourceBusDto, type GlobalSource, type SourceBus } from "../types/SourceTypes";
 import { Logger } from "../../logging/Logger";
-import { type ConsumerId, type DeviceAddress, DeviceAlertState, DeviceAlertTarget, type DeviceName, DeviceTallyState, type TallyDevice } from "../types/ConsumerStates";
+import { type DeviceAddress, DeviceAlertAction, DeviceAlertTarget, type DeviceName, DeviceTallyState, type TallyDevice } from "../types/DeviceTypes";
+import type { ConsumerId } from "../types/ConsumerTypes";
 import { ConsumerStore } from "../../database/ConsumerStore";
 import type { SystemInfo } from "../../types/SystemInfo";
 
@@ -86,9 +87,9 @@ export abstract class AbstractConsumer<T extends ConsumerEvents & Record<string,
         this.checkConfig(this.config);
     }
 
-    protected tallyState: TallyState = {
-        program: new Set<string>(),
-        preview: new Set<string>()
+    protected tallyState: SourceBus = {
+        program: new Set(),
+        preview: new Set()
     };
 
     protected baseState: DeviceTallyState = DeviceTallyState.NONE;
@@ -150,7 +151,7 @@ export abstract class AbstractConsumer<T extends ConsumerEvents & Record<string,
         (this as EventEmitter<ConsumerEvents>).emit('device_update', device);
         this.logger.debug(`Device ${key} renamed to: ${name}`);
     }
-    setDevicePatch(address: DeviceAddress, patch: Array<GlobalTallySource>): void{
+    setDevicePatch(address: DeviceAddress, patch: Array<GlobalSource>): void{
         const key = this.getDeviceKey(address);
         
         const device = this.devices.get(key);
@@ -180,7 +181,7 @@ export abstract class AbstractConsumer<T extends ConsumerEvents & Record<string,
         this.logger.debug(`Device ${key} deleted.`);
     }
 
-    abstract setDeviceAlert(address: DeviceAddress, type: DeviceAlertState, target: DeviceAlertTarget, time: number): void;
+    abstract setDeviceAlert(address: DeviceAddress, type: DeviceAlertAction, target: DeviceAlertTarget, time: number): void;
     
     protected setTallyDevice(device: TallyDevice): void {
 
@@ -188,7 +189,7 @@ export abstract class AbstractConsumer<T extends ConsumerEvents & Record<string,
 
         for (const patch of device.patch) {
 
-            const parsedSource = GlobalSourceTools.create(patch.producer, patch.source);
+            const parsedSource = new GlobalSourceDto(patch.producer, patch.source).toKey();
 
             if (this.tallyState.program.has(parsedSource)) {
                 newState = DeviceTallyState.PROGRAM;
@@ -210,10 +211,10 @@ export abstract class AbstractConsumer<T extends ConsumerEvents & Record<string,
 
     protected abstract sendTallyDevice(device: TallyDevice): void;
 
-    consumeTally(state: TallyState): void {
+    consumeTally(state: SourceBus): void {
         this.tallyState = state;
 
-        this.logger.debug('Consumed TallyState:', GlobalSourceTools.serialize(state));
+        this.logger.debug('Consumed tally bus:', SourceBusDto.from(state).serialize());
 
         for (const device of this.devices.values()) {
             this.setTallyDevice(device);

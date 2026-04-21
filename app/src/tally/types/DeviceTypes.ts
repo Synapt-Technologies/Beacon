@@ -47,6 +47,14 @@ export enum DeviceTallyState {
     PROGRAM = 7
 }
 
+export const DeviceTallyDisplayName: { readonly [K in keyof typeof DeviceTallyState]: string } = {
+    NONE:    'none',
+    WARNING: 'warning',
+    DANGER:  'danger',
+    PREVIEW: 'pvw',
+    PROGRAM: 'pgm',
+} as const
+
 export interface AlertSlotConfig {
     action: DeviceAlertAction;
     target: DeviceAlertTarget | null;

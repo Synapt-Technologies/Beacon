@@ -2,7 +2,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { useBeacon } from '../context/BeaconContext'
 import DeviceRow from '../components/devices/DeviceRow'
 import { DeviceDetailOverlay } from '../components/deviceDetail/DeviceDetailOverlay'
-import { GlobalDeviceTools } from '../../../src/tally/types/ConsumerStates'
+import { DeviceAddressDto } from '../../../src/tally/types/DeviceTypes'
 
 export default function OverviewPage() {
   const navigate = useNavigate()
@@ -33,7 +33,7 @@ export default function OverviewPage() {
 
       {devices.map(device => (
         <DeviceRow
-          key={GlobalDeviceTools.create(device.id.consumer, device.id.device)}
+          key={DeviceAddressDto.from(device.id).toKey()}
           device={device}
           onSelect={() => navigate(`/overview/${device.id.consumer}/${device.id.device}`)}
         />

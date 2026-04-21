@@ -9,10 +9,11 @@ import {
 import { toast } from 'react-hot-toast'
 import * as api from '../api/BeaconApi'
 import { SystemInfo } from '../../../src/types/SystemInfo'
-import { GlobalTallySource, ProducerBundle, ProducerId } from '../../../src/tally/types/ProducerStates'
+import type { ProducerBundle, ProducerId } from '../../../src/tally/types/ProducerTypes'
+import type { GlobalSource } from '../../../src/tally/types/SourceTypes'
 import { ConsumerExportMap, type OrchestratorConfig, type LifecycleConfig } from '../../../src/tally/TallyLifecycle'
 import { UITallyDevice } from '../types/DeviceStates'
-import { DeviceAddress, DeviceAlertState, DeviceAlertTarget } from '../../../src/tally/types/ConsumerStates'
+import { DeviceAddress, DeviceAlertAction, DeviceAlertTarget } from '../../../src/tally/types/DeviceTypes'
 import { DEFAULT_UI_ALERT_CONFIG, UIAlertSlot, UIConfig } from '../../../src/types/UIStates'
 import { ProducerConfig } from '../../../src/tally/producer/AbstractTallyProducer'
 import { ConsumerId } from '../types/beacon'
@@ -48,10 +49,10 @@ interface BeaconState {
     setConsumerEnabled: (id: ConsumerId, enabled: boolean) => Promise<void>
     updateConsumer: (id: ConsumerId, config: ConsumerConfig) => Promise<void>
 
-    patchDevice: (device: DeviceAddress, patch: GlobalTallySource[]) => Promise<void>
+    patchDevice: (device: DeviceAddress, patch: GlobalSource[]) => Promise<void>
     renameDevice: (device: DeviceAddress, name: { short?: string; long: string }) => Promise<void>
     removeDevice: (device: DeviceAddress) => Promise<void>
-    sendAlert: (device: DeviceAddress, type: DeviceAlertState, target: DeviceAlertTarget, time: number) => Promise<void>
+    sendAlert: (device: DeviceAddress, type: DeviceAlertAction, target: DeviceAlertTarget, time: number) => Promise<void>
 
     updateAlertSlot: (index: number, slot: UIAlertSlot) => void
     resetAlertSlot: (index: number) => void
@@ -164,7 +165,7 @@ export function BeaconProvider({ children }: { children: ReactNode }) {
     }
 
     // ? Devices
-    const patchDevice = async (device: DeviceAddress, patch: GlobalTallySource[]) => {
+    const patchDevice = async (device: DeviceAddress, patch: GlobalSource[]) => {
       await toast.promise(
         api.patchDevice(device, patch).then(() => setDevices(prev => prev.map(d =>
           d.id.consumer === device.consumer && d.id.device === device.device ? { ...d, patch } : d
@@ -188,7 +189,7 @@ export function BeaconProvider({ children }: { children: ReactNode }) {
         { loading: 'Removing…', success: 'Device removed', error: (e: unknown) => e instanceof Error ? e.message : 'Failed to remove device' }
       )
     }
-    const sendAlert = async (device: DeviceAddress, type: DeviceAlertState, target: DeviceAlertTarget, time: number) => {
+    const sendAlert = async (device: DeviceAddress, type: DeviceAlertAction, target: DeviceAlertTarget, time: number) => {
       haptics.trigger(defaultPatterns.heavy)
       await toast.promise(
         api.sendAlert(device, type, target, time),

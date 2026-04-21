@@ -1,4 +1,4 @@
-import { type AlertSlotConfig, DEFAULT_ALERT_SLOTS } from "../tally/types/ConsumerStates"
+import { type AlertSlotConfig, DEFAULT_ALERT_SLOTS } from "../tally/types/DeviceTypes"
 
 export type UIAlertSlot = AlertSlotConfig
 

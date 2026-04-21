@@ -1,9 +1,11 @@
 import { EventEmitter } from "events";
 import { AbstractConsumer } from "./consumer/AbstractConsumer";
 import { isGlobalBroadcastConsumer } from "./consumer/IGlobalBroadcastConsumer";
-import { GlobalSourceTools, type ProducerId, type TallyState } from "./types/ProducerStates";
+import { SourceBusDto, type SourceBus } from "./types/SourceTypes";
+import type { ProducerId } from "./types/ProducerTypes";
 import { AbstractTallyProducer, type ProducerInfo, ProducerStatus } from "./producer/AbstractTallyProducer";
-import { type AlertSlotConfig, DEFAULT_ALERT_SLOTS, DeviceTallyState, type ConsumerId, type TallyDevice } from "./types/ConsumerStates";
+import { type AlertSlotConfig, DEFAULT_ALERT_SLOTS, DeviceTallyState, type TallyDevice } from "./types/DeviceTypes";
+import type { ConsumerId } from "./types/ConsumerTypes";
 import { Logger } from "../logging/Logger";
 
 export type { AlertSlotConfig };
@@ -43,10 +45,10 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
     private producers: Map<ProducerId, AbstractTallyProducer> = new Map();
     private consumers: Map<ConsumerId, AbstractConsumer> = new Map();
 
-    private producerTallyStates: Map<ProducerId, TallyState> = new Map();
+    private producerTallyStates: Map<ProducerId, SourceBus> = new Map();
     private disconnectedProducers: Set<ProducerId> = new Set();
     private _connectGraceTimers: Map<ProducerId, ReturnType<typeof setTimeout>> = new Map();
-    private globalTallyState: TallyState = {
+    private globalTallyState: SourceBus = {
         preview: new Set(),
         program: new Set()
     }
@@ -143,7 +145,7 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
         }, 1000);
         this._connectGraceTimers.set(producer.getId(), graceTimer);
 
-        producer.on('tally_update', (newState: TallyState) => {
+        producer.on('tally_update', (newState: SourceBus) => {
             this.producerTallyStates.set(producer.getId(), newState);
             this._parseGlobalTally();
         });
@@ -203,7 +205,7 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
     }
 
     private _parseGlobalTally() {
-        const newGlobalTally: Required<TallyState> = {
+        const newGlobalTally: Required<SourceBus> = {
             moment: 0,
             program: new Set(),
             preview: new Set(),
@@ -224,12 +226,12 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
         const hasConnectedProducers = [...this.producers.keys()].some(id => !this.disconnectedProducers.has(id));
 
         if (newGlobalTally.moment == 0 && hasConnectedProducers) {
-            this.logger.warn(`Did not set tally, because of invalid payload. Might be due to init. Global Tally:`, GlobalSourceTools.serialize(newGlobalTally));
+            this.logger.warn(`Did not set tally, because of invalid payload. Might be due to init. Global Tally:`, SourceBusDto.from(newGlobalTally).serialize());
             return;
         }
 
 
-        this.logger.debug("Tally update:", GlobalSourceTools.serialize(newGlobalTally));
+        this.logger.debug("Tally update:", SourceBusDto.from(newGlobalTally).serialize());
 
         this.globalTallyState = newGlobalTally;
 

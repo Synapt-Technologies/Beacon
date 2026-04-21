@@ -1,5 +1,5 @@
 import { AbstractConsumer, ConsumerStatus, type ConsumerConfig, type ConsumerInfo } from "../AbstractConsumer";
-import { ConnectionType, DeviceAlertState, DeviceTallyState, GlobalDeviceTools, type DeviceAddress, type DeviceAlertTarget, type DeviceId, type TallyDevice } from "../../types/ConsumerStates";
+import { ConnectionType, DeviceAlertAction, DeviceTallyState, DeviceAddressDto, type DeviceAddress, type DeviceAlertTarget, type DeviceId, type TallyDevice } from "../../types/DeviceTypes";
 import { HARDWARE_VERSION_STRING, HardwareVersion } from "../../../types/SystemInfo";
 import type { Gpio } from 'pigpio';
 
@@ -25,7 +25,7 @@ interface GpioTallyOutput {
 }
 
 interface DeviceAlertRuntime {
-    type: DeviceAlertState,
+    type: DeviceAlertAction,
     token: symbol,
     intervalHandle: NodeJS.Timeout,
     timeoutHandle: NodeJS.Timeout | null,
@@ -36,15 +36,15 @@ interface AlertPatternConfig {
     pattern: Array<DeviceTallyState | null>,
 }
 
-const ALERT_PATTERNS: Record<DeviceAlertState, AlertPatternConfig | null> = {
-    [DeviceAlertState.IDENT]: {
+const ALERT_PATTERNS: Record<DeviceAlertAction, AlertPatternConfig | null> = {
+    [DeviceAlertAction.IDENT]: {
         speedMs: 400,
         pattern: [
             DeviceTallyState.PREVIEW,
             DeviceTallyState.PROGRAM,
         ],
     },
-    [DeviceAlertState.INFO]: {
+    [DeviceAlertAction.INFO]: {
         speedMs: 300,
         pattern: [
             DeviceTallyState.PREVIEW,
@@ -53,21 +53,21 @@ const ALERT_PATTERNS: Record<DeviceAlertState, AlertPatternConfig | null> = {
             null,
         ],
     },
-    [DeviceAlertState.NORMAL]: {
+    [DeviceAlertAction.NORMAL]: {
         speedMs: 400,
         pattern: [
             DeviceTallyState.WARNING,
             null,
         ],
     },
-    [DeviceAlertState.PRIO]: {
+    [DeviceAlertAction.PRIO]: {
         speedMs: 150,
         pattern: [
             DeviceTallyState.PROGRAM,
             DeviceTallyState.WARNING,
         ],
     },
-    [DeviceAlertState.CLEAR]: null,
+    [DeviceAlertAction.CLEAR]: null,
 };
 
 
@@ -152,9 +152,9 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
                     preview: new Gpio(pins.preview, { mode: Gpio.OUTPUT }),
                 };
                 
-                this.gpioMap.set(GlobalDeviceTools.create(devIndx.consumer, devIndx.device), gpioPins);
-                
-                const storedDevice = this.devices.get(GlobalDeviceTools.create(devIndx.consumer, devIndx.device));
+                this.gpioMap.set(DeviceAddressDto.from(devIndx).toKey(), gpioPins);
+
+                const storedDevice = this.devices.get(DeviceAddressDto.from(devIndx).toKey());
                 
                 if(!storedDevice){
                     
@@ -226,7 +226,7 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
             return;
         }
         
-        const devAddr = GlobalDeviceTools.create(device.id.consumer, device.id.device);
+        const devAddr = DeviceAddressDto.from(device.id).toKey();
         
         if (this.activeAlerts.has(devAddr)) {
             this.logger.debug(`Skipping GPIO tally write for alerting device:`, device.id);
@@ -285,9 +285,9 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
         return true;
     }
     
-    setDeviceAlert(address: DeviceAddress, type: DeviceAlertState, target: DeviceAlertTarget, time: number): void {
+    setDeviceAlert(address: DeviceAddress, type: DeviceAlertAction, target: DeviceAlertTarget, time: number): void {
         
-        const key = GlobalDeviceTools.create(address.consumer, address.device);
+        const key = DeviceAddressDto.from(address).toKey();
         const device = this.devices.get(key);
         
         if (!device) {
@@ -298,7 +298,7 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
         // GPIO alerts are device-level and do not differentiate operator/talent hardware lanes.
         void target;
         
-        if (type === DeviceAlertState.CLEAR) {
+        if (type === DeviceAlertAction.CLEAR) {
             this.clearDeviceAlert(key, true);
             this.logger.debug(`Cleared alert for device:`, address);
             return;
@@ -351,7 +351,7 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
         
         tick();
         
-        this.logger.debug(`Set alert ${DeviceAlertState[type]} for device:`, address, `timeout(s):`, time);
+        this.logger.debug(`Set alert ${DeviceAlertAction[type]} for device:`, address, `timeout(s):`, time);
     }
     
     private clearDeviceAlert(key: DeviceId, restoreTally: boolean): void {

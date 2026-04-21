@@ -3,11 +3,10 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { useBeacon } from '../context/BeaconContext'
 import { DeviceDetailOverlay } from '../components/deviceDetail/DeviceDetailOverlay'
 import { DeviceEditModal } from '../components/devices/DeviceEditPanel'
-import { PatchModal } from '../components/PatchModal'
 import { CONSUMER_SECTIONS } from '../config/consumers'
 import { UITallyDevice } from '../types/DeviceStates'
-import { GlobalDeviceTools } from '../../../src/tally/types/ConsumerStates'
-import type { GlobalTallySource, SourceInfo } from '../../../src/tally/types/ProducerStates'
+import { DeviceAddressDto } from '../../../src/tally/types/DeviceTypes'
+import type { SourceInfo } from '../../../src/tally/types/SourceTypes'
 import { useTallyState } from '../hooks/useTallyState'
 import { stateFromValue } from '../types/beacon'
 
@@ -15,7 +14,7 @@ import { stateFromValue } from '../types/beacon'
 export default function DevicesPage() {
   const navigate = useNavigate()
   const { consumer, device: deviceId } = useParams()
-  const { devices, producers, consumers, orchestratorConfig, renameDevice, patchDevice, removeDevice } = useBeacon()
+  const { devices, producers, consumers, orchestratorConfig, renameDevice, removeDevice } = useBeacon()
   const { states, deviceStates, systemConnected } = useTallyState()
   const disconnectState = stateFromValue(orchestratorConfig.state_on_disconnect ?? 0)
 
@@ -23,14 +22,12 @@ export default function DevicesPage() {
     const key = `${producer}:${source}`
     for (const p of producers) {
       const sources = p.info?.sources as unknown as Record<string, SourceInfo>
-      if (sources?.[key]) return sources[key].short ?? source
+      if (sources?.[key]) return sources[key].name?.short ?? source
     }
     return source
   }
 
-  const [editing,      setEditing]      = useState<UITallyDevice | null>(null)
-  const [patching,     setPatching]     = useState<UITallyDevice | null>(null)
-  const [patchingFrom, setPatchingFrom] = useState<UITallyDevice | null>(null)
+  const [editing, setEditing] = useState<UITallyDevice | null>(null)
 
   const selectedDevice = consumer && deviceId
     ? devices.find(d => d.id.consumer === consumer && d.id.device === deviceId) ?? null
@@ -39,27 +36,6 @@ export default function DevicesPage() {
   const handleSaveName = async (dev: UITallyDevice, name: { short?: string; long: string }) => {
     setEditing(null)
     await renameDevice(dev.id, name)
-  }
-
-  const handleOpenPatch = (dev: UITallyDevice) => {
-    setPatchingFrom(editing)   // remember which device opened the patch modal
-    setEditing(null)
-    setPatching(dev)
-  }
-
-  const handlePatchApply = async (patch: GlobalTallySource[]) => {
-    if (!patching) return
-    setPatchingFrom(null)
-    setPatching(null)
-    await patchDevice(patching.id, patch)
-  }
-
-  const handlePatchClose = () => {
-    setPatching(null)
-    if (patchingFrom) {
-      setEditing(patchingFrom)  // return to edit modal
-      setPatchingFrom(null)
-    }
   }
 
   const handleRemove = async (dev: UITallyDevice) => {
@@ -87,12 +63,12 @@ export default function DevicesPage() {
                 sectionDevices.map((dev, idx) => {
                   const isLast = idx === sectionDevices.length - 1
                   const liveDotState = systemConnected
-                    ? (deviceStates.get(GlobalDeviceTools.create(dev.id.consumer, dev.id.device)) ?? 'none')
+                    ? (deviceStates.get(DeviceAddressDto.from(dev.id).toKey()) ?? 'none')
                     : disconnectState
 
                   return (
                     <div
-                      key={GlobalDeviceTools.create(dev.id.consumer, dev.id.device)}
+                      key={DeviceAddressDto.from(dev.id).toKey()}
                       style={{
                         display: 'flex', alignItems: 'center', padding: '9px 14px', gap: 10,
                         borderBottom: !isLast ? '0.5px solid var(--color-border-tertiary)' : 'none',
@@ -169,15 +145,6 @@ export default function DevicesPage() {
         />
       )}
 
-      <PatchModal
-        open={!!patching}
-        deviceName={patching?.name.long ?? patching?.id.device ?? ''}
-        consumerName={patching?.consumer.name ?? ''}
-        currentPatch={patching?.patch ?? []}
-        producers={producers}
-        onApply={handlePatchApply}
-        onClose={handlePatchClose}
-      />
     </div>
   )
 }

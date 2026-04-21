@@ -3,8 +3,9 @@ import ViteExpress from "vite-express";
 import { Logger } from "../logging/Logger";
 import type { ProducerConfig } from "../tally/producer/AbstractTallyProducer";
 import type { ConsumerUpdate, LifecycleConfig } from "../tally/TallyLifecycle";
-import  { type DeviceAddress,  DeviceAlertState, DeviceAlertTarget, type DeviceName, type TallyDevice } from "../tally/types/ConsumerStates";
-import type { GlobalTallySource, ProducerBundle, ProducerId } from "../tally/types/ProducerStates";
+import  { type DeviceAddress, DeviceAlertAction, DeviceAlertTarget, type DeviceName, type TallyDevice } from "../tally/types/DeviceTypes";
+import type { GlobalSource } from "../tally/types/SourceTypes";
+import type { ProducerBundle, ProducerId } from "../tally/types/ProducerTypes";
 import type { OrchestratorConfig } from "../tally/TallyLifecycle";
 import type { SystemInfo } from "../types/SystemInfo";
 import { UpdateManager } from "../system/UpdateManager";
@@ -25,10 +26,10 @@ export interface AdminMutationHandlers {
 
     updateConsumer: (update: ConsumerUpdate) => Promise<void>
 
-    patchDevice:  (address: DeviceAddress, patch: GlobalTallySource[]) => void
+    patchDevice:  (address: DeviceAddress, patch: GlobalSource[]) => void
     renameDevice: (address: DeviceAddress, name: DeviceName) => void
     removeDevice: (address: DeviceAddress) => void
-    sendAlert:    (address: DeviceAddress, type: DeviceAlertState, target: DeviceAlertTarget, time: number) => void
+    sendAlert:    (address: DeviceAddress, type: DeviceAlertAction, target: DeviceAlertTarget, time: number) => void
 
     updateOrchestrator: (config: Partial<OrchestratorConfig>) => Promise<void>
     importConfig:       (config: LifecycleConfig) => Promise<void>
@@ -215,7 +216,7 @@ export class AdminServer {
 
         this.app.patch("/api/devices/:consumer/:device/patch", (req, res) => {
             const { consumer, device } = req.params;
-            const patch: GlobalTallySource[] = req.body.patch;
+            const patch: GlobalSource[] = req.body.patch;
             if (!Array.isArray(patch)) {
                 res.status(400).json({ error: "patch must be an array" });
                 return;
@@ -251,9 +252,9 @@ export class AdminServer {
                 res.status(400).json({ error: "type, target, and time are required" });
                 return;
             }
-            this.handlers.sendAlert({ consumer, device }, type as DeviceAlertState, target as DeviceAlertTarget, time);
+            this.handlers.sendAlert({ consumer, device }, type as DeviceAlertAction, target as DeviceAlertTarget, time);
             res.status(204).send();
-            this.logger.info(`Device alert sent:`, { consumer, device }, DeviceAlertState[type], DeviceAlertTarget[target]);
+            this.logger.info(`Device alert sent:`, { consumer, device }, DeviceAlertAction[type], DeviceAlertTarget[target]);
         });
 
         // ? Config

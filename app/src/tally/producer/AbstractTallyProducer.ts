@@ -1,5 +1,6 @@
 import { EventEmitter } from "node:events";
-import type { ProducerId, TallyState, SourceMap, ProducerModel } from "../types/ProducerStates";
+import type { SourceBus, SourceMap, ProducerModel } from "../types/SourceTypes";
+import type { ProducerId } from "../types/ProducerTypes";
 import { Logger } from "../../logging/Logger";
 import { ProducerStore } from "../../database/ProducerStore";
 
@@ -30,7 +31,7 @@ export interface ProducerInfo {
 }
 
 export type TallyProducerEvents = {
-    tally_update: [TallyState];
+    tally_update: [SourceBus];
     info_update: [ProducerInfo];
 }
 
@@ -95,13 +96,13 @@ export abstract class AbstractTallyProducer<T extends TallyProducerEvents & Reco
         status: ProducerStatus.OFFLINE,
     };
 
-    protected tallyState: TallyState = {
+    protected tallyState: SourceBus = {
         moment: undefined, // TODO: Add check for last updated? Too long ago -> Wrong? -> Update moment even if no change.
-        program: new Set<string>(),
-        preview: new Set<string>(),
+        program: new Set(),
+        preview: new Set(),
     };
 
-    getTallyState(): TallyState {
+    getSourceBus(): SourceBus {
         return this.tallyState;
     }
 

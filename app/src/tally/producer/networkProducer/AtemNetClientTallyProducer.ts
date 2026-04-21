@@ -2,7 +2,7 @@ import { Atem, type AtemState } from "atem-connection";
 import { AbstractNetClientTallyProducer, type NetClientProducerConfig, type NetClientProducerInfo } from "./AbstractNetClientTallyProducer";
 import { ProducerStatus } from "../AbstractTallyProducer";
 import { Enums as AtemEnums } from "atem-connection";
-import { GlobalSourceTools, type ProducerModel, type SourceInfo, type SourceMap, type TallyState } from "../../types/ProducerStates";
+import { GlobalSourceDto, SourceBusDto, type ProducerModel, type SourceBus, type SourceInfo, type SourceMap } from "../../types/SourceTypes";
 
 
 export interface AtemNetClientProducerConfig extends NetClientProducerConfig {
@@ -155,25 +155,25 @@ export class AtemNetClientTallyProducer extends AbstractNetClientTallyProducer {
 
 
         // TODO Implement multi ME, and maybe even aux handling?
-        const newProgramStrings = rawProgram.map(id => 
-            GlobalSourceTools.create(this.config.id, String(id))
+        const newProgramStrings = rawProgram.map(id =>
+            new GlobalSourceDto(this.config.id, String(id)).toKey()
         );
-        const newPreviewStrings = rawPreview.map(id => 
-            GlobalSourceTools.create(this.config.id, String(id))
+        const newPreviewStrings = rawPreview.map(id =>
+            new GlobalSourceDto(this.config.id, String(id)).toKey()
         );
 
-        const newTallyState: TallyState = {
+        const newTallyState: SourceBus = {
             moment: this.tallyState.moment,
-            program: new Set<string>(newProgramStrings),
-            preview: new Set<string>(newPreviewStrings)
+            program: new Set(newProgramStrings),
+            preview: new Set(newPreviewStrings)
         }
 
-        if (!GlobalSourceTools.areTallyStatesEqual(this.tallyState, newTallyState)) {
+        if (!SourceBusDto.from(this.tallyState).equals(newTallyState)) {
             this.tallyState = newTallyState;
-            
+
             this.emit("tally_update", this.tallyState);
 
-            this.logger.debug("Tally Change:", GlobalSourceTools.serialize(this.tallyState));
+            this.logger.debug("Tally Change:", SourceBusDto.from(this.tallyState).serialize());
         }
     }
 
@@ -197,12 +197,14 @@ export class AtemNetClientTallyProducer extends AbstractNetClientTallyProducer {
         for (const [id, input] of Object.entries(this.info.state.inputs)) {
             if (!input) continue;
             
-            const globalKey = GlobalSourceTools.create(this.config.id, id);
-            
+            const globalKey = new GlobalSourceDto(this.config.id, id).toKey();
+
             const sourceInfo: SourceInfo = {
                 source: { producer: this.config.id, source: id },
-                short: input.shortName || `${id}`,
-                long: input.longName || `Input ${id}`,
+                name: {
+                    short: input.shortName || `${id}`,
+                    long: input.longName || `Input ${id}`,
+                },
             }
 
             // this.logger.debug(`Parsing source. ID: ${globalKey}, info:`, sourceInfo);

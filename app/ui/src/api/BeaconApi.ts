@@ -1,6 +1,7 @@
-import type { ProducerBundle, ProducerId, GlobalTallySource } from '../../../src/tally/types/ProducerStates'
+import type { ProducerBundle, ProducerId } from '../../../src/tally/types/ProducerTypes'
+import type { GlobalSource } from '../../../src/tally/types/SourceTypes'
 import type { ConsumerExportMap, LifeCycleConsumerConfig, LifecycleConfig, OrchestratorConfig } from '../../../src/tally/TallyLifecycle'
-import type { TallyDevice, DeviceAddress, DeviceAlertState, DeviceAlertTarget } from '../../../src/tally/types/ConsumerStates'
+import type { TallyDevice, DeviceAddress, DeviceAlertAction, DeviceAlertTarget } from '../../../src/tally/types/DeviceTypes'
 import type { ConsumerId } from '../types/beacon'
 import { SystemInfo } from '../../../src/types/SystemInfo'
 
@@ -71,7 +72,7 @@ export function getDevices(): Promise<Record<string, TallyDevice[]>> {
     return request('/devices')
 }
 
-export function patchDevice(device: DeviceAddress, patch: GlobalTallySource[]): Promise<void> {
+export function patchDevice(device: DeviceAddress, patch: GlobalSource[]): Promise<void> {
     return request(`/devices/${device.consumer}/${device.device}/patch`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -91,7 +92,7 @@ export function removeDevice(device: DeviceAddress): Promise<void> {
     return request(`/devices/${device.consumer}/${device.device}`, { method: 'DELETE' })
 }
 
-export function sendAlert(device: DeviceAddress, type: DeviceAlertState, target: DeviceAlertTarget, time: number): Promise<void> {
+export function sendAlert(device: DeviceAddress, type: DeviceAlertAction, target: DeviceAlertTarget, time: number): Promise<void> {
     return request(`/devices/${device.consumer}/${device.device}/alert`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

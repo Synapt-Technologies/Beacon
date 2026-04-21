@@ -1,4 +1,4 @@
-import { TallyDevice } from "../../../src/tally/types/ConsumerStates";
+import { TallyDevice } from "../../../src/tally/types/DeviceTypes";
 
 
 export interface UITallyDevice extends TallyDevice {

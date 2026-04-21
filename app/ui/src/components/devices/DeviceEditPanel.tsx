@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { UITallyDevice } from '../../types/DeviceStates'
-import type { GlobalTallySource, SourceInfo } from '../../../../src/tally/types/ProducerStates'
+import type { SourceInfo } from '../../../../src/tally/types/SourceTypes'
 import { useBeacon } from '../../context/BeaconContext'
 
 // ? Consumer-specific config sections
@@ -78,7 +78,7 @@ export function DeviceEditModal({ device, open, onSave, onRemove, onClose }: Dev
     const key = `${producer}:${source}`
     for (const p of producers) {
       const sources = p.info?.sources as unknown as Record<string, SourceInfo>
-      if (sources?.[key]) return sources[key].short ?? source
+      if (sources?.[key]) return sources[key].name?.short ?? source
     }
     return source
   }

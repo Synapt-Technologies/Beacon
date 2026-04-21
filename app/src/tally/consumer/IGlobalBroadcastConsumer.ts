@@ -1,5 +1,5 @@
 import type { AbstractConsumer } from "./AbstractConsumer";
-import type { TallyDevice } from "../types/ConsumerStates";
+import type { TallyDevice } from "../types/DeviceTypes";
 
 export interface IGlobalBroadcastConsumer {
     publishDeviceTally(device: TallyDevice): void;

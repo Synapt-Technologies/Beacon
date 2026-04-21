@@ -3,13 +3,14 @@ import { TallyFactory } from "./TallyFactory";
 import { TallyOrchestrator, type OrchestratorConfig } from "./TallyOrchestrator";
 export type { OrchestratorConfig };
 import { ProducerStatus, type ProducerConfig } from "./producer/AbstractTallyProducer";
-import type { ProducerBundle, ProducerId } from "./types/ProducerStates";
+import type { ProducerBundle, ProducerId } from "./types/ProducerTypes";
 import { Logger } from "../logging/Logger";
 import type { AedesConsumerConfig } from "./consumer/networkConsumer/AedesNetworkConsumer";
 import type { GpioConsumerConfig } from "./consumer/hardwareConsumer/RpiGpioHardwareConsumer";
 import type { AbstractConsumer, ConsumerConfig, ConsumerInfo } from "./consumer/AbstractConsumer";
-import type { ConsumerId, DeviceAddress, DeviceAlertState, DeviceAlertTarget, DeviceName, TallyDevice } from "./types/ConsumerStates";
-import type { GlobalTallySource } from "./types/ProducerStates";
+import type { DeviceAddress, DeviceAlertAction, DeviceAlertTarget, DeviceName, TallyDevice } from "./types/DeviceTypes";
+import type { ConsumerId } from "./types/ConsumerTypes";
+import type { GlobalSource } from "./types/SourceTypes";
 import { HardwareVersion, type SystemInfo } from "../types/SystemInfo";
 import SystemInfoUtil from "../system/SystemInfoUtil";
 
@@ -330,7 +331,7 @@ export class TallyLifecycle {
 
     // ? Device methods — delegate to the owning consumer
 
-    public patchDevice(address: DeviceAddress, patch: GlobalTallySource[]): void {
+    public patchDevice(address: DeviceAddress, patch: GlobalSource[]): void {
         const consumer = this.orchestrator.getConsumer(address.consumer);
         if (!consumer) { this.logger.warn(`patchDevice: no consumer for`, address.consumer); return; }
         consumer.setDevicePatch(address, patch);
@@ -348,7 +349,7 @@ export class TallyLifecycle {
         consumer.deleteDevice(address);
     }
 
-    public sendAlert(address: DeviceAddress, type: DeviceAlertState, target: DeviceAlertTarget, time: number): void {
+    public sendAlert(address: DeviceAddress, type: DeviceAlertAction, target: DeviceAlertTarget, time: number): void {
         const consumer = this.orchestrator.getConsumer(address.consumer);
         if (!consumer) { this.logger.warn(`sendAlert: no consumer for`, address.consumer); return; }
         consumer.setDeviceAlert(address, type, target, time);

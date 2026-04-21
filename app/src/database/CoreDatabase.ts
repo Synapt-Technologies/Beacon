@@ -3,11 +3,12 @@ import fs from 'node:fs';
 import path from 'path';
 import type { ProducerConfig, ProducerInfo } from '../tally/producer/AbstractTallyProducer';
 import { ProducerStatus } from '../tally/producer/AbstractTallyProducer';
-import { GlobalSourceTools, type ProducerBundle, type SourceInfo } from '../tally/types/ProducerStates';
-import { DeviceTallyState, GlobalDeviceTools, type DeviceAddress, type TallyDevice } from '../tally/types/ConsumerStates';
+import { GlobalSourceDto, type SourceInfo } from '../tally/types/SourceTypes';
+import type { ProducerBundle } from '../tally/types/ProducerTypes';
+import { DeviceTallyState, DeviceAddressDto, type DeviceAddress, type TallyDevice } from '../tally/types/DeviceTypes';
 import { Logger } from '../logging/Logger';
-import type { LifecycleConfig, LifeCycleConsumerConfig } from '../tally/TallyLifecycle';
-import { TallyOrchestrator, type OrchestratorConfig } from '../tally/TallyOrchestrator';
+import type { LifeCycleConsumerConfig } from '../tally/TallyLifecycle';
+import { type OrchestratorConfig } from '../tally/TallyOrchestrator';
 export const SettingKey = {
     consumers: {
         aedes: "consumers.aedes",
@@ -133,7 +134,7 @@ export class CoreDatabase {
             const parsed = JSON.parse(row.info);
             const sources = new Map<string, SourceInfo>(
                 (parsed.sources ?? []).map((s: SourceInfo) => [
-                    GlobalSourceTools.create(s.source.producer, s.source.source),
+                    new GlobalSourceDto(s.source.producer, s.source.source).toKey(),
                     s
                 ])
             );
@@ -154,7 +155,7 @@ export class CoreDatabase {
     }
 
     public saveConsumerDevice(device: TallyDevice) {
-        const id = GlobalDeviceTools.create(device.id.consumer, device.id.device);
+        const id = DeviceAddressDto.from(device.id).toKey();
         const stmt = this.db.prepare(`
             INSERT INTO consumer_devices (id, consumer_id, data)
             VALUES (?, ?, ?)
@@ -164,7 +165,7 @@ export class CoreDatabase {
     }
 
     public getConsumerDevice(address: DeviceAddress): TallyDevice | null {
-        const id = GlobalDeviceTools.create(address.consumer, address.device);
+        const id = DeviceAddressDto.from(address).toKey();
         const row = this.db.prepare('SELECT data FROM consumer_devices WHERE id = ?').get(id) as { data: string } | undefined;
         if (!row) return null;
 
@@ -177,7 +178,7 @@ export class CoreDatabase {
     }
 
     public deleteConsumerDevice(address: DeviceAddress): void {
-        const id = GlobalDeviceTools.create(address.consumer, address.device);
+        const id = DeviceAddressDto.from(address).toKey();
         this.db.prepare('DELETE FROM consumer_devices WHERE id = ?').run(id);
     }
 

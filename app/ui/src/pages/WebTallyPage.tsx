@@ -4,7 +4,7 @@ import { useBeacon } from '../context/BeaconContext'
 import { TallyBlock, stateSub } from '../components/TallyBlock'
 import { FullscreenOverlay } from '../components/FullscreenOverlay'
 import { IconChevronLeft, IconChevronRight, IconFullscreen } from '../components/icons'
-import type { SourceInfo } from '../../../src/tally/types/ProducerStates'
+import type { SourceInfo } from '../../../src/tally/types/SourceTypes'
 import { useTallyState } from '../hooks/useTallyState'
 import { stateFromValue, type DeviceDisplayState } from '../types/beacon'
 
@@ -55,12 +55,12 @@ function SourceDetail({
         </button>
       </div>
 
-      <TallyBlock name={source.long} sub={stateSub(state)} state={state} height={160} nameFontSize={26} />
+      <TallyBlock name={source.name.long} sub={stateSub(state)} state={state} height={160} nameFontSize={26} />
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
         {([
           ['Producer',   source.prodName],
-          ['Short name', source.short],
+          ['Short name', source.name.short],
           ['Source ID',  `${source.source.producer}:${source.source.source}`],
           ['State',      stateSub(state)],
         ] as [string, string][]).map(([label, value]) => (
@@ -82,8 +82,8 @@ function SourceDetail({
       <FullscreenOverlay
         open={fsOpen}
         state={state}
-        name={source.short}
-        sub={`${source.long} · ${source.prodName}`}
+        name={source.name.short ?? source.name.long}
+        sub={`${source.name.long} · ${source.prodName}`}
         onClose={() => navigate(basePath)}
       />
     </div>
@@ -218,10 +218,10 @@ export default function WebTallyPage() {
                 >
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-primary)' }}>
-                      {src.long}
+                      {src.name.long}
                     </div>
                     <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginTop: 2 }}>
-                      {src.short} · {prod.config.name ?? prod.config.id}
+                      {src.name.short} · {prod.config.name ?? prod.config.id}
                     </div>
                   </div>
                   <IconChevronRight style={{ color: 'var(--color-text-tertiary)', flexShrink: 0 }} />

@@ -4,7 +4,7 @@ import { useBeacon } from '../context/BeaconContext'
 import { Toggle } from '../components/Toggle'
 import { IconReset } from '../components/icons'
 import Savebar from '../components/layout/savebar/Savebar'
-import { DeviceAlertState, DeviceAlertTarget } from '../../../src/tally/types/ConsumerStates'
+import { DeviceAlertAction, DeviceAlertTarget } from '../../../src/tally/types/DeviceTypes'
 import { UIAlertSlot, DEFAULT_UI_ALERT_CONFIG } from '../../../src/types/UIStates'
 import type { AlertSlot, AlertAction, AlertTarget } from '../types/beacon'
 import { ALERT_COLORS, ALERT_SHORT, ALERT_LONG } from '../types/beacon'
@@ -18,7 +18,7 @@ import StatusPill from '../components/statusPill/StatusPill'
 
 function toAlertSlot(slot: UIAlertSlot): AlertSlot {
   return {
-    action:  DeviceAlertState[slot.action]  as AlertAction,
+    action:  DeviceAlertAction[slot.action]  as AlertAction,
     target:  slot.target !== null ? DeviceAlertTarget[slot.target] as AlertTarget : null,
     timeout: slot.timeout,
   }
@@ -26,7 +26,7 @@ function toAlertSlot(slot: UIAlertSlot): AlertSlot {
 
 function toUIAlertSlot(slot: AlertSlot): UIAlertSlot {
   return {
-    action:  DeviceAlertState[slot.action as keyof typeof DeviceAlertState],
+    action:  DeviceAlertAction[slot.action as keyof typeof DeviceAlertAction],
     target:  slot.target !== null ? DeviceAlertTarget[slot.target as keyof typeof DeviceAlertTarget] : null,
     timeout: slot.timeout,
   }

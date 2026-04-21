@@ -4,7 +4,8 @@ import { useBeacon } from '../context/BeaconContext'
 
 const IPV4_RE = /^((25[0-5]|2[0-4]\d|1\d{2}|[1-9]\d|\d)\.){3}(25[0-5]|2[0-4]\d|1\d{2}|[1-9]\d|\d)$/
 import { AddConnectionModal } from '../components/AddConnectionModal'
-import type { ProducerBundle, SourceInfo } from '../../../src/tally/types/ProducerStates'
+import type { ProducerBundle } from '../../../src/tally/types/ProducerTypes'
+import type { SourceInfo } from '../../../src/tally/types/SourceTypes'
 import type { ProducerConfig } from '../../../src/tally/producer/AbstractTallyProducer'
 import { PRODUCER_TYPE_MAP } from '../config/producers'
 import { Toggle } from '../components/Toggle'
@@ -177,7 +178,7 @@ function ProducerCard({ producer: prod, editing, onEdit, onRemove }: ProducerCar
                     color: 'var(--color-text-secondary)',
                     border: '0.5px solid var(--color-border-tertiary)',
                   }}>
-                    {s.short}
+                    {s.name?.short}
                   </span>
                 ))}
                 {sources.length > 12 && (

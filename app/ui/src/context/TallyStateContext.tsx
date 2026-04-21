@@ -2,7 +2,7 @@ import { createContext, useContext, useState, useEffect, type ReactNode } from '
 import mqtt from 'mqtt'
 import { useBeacon } from './BeaconContext'
 import type { AedesConsumerConfig } from '../../../src/tally/consumer/networkConsumer/AedesNetworkConsumer'
-import { DeviceTallyDisplayName, GlobalDeviceTools } from '../../../src/tally/types/ConsumerStates'
+import { DeviceTallyDisplayName, DeviceAddressDto } from '../../../src/tally/types/DeviceTypes'
 import type { DeviceDisplayState } from '../types/beacon'
 
 type SourceState = 'pgm' | 'pvw' | 'none'
@@ -67,7 +67,7 @@ export function TallyStateProvider({ children }: { children: ReactNode }) {
 
           const name        = (data as { state?: string }).state ?? ''
           const display     = (DeviceTallyDisplayName[name as keyof typeof DeviceTallyDisplayName] ?? 'none') as DeviceDisplayState
-          const fullKey     = GlobalDeviceTools.create(consumerId, deviceId)
+          const fullKey     = new DeviceAddressDto(consumerId, deviceId).toKey()
           setDeviceStates(prev => new Map(prev).set(fullKey, display))
         } else if (topic === 'system/info') {
           setLastKeepalive(Date.now())

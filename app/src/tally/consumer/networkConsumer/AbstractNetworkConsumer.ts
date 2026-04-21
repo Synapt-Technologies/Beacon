@@ -1,5 +1,5 @@
 import { AbstractConsumer, ConsumerStatus, type ConsumerConfig, type ConsumerEvents, type ConsumerInfo } from "../AbstractConsumer";
-import type { TallyState } from "../../types/ProducerStates";
+import type { SourceBus } from "../../types/SourceTypes";
 
 
 export interface NetworkConsumerInfo extends ConsumerInfo {
@@ -53,7 +53,7 @@ export abstract class AbstractNetworkConsumer<T extends NetworkConsumerEvents = 
             this.logger.fatal(`Valid Port is required. Submitted config:`, config);
     }
     
-    consumeTally(state: TallyState): void {
+    consumeTally(state: SourceBus): void {
         super.consumeTally(state);
         
         if (this.config.broadcast_all) {

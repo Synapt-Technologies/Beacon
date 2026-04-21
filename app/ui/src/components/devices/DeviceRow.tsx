@@ -3,8 +3,9 @@ import { UITallyDevice } from '../../types/DeviceStates'
 import { stateFromValue, type DeviceDisplayState } from '../../types/beacon'
 import { useBeacon } from '../../context/BeaconContext'
 import { useTallyState } from '../../hooks/useTallyState'
-import { GlobalDeviceTools } from '../../../../src/tally/types/ConsumerStates'
-import type { ProducerId, SourceId, SourceInfo } from '../../../../src/tally/types/ProducerStates'
+import { DeviceAddressDto } from '../../../../src/tally/types/DeviceTypes'
+import type { ProducerId } from '../../../../src/tally/types/ProducerTypes'
+import type { SourceId, SourceInfo } from '../../../../src/tally/types/SourceTypes'
 
 type SourceState = 'pgm' | 'pvw' | 'none'
 
@@ -25,7 +26,7 @@ export default function DeviceRow({
     const { states, deviceStates, systemConnected } = useTallyState()
 
     const disconnectState = stateFromValue(orchestratorConfig.state_on_disconnect ?? 0)
-    const deviceKey       = GlobalDeviceTools.create(device.id.consumer, device.id.device)
+    const deviceKey       = DeviceAddressDto.from(device.id).toKey()
     const liveState: DeviceDisplayState = systemConnected
         ? (deviceStates.get(deviceKey) ?? 'none')
         : disconnectState
@@ -35,7 +36,7 @@ export default function DeviceRow({
         
         for (const p of producers) {
             const sources = p.info?.sources as unknown as Record<string, SourceInfo>
-            if (sources?.[key]) return sources[key].short ?? source
+            if (sources?.[key]) return sources[key].name?.short ?? source
         }
         return key
     }

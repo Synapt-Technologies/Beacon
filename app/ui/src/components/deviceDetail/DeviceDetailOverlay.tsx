@@ -10,8 +10,8 @@ import InfoBox from './InfoBox'
 import PatchedSourceRow from './PatchedSourceRow'
 import DeviceAlerts from './DeviceAlerts'
 import { UITallyDevice } from '../../types/DeviceStates'
-import { ConnectionType, GlobalDeviceTools } from '../../../../src/tally/types/ConsumerStates'
-import type { GlobalTallySource } from '../../../../src/tally/types/ProducerStates'
+import { ConnectionType, DeviceAddressDto } from '../../../../src/tally/types/DeviceTypes'
+import type { GlobalSource } from '../../../../src/tally/types/SourceTypes'
 import { stateFromValue, type DeviceDisplayState } from '../../types/beacon'
 import { DeviceEditModal } from '../devices/DeviceEditPanel'
 
@@ -50,14 +50,14 @@ export function DeviceDetailOverlay({ device, backPath, backLabel }: DeviceDetai
     const basePath    = `${backPath}/${device.id.consumer}/${device.id.device}`
     const fsOpen      = location.pathname.endsWith('/fullscreen')
     const liveState: DeviceDisplayState = systemConnected
-        ? (deviceStates.get(GlobalDeviceTools.create(device.id.consumer, device.id.device)) ?? 'none')
+        ? (deviceStates.get(DeviceAddressDto.from(device.id).toKey()) ?? 'none')
         : disconnectState
     const stateStr = liveState
-    const deviceKey   = GlobalDeviceTools.create(device.id.consumer, device.id.device)
+    const deviceKey   = DeviceAddressDto.from(device.id).toKey()
     const deviceLong  = device.name.long
     const deviceShort = device.name.short ?? device.name.long ?? device.id.device
 
-    const handlePatchApply = async (patch: GlobalTallySource[]) => {
+    const handlePatchApply = async (patch: GlobalSource[]) => {
         setPatchOpen(false)
         await patchDevice(device.id, patch)
     }

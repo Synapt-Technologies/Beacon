@@ -1,4 +1,4 @@
-import { DeviceTallyState, DeviceTallyDisplayName } from '../../../src/tally/types/ConsumerStates'
+import { DeviceTallyState, DeviceTallyDisplayName } from '../../../src/tally/types/DeviceTypes'
 
 // ─── Tally state ─────────────────────────────────────────────────────────────
 
