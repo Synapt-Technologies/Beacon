@@ -1,36 +1,34 @@
 import { AbstractNetworkConsumer, type NetworkConsumerConfig, type NetworkConsumerInfo } from "./AbstractNetworkConsumer";
 import { ConsumerStatus } from "../AbstractConsumer";
-import { type IGlobalBroadcastConsumer } from "../IGlobalBroadcastConsumer";
 
 import { Aedes, type Client, type Subscription } from "aedes";
 import { createServer, Server } from "node:net";
 import { createServer as createHttpServer, type Server as HttpServer } from "node:http";
 import { WebSocketServer, createWebSocketStream } from "ws";
-import { type DeviceAddress, DeviceAlertAction, DeviceAlertTarget, DeviceTallyState, type TallyDevice } from "../../types/DeviceTypes";
+import { type DeviceAlertBundle, type DeviceTallyBundle, DeviceTallyState } from "../../types/DeviceTypes";
+import type { SourceBus } from "../../types/SourceTypes";
 
 export interface AedesConsumerInfo extends NetworkConsumerInfo {
     tcp_active: boolean;
     ws_active: boolean;
-    ws_port: number;
 }
 
 export interface AedesConsumerConfig extends NetworkConsumerConfig {
-    serve_tcp?: boolean;
-    serve_ws?: boolean;
-    ws_port?: number;
+    serve_tcp: boolean;
+    serve_ws: boolean;
+    ws_port: number;
 }
 
 
-export class AedesNetworkConsumer extends AbstractNetworkConsumer implements IGlobalBroadcastConsumer {
+export class AedesNetworkConsumer extends AbstractNetworkConsumer {
 
     protected declare config: Required<AedesConsumerConfig>; // Declare to indicate it overwrites the parent's type.
     protected info: AedesConsumerInfo = { 
         status: ConsumerStatus.OFFLINE, 
-        device_count: 0, port: -1, 
+        device_count: 0,
         client_count: 0, 
         tcp_active: false, 
         ws_active: false, 
-        ws_port: -1 
     };
     
     public static readonly DefaultConfig: Required<AedesConsumerConfig> = {
@@ -47,7 +45,7 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer implements IGl
         return AedesNetworkConsumer.DefaultConfig;
     }
 
-    constructor(config: AedesConsumerConfig) {
+    constructor(config: Partial<AedesConsumerConfig>) {
         super(config);
     }
     
@@ -94,9 +92,7 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer implements IGl
         }
 
         if (this.config.serve_ws) {
-            this.info.ws_port = this.config.ws_port;
             try {
-
                 this.wsHttpServer = createHttpServer();
                 this.wss = new WebSocketServer({ server: this.wsHttpServer });
                 this.wss.on('connection', (websocket, req) => {
@@ -126,7 +122,7 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer implements IGl
             this.logger.debug('Subscription:', subscriptions);
 
             // if (subscriptions.some(sub => sub.topic == 'tally' || sub.topic.startsWith('tally/') ))
-            //     this.emit('connection'); // TODO: Device Discovery
+            //     this.emit('connection'); // TODO: Device Discovery, or on different topic?
         });
 
         this.aedes.on('publish',  (packet, client) => {if (client) {
@@ -206,19 +202,15 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer implements IGl
         this.info.client_count = 0;
     }
 
-    public publishDeviceTally(device: TallyDevice): void {
-        this.sendTallyDevice(device);
-    }
-
-    broadcastTally(): void {
+    broadcastTally(bus: SourceBus): void {
         if (!this.aedes) {
             this.logger.warn("Discarding Tally: Attempted to send before initialization.");
             return;
         }
 
         const payload = JSON.stringify({
-            program: Array.from(this.tallyState.program),
-            preview: Array.from(this.tallyState.preview),
+            program: Array.from(bus.program),
+            preview: Array.from(bus.preview),
             moment: Date.now()
         });
 
@@ -254,27 +246,25 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer implements IGl
 
     }
 
-
-    protected sendTallyDevice(device: TallyDevice): void {
+    sendDeviceState(bundle: DeviceTallyBundle): void {
         if (!this.aedes) {
             this.logger.warn("Discarding Tally: Attempted to send before initialization.");
             return;
         }
 
         const payload = JSON.stringify({
-            state: DeviceTallyState[device.state], // Maybe send number for efficiency?
-            name: device.name,
-            moment: this.tallyState.moment
-        });
-        
-        this.logger.debug(`Attempting to publish to MQTT for ${device.id.device}...`);
-        
+            ...bundle,
+            state: DeviceTallyState[bundle.state], // Maybe send number for efficiency?
+        }); // TODO: Broadcast more, like name?
+
+        this.logger.debug(`Attempting to publish to MQTT for ${bundle.id.device}...`);
+
         this.aedes.publish(
         {
             cmd: 'publish',
             qos: 1,
             dup: false,
-            topic: `tally/device/${device.id.consumer}/${device.id.device}`,
+            topic: `tally/device/${bundle.id.consumer}/${bundle.id.device}`,
             payload: Buffer.from(payload),
             retain: true
         }, () => {});
@@ -282,8 +272,8 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer implements IGl
         this.logger.debug(`Sent payload to device:`, payload);
        
     }
+    sendDeviceAlert(bundle: DeviceAlertBundle): void {
 
-    setDeviceAlert(address: DeviceAddress, type: DeviceAlertAction, target: DeviceAlertTarget, time: number): void {
         if (!this.aedes) {
             this.logger.warn("Discarding Tally: Attempted to send before initialization.");
             return;
@@ -293,8 +283,8 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer implements IGl
             cmd: 'publish',
             qos: 2, // High priority for alerts
             dup: false,
-            topic: `tally/device/${address.consumer}/${address.device}/alert`,
-            payload: Buffer.from(JSON.stringify({ type, target, time })),
+            topic: `tally/device/${bundle.id.consumer}/${bundle.id.device}/alert`,
+            payload: Buffer.from(JSON.stringify(bundle)),
             retain: false // Alerts are momentary, no retain
         }, () => {});
     }
