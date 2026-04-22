@@ -1,9 +1,9 @@
 import { AbstractConsumer, ConsumerStatus, type ConsumerConfig, type ConsumerEvents, type ConsumerInfo } from "../AbstractConsumer";
 import type { SourceBus } from "../../types/SourceTypes";
+import type { DeviceKey, TallyDevice } from "../../types/DeviceTypes";
 
 
 export interface NetworkConsumerInfo extends ConsumerInfo {
-    port: number;
     client_count: number;
 }
 
@@ -17,7 +17,7 @@ export interface NetworkConsumerConfig extends ConsumerConfig {
 export type NetworkConsumerEvents = ConsumerEvents & {
     connection: []; // When A client loads, subscribes or whatever.
     disconnection: []; // When A client loads, subscribes or whatever.
-    discovery: [id:string, outputs: any]
+    discovery: [id: TallyDevice] // TODO Multi output support.
 }
 
 export abstract class AbstractNetworkConsumer<T extends NetworkConsumerEvents = NetworkConsumerEvents> extends AbstractConsumer<T> {
@@ -26,7 +26,6 @@ export abstract class AbstractNetworkConsumer<T extends NetworkConsumerEvents = 
     protected info: NetworkConsumerInfo = { 
         status: ConsumerStatus.OFFLINE, 
         device_count: 0, 
-        port: -1, 
         client_count: 0 
     };
     
@@ -52,28 +51,17 @@ export abstract class AbstractNetworkConsumer<T extends NetworkConsumerEvents = 
         if (config.port == null || config.port < 0 || config.port > 65535)
             this.logger.fatal(`Valid Port is required. Submitted config:`, config);
     }
-    
-    consumeTally(state: SourceBus): void {
-        super.consumeTally(state);
-        
-        if (this.config.broadcast_all) {
-            this.broadcastTally();
-        }
-    }
 
-    abstract broadcastTally(): void;
-
+    abstract broadcastTally(bus: SourceBus): void;
     abstract broadcastKeepAlive(): void;
 
     init(): void | Promise<void> {
-
-        this.info.port = this.config.port;
 
         if (this.config.keep_alive) { // TODO add keepalive with server info instead
             this.timer = setInterval(() => {
                 this.broadcastKeepAlive();
             }, this.config.keep_alive_ms);
-            this.logger.debug("Started keep alive at ms:", this.config.keep_alive_ms);
+            this.logger.debug("Started keep alive at ms interval:", this.config.keep_alive_ms);
         }
 
         this.info.status = ConsumerStatus.ONLINE;
