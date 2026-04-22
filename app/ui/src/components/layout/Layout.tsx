@@ -74,7 +74,7 @@ export default function Layout() {
     if (PAGE_TITLES[location.pathname]) {
         document.title = `Beacon - ${title}`
     } else {
-        document.title = '${title}'
+        document.title = `${title}`
     }
 
     return (
