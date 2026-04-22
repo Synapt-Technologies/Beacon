@@ -19,9 +19,9 @@ export interface ConsumerInfo {
 }
 
 export interface ConsumerConfig {
-    id?: ConsumerId;
-    name?: string;
-    system_info?: SystemInfo | null;
+    id: ConsumerId;
+    name: string;
+    system_info: SystemInfo | null;
 }
 
 export type ConsumerEvents = {
@@ -65,7 +65,7 @@ export abstract class AbstractConsumer<T extends ConsumerEvents & Record<string,
         return this.info;
     }
 
-    constructor(config: ConsumerConfig) {
+    constructor(config: Partial<ConsumerConfig>) {
         super();
 
         this.config = {...this.getDefaultConfig(), ...config};
