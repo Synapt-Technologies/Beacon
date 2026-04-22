@@ -1,7 +1,6 @@
-import { EventEmitter } from "node:events";
-import { GlobalSourceDto, SourceBusDto, type GlobalSource, type SourceBus } from "../types/SourceTypes";
+import { EventEmitter } from "events";
 import { Logger } from "../../logging/Logger";
-import { type DeviceAddress, DeviceAlertAction, DeviceAlertTarget, type DeviceName, DeviceTallyState, type TallyDevice } from "../types/DeviceTypes";
+import { type DeviceAddress, DeviceAddressDto, type DeviceAlertBundle, type DeviceId, type DeviceKey, type DeviceTallyBundle, type TallyDevice } from "../types/DeviceTypes";
 import type { ConsumerId } from "../types/ConsumerTypes";
 import { ConsumerStore } from "../../database/ConsumerStore";
 import type { SystemInfo } from "../../types/SystemInfo";
@@ -22,11 +21,12 @@ export interface ConsumerInfo {
 export interface ConsumerConfig {
     id?: ConsumerId;
     name?: string;
-    system_info?: SystemInfo;
+    system_info?: SystemInfo | null;
 }
 
 export type ConsumerEvents = {
-    device_update: [device: TallyDevice];
+    device_update:  [device: TallyDevice];
+    device_added:   [device: TallyDevice];
     device_removed: [address: DeviceAddress];
 }
 
@@ -39,7 +39,7 @@ export abstract class AbstractConsumer<T extends ConsumerEvents & Record<string,
 
     protected store: ConsumerStore;
 
-    protected devices: Map<string, TallyDevice> = new Map();
+    protected devices: Map<DeviceKey, TallyDevice> = new Map();
 
     protected config: Required<ConsumerConfig>;
 
@@ -47,10 +47,7 @@ export abstract class AbstractConsumer<T extends ConsumerEvents & Record<string,
     public static readonly DefaultConfig: Required<ConsumerConfig> = {
         id: "",
         name: "Consumer",
-        // system_info: null, // TODO: Remove default system info.
-        system_info: {
-            name: "Beacon-Tally Base"
-        }
+        system_info: null,
     };
 
     protected info: ConsumerInfo = { 
@@ -77,6 +74,8 @@ export abstract class AbstractConsumer<T extends ConsumerEvents & Record<string,
 
         this.store = new ConsumerStore(this.config.id);
 
+        this.checkConfig(this.config);
+
         const storedDevices = this.store.loadDevices();
         if (storedDevices.size > 0) {
             this.devices = storedDevices;
@@ -84,21 +83,6 @@ export abstract class AbstractConsumer<T extends ConsumerEvents & Record<string,
             this.logger.debug(`Loaded ${storedDevices.size} stored device(s).`);
         }
 
-        this.checkConfig(this.config);
-    }
-
-    protected tallyState: SourceBus = {
-        program: new Set(),
-        preview: new Set()
-    };
-
-    protected baseState: DeviceTallyState = DeviceTallyState.NONE;
-
-    setBaseState(state: DeviceTallyState): void {
-        this.baseState = state;
-        for (const device of this.devices.values()) {
-            this.setTallyDevice(device);
-        }
     }
         
     protected checkConfig(config: ConsumerConfig) {
@@ -108,66 +92,30 @@ export abstract class AbstractConsumer<T extends ConsumerEvents & Record<string,
             this.logger.fatal(`System info was not provided. Submitted config:`, config);
     }
 
-    protected getDeviceKey(address: DeviceAddress): string {
-        return `${address.consumer}:${address.device}`;
-    }
-
-    protected getDeviceAddress(key: string): DeviceAddress {
-        
-        const parts = key.split(":");
-        const consumer = parts.shift() || ""; // Take the first part
-        const device = parts.join(":");    // Put everything else back together
-        return { consumer, device };
-    }
 
     getAvailableDevices(): Array<TallyDevice> {
         return Array.from(this.devices.values());
     }
     getDevice(address: DeviceAddress): TallyDevice | null {
-        return this.devices.get(this.getDeviceKey(address)) || null;
+        return this.devices.get(DeviceAddressDto.from(address).toKey()) || null;
     }
 
     protected _addDevice(device: TallyDevice) {
 
         device.id.consumer = this.config.id;
-        const key = this.getDeviceKey(device.id);
+        const key = DeviceAddressDto.from(device.id).toKey();
 
         this.devices.set(key, device);
         this.info.device_count = this.devices.size;
         this.store.saveDevice(device);
-        this.setTallyDevice(device);
+
+        (this as EventEmitter<ConsumerEvents>).emit('device_added', device);
+        this.logger.debug(`Device ${key} added.`);
     }
-    setDeviceName(address: DeviceAddress, name: DeviceName): void {
-        const key = this.getDeviceKey(address);
-        
-        const device = this.devices.get(key);
-        if (!device){
-            this.logger.warn(`Attempted to set name:`, name, `for unknown device at address:`, address)
-            return;
-        }
-        
-        device.name = name;
-        this.store.saveDevice(device);
-        (this as EventEmitter<ConsumerEvents>).emit('device_update', device);
-        this.logger.debug(`Device ${key} renamed to: ${name}`);
-    }
-    setDevicePatch(address: DeviceAddress, patch: Array<GlobalSource>): void{
-        const key = this.getDeviceKey(address);
-        
-        const device = this.devices.get(key);
-        if (!device){
-            this.logger.warn(`Attempted to set patch:`, patch, `for unknown device at address:`, address)
-            return;
-        }
-        
-        device.patch = patch;
-        this.store.saveDevice(device);
-        this.setTallyDevice(device);
-        (this as EventEmitter<ConsumerEvents>).emit('device_update', device);
-        this.logger.debug(`Device ${key} set patch to:`, patch);
-    }
+
+
     deleteDevice(address: DeviceAddress): void {
-        const key = this.getDeviceKey(address);
+        const key = DeviceAddressDto.from(address).toKey();
 
         if (!this.devices.has(key)) {
             this.logger.warn(`Attempted to delete unknown device at address:`, address);
@@ -181,45 +129,24 @@ export abstract class AbstractConsumer<T extends ConsumerEvents & Record<string,
         this.logger.debug(`Device ${key} deleted.`);
     }
 
-    abstract setDeviceAlert(address: DeviceAddress, type: DeviceAlertAction, target: DeviceAlertTarget, time: number): void;
-    
-    protected setTallyDevice(device: TallyDevice): void {
+    updateDevice(device: TallyDevice): void {
 
-        let newState = this.baseState; // Default: NONE, or configured state-on-disconnect
+        const key = DeviceAddressDto.from(device.id).toKey();
 
-        for (const patch of device.patch) {
-
-            const parsedSource = new GlobalSourceDto(patch.producer, patch.source).toKey();
-
-            if (this.tallyState.program.has(parsedSource)) {
-                newState = DeviceTallyState.PROGRAM;
-                break;
-            }
-            if (this.tallyState.preview.has(parsedSource)) {
-                newState = DeviceTallyState.PREVIEW;
-            }
+        if (!this.devices.has(key)) {
+            this.logger.warn(`Attempted to update unknown device at address:`, device.id);
+            return;
         }
 
-        if (device.state !== newState || !device.last_update) {
-            device.last_update = Date.now();
-            device.state = newState;
-            this.logger.debug(`Device ${this.getDeviceKey(device.id)} state changed to ${DeviceTallyState[device.state]}`);
-            (this as EventEmitter<ConsumerEvents>).emit('device_update', device);
-            this.sendTallyDevice(device);
-        }
+        this.devices.set(key, device);
+        this.store.saveDevice(device);
+        (this as EventEmitter<ConsumerEvents>).emit('device_update', device);
+        this.logger.debug(`Device ${key} updated.`);
     }
 
-    protected abstract sendTallyDevice(device: TallyDevice): void;
+    abstract sendDeviceAlert(bundle: DeviceAlertBundle): void;
+    abstract sendDeviceState(bundle: DeviceTallyBundle): void;
 
-    consumeTally(state: SourceBus): void {
-        this.tallyState = state;
-
-        this.logger.debug('Consumed tally bus:', SourceBusDto.from(state).serialize());
-
-        for (const device of this.devices.values()) {
-            this.setTallyDevice(device);
-        }
-    }
 
     abstract init(): void | Promise<void>;
     abstract destroy(): void | Promise<void>;
