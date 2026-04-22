@@ -147,9 +147,8 @@ export abstract class AbstractConsumer<T extends ConsumerEvents & Record<string,
         this.logger.debug(`Device ${key} updated.`);
     }
 
-    abstract sendDeviceAlert(bundle: DeviceAlertBundle): void;
     abstract sendDeviceState(bundle: DeviceTallyBundle): void;
-
+    abstract sendDeviceAlert(bundle: DeviceAlertBundle): void;
 
     abstract init(): void | Promise<void>;
     abstract destroy(): void | Promise<void>;
