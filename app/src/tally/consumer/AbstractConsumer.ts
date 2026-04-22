@@ -1,6 +1,6 @@
 import { EventEmitter } from "events";
 import { Logger } from "../../logging/Logger";
-import { type DeviceAddress, DeviceAddressDto, type DeviceAlertBundle, type DeviceId, type DeviceKey, type DeviceTallyBundle, type TallyDevice } from "../types/DeviceTypes";
+import { type DeviceAddress, DeviceAddressDto, type DeviceAlertBundle, type DeviceKey, type DeviceTallyBundle, type TallyDevice } from "../types/DeviceTypes";
 import type { ConsumerId } from "../types/ConsumerTypes";
 import { ConsumerStore } from "../../database/ConsumerStore";
 import { HardwareVersion, type SystemInfo } from "../../types/SystemInfo";
