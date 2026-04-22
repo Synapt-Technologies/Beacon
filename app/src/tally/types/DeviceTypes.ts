@@ -69,26 +69,63 @@ export const DEFAULT_ALERT_SLOTS: AlertSlotConfig[] = [
     { action: DeviceAlertAction.CLEAR,  target: null,                       timeout: null },
 ]
 
-export interface DeviceTallyBundle {
-    id: DeviceAddress;
-    state: DeviceTallyState;
-    moment?: number;
-    sources?: SourceBus; // TODO ADD (/Imp) SOURCES LEADING TO TALLY
-}
-
-export interface DeviceAlertBundle {
-    id: DeviceAddress;
-    action: DeviceAlertAction;
-    target: DeviceAlertTarget | null;
-    timeout: number;
-    moment?: number;
-}
 
 export interface TallyDevice {
     id: DeviceAddress;
     name: DeviceName;
     connection: ConnectionType;
     patch: Array<GlobalSource>; // TODO: Implement more complex patching logic
+}
+
+export interface DeviceBundle extends TallyDevice {
+    moment?: number;
+}
+
+export interface DeviceTallyPackage {
+    state: DeviceTallyState;
+    activeSources?: SourceBus; // TODO ADD (/Imp) SOURCES LEADING TO TALLY
+}
+
+export interface DeviceTallyBundle extends DeviceBundle, DeviceTallyPackage {}
+
+export interface DeviceAlertPackage {
+    action: DeviceAlertAction;
+    target: DeviceAlertTarget | null;
+    timeout: number | null;
+}
+
+export interface DeviceAlertBundle extends DeviceBundle, DeviceAlertPackage {}
+
+
+export class TallyDeviceDto implements TallyDevice {
+    id: DeviceAddress;
+    name: DeviceName;
+    connection: ConnectionType;
+    patch: Array<GlobalSource>;
+
+    constructor(device: TallyDevice) {
+        this.id = device.id;
+        this.name = device.name;
+        this.connection = device.connection;
+        this.patch = device.patch;
+    }
+
+    toTallyBundle(pckg: DeviceTallyPackage): DeviceTallyBundle {
+        return {
+            ...this,
+            ...pckg,
+            moment: Date.now(),
+        };
+    }
+
+    toAlertBundle(pckg: DeviceAlertPackage): DeviceAlertBundle {
+        return {
+            ...this,
+            ...pckg,
+            moment: Date.now(),
+        };
+    }
+
 }
 
 export class DeviceAddressDto implements DeviceAddress {
