@@ -80,8 +80,8 @@ export interface DeviceAlertBundle {
     id: DeviceAddress;
     action: DeviceAlertAction;
     target: DeviceAlertTarget | null;
-    timeout: number | null;
-    moment?: number | null;
+    timeout: number;
+    moment?: number;
 }
 
 export interface TallyDevice {
