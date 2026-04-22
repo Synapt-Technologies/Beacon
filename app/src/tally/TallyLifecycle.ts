@@ -77,7 +77,9 @@ export class TallyLifecycle {
     private _restarting = new Set<ConsumerId>();
 
     public info: LifeCycleInfo = {
-        system: {}
+        system: {
+            hardware: HardwareVersion.UNKNOWN,
+        }
     };
 
     private _config: LifecycleConfigInternal = {
@@ -104,7 +106,6 @@ export class TallyLifecycle {
     }
 
     public async boot(): Promise<void> {
-        // this.info = ? // TODO load hw info.
         this.logger.info(`Initializing TallyLifecycle...`);
 
         this.info.system = SystemInfoUtil.getSystemInfo();
