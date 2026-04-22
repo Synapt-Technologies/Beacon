@@ -5,10 +5,11 @@ import type { ProducerConfig, ProducerInfo } from '../tally/producer/AbstractTal
 import { ProducerStatus } from '../tally/producer/AbstractTallyProducer';
 import { GlobalSourceDto, type SourceInfo } from '../tally/types/SourceTypes';
 import type { ProducerBundle } from '../tally/types/ProducerTypes';
-import { DeviceTallyState, DeviceAddressDto, type DeviceAddress, type TallyDevice } from '../tally/types/DeviceTypes';
+import { DeviceAddressDto, type DeviceAddress, type TallyDevice, type DeviceKey } from '../tally/types/DeviceTypes';
 import { Logger } from '../logging/Logger';
 import type { LifeCycleConsumerConfig } from '../tally/TallyLifecycle';
 import { type OrchestratorConfig } from '../tally/TallyOrchestrator';
+import type { ConsumerId } from '../tally/types/ConsumerTypes';
 export const SettingKey = {
     consumers: {
         aedes: "consumers.aedes",
@@ -170,7 +171,7 @@ export class CoreDatabase {
         if (!row) return null;
 
         try {
-            return { ...JSON.parse(row.data), state: DeviceTallyState.NONE };
+            return { ...JSON.parse(row.data) };
         } catch {
             this.logger.error(`Failed to parse device with ID:`, id);
             return null;
@@ -182,17 +183,14 @@ export class CoreDatabase {
         this.db.prepare('DELETE FROM consumer_devices WHERE id = ?').run(id);
     }
 
-    public getConsumerDevices(consumerId: string): Map<string, TallyDevice> {
-        const rows = this.db.prepare('SELECT id, data FROM consumer_devices WHERE consumer_id = ?').all(consumerId) as { id: string, data: string }[];
+    public getConsumerDevices(consumerId: ConsumerId): Map<DeviceKey, TallyDevice> {
+        const rows = this.db.prepare('SELECT id, data FROM consumer_devices WHERE consumer_id = ?').all(consumerId) as { id: DeviceKey, data: string }[];
 
-        const output = new Map<string, TallyDevice>();
+        const output = new Map<DeviceKey, TallyDevice>();
 
         for (const row of rows) {
             try {
-                const parsed = JSON.parse(row.data);
-                // Migration: devices stored before name was required get a default.
-                if (!parsed.name) parsed.name = { long: parsed.id?.device ?? row.id };
-                const device: TallyDevice = { ...parsed, state: DeviceTallyState.NONE };
+                const device: TallyDevice = { ...JSON.parse(row.data) };
                 output.set(row.id, device);
             } catch {
                 this.logger.error(`Failed to parse device with ID:`, row.id);

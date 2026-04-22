@@ -8,8 +8,8 @@ export interface DeviceAddress {
     device: DeviceId;
 }
 
-// export type DeviceKey = `${ConsumerId}:${DeviceId}`; // TODO
-export type DeviceKey = string;
+export type DeviceKey = `${ConsumerId}:${DeviceId}`;
+// export type DeviceKey = string;
 
 export enum ConnectionType {
     HARDWARE,
