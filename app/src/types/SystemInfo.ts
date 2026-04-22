@@ -16,6 +16,6 @@ export const HARDWARE_VERSION_STRING: Record<HardwareVersion, string> = {
 
 export interface SystemInfo {
     name?: string;
-    hardware?: HardwareVersion;
+    hardware: HardwareVersion;
     firmware?: string
 }
