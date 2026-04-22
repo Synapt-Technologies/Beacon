@@ -3,7 +3,7 @@ import { Logger } from "../../logging/Logger";
 import { type DeviceAddress, DeviceAddressDto, type DeviceAlertBundle, type DeviceId, type DeviceKey, type DeviceTallyBundle, type TallyDevice } from "../types/DeviceTypes";
 import type { ConsumerId } from "../types/ConsumerTypes";
 import { ConsumerStore } from "../../database/ConsumerStore";
-import type { SystemInfo } from "../../types/SystemInfo";
+import { HardwareVersion, type SystemInfo } from "../../types/SystemInfo";
 
 
 export enum ConsumerStatus {
@@ -21,7 +21,7 @@ export interface ConsumerInfo {
 export interface ConsumerConfig {
     id: ConsumerId;
     name: string;
-    system_info: SystemInfo | null;
+    system_info: SystemInfo;
 }
 
 export type ConsumerEvents = {
@@ -47,15 +47,18 @@ export abstract class AbstractConsumer<T extends ConsumerEvents & Record<string,
     public static readonly DefaultConfig: Required<ConsumerConfig> = {
         id: "",
         name: "Consumer",
-        system_info: null,
+        system_info: {
+            hardware: HardwareVersion.UNKNOWN
+        },
     };
+
+    protected abstract getDefaultConfig(): Required<ConsumerConfig>;
 
     protected info: ConsumerInfo = { 
         status: ConsumerStatus.OFFLINE, 
         device_count: 0 
     };
 
-    protected abstract getDefaultConfig(): Required<ConsumerConfig>;
 
     getConfig(): ConsumerConfig {
         return this.config;
