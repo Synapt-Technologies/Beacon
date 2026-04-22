@@ -2,6 +2,7 @@ import { AbstractConsumer, ConsumerStatus, type ConsumerConfig, type ConsumerInf
 import { ConnectionType, DeviceAlertAction, DeviceTallyState, DeviceAddressDto, type TallyDevice, type DeviceKey, type DeviceTallyBundle, type DeviceAlertBundle } from "../../types/DeviceTypes";
 import { HARDWARE_VERSION_STRING, HardwareVersion } from "../../../types/SystemInfo";
 import type { Gpio } from 'pigpio';
+import type { SourceBus } from "../../types/SourceTypes";
 
 // TODO: check if this is the right GPIO library. Was rpi-gpio before, but it's not updated.
 
@@ -203,6 +204,8 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
         }
         
     }
+
+    broadcastTally(bus: SourceBus): void {}
 
     sendDeviceState(bundle: DeviceTallyBundle): void {
 
