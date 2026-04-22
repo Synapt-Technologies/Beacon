@@ -8,10 +8,10 @@ export interface NetworkConsumerInfo extends ConsumerInfo {
 }
 
 export interface NetworkConsumerConfig extends ConsumerConfig {
-    port?: number;
-    keep_alive?: boolean;
-    keep_alive_ms?: number;
-    broadcast_all?: boolean; // Broadcast all tally states to the /tally topic.
+    port: number;
+    keep_alive: boolean;
+    keep_alive_ms: number;
+    broadcast_all: boolean; // Broadcast all tally states to the /tally topic.
 } 
 
 export type NetworkConsumerEvents = ConsumerEvents & {
@@ -41,7 +41,7 @@ export abstract class AbstractNetworkConsumer<T extends NetworkConsumerEvents = 
     
     private timer?: NodeJS.Timeout;
 
-    constructor(config: NetworkConsumerConfig) {
+    constructor(config: Partial<NetworkConsumerConfig>) {
         super(config);
     }
         
