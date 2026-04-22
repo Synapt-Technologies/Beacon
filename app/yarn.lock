@@ -857,6 +857,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/events@npm:^3":
+  version: 3.0.3
+  resolution: "@types/events@npm:3.0.3"
+  checksum: 10c0/3a56f8c51eb4ebc0d05dcadca0c6636c816acc10216ce36c976fad11e54a01f4bb979a07211355686015884753b37f17d74bfdc7aaf4ebb027c1e8a501c7b21d
+  languageName: node
+  linkType: hard
+
 "@types/express-serve-static-core@npm:^5.0.0":
   version: 5.1.1
   resolution: "@types/express-serve-static-core@npm:5.1.1"
@@ -1171,6 +1178,7 @@ __metadata:
   resolution: "beacon-tally@workspace:."
   dependencies:
     "@types/better-sqlite3": "npm:^7.6.13"
+    "@types/events": "npm:^3"
     "@types/express": "npm:^5.0.6"
     "@types/node": "npm:^25.5.0"
     "@types/pigpio": "npm:^3.1.0"
@@ -1181,6 +1189,7 @@ __metadata:
     aedes: "npm:^1.0.1"
     atem-connection: "npm:^3.9.0"
     better-sqlite3: "npm:^12.8.0"
+    events: "npm:^3.3.0"
     express: "npm:^5.2.1"
     less: "npm:^4.6.4"
     mqtt: "npm:^5.10.4"
