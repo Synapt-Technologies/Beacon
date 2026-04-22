@@ -316,7 +316,7 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
         };
         
         const intervalHandle = setInterval(tick, alertConfig.speedMs);
-        const timeoutHandle = bundle.timeout > 0
+        const timeoutHandle = bundle.timeout && bundle.timeout > 0
         ? setTimeout(() => {
             const runtime = this.activeAlerts.get(address);
             if (!runtime || runtime.token !== alertToken) {
