@@ -1,5 +1,5 @@
 import type { ConsumerId } from "./ConsumerTypes";
-import type { GlobalSource } from "./SourceTypes";
+import type { GlobalSource, SourceBus } from "./SourceTypes";
 
 export type DeviceId = string;
 
@@ -8,7 +8,8 @@ export interface DeviceAddress {
     device: DeviceId;
 }
 
-export type DeviceKey = `${ConsumerId}:${DeviceId}`;
+// export type DeviceKey = `${ConsumerId}:${DeviceId}`; // TODO
+export type DeviceKey = string;
 
 export enum ConnectionType {
     HARDWARE,
@@ -68,14 +69,26 @@ export const DEFAULT_ALERT_SLOTS: AlertSlotConfig[] = [
     { action: DeviceAlertAction.CLEAR,  target: null,                       timeout: null },
 ]
 
+export interface DeviceTallyBundle {
+    id: DeviceAddress;
+    state: DeviceTallyState;
+    moment?: number;
+    sources?: SourceBus; // TODO ADD (/Imp) SOURCES LEADING TO TALLY
+}
+
+export interface DeviceAlertBundle {
+    id: DeviceAddress;
+    action: DeviceAlertAction;
+    target: DeviceAlertTarget | null;
+    timeout: number | null;
+    moment?: number | null;
+}
+
 export interface TallyDevice {
     id: DeviceAddress;
     name: DeviceName;
     connection: ConnectionType;
     patch: Array<GlobalSource>;
-    // TODO ADD SOURCES LEADING TO TALLY
-    state: DeviceTallyState;
-    last_update?: number;
 }
 
 export class DeviceAddressDto implements DeviceAddress {
