@@ -4,6 +4,7 @@ import { type DeviceAddress, DeviceAddressDto, type DeviceAlertBundle, type Devi
 import type { ConsumerId } from "../types/ConsumerTypes";
 import { ConsumerStore } from "../../database/ConsumerStore";
 import { HardwareVersion, type SystemInfo } from "../../types/SystemInfo";
+import type { SourceBus } from "../types/SourceTypes";
 
 
 export enum ConsumerStatus {
@@ -144,6 +145,7 @@ export abstract class AbstractConsumer<T extends ConsumerEvents & Record<string,
         (this as EventEmitter<ConsumerEvents>).emit('device_update', device);
         this.logger.debug(`Device ${key} updated.`);
     }
+    abstract broadcastTally(bus: SourceBus): void;
 
     abstract sendDeviceState(bundle: DeviceTallyBundle): void;
     abstract sendDeviceAlert(bundle: DeviceAlertBundle): void;

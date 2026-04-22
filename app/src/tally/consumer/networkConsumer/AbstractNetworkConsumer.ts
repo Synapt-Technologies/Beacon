@@ -52,7 +52,6 @@ export abstract class AbstractNetworkConsumer<T extends NetworkConsumerEvents = 
             this.logger.fatal(`Valid Port is required. Submitted config:`, config);
     }
 
-    abstract broadcastTally(bus: SourceBus): void;
     abstract broadcastKeepAlive(): void;
 
     init(): void | Promise<void> {
