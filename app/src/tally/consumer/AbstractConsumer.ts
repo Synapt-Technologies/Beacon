@@ -95,7 +95,7 @@ export abstract class AbstractConsumer<T extends ConsumerEvents & Record<string,
     }
 
 
-    getAvailableDevices(): Array<TallyDevice> {
+    getDevices(): Array<TallyDevice> {
         return Array.from(this.devices.values());
     }
     getDevice(address: DeviceAddress): TallyDevice | null {
