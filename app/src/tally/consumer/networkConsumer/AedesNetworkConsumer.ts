@@ -202,6 +202,14 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer {
         this.info.client_count = 0;
     }
 
+    isDeviceBroadcaster(): boolean {
+        return true;
+    }
+
+    isTallyBroadcaster(): boolean {
+        return true;
+    }
+
     broadcastTally(bus: SourceBus): void {
         if (!this.aedes) {
             this.logger.warn("Discarding Tally: Attempted to send before initialization.");

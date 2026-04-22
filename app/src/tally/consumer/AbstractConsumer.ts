@@ -152,6 +152,14 @@ export abstract class AbstractConsumer<T extends ConsumerEvents & Record<string,
 
     abstract init(): void | Promise<void>;
     abstract destroy(): void | Promise<void>;
+
+    isDeviceBroadcaster(): boolean {
+        return false;
+    }
+
+    isTallyBroadcaster(): boolean {
+        return false;
+    }
     
     getId(): ConsumerId {
         return this.config.id;
