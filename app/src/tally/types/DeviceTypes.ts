@@ -12,7 +12,7 @@ export type DeviceKey = `${ConsumerId}:${DeviceId}`;
 // export type DeviceKey = string;
 
 export enum ConnectionType {
-    HARDWARE,
+    LOCAL,
     NETWORK,
     WIRELESS,
     VIRTUAL
@@ -88,7 +88,7 @@ export interface TallyDevice {
     id: DeviceAddress;
     name: DeviceName;
     connection: ConnectionType;
-    patch: Array<GlobalSource>;
+    patch: Array<GlobalSource>; // TODO: Implement more complex patching logic
 }
 
 export class DeviceAddressDto implements DeviceAddress {
@@ -100,10 +100,14 @@ export class DeviceAddressDto implements DeviceAddress {
         this.device = device;
     }
 
-    static from(address: DeviceAddress | DeviceKey): DeviceAddressDto {
+    static from(address: DeviceAddress | DeviceKey | DeviceAddressDto): DeviceAddressDto {
+        if (address instanceof DeviceAddressDto){
+            return address;
+        }
         if (typeof address === "string") {
             return this.fromKey(address);
         }
+        
         return new DeviceAddressDto(address.consumer, address.device);
     }
 
