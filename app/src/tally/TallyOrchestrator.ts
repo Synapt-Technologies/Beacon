@@ -1,18 +1,18 @@
 import { EventEmitter } from "events";
 import { AbstractConsumer } from "./consumer/AbstractConsumer";
-import { isGlobalBroadcastConsumer } from "./consumer/IGlobalBroadcastConsumer";
 import { SourceBusDto, type SourceBus } from "./types/SourceTypes";
 import type { ProducerId } from "./types/ProducerTypes";
 import { AbstractTallyProducer, type ProducerInfo, ProducerStatus } from "./producer/AbstractTallyProducer";
-import { type AlertSlotConfig, DEFAULT_ALERT_SLOTS, DeviceTallyState, type TallyDevice } from "./types/DeviceTypes";
+import { type AlertSlotConfig, type DeviceTallyPackage, DeviceTallyState, type TallyDevice, TallyDeviceDto } from "./types/DeviceTypes";
 import type { ConsumerId } from "./types/ConsumerTypes";
 import { Logger } from "../logging/Logger";
+import { PatchLogicEngine } from "./logic/PatchLogicEngine";
+import { disconnect } from "cluster";
 
 export type { AlertSlotConfig };
 
 export interface OrchestratorConfig {
     state_on_disconnect?: DeviceTallyState;
-    alert_slots?: AlertSlotConfig[];
 }
 
 
@@ -33,17 +33,17 @@ export interface OrchestratorEvents {
 export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
 
     protected logger: Logger;
+
+    protected logicEngine: PatchLogicEngine = new PatchLogicEngine();
     
     protected config: Required<OrchestratorConfig>;
 
     public static readonly DefaultConfig: Required<OrchestratorConfig> = {
         state_on_disconnect: DeviceTallyState.NONE,
-        alert_slots: DEFAULT_ALERT_SLOTS,
     };
 
 
     private producers: Map<ProducerId, AbstractTallyProducer> = new Map();
-    private consumers: Map<ConsumerId, AbstractConsumer> = new Map();
 
     private producerTallyStates: Map<ProducerId, SourceBus> = new Map();
     private disconnectedProducers: Set<ProducerId> = new Set();
@@ -53,6 +53,8 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
         program: new Set()
     }
 
+    private consumers: Map<ConsumerId, AbstractConsumer> = new Map();
+
 
     constructor(config: OrchestratorConfig) {
         super();
@@ -61,6 +63,30 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
         this.logger = new Logger(["Tally", "Orchestrator"]);
 
         this.checkConfig(this.config);
+    }
+
+    private parseDevices(newbus: SourceBus, oldbus: SourceBus): void {
+        for (const consumer of this.consumers.values()) {
+            for (const device of consumer.getDevices()) {
+                this.sendDevice(
+                    device, 
+                    this.logicEngine.evaluate(device.logic, {
+                        newbus,
+                        oldbus,
+                        disconnectedProducers: this.disconnectedProducers,
+                        disconnectedState: this.config.state_on_disconnect
+                    })
+                );
+            }
+        }
+    }
+
+    private sendDevice(device: TallyDevice, pckg: DeviceTallyPackage): void {
+        for (const consumer of this.consumers.values()) {
+            if (consumer.isDeviceBroadcaster()) {
+                consumer.sendDeviceState(new TallyDeviceDto(device).toTallyBundle(pckg));
+            }
+        }
     }
 
     updateConfig(config: Partial<OrchestratorConfig>): void {
@@ -82,10 +108,28 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
             this.logger.info(`State on disconnect changed to ${DeviceTallyState[this.config.state_on_disconnect]}. Disconnected producers: ${this.disconnectedProducers.size}.`)
 
             if (this.disconnectedProducers.size !== 0) {  // TODO Extract to function and use in restart
-                this.logger.info(`Updating consumer base state...`);
+                this.logger.info(`Updating device alert state...`);
 
+                const tallyPckg: DeviceTallyPackage = {
+                    state: this.config.state_on_disconnect,
+                };
+
+                // TODO: extract this, it is repeated
+                // TODO Only send to consumers that broadcast, or own device
                 for (const consumer of this.consumers.values()) {
-                    consumer.setBaseState(this.config.state_on_disconnect);
+
+                    if (consumer.isDeviceBroadcaster()) {
+                        for (const nestedConsumer of this.consumers.values()) {
+                            for (const device of nestedConsumer.getDevices()) {
+                                consumer.sendDeviceState(new TallyDeviceDto(device).toTallyBundle(tallyPckg));
+                            }
+                        }
+                    }
+                    else {
+                        for (const device of consumer.getDevices()) {
+                            consumer.sendDeviceState(new TallyDeviceDto(device).toTallyBundle(tallyPckg));
+                        }
+                    }
                 }
             }
         }
@@ -97,26 +141,28 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
 
     addConsumer(consumer: AbstractConsumer): void {
         this.consumers.set(consumer.getId(), consumer);
-        consumer.on('device_update', (device: TallyDevice) => {
-            this._notifyBroadcasters(consumer.getId(), device);
-        });
+        // TODO
+        // consumer.on('device_update', (device: TallyDevice) => {
+        //     for (const consumer of this.consumers.values()) {
+        //         consumer.sendDeviceState(new TallyDeviceDto(device).toTallyBundle(tallyPckg));
+        //     }
+
+        // });
         this.emit('consumer_added', consumer.getId());
 
         
         if (this.disconnectedProducers.size !== 0) {
-            consumer.setBaseState(this.config.state_on_disconnect);
+
+            const tallyPckg: DeviceTallyPackage = {
+                state: this.config.state_on_disconnect,
+            };
+
+            for (const device of consumer.getDevices()) {
+                consumer.sendDeviceState(new TallyDeviceDto(device).toTallyBundle(tallyPckg));
+            }
         }
 
         this._parseGlobalTally();
-    }
-
-    private _notifyBroadcasters(exclude: ConsumerId, device: TallyDevice): void {
-        for (const [id, consumer] of this.consumers) {
-            if (id === exclude) continue;
-            if (isGlobalBroadcastConsumer(consumer)) {
-                consumer.publishDeviceTally(device);
-            }
-        }
     }
 
     async removeConsumer(id: ConsumerId): Promise<void> {
@@ -138,8 +184,23 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
         const graceTimer = setTimeout(() => {
             this._connectGraceTimers.delete(producer.getId());
             if (this.disconnectedProducers.has(producer.getId())) {
-                for (const consumer of this.consumers.values()) {
-                    consumer.setBaseState(this.config.state_on_disconnect);
+                const tallyPckg: DeviceTallyPackage = {
+                    state: this.config.state_on_disconnect,
+                };
+                for (const consumer of this.consumers.values()) {                
+
+                    if (consumer.isDeviceBroadcaster()) {
+                        for (const nestedConsumer of this.consumers.values()) {
+                            for (const device of nestedConsumer.getDevices()) {
+                                consumer.sendDeviceState(new TallyDeviceDto(device).toTallyBundle(tallyPckg));
+                            }
+                        }
+                    }
+                    else {
+                        for (const device of consumer.getDevices()) {
+                            consumer.sendDeviceState(new TallyDeviceDto(device).toTallyBundle(tallyPckg));
+                        }
+                    }
                 }
             }
         }, 1000);
@@ -158,8 +219,24 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
             }
             this.disconnectedProducers.delete(producer.getId());
             this._parseGlobalTally();
-            for (const consumer of this.consumers.values()) {
-                consumer.setBaseState(DeviceTallyState.NONE);
+            if (this.disconnectedProducers.size == 0) {
+                const tallyPckg: DeviceTallyPackage = {
+                    state: this.config.state_on_disconnect,
+                };
+                for (const consumer of this.consumers.values()) {
+                    if (consumer.isDeviceBroadcaster()) {
+                        for (const nestedConsumer of this.consumers.values()) {
+                            for (const device of nestedConsumer.getDevices()) {
+                                consumer.sendDeviceState(new TallyDeviceDto(device).toTallyBundle(tallyPckg));
+                            }
+                        }
+                    }
+                    else {
+                        for (const device of consumer.getDevices()) {
+                            consumer.sendDeviceState(new TallyDeviceDto(device).toTallyBundle(tallyPckg));
+                        }
+                    }
+                }
             }
             this.emit('producer_connected', producer.getId());
         });
@@ -168,8 +245,22 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
             if (producer.isDestroying()) return;
             this.disconnectedProducers.add(producer.getId());
             this._parseGlobalTally();
+            const tallyPckg: DeviceTallyPackage = {
+                state: this.config.state_on_disconnect,
+            };
             for (const consumer of this.consumers.values()) {
-                consumer.setBaseState(this.config.state_on_disconnect);
+                if (consumer.isDeviceBroadcaster()) {
+                    for (const nestedConsumer of this.consumers.values()) {
+                        for (const device of nestedConsumer.getDevices()) {
+                            consumer.sendDeviceState(new TallyDeviceDto(device).toTallyBundle(tallyPckg));
+                        }
+                    }
+                }
+                else {
+                    for (const device of consumer.getDevices()) {
+                        consumer.sendDeviceState(new TallyDeviceDto(device).toTallyBundle(tallyPckg));
+                    }
+                }
             }
             this.emit('producer_disconnected', producer.getId());
         });
@@ -196,8 +287,22 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
         this.producerTallyStates.delete(id);
         this.disconnectedProducers.delete(id);
         if (this.disconnectedProducers.size === 0) {
+            const tallyPckg: DeviceTallyPackage = {
+                state: this.config.state_on_disconnect,
+            };
             for (const consumer of this.consumers.values()) {
-                consumer.setBaseState(DeviceTallyState.NONE);
+                if (consumer.isDeviceBroadcaster()) {
+                    for (const nestedConsumer of this.consumers.values()) {
+                        for (const device of nestedConsumer.getDevices()) {
+                            consumer.sendDeviceState(new TallyDeviceDto(device).toTallyBundle(tallyPckg));
+                        }
+                    }
+                }
+                else {
+                    for (const device of consumer.getDevices()) {
+                        consumer.sendDeviceState(new TallyDeviceDto(device).toTallyBundle(tallyPckg));
+                    }
+                }
             }
         }
         this.emit('producer_removed', id);
