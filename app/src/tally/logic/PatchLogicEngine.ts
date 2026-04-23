@@ -8,6 +8,7 @@ export class PatchLogicEngine {
     evaluate(node: PatchNode, context: TallyContext): DeviceTallyPackage {
         switch (node.type) {
             case 'SimpleBusNode': return this.evalSimple(node, context);
+            default: throw new Error(`Unhandled node type: ${(node as any).type}`);
         }
     }
 
