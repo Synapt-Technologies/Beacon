@@ -159,14 +159,15 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer {
         //     name: {long: 'Test Device 1' },
         //     state: DeviceTallyState.NONE,
         //     connection: 2,
-        //     patch: [],
+        //     logic: new SimpleBusNode([]),
         // };
         // const testTallyDevice2: TallyDevice = {
         //     id: { consumer: this.config.id, device: '9862eef93c9e' },
         //     name: {long: 'Test Device 2' },
         //     state: DeviceTallyState.NONE,
         //     connection: 3,
-        //     patch: [],
+        //     logic: new SimpleBusNode([]),
+        
         // };
 
         // this._addDevice(testTallyDevice1);
