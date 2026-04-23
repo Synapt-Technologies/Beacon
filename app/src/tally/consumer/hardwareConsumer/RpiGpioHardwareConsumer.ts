@@ -3,6 +3,7 @@ import { ConnectionType, DeviceAlertAction, DeviceTallyState, DeviceAddressDto, 
 import { HARDWARE_VERSION_STRING, HardwareVersion } from "../../../types/SystemInfo";
 import type { Gpio } from 'pigpio';
 import type { SourceBus } from "../../types/SourceTypes";
+import { SimpleBusNode } from "../../types/LogicTypes";
 
 // TODO: check if this is the right GPIO library. Was rpi-gpio before, but it's not updated.
 
@@ -159,7 +160,7 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
                             long: `Local ${i+1}`
                         },
                         connection: ConnectionType.LOCAL,
-                        patch: new Array(),
+                        logic: new SimpleBusNode([]),
                     }
                     
                     this._addDevice(newDevice)
