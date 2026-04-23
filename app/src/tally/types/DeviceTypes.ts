@@ -1,6 +1,6 @@
 import type { ConsumerId } from "./ConsumerTypes";
 import type { PatchNode } from "./LogicTypes";
-import type { GlobalSource, SourceBus } from "./SourceTypes";
+import type { GlobalSourceKey } from "./SourceTypes";
 
 export type DeviceId = string;
 
@@ -85,7 +85,7 @@ export interface DeviceBundle extends TallyDevice {
 
 export interface DeviceTallyPackage {
     state: DeviceTallyState;
-    activeSources?: SourceBus; // TODO ADD (/Imp) SOURCES LEADING TO TALLY
+    activeSources?: Set<GlobalSourceKey>;
 }
 
 export interface DeviceTallyBundle extends DeviceBundle, DeviceTallyPackage {}
