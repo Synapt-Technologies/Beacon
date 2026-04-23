@@ -1,4 +1,5 @@
 import type { ConsumerId } from "./ConsumerTypes";
+import type { PatchNode } from "./LogicTypes";
 import type { GlobalSource, SourceBus } from "./SourceTypes";
 
 export type DeviceId = string;
@@ -74,7 +75,8 @@ export interface TallyDevice {
     id: DeviceAddress;
     name: DeviceName;
     connection: ConnectionType;
-    patch: Array<GlobalSource>; // TODO: Implement more complex patching logic
+    // patch: Array<GlobalSource>; // TODO: Implement more complex patching logic
+    logic: PatchNode;
 }
 
 export interface DeviceBundle extends TallyDevice {
@@ -101,13 +103,13 @@ export class TallyDeviceDto implements TallyDevice {
     id: DeviceAddress;
     name: DeviceName;
     connection: ConnectionType;
-    patch: Array<GlobalSource>;
+    logic: PatchNode;
 
     constructor(device: TallyDevice) {
         this.id = device.id;
         this.name = device.name;
         this.connection = device.connection;
-        this.patch = device.patch;
+        this.logic = device.logic;
     }
 
     toTallyBundle(pckg: DeviceTallyPackage): DeviceTallyBundle {
