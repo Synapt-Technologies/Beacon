@@ -18,18 +18,29 @@ export class PatchLogicEngine {
         const programHits = new Set(keys.filter(k => context.newbus.program.has(k)));
         const previewHits = new Set(keys.filter(k => context.newbus.preview.has(k)));
 
-        const activeSources: SourceBus = { program: programHits, preview: previewHits };
+        let activeSources: Set<GlobalSourceKey> = new Set();
 
         let outputState: DeviceTallyState;
 
-        if (programHits.size > 0) outputState = DeviceTallyState.PROGRAM;
-        else if (previewHits.size > 0) outputState = DeviceTallyState.PREVIEW;
-        else outputState = DeviceTallyState.NONE;
+        if (programHits.size > 0) {
+            outputState = DeviceTallyState.PROGRAM;
+            activeSources = programHits;
+        }
+        else if (previewHits.size > 0) {
+            outputState = DeviceTallyState.PREVIEW;
+            activeSources = previewHits;
+        }
+        else {
+            outputState = DeviceTallyState.NONE;
+        }
 
-        for (const producer of this.collectProducers(node)) {
-            if (context.disconnectedProducers.has(producer)) {
-                outputState = context.disconnectedState;
-                break;
+        if (context.disconnectedState > outputState) {
+            for (const producer of this.collectProducers(node)) {
+                if (context.disconnectedProducers.has(producer)) {
+                    outputState = context.disconnectedState;
+                    activeSources = new Set();
+                    break;
+                }
             }
         }
 
