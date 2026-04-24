@@ -213,6 +213,10 @@ export class TallyLifecycle {
             }
         }
 
+        if (config.orchestrator) {
+            this._config.orchestrator = { ...this._config.orchestrator, ...config.orchestrator };
+        }
+
         this.logger.info(`Config imported.`);
     }
 
@@ -339,7 +343,7 @@ export class TallyLifecycle {
         const device = consumer.getDevice(address);
         if (!device) { this.logger.warn(`patchDevice: no device for`, address); return; }
         device.logic = new SimpleBusNode(patch);
-        // TODO: Update Device / orchestrator
+        consumer.updateDevice(device);
     }
 
     public renameDevice(address: DeviceAddress, name: DeviceName): void {
@@ -348,7 +352,7 @@ export class TallyLifecycle {
         const device = consumer.getDevice(address);
         if (!device) { this.logger.warn(`renameDevice: no device for`, address); return; }
         device.name = name;
-        // TODO: Update Device / orchestrator
+        consumer.updateDevice(device);
     }
 
     public removeDevice(address: DeviceAddress): void {
