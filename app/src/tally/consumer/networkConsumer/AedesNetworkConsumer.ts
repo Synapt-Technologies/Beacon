@@ -166,11 +166,9 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer {
         //     name: {long: 'Test Device 2' },
         //     connection: 3,
         //     logic: new SimpleBusNode([]),
-        
         // };
-
-        this._addDevice(testTallyDevice1);
-        this._addDevice(testTallyDevice2);
+        // this._addDevice(testTallyDevice1);
+        // this._addDevice(testTallyDevice2);
     }
 
     async destroy(): Promise<void> {
