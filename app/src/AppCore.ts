@@ -67,6 +67,7 @@ export class AppCore {
             });
         };
 
+        // TODO: Should go through the lifecycle
         orchestrator.on("producer_added",    syncState);
         orchestrator.on("producer_removed",  syncState);
         orchestrator.on("consumer_added",    syncState);
