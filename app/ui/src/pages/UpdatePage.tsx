@@ -162,7 +162,7 @@ function ReleaseDetailView({ release, isCurrent, onBack, onUpdate }: {
         {release.name}
       </div>
       <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginBottom: 16, display: 'flex', gap: 5 }}>
-        <p>{new Date(release.publishedAt).toLocaleDateString()}</p>
+        <span>{new Date(release.publishedAt).toLocaleDateString()}</span>
         {release.prerelease && (
           <span style={{ fontSize: 10, padding: '1px 6px', borderRadius: 99, background: 'color-mix(in srgb, #E8A838 20%, transparent)', color: '#E8A838' }}>
             beta
