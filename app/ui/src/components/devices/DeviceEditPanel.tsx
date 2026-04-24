@@ -72,7 +72,7 @@ export function DeviceEditModal({ device, open, onSave, onRemove, onClose }: Dev
 
   if (!open) return null
 
-  const patch = device.patch
+  const patch = device.logic.sources
 
   function shortName(producer: string, source: string): string {
     const key = `${producer}:${source}`

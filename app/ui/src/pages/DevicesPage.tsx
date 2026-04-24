@@ -89,10 +89,10 @@ export default function DevicesPage() {
                         )}
                       </div>
                       <div style={{ flex: 1, display: 'flex', flexWrap: 'wrap', gap: 4, minWidth: 0 }}>
-                        {dev.patch.length === 0 ? (
+                        {dev.logic.sources.length === 0 ? (
                           <span style={{ fontSize: 11, color: 'var(--color-text-tertiary)' }}>No sources</span>
                         ) : (
-                          dev.patch.map((src, i) => {
+                          dev.logic.sources.map((src, i) => {
                             const key = `${src.producer}:${src.source}`
                             const srcState = systemConnected ? states.get(key) : undefined
                             const active = srcState === 'pgm' || srcState === 'pvw'

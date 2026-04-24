@@ -8,7 +8,7 @@ import {
 } from 'react'
 import { toast } from 'react-hot-toast'
 import * as api from '../api/BeaconApi'
-import { SystemInfo } from '../../../src/types/SystemInfo'
+import { HardwareVersion, SystemInfo } from '../../../src/types/SystemInfo'
 import type { ProducerBundle, ProducerId } from '../../../src/tally/types/ProducerTypes'
 import type { GlobalSource } from '../../../src/tally/types/SourceTypes'
 import { ConsumerExportMap, type OrchestratorConfig, type LifecycleConfig } from '../../../src/tally/TallyLifecycle'
@@ -69,7 +69,7 @@ export function BeaconProvider({ children }: { children: ReactNode }) {
     const [consumers, setConsumers]                   = useState<Partial<ConsumerExportMap>>({})
     const [devices, setDevices]                       = useState<UITallyDevice[]>([])
     const [orchestratorConfig, setOrchestratorConfig] = useState<Partial<OrchestratorConfig>>({})
-    const [system, setSystem]                          = useState<SystemInfo>({})
+    const [system, setSystem]                          = useState<SystemInfo>({ hardware: HardwareVersion.UNKNOWN })
     const [loading, setLoading]                       = useState(false)
     const [error, setError]                           = useState<string | null>(null)
 

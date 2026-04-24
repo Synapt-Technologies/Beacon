@@ -22,7 +22,7 @@ interface DeviceDetailOverlayProps {
 }
 
 const CONNECTION_LABELS: Record<ConnectionType, string> = {
-    [ConnectionType.HARDWARE]: 'Hardware',
+    [ConnectionType.LOCAL]: 'Local',
     [ConnectionType.NETWORK]:  'Network',
     [ConnectionType.WIRELESS]: 'Wireless',
     [ConnectionType.VIRTUAL]:  'Virtual',
@@ -116,16 +116,16 @@ export function DeviceDetailOverlay({ device, backPath, backLabel }: DeviceDetai
                         <InfoBox label="Consumer"    value={device.consumer.name} />
                         <InfoBox label="Connection"  value={CONNECTION_LABELS[device.connection] ?? 'Unknown'} />
                         <InfoBox label="Device ID"   value={deviceKey} />
-                        <InfoBox label="Last update" value={formatTs(device.last_update)} />
+                        <InfoBox label="Last update" value={"123"} />
                     </div>
 
                     <div className="sec-lbl">Patched sources</div>
-                    {device.patch.length === 0 ? (
+                    {device.logic.sources.length === 0 ? (
                         <div style={{ fontSize: 12, color: 'var(--color-text-tertiary)', padding: '8px 0' }}>
                             No sources patched
                         </div>
                     ) : (
-                        device.patch.map((src, i) => (
+                        device.logic.sources.map((src, i) => (
                             <PatchedSourceRow
                                 key={i}
                                 src={src}
@@ -160,7 +160,7 @@ export function DeviceDetailOverlay({ device, backPath, backLabel }: DeviceDetai
                     open={patchOpen}
                     deviceName={deviceLong}
                     consumerName={device.consumer.name}
-                    currentPatch={device.patch}
+                    currentPatch={device.logic.sources}
                     producers={producers}
                     onApply={handlePatchApply}
                     onClose={() => setPatchOpen(false)}

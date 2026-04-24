@@ -50,13 +50,13 @@ export default function DeviceRow({
                 <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-primary)' }}>
                     {device.name.long}
                 </div>
-                {device.patch.length === 0 ? (
+                {device.logic.sources.length === 0 ? (
                     <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginTop: 2 }}>
                         No sources patched
                     </div>
                 ) : (
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 3, marginTop: 4 }}>
-                        {device.patch.map((src, i) => {
+                        {device.logic.sources.map((src, i) => {
                             const key   = `${src.producer}:${src.source}`
                             const state = systemConnected ? (states.get(key) ?? 'none') : 'none'
                             return (
