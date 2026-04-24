@@ -7,7 +7,7 @@ import  { type DeviceAddress, DeviceAlertAction, DeviceAlertTarget, type DeviceN
 import type { GlobalSource } from "../tally/types/SourceTypes";
 import type { ProducerBundle, ProducerId } from "../tally/types/ProducerTypes";
 import type { OrchestratorConfig } from "../tally/TallyLifecycle";
-import type { SystemInfo } from "../types/SystemInfo";
+import { HardwareVersion, type SystemInfo } from "../types/SystemInfo";
 import { UpdateManager } from "../system/UpdateManager";
 
 export interface AdminState {
@@ -44,7 +44,9 @@ export class AdminServer {
         consumers: undefined,
         devices: new Map(),
         orchestratorConfig: {},
-        info: {}
+        info: {
+            hardware: HardwareVersion.UNKNOWN
+        }
     };
     private handlers!: AdminMutationHandlers;
     private updateManager: UpdateManager;
