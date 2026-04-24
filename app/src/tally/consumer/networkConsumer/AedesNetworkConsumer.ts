@@ -230,7 +230,7 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer {
             topic: 'tally/global',
             payload: Buffer.from(payload),
             retain: true
-        }, () => {});
+        }, (err) => { if (err) this.logger.warn('broadcastTally publish error:', err); });
     }
 
     broadcastKeepAlive(): void {
@@ -251,7 +251,7 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer {
             topic: 'system/info',
             payload: Buffer.from(payload),
             retain: false
-        }, () => {});
+        }, (err) => { if (err) this.logger.warn('broadcastKeepAlive publish error:', err); });
 
     }
 
@@ -276,7 +276,7 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer {
             topic: `tally/device/${bundle.id.consumer}/${bundle.id.device}`,
             payload: Buffer.from(payload),
             retain: true
-        }, () => {});
+        }, (err) => { if (err) this.logger.warn(`sendDeviceState publish error for ${bundle.id.device}:`, err); });
 
         this.logger.debug(`Sent payload to device:`, payload);
        
@@ -295,7 +295,7 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer {
             topic: `tally/device/${bundle.id.consumer}/${bundle.id.device}/alert`,
             payload: Buffer.from(JSON.stringify(bundle)),
             retain: false // Alerts are momentary, no retain
-        }, () => {});
+        }, (err) => { if (err) this.logger.warn(`sendDeviceAlert publish error for ${bundle.id.device}:`, err); });
     }
 
 }
