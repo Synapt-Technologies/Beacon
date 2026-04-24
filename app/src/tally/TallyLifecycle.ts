@@ -76,6 +76,7 @@ export class TallyLifecycle {
     private orchestrator!: TallyOrchestrator;
     private logger = new Logger(["Tally", "Lifecycle"]);
     private _restarting = new Set<ConsumerId>();
+    private _producerPending = new Set<ProducerId>();
 
     public info: LifeCycleInfo = {
         system: {
@@ -260,8 +261,13 @@ export class TallyLifecycle {
         try {
             await this.addProducer(type, fullConfig);
         } catch (e) {
-            if (oldRecord)
-                await this.addProducer(oldRecord.type, oldRecord.config).catch(re => this.logger.error(`Failed to restore producer:`, id, re));
+            if (oldRecord) {
+                try {
+                    await this.addProducer(oldRecord.type, oldRecord.config);
+                } catch (restoreError) {
+                    return this.logger.fatal(`Failed to restore producer after update failure:`, id, restoreError);
+                }
+            }
             throw e;
         }
     }
@@ -272,16 +278,25 @@ export class TallyLifecycle {
     }
 
     public async setProducerEnabled(id: ProducerId, enabled: boolean): Promise<void> {
+        if (this._producerPending.has(id)) {
+            this.logger.warn(`setProducerEnabled: operation already in progress for:`, id);
+            return;
+        }
         const record = this.db.getProducers().find(p => p.config.id === id);
         if (!record) {
             this.logger.warn(`setProducerEnabled: producer not found:`, id);
             return;
         }
-        this.db.saveProducer({ type: record.type, enabled, config: record.config });
-        if (enabled && !this.orchestrator.hasProducer(id)) {
-            await this._startProducer(record.type, record.config);
-        } else if (!enabled && this.orchestrator.hasProducer(id)) {
-            await this.orchestrator.removeProducer(id);
+        this._producerPending.add(id);
+        try {
+            this.db.saveProducer({ type: record.type, enabled, config: record.config });
+            if (enabled && !this.orchestrator.hasProducer(id)) {
+                await this._startProducer(record.type, record.config);
+            } else if (!enabled && this.orchestrator.hasProducer(id)) {
+                await this.orchestrator.removeProducer(id);
+            }
+        } finally {
+            this._producerPending.delete(id);
         }
     }
 
