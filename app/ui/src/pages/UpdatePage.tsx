@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
@@ -23,18 +23,98 @@ const RELEASE_NOTES_STYLE = `
   .release-notes th, .release-notes td { border: 0.5px solid var(--color-border-tertiary); padding: 5px 8px; text-align: left; }
   .release-notes th { background: var(--color-background-secondary); font-weight: 600; }
   .release-notes a { color: var(--acc); }
-  .release-notes blockquote { border-left: 3px solid var(--color-border-secondary); padding-left: 12px; color: var(--color-text-tertiary); margin: 8px 0; }
+  .release-notes blockquote:not(.markdown-alert) {
+    border-left: 3px solid var(--color-border-secondary);
+    padding-left: 12px;
+    color: var(--color-text-tertiary);
+    margin: 8px 0;
+  }
+  .release-notes .markdown-alert {
+    margin: 8px 0;
+    padding: 8px 12px;
+    color: var(--color-text-primary);
+    border-left: 3px solid var(--color-border-secondary);
+    border-radius: 0 4px 4px 0;
+    background: color-mix(in srgb, var(--color-border-secondary) 8%, transparent);
+  }
+  .release-notes .markdown-alert > *:last-child { margin-bottom: 0; }
+  .release-notes .markdown-alert-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 4px;
+    font-size: 16px;
+    font-weight: 600;
+    text-transform: uppercase;
+    line-height: 1.2;
+  }
+  .release-notes .markdown-alert-title::before {
+    content: '';
+    width: 16px;
+    height: 16px;
+    flex: 0 0 16px;
+    background-color: currentColor;
+    -webkit-mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    -webkit-mask-size: contain;
+    mask-repeat: no-repeat;
+    mask-position: center;
+    mask-size: contain;
+  }
+  .release-notes .markdown-alert-title svg {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+  }
+
+  .release-notes .markdown-alert-note .markdown-alert-title::before {
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Zm8.93-3.588-1.66.332a.25.25 0 0 0-.196.244v3.76c0 .132.107.239.24.239h1.13a.24.24 0 0 0 .24-.24V4.656a.25.25 0 0 0-.304-.244ZM8 10.904a1.08 1.08 0 1 0 0 2.16 1.08 1.08 0 0 0 0-2.16Z'/%3E%3C/svg%3E");
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Zm8.93-3.588-1.66.332a.25.25 0 0 0-.196.244v3.76c0 .132.107.239.24.239h1.13a.24.24 0 0 0 .24-.24V4.656a.25.25 0 0 0-.304-.244ZM8 10.904a1.08 1.08 0 1 0 0 2.16 1.08 1.08 0 0 0 0-2.16Z'/%3E%3C/svg%3E");
+  }
+  .release-notes .markdown-alert-tip .markdown-alert-title::before {
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M8 1a5 5 0 0 0-3.547 8.523c.598.598.973 1.371 1.113 2.228A1.75 1.75 0 0 0 7.296 13h1.408a1.75 1.75 0 0 0 1.73-1.249c.14-.857.515-1.63 1.113-2.228A5 5 0 0 0 8 1Zm-.25 13a.75.75 0 0 0 1.5 0v-.25h-1.5V14Z'/%3E%3C/svg%3E");
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M8 1a5 5 0 0 0-3.547 8.523c.598.598.973 1.371 1.113 2.228A1.75 1.75 0 0 0 7.296 13h1.408a1.75 1.75 0 0 0 1.73-1.249c.14-.857.515-1.63 1.113-2.228A5 5 0 0 0 8 1Zm-.25 13a.75.75 0 0 0 1.5 0v-.25h-1.5V14Z'/%3E%3C/svg%3E");
+  }
+  .release-notes .markdown-alert-important .markdown-alert-title::before,
+  .release-notes .markdown-alert-warning .markdown-alert-title::before,
+  .release-notes .markdown-alert-caution .markdown-alert-title::before {
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M6.457 1.047a1.75 1.75 0 0 1 3.086 0l5.48 9.75A1.75 1.75 0 0 1 13.48 13.5H2.52A1.75 1.75 0 0 1 .977 10.797l5.48-9.75ZM8 5.25a.75.75 0 0 0-.75.75v3a.75.75 0 0 0 1.5 0V6A.75.75 0 0 0 8 5.25Zm0 6.25a.875.875 0 1 0 0-1.75.875.875 0 0 0 0 1.75Z'/%3E%3C/svg%3E");
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M6.457 1.047a1.75 1.75 0 0 1 3.086 0l5.48 9.75A1.75 1.75 0 0 1 13.48 13.5H2.52A1.75 1.75 0 0 1 .977 10.797l5.48-9.75ZM8 5.25a.75.75 0 0 0-.75.75v3a.75.75 0 0 0 1.5 0V6A.75.75 0 0 0 8 5.25Zm0 6.25a.875.875 0 1 0 0-1.75.875.875 0 0 0 0 1.75Z'/%3E%3C/svg%3E");
+  }
+
+  .release-notes .markdown-alert-note {
+    border-left-color: #0969DA;
+    background: color-mix(in srgb, #0969DA 10%, transparent);
+  }
+  .release-notes .markdown-alert-note .markdown-alert-title { color: #0969DA; }
+
+  .release-notes .markdown-alert-tip {
+    border-left-color: #1A7F37;
+    background: color-mix(in srgb, #1A7F37 10%, transparent);
+  }
+  .release-notes .markdown-alert-tip .markdown-alert-title { color: #1A7F37; }
+
+  .release-notes .markdown-alert-important {
+    border-left-color: #8250DF;
+    background: color-mix(in srgb, #8250DF 10%, transparent);
+  }
+  .release-notes .markdown-alert-important .markdown-alert-title { color: #8250DF; }
+
+  .release-notes .markdown-alert-warning {
+    border-left-color: #9A6700;
+    background: color-mix(in srgb, #9A6700 12%, transparent);
+  }
+  .release-notes .markdown-alert-warning .markdown-alert-title { color: #9A6700; }
+
+  .release-notes .markdown-alert-caution {
+    border-left-color: #CF222E;
+    background: color-mix(in srgb, #CF222E 10%, transparent);
+  }
+  .release-notes .markdown-alert-caution .markdown-alert-title { color: #CF222E; }
+
   .release-notes input[type=checkbox] { margin-right: 5px; }
   .release-notes > *:first-child { margin-top: 0; }
 `
-
-const GH_ALERTS: Record<string, { label: string; color: string }> = {
-  NOTE:      { label: 'Note',      color: '#0969DA' },
-  TIP:       { label: 'Tip',       color: '#1A7F37' },
-  IMPORTANT: { label: 'Important', color: '#8250DF' },
-  WARNING:   { label: 'Warning',   color: '#9A6700' },
-  CAUTION:   { label: 'Caution',   color: '#CF222E' },
-}
 
 // Normalises GitHub alert hard-break format so [!TYPE] is always its own paragraph.
 // "> [!TYPE]  \n> content" → "> [!TYPE]\n>\n> content"
@@ -96,33 +176,7 @@ function ReleaseDetailView({ release, isCurrent, onBack, onUpdate }: {
         {release.body ? (
           <div className="release-notes">
             <ReactMarkdown
-              remarkPlugins={[remarkGfm]}
-              components={{
-                blockquote: ({ node, children }) => {
-                  // node is a HAST element — children are { type: 'element' | 'text', tagName?, ... }
-                  const firstP = (node as any)?.children?.find(
-                    (c: any) => c.type === 'element' && c.tagName === 'p'
-                  )
-                  const firstText = firstP?.children?.find((c: any) => c.type === 'text')
-                  const m = firstText?.value?.match(/^\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]$/)
-                  if (m && GH_ALERTS[m[1]]) {
-                    const alert = GH_ALERTS[m[1]]
-                    return (
-                      <div style={{
-                        borderLeft: `3px solid ${alert.color}`,
-                        background: `color-mix(in srgb, ${alert.color} 10%, transparent)`,
-                        padding: '8px 12px', borderRadius: '0 4px 4px 0', marginBottom: 8,
-                      }}>
-                        <div style={{ fontWeight: 600, color: alert.color, fontSize: 11, marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                          {alert.label}
-                        </div>
-                        {Children.toArray(children).slice(1)}
-                      </div>
-                    )
-                  }
-                  return <blockquote style={{ borderLeft: '3px solid var(--color-border-secondary)', paddingLeft: 12, color: 'var(--color-text-tertiary)', margin: '8px 0' }}>{children}</blockquote>
-                },
-              }}
+              remarkPlugins={[remarkGfm, remarkGithubAlerts]}
             >
               {preprocessAlerts(release.body)}
             </ReactMarkdown>
