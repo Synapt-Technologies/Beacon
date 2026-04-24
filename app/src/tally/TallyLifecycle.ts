@@ -8,11 +8,12 @@ import { Logger } from "../logging/Logger";
 import type { AedesConsumerConfig } from "./consumer/networkConsumer/AedesNetworkConsumer";
 import type { GpioConsumerConfig } from "./consumer/hardwareConsumer/RpiGpioHardwareConsumer";
 import type { AbstractConsumer, ConsumerConfig, ConsumerInfo } from "./consumer/AbstractConsumer";
-import type { DeviceAddress, DeviceAlertAction, DeviceAlertTarget, DeviceName, TallyDevice } from "./types/DeviceTypes";
+import { TallyDeviceDto, type DeviceAddress, type DeviceAlertAction, type DeviceAlertTarget, type DeviceName, type TallyDevice } from "./types/DeviceTypes";
 import type { ConsumerId } from "./types/ConsumerTypes";
 import type { GlobalSource } from "./types/SourceTypes";
 import { HardwareVersion, type SystemInfo } from "../types/SystemInfo";
 import SystemInfoUtil from "../system/SystemInfoUtil";
+import { SimpleBusNode } from "./types/LogicTypes";
 
 // ? Mutations
 export interface ConsumerUpdate<T extends ConsumerConfig = ConsumerConfig> extends LifeCycleConsumerConfig<T> {
@@ -333,15 +334,21 @@ export class TallyLifecycle {
     // ? Device methods — delegate to the owning consumer
 
     public patchDevice(address: DeviceAddress, patch: GlobalSource[]): void {
-        const consumer = this.orchestrator.getConsumer(address.consumer);
+        const consumer = this.orchestrator.getConsumer(address.consumer); // TODO: Add getDevice to Orchestrator
         if (!consumer) { this.logger.warn(`patchDevice: no consumer for`, address.consumer); return; }
-        consumer.setDevicePatch(address, patch);
+        const device = consumer.getDevice(address);
+        if (!device) { this.logger.warn(`patchDevice: no device for`, address); return; }
+        device.logic = new SimpleBusNode(patch);
+        // TODO: Update Device / orchestrator
     }
 
     public renameDevice(address: DeviceAddress, name: DeviceName): void {
-        const consumer = this.orchestrator.getConsumer(address.consumer);
+        const consumer = this.orchestrator.getConsumer(address.consumer); // TODO: Add getDevice to Orchestrator
         if (!consumer) { this.logger.warn(`renameDevice: no consumer for`, address.consumer); return; }
-        consumer.setDeviceName(address, name);
+        const device = consumer.getDevice(address);
+        if (!device) { this.logger.warn(`renameDevice: no device for`, address); return; }
+        device.name = name;
+        // TODO: Update Device / orchestrator
     }
 
     public removeDevice(address: DeviceAddress): void {
@@ -350,10 +357,12 @@ export class TallyLifecycle {
         consumer.deleteDevice(address);
     }
 
-    public sendAlert(address: DeviceAddress, type: DeviceAlertAction, target: DeviceAlertTarget, time: number): void {
-        const consumer = this.orchestrator.getConsumer(address.consumer);
+    public sendAlert(address: DeviceAddress, action: DeviceAlertAction, target: DeviceAlertTarget, timeout: number): void {
+        const consumer = this.orchestrator.getConsumer(address.consumer); // TODO: Add getDevice to Orchestrator
         if (!consumer) { this.logger.warn(`sendAlert: no consumer for`, address.consumer); return; }
-        consumer.setDeviceAlert(address, type, target, time);
+        const device = consumer.getDevice(address);
+        if (!device) { this.logger.warn(`sendAlert: no device for`, address); return; }
+        consumer.sendDeviceAlert(new TallyDeviceDto(device).toAlertBundle({ action, target, timeout }));
     }
 
     private async _restartConsumer(consumerId: ConsumerId): Promise<void> {
