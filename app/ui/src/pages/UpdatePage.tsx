@@ -1,9 +1,148 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import type { UpdateStatus } from '../../../src/types/UpdateTypes'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
+import remarkGithubAlerts from 'remark-github-alerts'
+import type { UpdateStatus, GitHubRelease } from '../../../src/types/UpdateTypes'
 import * as BeaconApi from '../api/BeaconApi'
 
 type OverlayState = 'updating' | 'done' | 'error'
+
+const RELEASE_NOTES_STYLE = `
+  .release-notes { font-size: 13px; color: var(--color-text-primary); line-height: 1.6; }
+  .release-notes h1 { font-size: 15px; font-weight: 600; margin: 14px 0 8px; }
+  .release-notes h2 { font-size: 14px; font-weight: 600; margin: 12px 0 6px; }
+  .release-notes h3 { font-size: 13px; font-weight: 600; margin: 10px 0 4px; }
+  .release-notes p  { margin-bottom: 8px; }
+  .release-notes ul, .release-notes ol { padding-left: 20px; margin-bottom: 8px; }
+  .release-notes li { margin-bottom: 3px; }
+  .release-notes code { font-family: monospace; font-size: 11px; background: var(--color-background-secondary); padding: 1px 4px; border-radius: 3px; }
+  .release-notes pre { background: var(--color-background-secondary); padding: 10px 12px; border-radius: 6px; overflow-x: auto; margin-bottom: 8px; }
+  .release-notes pre code { background: none; padding: 0; }
+  .release-notes table { border-collapse: collapse; width: 100%; margin-bottom: 8px; font-size: 12px; }
+  .release-notes th, .release-notes td { border: 0.5px solid var(--color-border-tertiary); padding: 5px 8px; text-align: left; }
+  .release-notes th { background: var(--color-background-secondary); font-weight: 600; }
+  .release-notes a { color: var(--acc); }
+  .release-notes blockquote { border-left: 3px solid var(--color-border-secondary); padding-left: 12px; color: var(--color-text-tertiary); margin: 8px 0; }
+  .release-notes input[type=checkbox] { margin-right: 5px; }
+  .release-notes > *:first-child { margin-top: 0; }
+`
+
+const GH_ALERTS: Record<string, { label: string; color: string }> = {
+  NOTE:      { label: 'Note',      color: '#0969DA' },
+  TIP:       { label: 'Tip',       color: '#1A7F37' },
+  IMPORTANT: { label: 'Important', color: '#8250DF' },
+  WARNING:   { label: 'Warning',   color: '#9A6700' },
+  CAUTION:   { label: 'Caution',   color: '#CF222E' },
+}
+
+// Normalises GitHub alert hard-break format so [!TYPE] is always its own paragraph.
+// "> [!TYPE]  \n> content" → "> [!TYPE]\n>\n> content"
+function preprocessAlerts(md: string): string {
+  return md.replace(
+    /(^> \[!(?:NOTE|TIP|IMPORTANT|WARNING|CAUTION)\])[^\S\n]*(\r?\n)/gm,
+    (_, header, newline) => `${header}${newline}>${newline}`,
+  )
+}
+
+function ReleaseDetailView({ release, isCurrent, onBack, onUpdate }: {
+  release: GitHubRelease
+  isCurrent: boolean
+  onBack: () => void
+  onUpdate: () => void
+}) {
+  return (
+    <div>
+      <style>{RELEASE_NOTES_STYLE}</style>
+
+      {/* Back + badges */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+        <button
+          onClick={onBack}
+          style={{
+            display: 'flex', alignItems: 'center', gap: 5, background: 'none',
+            border: 'none', cursor: 'pointer', padding: '4px 0',
+            fontSize: 12, color: 'var(--color-text-secondary)',
+          }}
+        >
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M9 2.5L4.5 7L9 11.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          Releases
+        </button>
+        <div style={{ flex: 1 }} />
+        {release.prerelease && (
+          <span style={{ fontSize: 10, padding: '1px 6px', borderRadius: 99, background: 'color-mix(in srgb, #E8A838 20%, transparent)', color: '#E8A838' }}>
+            beta
+          </span>
+        )}
+        {isCurrent && (
+          <span style={{ fontSize: 10, padding: '1px 6px', borderRadius: 99, background: 'color-mix(in srgb, var(--acc) 20%, transparent)', color: 'var(--acc)' }}>
+            current
+          </span>
+        )}
+      </div>
+
+      {/* Title */}
+      <div style={{ fontSize: 17, fontWeight: 600, color: 'var(--color-text-primary)', marginBottom: 3 }}>
+        {release.name}
+      </div>
+      <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginBottom: 16 }}>
+        {new Date(release.publishedAt).toLocaleDateString()}
+      </div>
+
+      {/* Notes */}
+      <div className="s-card" style={{ padding: '14px 16px' }}>
+        {release.body ? (
+          <div className="release-notes">
+            <ReactMarkdown
+              remarkPlugins={[remarkGfm]}
+              components={{
+                blockquote: ({ node, children }) => {
+                  // node is a HAST element — children are { type: 'element' | 'text', tagName?, ... }
+                  const firstP = (node as any)?.children?.find(
+                    (c: any) => c.type === 'element' && c.tagName === 'p'
+                  )
+                  const firstText = firstP?.children?.find((c: any) => c.type === 'text')
+                  const m = firstText?.value?.match(/^\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]$/)
+                  if (m && GH_ALERTS[m[1]]) {
+                    const alert = GH_ALERTS[m[1]]
+                    return (
+                      <div style={{
+                        borderLeft: `3px solid ${alert.color}`,
+                        background: `color-mix(in srgb, ${alert.color} 10%, transparent)`,
+                        padding: '8px 12px', borderRadius: '0 4px 4px 0', marginBottom: 8,
+                      }}>
+                        <div style={{ fontWeight: 600, color: alert.color, fontSize: 11, marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                          {alert.label}
+                        </div>
+                        {Children.toArray(children).slice(1)}
+                      </div>
+                    )
+                  }
+                  return <blockquote style={{ borderLeft: '3px solid var(--color-border-secondary)', paddingLeft: 12, color: 'var(--color-text-tertiary)', margin: '8px 0' }}>{children}</blockquote>
+                },
+              }}
+            >
+              {preprocessAlerts(release.body)}
+            </ReactMarkdown>
+          </div>
+        ) : (
+          <div style={{ fontSize: 12, color: 'var(--color-text-tertiary)' }}>No release notes available.</div>
+        )}
+      </div>
+
+      {/* Update action */}
+      {!isCurrent && (
+        <div style={{ marginTop: 16, display: 'flex', justifyContent: 'flex-end' }}>
+          <button className="sm-btn" onClick={onUpdate} style={{ background: 'var(--acc)', color: '#fff', border: 'none' }}>
+            Update to {release.tag}
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
 
 function UpdateProgressOverlay() {
   return (
@@ -142,11 +281,12 @@ function UpdateSuccessModal({ version, onStay, onNavigate }: {
 export default function UpdatePage() {
   const navigate = useNavigate()
 
-  const [status,       setStatus]       = useState<UpdateStatus | null>(null)
-  const [checking,     setChecking]     = useState(false)
-  const [showBranches, setShowBranches] = useState(false)
-  const [overlay,      setOverlay]      = useState<OverlayState | null>(null)
-  const [newVersion,   setNewVersion]   = useState<string | null>(null)
+  const [status,        setStatus]        = useState<UpdateStatus | null>(null)
+  const [checking,      setChecking]      = useState(false)
+  const [showBranches,  setShowBranches]  = useState(false)
+  const [overlay,       setOverlay]       = useState<OverlayState | null>(null)
+  const [newVersion,    setNewVersion]    = useState<string | null>(null)
+  const [detailRelease, setDetailRelease] = useState<GitHubRelease | null>(null)
 
   useEffect(() => {
     const isPending = sessionStorage.getItem('beacon-update-pending') === 'true'
@@ -208,6 +348,18 @@ export default function UpdatePage() {
     } catch {
       sessionStorage.removeItem('beacon-update-pending')
     }
+  }
+
+  if (detailRelease) {
+    const isCurrent = detailRelease.tag === `v${status?.current}` || detailRelease.tag === status?.current
+    return (
+      <ReleaseDetailView
+        release={detailRelease}
+        isCurrent={isCurrent}
+        onBack={() => setDetailRelease(null)}
+        onUpdate={() => { handleApply(detailRelease.tag, 'release'); setDetailRelease(null) }}
+      />
+    )
   }
 
   return (
@@ -289,6 +441,11 @@ export default function UpdatePage() {
               {!isCurrent && (
                 <button className="sm-btn" onClick={() => handleApply(r.tag, 'release')}>
                   Update
+                </button>
+              )}
+              {r.body && (
+                <button className="sm-btn" onClick={() => setDetailRelease(r)} style={{ background: 'var(--acc)', color: '#fff', border: 'none' }}>
+                  Info
                 </button>
               )}
             </div>

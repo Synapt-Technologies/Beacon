@@ -3,6 +3,7 @@ export interface GitHubRelease {
     name:        string;
     publishedAt: string;
     prerelease:  boolean;
+    body:        string;
 }
 
 export interface GitHubBranch {
