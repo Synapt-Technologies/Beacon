@@ -90,11 +90,11 @@ export function TallyStateProvider({ children }: { children: ReactNode }) {
     }
   }, [wsUrl, keepAliveMs])
 
-  // Staleness detection: flag if no keepalive received within keepAliveMs * 3
+  // Staleness detection: flag if no keepalive received within keepAliveMs * 5
   useEffect(() => {
     const id = setInterval(() => {
       if (lastKeepalive === null) return
-      setStale(Date.now() - lastKeepalive > keepAliveMs * 3)
+      setStale(Date.now() - lastKeepalive > keepAliveMs * 5)
     }, keepAliveMs)
     return () => clearInterval(id)
   }, [keepAliveMs, lastKeepalive])
