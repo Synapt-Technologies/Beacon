@@ -121,6 +121,14 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
         return newGlobalState;
     }
 
+    private broadcastTally(sourceBus: SourceBus) {
+        for (const consumer of this.consumers.values()) {
+            if (consumer.isTallyBroadcaster()) {
+                consumer.broadcastTally(sourceBus);
+            }
+        }
+    }
+
     private updateDeviceTally(device?: TallyDevice): void {
 
         if (device) {
@@ -133,8 +141,10 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
         }
         else{
             const newGlobal = this.parseNewGlobalTally(this.producerTallyStates);
-
+            this.broadcastTally(newGlobal);
             this.parseDevices(newGlobal);
+
+
         }
     }
 
