@@ -40,8 +40,6 @@ type SettingType<K extends string, T = SettingMap> =
 
 
 
-        
-// TODO add more try catch.
 export class CoreDatabase {
     private static instance: CoreDatabase;
     private db: Database.Database;
@@ -62,7 +60,7 @@ export class CoreDatabase {
         ]);
         this.logger.info(`Database initialized at:`, dbPath);
     }
-    
+
     public static getInstance(): CoreDatabase {
         if (!CoreDatabase.instance) {
             CoreDatabase.instance = new CoreDatabase();
@@ -86,7 +84,7 @@ export class CoreDatabase {
                 FOREIGN KEY(id) REFERENCES producers(id) ON DELETE CASCADE
             );
 
-            
+
             CREATE TABLE IF NOT EXISTS consumer_devices (
                 id TEXT PRIMARY KEY,
                 consumer_id TEXT NOT NULL,
@@ -97,34 +95,46 @@ export class CoreDatabase {
                 key TEXT PRIMARY KEY,
                 value TEXT NOT NULL
             )
-            
+
         `);
     }
 
 
     // ? Producer Methods
     public saveProducer(entry: { type: string; enabled: boolean; config: ProducerConfig }): void {
-        const stmt = this.db.prepare(`
-            INSERT INTO producers (id, type, config, enabled)
-            VALUES (?, ?, ?, ?)
-            ON CONFLICT(id) DO UPDATE SET config=excluded.config, enabled=excluded.enabled
-        `);
-        stmt.run(entry.config.id, entry.type, JSON.stringify(entry.config), entry.enabled ? 1 : 0);
+        try {
+            const stmt = this.db.prepare(`
+                INSERT INTO producers (id, type, config, enabled)
+                VALUES (?, ?, ?, ?)
+                ON CONFLICT(id) DO UPDATE SET config=excluded.config, enabled=excluded.enabled
+            `);
+            stmt.run(entry.config.id, entry.type, JSON.stringify(entry.config), entry.enabled ? 1 : 0);
+        } catch (err) {
+            return this.logger.fatal(`Failed to save producer:`, entry.config.id, err);
+        }
     }
 
     public getProducers(): Required<Omit<ProducerBundle, "info">>[] {
-        const rows = this.db.prepare('SELECT * FROM producers').all() as { id: string, type: string, config: string, enabled: number }[];
-        return rows.map(row => ({ type: row.type, enabled: row.enabled === 1, config: JSON.parse(row.config) }));
+        try {
+            const rows = this.db.prepare('SELECT * FROM producers').all() as { id: string, type: string, config: string, enabled: number }[];
+            return rows.map(row => ({ type: row.type, enabled: row.enabled === 1, config: JSON.parse(row.config) }));
+        } catch (err) {
+            return this.logger.fatal(`Failed to read producers:`, err);
+        }
     }
 
     public saveProducerInventory(id: string, info: ProducerInfo) {
-        const serialized = { ...info, sources: Array.from(info.sources.values()) };
-        const stmt = this.db.prepare(`
-            INSERT INTO producer_info (id, info)
-            VALUES (?, ?)
-            ON CONFLICT(id) DO UPDATE SET info=excluded.info
-        `);
-        stmt.run(id, JSON.stringify(serialized));
+        try {
+            const serialized = { ...info, sources: Array.from(info.sources.values()) };
+            const stmt = this.db.prepare(`
+                INSERT INTO producer_info (id, info)
+                VALUES (?, ?)
+                ON CONFLICT(id) DO UPDATE SET info=excluded.info
+            `);
+            stmt.run(id, JSON.stringify(serialized));
+        } catch (err) {
+            return this.logger.fatal(`Failed to save producer inventory:`, id, err);
+        }
     }
 
     public getProducerInventory(id: string): ProducerInfo | null {
@@ -147,7 +157,11 @@ export class CoreDatabase {
     }
 
     public deleteProducer(id: string): void {
-        this.db.prepare('DELETE FROM producers WHERE id = ?').run(id);
+        try {
+            this.db.prepare('DELETE FROM producers WHERE id = ?').run(id);
+        } catch (err) {
+            return this.logger.fatal(`Failed to delete producer:`, id, err);
+        }
     }
 
     // ? Consumer Device Methods
@@ -156,13 +170,17 @@ export class CoreDatabase {
     }
 
     public saveConsumerDevice(device: TallyDevice) {
-        const id = DeviceAddressDto.from(device.id).toKey();
-        const stmt = this.db.prepare(`
-            INSERT INTO consumer_devices (id, consumer_id, data)
-            VALUES (?, ?, ?)
-            ON CONFLICT(id) DO UPDATE SET data=excluded.data
-        `);
-        stmt.run(id, device.id.consumer, JSON.stringify(device));
+        try {
+            const id = DeviceAddressDto.from(device.id).toKey();
+            const stmt = this.db.prepare(`
+                INSERT INTO consumer_devices (id, consumer_id, data)
+                VALUES (?, ?, ?)
+                ON CONFLICT(id) DO UPDATE SET data=excluded.data
+            `);
+            stmt.run(id, device.id.consumer, JSON.stringify(device));
+        } catch (err) {
+            return this.logger.fatal(`Failed to save consumer device:`, device.id, err);
+        }
     }
 
     public getConsumerDevice(address: DeviceAddress): TallyDevice | null {
@@ -179,8 +197,12 @@ export class CoreDatabase {
     }
 
     public deleteConsumerDevice(address: DeviceAddress): void {
-        const id = DeviceAddressDto.from(address).toKey();
-        this.db.prepare('DELETE FROM consumer_devices WHERE id = ?').run(id);
+        try {
+            const id = DeviceAddressDto.from(address).toKey();
+            this.db.prepare('DELETE FROM consumer_devices WHERE id = ?').run(id);
+        } catch (err) {
+            return this.logger.fatal(`Failed to delete consumer device:`, address, err);
+        }
     }
 
     public getConsumerDevices(consumerId: ConsumerId): Map<DeviceKey, TallyDevice> {
@@ -214,24 +236,27 @@ export class CoreDatabase {
     }
 
     public setSetting<K extends SettingKey>(key: K, value: SettingType<K>): void {
-        const stmt = this.db.prepare(`
-            INSERT INTO settings (key, value)
-            VALUES (?, ?)
-            ON CONFLICT(key) DO UPDATE SET value=excluded.value
-        `);
-        stmt.run(key, JSON.stringify(value));
+        try {
+            const stmt = this.db.prepare(`
+                INSERT INTO settings (key, value)
+                VALUES (?, ?)
+                ON CONFLICT(key) DO UPDATE SET value=excluded.value
+            `);
+            stmt.run(key, JSON.stringify(value));
+        } catch (err) {
+            return this.logger.fatal(`Failed to save setting:`, key, err);
+        }
     }
 
     public static destroy(): void {
-        // TODO Strengthen this with a try catch and make sure to handle errors properly.
-        if (!CoreDatabase.instance) 
+        if (!CoreDatabase.instance)
             return;
-        
+
         try{
             CoreDatabase.instance.logger.info(`Closing database.`);
             const db = CoreDatabase.instance.db;
             if (db && db.open) {
-                db.close(); 
+                db.close();
             }
             CoreDatabase.instance.logger.info(`Database closed successfully.`);
         } catch (err) {
@@ -239,7 +264,7 @@ export class CoreDatabase {
         } finally {
             CoreDatabase.instance = undefined!;
         }
-    
+
     }
 
 }
