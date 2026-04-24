@@ -155,7 +155,9 @@ export class TallyLifecycle {
     private async _loadConsumers(): Promise<void> {
         for (const id of Object.keys(this._config.consumers) as RegisteredConsumerId[]) {
             if (!this._config.consumers[id].enabled) continue;
-            await this._restartConsumer(id);
+            try {
+                await this._restartConsumer(id);
+            } catch { /* error already logged in _restartConsumer */ }
         }
     }
 
@@ -197,7 +199,9 @@ export class TallyLifecycle {
                 if (setting.enabled !== undefined) this._config.consumers[id].enabled = setting.enabled;
                 if (setting.config)               this._config.consumers[id].config  = { ...this._config.consumers[id].config, ...setting.config };
                 this.db.setSetting(SettingKey.consumers[id], { enabled: this._config.consumers[id].enabled, config: this._config.consumers[id].config });
-                await this._restartConsumer(id);
+                try {
+                    await this._restartConsumer(id);
+                } catch { /* error already logged in _restartConsumer */ }
             }
         }
 
