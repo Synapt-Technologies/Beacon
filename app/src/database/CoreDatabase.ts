@@ -235,9 +235,9 @@ export class CoreDatabase {
             }
             CoreDatabase.instance.logger.info(`Database closed successfully.`);
         } catch (err) {
-            this.instance.logger.error(`Error closing database:`, err);
+            CoreDatabase.instance.logger.error(`Error closing database:`, err);
         } finally {
-            CoreDatabase.instance = undefined as any;
+            CoreDatabase.instance = undefined!;
         }
     
     }
