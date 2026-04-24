@@ -5,8 +5,9 @@ import { Aedes, type Client, type Subscription } from "aedes";
 import { createServer, Server } from "node:net";
 import { createServer as createHttpServer, type Server as HttpServer } from "node:http";
 import { WebSocketServer, createWebSocketStream } from "ws";
-import { type DeviceAlertBundle, type DeviceTallyBundle, DeviceTallyState } from "../../types/DeviceTypes";
+import { type DeviceAlertBundle, type DeviceTallyBundle, DeviceTallyState, type TallyDevice, type TallyDevice, TallyDeviceDto } from "../../types/DeviceTypes";
 import type { SourceBus } from "../../types/SourceTypes";
+import { SimpleBusNode } from "../../types/LogicTypes";
 
 export interface AedesConsumerInfo extends NetworkConsumerInfo {
     tcp_active: boolean;
@@ -157,21 +158,19 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer {
         // const testTallyDevice1: TallyDevice = {
         //     id: { consumer: this.config.id, device: 'ad322df69708' },
         //     name: {long: 'Test Device 1' },
-        //     state: DeviceTallyState.NONE,
         //     connection: 2,
         //     logic: new SimpleBusNode([]),
         // };
         // const testTallyDevice2: TallyDevice = {
         //     id: { consumer: this.config.id, device: '9862eef93c9e' },
         //     name: {long: 'Test Device 2' },
-        //     state: DeviceTallyState.NONE,
         //     connection: 3,
         //     logic: new SimpleBusNode([]),
         
         // };
 
-        // this._addDevice(testTallyDevice1);
-        // this._addDevice(testTallyDevice2);
+        this._addDevice(testTallyDevice1);
+        this._addDevice(testTallyDevice2);
     }
 
     async destroy(): Promise<void> {
