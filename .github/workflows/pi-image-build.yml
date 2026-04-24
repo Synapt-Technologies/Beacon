@@ -48,11 +48,28 @@ jobs:
             -c beacon.yaml \
             -B /tmp/beacon-work/work
 
+      - name: Compress image to .xz
+        run: |
+          IMG_DIR="/tmp/beacon-work/work/image-Beacon"
+          shopt -s nullglob
+          IMAGES=("${IMG_DIR}"/*.img)
+
+          if [ ${#IMAGES[@]} -eq 0 ]; then
+            echo "ERROR: No .img files found in ${IMG_DIR}"
+            ls -la "${IMG_DIR}" || true
+            exit 1
+          fi
+
+          for img in "${IMAGES[@]}"; do
+            xz -v -T0 -6 -f -k "${img}"
+          done
+
       - name: Upload to release
         if: github.event_name == 'release'
         run: |
           gh release upload "${{ github.event.release.tag_name }}" \
             /tmp/beacon-work/work/image-Beacon/*.img \
+            /tmp/beacon-work/work/image-Beacon/*.img.xz \
             --clobber
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
