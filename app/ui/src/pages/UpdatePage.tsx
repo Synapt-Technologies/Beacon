@@ -150,7 +150,14 @@ function ReleaseDetailView({ release, isCurrent, onBack, onUpdate }: {
           </svg>
           Releases
         </button>
-        <div style={{ flex: 1 }} />
+      </div>
+
+      {/* Title */}
+      <div style={{ fontSize: 17, fontWeight: 600, color: 'var(--color-text-primary)', marginBottom: 3 }}>
+        {release.name}
+      </div>
+      <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginBottom: 16, display: 'flex', gap: 5 }}>
+        <p>{new Date(release.publishedAt).toLocaleDateString()}</p>
         {release.prerelease && (
           <span style={{ fontSize: 10, padding: '1px 6px', borderRadius: 99, background: 'color-mix(in srgb, #E8A838 20%, transparent)', color: '#E8A838' }}>
             beta
@@ -161,14 +168,6 @@ function ReleaseDetailView({ release, isCurrent, onBack, onUpdate }: {
             current
           </span>
         )}
-      </div>
-
-      {/* Title */}
-      <div style={{ fontSize: 17, fontWeight: 600, color: 'var(--color-text-primary)', marginBottom: 3 }}>
-        {release.name}
-      </div>
-      <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginBottom: 16 }}>
-        {new Date(release.publishedAt).toLocaleDateString()}
       </div>
 
       {/* Notes */}
