@@ -311,7 +311,7 @@ export class AdminServer {
                 res.status(400).json({ error: "ref and type are required" });
                 return;
             }
-            res.status(204).send();
+            res.status(202).send();
             this.updateManager.applyUpdate(ref, type).catch((err) => {
                 this.logger.error("Update failed:", err);
             });
