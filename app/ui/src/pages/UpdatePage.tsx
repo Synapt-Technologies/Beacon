@@ -9,47 +9,56 @@ import * as BeaconApi from '../api/BeaconApi'
 type OverlayState = 'updating' | 'done' | 'error'
 
 const RELEASE_NOTES_STYLE = `
-  .release-notes { font-size: 13px; color: var(--color-text-primary); line-height: 1.6; }
-  .release-notes h1 { font-size: 20px; font-weight: 700; line-height: 1.25; margin: 16px 0 10px; }
-  .release-notes h2 { font-size: 17px; font-weight: 650; line-height: 1.3; margin: 14px 0 8px; }
-  .release-notes h3 { font-size: 15px; font-weight: 600; line-height: 1.35; margin: 12px 0 7px; }
-  .release-notes h4 { font-size: 14px; font-weight: 600; line-height: 1.4; margin: 10px 0 6px; }
-  .release-notes h5, .release-notes h6 { font-size: 13px; font-weight: 600; line-height: 1.4; margin: 9px 0 5px; }
-  .release-notes p { margin: 0 0 8px; }
-  .release-notes ul, .release-notes ol { padding-left: 20px; margin: 0 0 8px; }
+  .release-notes { font-size: 13px; color: var(--color-text-primary); line-height: 1.55; }
+  .release-notes h1, .release-notes h2, .release-notes h3, .release-notes h4, .release-notes h5, .release-notes h6 {
+    font-weight: 600;
+    line-height: 1.25;
+    margin: 16px 0 10px;
+  }
+  .release-notes h1 { font-size: 21px; padding-bottom: 0.25em; border-bottom: 1px solid var(--color-border-tertiary); }
+  .release-notes h2 { font-size: 17px; padding-bottom: 0.2em; border-bottom: 1px solid var(--color-border-tertiary); }
+  .release-notes h3 { font-size: 15px; }
+  .release-notes h4 { font-size: 14px; }
+  .release-notes h5 { font-size: 13px; }
+  .release-notes h6 { font-size: 12px; color: var(--color-text-tertiary); }
+  .release-notes p { margin: 0 0 10px; }
+  .release-notes ul, .release-notes ol { padding-left: 20px; margin: 0 0 10px; }
   .release-notes li { margin-bottom: 3px; }
-  .release-notes code { font-family: monospace; font-size: 11px; background: var(--color-background-secondary); padding: 1px 4px; border-radius: 3px; }
-  .release-notes pre { background: var(--color-background-secondary); padding: 10px 12px; border-radius: 6px; overflow-x: auto; margin-bottom: 8px; }
+  .release-notes code {
+    font-family: ui-monospace, SFMono-Regular, SFMono, Menlo, Consolas, 'Liberation Mono', monospace;
+    font-size: 11px;
+    background: var(--color-background-secondary);
+    padding: 1px 4px;
+    border-radius: 4px;
+  }
+  .release-notes pre { background: var(--color-background-secondary); padding: 10px 12px; border-radius: 6px; overflow-x: auto; margin-bottom: 10px; }
   .release-notes pre code { background: none; padding: 0; }
-  .release-notes table { border-collapse: collapse; width: 100%; margin-bottom: 8px; font-size: 12px; }
-  .release-notes th, .release-notes td { border: 0.5px solid var(--color-border-tertiary); padding: 5px 8px; text-align: left; }
+  .release-notes table { border-collapse: collapse; width: 100%; margin-bottom: 10px; font-size: 12px; }
+  .release-notes th, .release-notes td { border: 1px solid var(--color-border-tertiary); padding: 6px 8px; text-align: left; }
   .release-notes th { background: var(--color-background-secondary); font-weight: 600; }
   .release-notes a { color: var(--acc); }
   .release-notes blockquote:not(.markdown-alert) {
-    border-left: 3px solid var(--color-border-secondary);
-    padding-left: 12px;
+    border-left: 0.25em solid var(--color-border-secondary);
+    padding: 0 1em;
     color: var(--color-text-tertiary);
-    margin: 8px 0;
+    margin: 0 0 10px;
   }
   .release-notes .markdown-alert {
-    margin: 8px 0;
+    margin: 0 0 10px;
     padding: 8px 12px;
     color: var(--color-text-primary);
-    border-left: 3px solid var(--color-border-secondary);
+    border-left: 0.25em solid var(--color-border-secondary);
     border-radius: 0 4px 4px 0;
     background: color-mix(in srgb, var(--color-border-secondary) 8%, transparent);
   }
   .release-notes .markdown-alert > *:last-child { margin-bottom: 0; }
-  .release-notes .markdown-alert > br:first-of-type { display: none; }
-  .release-notes .markdown-alert > .markdown-alert-title + :is(p, ul, ol, pre) { margin-top: 0; }
   .release-notes .markdown-alert-title {
     display: flex;
     align-items: center;
-    gap: 6px;
-    margin-bottom: 4px;
-    font-size: 14px;
+    gap: 3px;
+    margin-bottom: 8px;
+    font-size: 13px;
     font-weight: 600;
-    text-transform: uppercase;
     line-height: 1.2;
   }
   .release-notes .markdown-alert-title::before {
