@@ -239,9 +239,16 @@ export class TallyLifecycle {
 
     // ? Producer methods
 
+    private static readonly PRODUCER_INIT_TIMEOUT_MS = 10_000;
+
     private async _startProducer(type: string, config: ProducerConfig): Promise<void> {
         const producer = TallyFactory.createProducer(type, config);
-        await producer.init();
+        await Promise.race([
+            producer.init(),
+            new Promise<never>((_, reject) =>
+                setTimeout(() => reject(new Error(`Producer init timed out after ${TallyLifecycle.PRODUCER_INIT_TIMEOUT_MS}ms: ${config.id}`)), TallyLifecycle.PRODUCER_INIT_TIMEOUT_MS)
+            )
+        ]);
         this.orchestrator.addProducer(producer);
     }
 
