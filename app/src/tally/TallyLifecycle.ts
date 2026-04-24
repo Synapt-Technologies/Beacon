@@ -354,33 +354,33 @@ export class TallyLifecycle {
 
     public patchDevice(address: DeviceAddress, patch: GlobalSource[]): void {
         const consumer = this.orchestrator.getConsumer(address.consumer); // TODO: Add getDevice to Orchestrator
-        if (!consumer) { this.logger.warn(`patchDevice: no consumer for`, address.consumer); return; }
+        if (!consumer) throw new Error(`patchDevice: unknown consumer '${address.consumer}'`);
         const device = consumer.getDevice(address);
-        if (!device) { this.logger.warn(`patchDevice: no device for`, address); return; }
+        if (!device) throw new Error(`patchDevice: unknown device '${address.device}' on consumer '${address.consumer}'`);
         device.logic = new SimpleBusNode(patch);
         consumer.updateDevice(device);
     }
 
     public renameDevice(address: DeviceAddress, name: DeviceName): void {
         const consumer = this.orchestrator.getConsumer(address.consumer); // TODO: Add getDevice to Orchestrator
-        if (!consumer) { this.logger.warn(`renameDevice: no consumer for`, address.consumer); return; }
+        if (!consumer) throw new Error(`renameDevice: unknown consumer '${address.consumer}'`);
         const device = consumer.getDevice(address);
-        if (!device) { this.logger.warn(`renameDevice: no device for`, address); return; }
+        if (!device) throw new Error(`renameDevice: unknown device '${address.device}' on consumer '${address.consumer}'`);
         device.name = name;
         consumer.updateDevice(device);
     }
 
     public removeDevice(address: DeviceAddress): void {
         const consumer = this.orchestrator.getConsumer(address.consumer);
-        if (!consumer) { this.logger.warn(`removeDevice: no consumer for`, address.consumer); return; }
+        if (!consumer) throw new Error(`removeDevice: unknown consumer '${address.consumer}'`);
         consumer.deleteDevice(address);
     }
 
     public sendAlert(address: DeviceAddress, action: DeviceAlertAction, target: DeviceAlertTarget, timeout: number): void {
         const consumer = this.orchestrator.getConsumer(address.consumer); // TODO: Add getDevice to Orchestrator
-        if (!consumer) { this.logger.warn(`sendAlert: no consumer for`, address.consumer); return; }
+        if (!consumer) throw new Error(`sendAlert: unknown consumer '${address.consumer}'`);
         const device = consumer.getDevice(address);
-        if (!device) { this.logger.warn(`sendAlert: no device for`, address); return; }
+        if (!device) throw new Error(`sendAlert: unknown device '${address.device}' on consumer '${address.consumer}'`);
         consumer.sendDeviceAlert(new TallyDeviceDto(device).toAlertBundle({ action, target, timeout }));
     }
 

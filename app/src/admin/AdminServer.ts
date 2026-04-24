@@ -223,9 +223,14 @@ export class AdminServer {
                 res.status(400).json({ error: "patch must be an array" });
                 return;
             }
-            this.handlers.patchDevice({ consumer, device }, patch);
-            res.status(204).send();
-            this.logger.info(`Device patched:`, { consumer, device }, patch);
+            try {
+                this.handlers.patchDevice({ consumer, device }, patch);
+                res.status(204).send();
+                this.logger.info(`Device patched:`, { consumer, device }, patch);
+            } catch (e) {
+                this.logger.error("Failed to patch device:", e);
+                res.status(500).json({ error: e instanceof Error ? e.message : "Failed to patch device" });
+            }
         });
 
         this.app.patch("/api/devices/:consumer/:device/name", (req, res) => {
@@ -235,28 +240,43 @@ export class AdminServer {
                 res.status(400).json({ error: "name.long is required" });
                 return;
             }
-            this.handlers.renameDevice({ consumer, device }, name);
-            res.status(204).send();
-            this.logger.info(`Device renamed:`, { consumer, device }, name);
+            try {
+                this.handlers.renameDevice({ consumer, device }, name);
+                res.status(204).send();
+                this.logger.info(`Device renamed:`, { consumer, device }, name);
+            } catch (e) {
+                this.logger.error("Failed to rename device:", e);
+                res.status(500).json({ error: e instanceof Error ? e.message : "Failed to rename device" });
+            }
         });
 
         this.app.delete("/api/devices/:consumer/:device", (req, res) => {
             const { consumer, device } = req.params;
-            this.handlers.removeDevice({ consumer, device });
-            res.status(204).send();
-            this.logger.info(`Device removed:`, { consumer, device });
+            try {
+                this.handlers.removeDevice({ consumer, device });
+                res.status(204).send();
+                this.logger.info(`Device removed:`, { consumer, device });
+            } catch (e) {
+                this.logger.error("Failed to remove device:", e);
+                res.status(500).json({ error: e instanceof Error ? e.message : "Failed to remove device" });
+            }
         });
 
         this.app.post("/api/devices/:consumer/:device/alert", (req, res) => {
-            const { consumer, device,  } = req.params;
+            const { consumer, device } = req.params;
             const { type, target, time } = req.body;
             if (type === undefined || target === undefined || time === undefined) {
                 res.status(400).json({ error: "type, target, and time are required" });
                 return;
             }
-            this.handlers.sendAlert({ consumer, device }, type as DeviceAlertAction, target as DeviceAlertTarget, time);
-            res.status(204).send();
-            this.logger.info(`Device alert sent:`, { consumer, device }, DeviceAlertAction[type], DeviceAlertTarget[target]);
+            try {
+                this.handlers.sendAlert({ consumer, device }, type as DeviceAlertAction, target as DeviceAlertTarget, time);
+                res.status(204).send();
+                this.logger.info(`Device alert sent:`, { consumer, device }, DeviceAlertAction[type], DeviceAlertTarget[target]);
+            } catch (e) {
+                this.logger.error("Failed to send device alert:", e);
+                res.status(500).json({ error: e instanceof Error ? e.message : "Failed to send alert" });
+            }
         });
 
         // ? Config
