@@ -5,12 +5,32 @@ import * as BeaconApi from '../api/BeaconApi'
 
 type OverlayState = 'updating' | 'done' | 'error'
 
-function UpdateOverlay({ state, version, error, onDone, onError }: {
-  state: OverlayState
-  version: string | null
+function UpdateProgressOverlay() {
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 9999,
+      display: 'flex', flexDirection: 'column', alignItems: 'center',
+      justifyContent: 'center', gap: 10,
+      background: 'var(--color-background-primary)',
+    }}>
+      <svg width="34" height="34" viewBox="0 0 34 34" fill="none"
+        style={{ animation: 'spin 0.9s linear infinite', marginBottom: 2 }}>
+        <circle cx="17" cy="17" r="13" stroke="var(--color-border-secondary)" strokeWidth="2.5"/>
+        <path d="M17 4 A13 13 0 0 1 30 17" stroke="var(--acc)" strokeWidth="2.5" strokeLinecap="round"/>
+      </svg>
+      <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--color-text-primary)' }}>
+        Updating Beacon…
+      </div>
+      <div style={{ fontSize: 12, color: 'var(--color-text-tertiary)' }}>
+        The app is restarting. Please wait.
+      </div>
+    </div>
+  )
+}
+
+function UpdateErrorOverlay({ error, onDismiss }: {
   error: string | null
-  onDone: () => void
-  onError: () => void
+  onDismiss: () => void
 }) {
   return (
     <div style={{
@@ -19,65 +39,102 @@ function UpdateOverlay({ state, version, error, onDone, onError }: {
       justifyContent: 'center', gap: 10,
       background: 'var(--color-background-primary)',
     }}>
-      {state === 'updating' && (
-        <>
-          <svg width="34" height="34" viewBox="0 0 34 34" fill="none" style={{ animation: 'spin 0.9s linear infinite', marginBottom: 2 }}>
-            <circle cx="17" cy="17" r="13" stroke="var(--color-border-secondary)" strokeWidth="2.5"/>
-            <path d="M17 4 A13 13 0 0 1 30 17" stroke="var(--acc)" strokeWidth="2.5" strokeLinecap="round"/>
-          </svg>
-          <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--color-text-primary)' }}>
-            Updating Beacon…
-          </div>
-          <div style={{ fontSize: 12, color: 'var(--color-text-tertiary)' }}>
-            The app is restarting. Please wait.
-          </div>
-        </>
+      <svg width="34" height="34" viewBox="0 0 34 34" fill="none" style={{ marginBottom: 2 }}>
+        <circle cx="17" cy="17" r="13" stroke="#E24B4A" strokeWidth="2"/>
+        <path d="M12 12L22 22M22 12L12 22" stroke="#E24B4A" strokeWidth="2" strokeLinecap="round"/>
+      </svg>
+      <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--color-text-primary)' }}>
+        Update failed
+      </div>
+      {error && (
+        <div style={{
+          marginTop: 4, padding: '8px 12px', borderRadius: 6, maxWidth: 400,
+          background: 'color-mix(in srgb, #E24B4A 10%, transparent)',
+          border: '0.5px solid color-mix(in srgb, #E24B4A 40%, transparent)',
+          fontSize: 11, color: '#E24B4A', textAlign: 'center', wordBreak: 'break-word',
+        }}>
+          {error}
+        </div>
       )}
+      <button className="sm-btn" onClick={onDismiss} style={{ marginTop: 8 }}>
+        Back to Settings
+      </button>
+    </div>
+  )
+}
 
-      {state === 'done' && (
-        <>
-          <svg width="34" height="34" viewBox="0 0 34 34" fill="none" style={{ marginBottom: 2 }}>
-            <circle cx="17" cy="17" r="13" stroke="var(--pvw)" strokeWidth="2"/>
-            <path d="M11 17L15.5 22L23 12" stroke="var(--pvw)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-          <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--color-text-primary)' }}>
-            Update complete
-          </div>
-          {version && (
-            <div style={{ fontSize: 12, color: 'var(--color-text-tertiary)' }}>
-              Now running version {version}
-            </div>
-          )}
-          <button className="sm-btn" onClick={onDone} style={{ marginTop: 8 }}>
-            Go to Home
-          </button>
-        </>
-      )}
+function UpdateOverlay({ state, version, error, onDismiss, onNavigate }: {
+  state: OverlayState
+  version: string | null
+  error: string | null
+  onDismiss: () => void
+  onNavigate: () => void
+}) {
+  if (state === 'updating') return <UpdateProgressOverlay />
+  if (state === 'error')    return <UpdateErrorOverlay error={error} onDismiss={onDismiss} />
+  return <UpdateSuccessModal version={version} onStay={onDismiss} onNavigate={onNavigate} />
+}
 
-      {state === 'error' && (
-        <>
-          <svg width="34" height="34" viewBox="0 0 34 34" fill="none" style={{ marginBottom: 2 }}>
-            <circle cx="17" cy="17" r="13" stroke="#E24B4A" strokeWidth="2"/>
-            <path d="M12 12L22 22M22 12L12 22" stroke="#E24B4A" strokeWidth="2" strokeLinecap="round"/>
+function UpdateSuccessModal({ version, onStay, onNavigate }: {
+  version: string | null
+  onStay: () => void
+  onNavigate: () => void
+}) {
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 50,
+      background: 'rgba(0,0,0,.45)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+    }}>
+      <div style={{
+        background: 'var(--color-background-primary)',
+        borderRadius: 'var(--border-radius-lg)',
+        border: '0.5px solid var(--color-border-tertiary)',
+        width: 320, overflow: 'hidden',
+        display: 'flex', flexDirection: 'column', alignItems: 'center',
+        padding: '32px 24px 24px', gap: 8,
+      }}>
+        <div style={{
+          width: 48, height: 48, borderRadius: '50%',
+          background: 'color-mix(in srgb, var(--acc) 15%, transparent)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          marginBottom: 4,
+        }}>
+          <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+            <path d="M4 11.5L9 16.5L18 6" stroke="var(--acc)" strokeWidth="2"
+              strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
-          <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--color-text-primary)' }}>
-            Update failed
-          </div>
-          {error && (
-            <div style={{
-              marginTop: 4, padding: '8px 12px', borderRadius: 6, maxWidth: 400,
-              background: 'color-mix(in srgb, #E24B4A 10%, transparent)',
-              border: '0.5px solid color-mix(in srgb, #E24B4A 40%, transparent)',
-              fontSize: 11, color: '#E24B4A', textAlign: 'center', wordBreak: 'break-word',
-            }}>
-              {error}
-            </div>
-          )}
-          <button className="sm-btn" onClick={onError} style={{ marginTop: 8 }}>
-            Back to Settings
+        </div>
+        <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--color-text-primary)' }}>
+          Update complete
+        </div>
+        <div style={{ fontSize: 12, color: 'var(--color-text-tertiary)', textAlign: 'center', lineHeight: 1.5 }}>
+          {version ? `Now running version ${version}` : 'Beacon is now running the selected version.'}
+        </div>
+        <div style={{ display: 'flex', gap: 8, marginTop: 16, width: '100%' }}>
+          <button
+            onClick={onStay}
+            style={{
+              flex: 1, fontSize: 12, padding: '7px 0',
+              borderRadius: 'var(--border-radius-md)',
+              border: '0.5px solid var(--color-border-tertiary)',
+              background: 'none', color: 'var(--color-text-secondary)', cursor: 'pointer',
+            }}
+          >
+            Stay here
           </button>
-        </>
-      )}
+          <button
+            onClick={onNavigate}
+            style={{
+              flex: 1, fontSize: 12, padding: '7px 0',
+              borderRadius: 'var(--border-radius-md)',
+              border: 'none', background: 'var(--acc)', color: '#fff', cursor: 'pointer',
+            }}
+          >
+            Go to overview
+          </button>
+        </div>
+      </div>
     </div>
   )
 }
@@ -153,18 +210,6 @@ export default function UpdatePage() {
     }
   }
 
-  if (overlay) {
-    return (
-      <UpdateOverlay
-        state={overlay}
-        version={newVersion}
-        error={status?.updateError ?? null}
-        onDone={() => navigate('/')}
-        onError={() => setOverlay(null)}
-      />
-    )
-  }
-
   return (
     <div>
       {/* Back + check */}
@@ -194,7 +239,7 @@ export default function UpdatePage() {
       </div>
 
       {/* Error */}
-      {status?.updateError && (
+      {status?.updateError && !overlay && (
         <div className="s-card" style={{ marginBottom: 16 }}>
           <div style={{ padding: '10px 14px', fontSize: 12, color: '#E24B4A' }}>
             {status.updateError}
@@ -285,6 +330,16 @@ export default function UpdatePage() {
             </div>
           )}
         </>
+      )}
+
+      {overlay && (
+        <UpdateOverlay
+          state={overlay}
+          version={newVersion}
+          error={status?.updateError ?? null}
+          onDismiss={() => setOverlay(null)}
+          onNavigate={() => navigate('/')}
+        />
       )}
     </div>
   )
