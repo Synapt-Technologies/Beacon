@@ -10,12 +10,14 @@ import { Logger } from '../logging/Logger';
 import type { LifeCycleConsumerConfig } from '../tally/TallyLifecycle';
 import { type OrchestratorConfig } from '../tally/TallyOrchestrator';
 import type { ConsumerId } from '../tally/types/ConsumerTypes';
+import type { UIConfig } from '../types/UIStates';
 export const SettingKey = {
     consumers: {
         aedes: "consumers.aedes",
         gpio: "consumers.gpio",
     },
     orchestrator: "orchestrator",
+    ui: "ui",
 } as const;
 
 export type SettingKey = LeafValues<typeof SettingKey>;
@@ -31,6 +33,7 @@ interface SettingMap { // ?Note: String if not set.
         gpio: LifeCycleConsumerConfig;
     }
     orchestrator: OrchestratorConfig;
+    ui: UIConfig;
 }
 
 type SettingType<K extends string, T = SettingMap> =

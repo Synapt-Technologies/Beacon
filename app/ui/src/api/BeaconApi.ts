@@ -1,6 +1,7 @@
 import type { ProducerBundle, ProducerId } from '../../../src/tally/types/ProducerTypes'
 import type { GlobalSource } from '../../../src/tally/types/SourceTypes'
 import type { ConsumerExportMap, LifeCycleConsumerConfig, LifecycleConfig, OrchestratorConfig } from '../../../src/tally/TallyLifecycle'
+import type { UIConfig } from '../../../src/types/UIStates'
 import type { TallyDevice, DeviceAddress, DeviceAlertAction, DeviceAlertTarget } from '../../../src/tally/types/DeviceTypes'
 import type { ConsumerId } from '../types/beacon'
 import { SystemInfo } from '../../../src/types/SystemInfo'
@@ -126,6 +127,18 @@ export function updateOrchestratorConfig(config: Partial<OrchestratorConfig>): P
 export function importConfig(config: LifecycleConfig): Promise<void> {
     return request('/config/import', {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(config),
+    })
+}
+
+export function getUIConfig(): Promise<UIConfig> {
+    return request('/config/ui')
+}
+
+export function updateUIConfig(config: Partial<UIConfig>): Promise<void> {
+    return request('/config/ui', {
+        method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(config),
     })

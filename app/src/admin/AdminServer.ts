@@ -9,6 +9,8 @@ import type { ProducerBundle, ProducerId } from "../tally/types/ProducerTypes";
 import type { OrchestratorConfig } from "../tally/TallyLifecycle";
 import { HardwareVersion, type SystemInfo } from "../types/SystemInfo";
 import { UpdateManager } from "../system/UpdateManager";
+import { CoreDatabase, SettingKey } from "../database/CoreDatabase";
+import { type UIConfig, DEFAULT_UI_ALERT_CONFIG } from "../types/UIStates";
 
 export interface AdminState {
     producers: ProducerBundle[];
@@ -51,9 +53,12 @@ export class AdminServer {
     private handlers!: AdminMutationHandlers;
     private updateManager: UpdateManager;
     private _sseClients: Set<express.Response> = new Set();
+    private _uiConfig: UIConfig = { alerts: DEFAULT_UI_ALERT_CONFIG };
 
     constructor(updateManager: UpdateManager) {
         this.updateManager = updateManager;
+        const stored = CoreDatabase.getInstance().getSetting(SettingKey.ui);
+        if (stored) this._uiConfig = stored;
     }
 
     private _serializeState() {
@@ -66,15 +71,19 @@ export class AdminServer {
             devices: Object.fromEntries(this.state.devices),
             orchestratorConfig: this.state.orchestratorConfig,
             info: this.state.info,
+            uiConfig: this._uiConfig,
         };
+    }
+
+    private _broadcast(): void {
+        if (this._sseClients.size === 0) return;
+        const data = `data: ${JSON.stringify(this._serializeState())}\n\n`;
+        for (const res of this._sseClients) res.write(data);
     }
 
     public setState(state: AdminState): void {
         this.state = state;
-        if (this._sseClients.size > 0) {
-            const data = `data: ${JSON.stringify(this._serializeState())}\n\n`;
-            for (const res of this._sseClients) res.write(data);
-        }
+        this._broadcast();
     }
 
     public setHandlers(handlers: AdminMutationHandlers): void {
@@ -312,6 +321,20 @@ export class AdminServer {
                 this.logger.error("Failed to update orchestrator config:", e);
                 res.status(500).json({ error: e instanceof Error ? e.message : "Failed to update orchestrator config" });
             }
+        });
+
+        // ? UI config
+
+        this.app.get("/api/config/ui", (_req, res) => {
+            res.json(this._uiConfig);
+        });
+
+        this.app.patch("/api/config/ui", (req, res) => {
+            this._uiConfig = { ...this._uiConfig, ...req.body as Partial<UIConfig> };
+            CoreDatabase.getInstance().setSetting(SettingKey.ui, this._uiConfig);
+            this._broadcast();
+            this.logger.info(`UI config updated:`, this._uiConfig);
+            res.status(204).send();
         });
 
         // ? Update

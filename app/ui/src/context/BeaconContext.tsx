@@ -69,6 +69,7 @@ export function BeaconProvider({ children }: { children: ReactNode }) {
     const [consumers, setConsumers]                   = useState<Partial<ConsumerExportMap>>({})
     const [devices, setDevices]                       = useState<UITallyDevice[]>([])
     const [orchestratorConfig, setOrchestratorConfig] = useState<Partial<OrchestratorConfig>>({})
+    const [uiConfig, setUIConfig]                      = useState<UIConfig>({ alerts: DEFAULT_UI_ALERT_CONFIG })
     const [system, setSystem]                          = useState<SystemInfo>({ hardware: HardwareVersion.UNKNOWN })
     const [loading, setLoading]                       = useState(false)
     const [error, setError]                           = useState<string | null>(null)
@@ -79,6 +80,7 @@ export function BeaconProvider({ children }: { children: ReactNode }) {
         setProducers(s.producers ?? [])
         setConsumers(s.consumers ?? {})
         setOrchestratorConfig(s.orchestratorConfig ?? {})
+        if (s.uiConfig) setUIConfig(s.uiConfig)
         const ui: UITallyDevice[] = []
         for (const [consumerId, devList] of Object.entries(s.devices ?? {})) {
           for (const dev of devList as UITallyDevice[]) {
@@ -197,19 +199,25 @@ export function BeaconProvider({ children }: { children: ReactNode }) {
       )
     }
 
-    // ? Alert slots — derive from orchestratorConfig, persist via updateOrchestratorConfig
-    const updateAlertSlot = (index: number, slot: UIAlertSlot) => {
-      const alerts = [...(orchestratorConfig.alert_slots ?? DEFAULT_UI_ALERT_CONFIG)]
-      alerts[index] = slot
-      updateOrchestratorConfig({ alert_slots: alerts }).catch(() => {})
-    }
-    const resetAlertSlot = (index: number) => {
-      const alerts = [...(orchestratorConfig.alert_slots ?? DEFAULT_UI_ALERT_CONFIG)]
-      alerts[index] = DEFAULT_UI_ALERT_CONFIG[index]
-      updateOrchestratorConfig({ alert_slots: alerts }).catch(() => {})
+    // ? UI config
+    const updateUIConfig = async (config: Partial<UIConfig>) => {
+      await toast.promise(
+        api.updateUIConfig(config).then(() => setUIConfig(prev => ({ ...prev, ...config }))),
+        { loading: 'Saving…', success: 'Settings saved', error: (e: unknown) => e instanceof Error ? e.message : 'Failed to save settings' }
+      )
     }
 
-    const uiConfig: UIConfig = { alerts: orchestratorConfig.alert_slots ?? DEFAULT_UI_ALERT_CONFIG }
+    // ? Alert slots
+    const updateAlertSlot = (index: number, slot: UIAlertSlot) => {
+      const alerts = [...uiConfig.alerts]
+      alerts[index] = slot
+      updateUIConfig({ alerts }).catch(() => {})
+    }
+    const resetAlertSlot = (index: number) => {
+      const alerts = [...uiConfig.alerts]
+      alerts[index] = DEFAULT_UI_ALERT_CONFIG[index]
+      updateUIConfig({ alerts }).catch(() => {})
+    }
 
     // ? Config
     const exportConfig = async () => {
