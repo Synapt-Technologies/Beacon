@@ -38,6 +38,9 @@ const RELEASE_NOTES_STYLE = `
     background: color-mix(in srgb, var(--color-border-secondary) 8%, transparent);
   }
   .release-notes .markdown-alert > *:last-child { margin-bottom: 0; }
+  .release-notes .markdown-alert > br:first-of-type { display: none; }
+  .release-notes .markdown-alert > .markdown-alert-title + p { margin-top: 0; }
+  .release-notes .markdown-alert > .markdown-alert-title + :is(p, ul, ol, pre) { margin-top: 0; }
   .release-notes .markdown-alert-title {
     display: flex;
     align-items: center;
@@ -116,12 +119,14 @@ const RELEASE_NOTES_STYLE = `
   .release-notes > *:first-child { margin-top: 0; }
 `
 
-// Normalises GitHub alert hard-break format so [!TYPE] is always its own paragraph.
-// "> [!TYPE]  \n> content" → "> [!TYPE]\n>\n> content"
-function preprocessAlerts(md: string): string {
+// GitHub release bodies sometimes contain two-space hard breaks after alert headers:
+// > [!CAUTION]··\n> text
+// That is valid markdown for a <br>, which shows as an extra blank line before content.
+// We only strip that hard-break on alert header lines.
+function normalizeAlertHeaderLineBreaks(md: string): string {
   return md.replace(
-    /(^> \[!(?:NOTE|TIP|IMPORTANT|WARNING|CAUTION)\])[^\S\n]*(\r?\n)/gm,
-    (_, header, newline) => `${header}${newline}>${newline}`,
+    /(^>\s*\[!(?:NOTE|TIP|IMPORTANT|WARNING|CAUTION)\])\s{2,}(\r?\n)/gm,
+    '$1$2',
   )
 }
 
@@ -177,7 +182,7 @@ function ReleaseDetailView({ release, isCurrent, onBack, onUpdate }: {
             <ReactMarkdown
               remarkPlugins={[remarkGfm, remarkGithubAlerts]}
             >
-              {preprocessAlerts(release.body)}
+              {normalizeAlertHeaderLineBreaks(release.body)}
             </ReactMarkdown>
           </div>
         ) : (
