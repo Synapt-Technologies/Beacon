@@ -1,13 +1,12 @@
 import { EventEmitter } from "events";
 import { AbstractConsumer } from "./consumer/AbstractConsumer";
-import { SourceBusDto, type SourceBus } from "./types/SourceTypes";
+import { type SourceBus } from "./types/SourceTypes";
 import type { ProducerId } from "./types/ProducerTypes";
 import { AbstractTallyProducer, type ProducerInfo, ProducerStatus } from "./producer/AbstractTallyProducer";
 import { type AlertSlotConfig, type DeviceTallyPackage, DeviceTallyState, type TallyDevice, TallyDeviceDto } from "./types/DeviceTypes";
 import type { ConsumerId } from "./types/ConsumerTypes";
 import { Logger } from "../logging/Logger";
 import { PatchLogicEngine } from "./logic/PatchLogicEngine";
-import { disconnect } from "cluster";
 
 export type { AlertSlotConfig };
 
@@ -67,7 +66,7 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
         this.checkConfig(this.config);
     }
 
-    private parseDevices(newbus: SourceBus | null = null): void {
+    private parseDevices(newbus?: SourceBus): void {
 
         const oldbus = this.globalTallyState;
 
@@ -91,13 +90,13 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
 
     private sendDevice(device: TallyDevice, pckg: DeviceTallyPackage): void {
         for (const consumer of this.consumers.values()) {
-            if (consumer.isDeviceBroadcaster()) {
+            if (consumer.isDeviceBroadcaster() || consumer.getId() === device.id.consumer) {
                 consumer.sendDeviceState(new TallyDeviceDto(device).toTallyBundle(pckg));
             }
         }
     }
 
-    private parseNewGlobalTally(newStates: Map<ProducerId, SourceBus>): SourceBus {
+    private parseNewGlobalTally(newStates: Map<ProducerId, SourceBus>): SourceBus { // TODO: Make a function that fetches the globalProducer state, calls this and then the parseDevices
 
         const newGlobalState: SourceBus = {
             preview: new Set(),
@@ -105,6 +104,9 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
         };
 
         for (const [producerId, newState] of newStates) {
+
+            if(this.disconnectedProducers.has(producerId)) 
+                continue;
 
             newState.preview.forEach((sourceKey) => {
                 newGlobalState.preview.add(sourceKey);
@@ -140,19 +142,19 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
 
     addConsumer(consumer: AbstractConsumer): void {
         this.consumers.set(consumer.getId(), consumer);
-        // TODO
-        // consumer.on('device_update', (device: TallyDevice) => {
-        //     for (const consumer of this.consumers.values()) {
-        //         consumer.sendDeviceState(new TallyDeviceDto(device).toTallyBundle(tallyPckg));
-        //     }
-
-        // });
+        consumer.on('device_update', (device: TallyDevice) => {
+            this.sendDevice(device, this.logicEngine.evaluate(device.logic, {
+                newbus: this.globalTallyState,
+                oldbus: this.globalTallyState,
+                disconnectedProducers: this.disconnectedProducers,
+                disconnectedState: this.config.state_on_disconnect
+            }));
+        });
         this.emit('consumer_added', consumer.getId());
 
         
         this.parseDevices();
 
-        // this._parseGlobalTally();
     }
 
     async removeConsumer(id: ConsumerId): Promise<void> {
@@ -161,6 +163,7 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
             this.logger.warn(`Attempted to remove unknown consumer:`, id);
             return;
         }
+        consumer.removeAllListeners('device_update')
         await consumer.destroy();
         this.consumers.delete(id);
         this.emit('consumer_removed', id);
@@ -174,6 +177,7 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
             this._connectGraceTimers.delete(producer.getId());
             if (producer.getInfo().status === ProducerStatus.OFFLINE) {
                 this.disconnectedProducers.add(producer.getId());
+                this.parseDevices();
             }
         }, 1000);
         this._connectGraceTimers.set(producer.getId(), graceTimer);
@@ -196,7 +200,8 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
             }
             this.disconnectedProducers.delete(producer.getId());
             
-            this.parseDevices();
+            const newGlobal = this.parseNewGlobalTally(this.producerTallyStates);
+            this.parseDevices(newGlobal);
 
             this.emit('producer_connected', producer.getId());
         });
@@ -205,7 +210,8 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
             if (producer.isDestroying()) return;
             this.disconnectedProducers.add(producer.getId());
             
-            this.parseDevices();
+            const newGlobal = this.parseNewGlobalTally(this.producerTallyStates);
+            this.parseDevices(newGlobal);
             
             this.emit('producer_disconnected', producer.getId());
         });
@@ -226,6 +232,7 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
             this.logger.warn(`Attempted to remove unknown producer:`, id);
         } else {
             producer.markDestroying();
+            producer.removeAllListeners();
             await producer.destroy();
             this.producers.delete(id);
         }
@@ -238,41 +245,6 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
         this.emit('producer_removed', id);
     }
 
-    // private _parseGlobalTally() {
-    //     const newGlobalTally: Required<SourceBus> = {
-    //         moment: 0,
-    //         program: new Set(),
-    //         preview: new Set(),
-    //     }
-
-    //     for (const [producerId, state] of this.producerTallyStates.entries()) {
-    //         if (this.disconnectedProducers.has(producerId)) continue;
-    //         if (!state.moment || state.moment == 0)
-    //             continue;
-            
-    //         state.program.forEach(source => newGlobalTally.program.add(source));
-    //         state.preview.forEach(source => newGlobalTally.preview.add(source));
-            
-    //         if (state.moment && state.moment > newGlobalTally.moment )
-    //             newGlobalTally.moment = state.moment;
-    //     }
-
-    //     const hasConnectedProducers = [...this.producers.keys()].some(id => !this.disconnectedProducers.has(id));
-
-    //     if (newGlobalTally.moment == 0 && hasConnectedProducers) {
-    //         this.logger.warn(`Did not set tally, because of invalid payload. Might be due to init. Global Tally:`, SourceBusDto.from(newGlobalTally).serialize());
-    //         return;
-    //     }
-
-
-    //     this.logger.debug("Tally update:", SourceBusDto.from(newGlobalTally).serialize());
-
-    //     this.globalTallyState = newGlobalTally;
-
-    //     for (const consumer of this.consumers.values()) {
-    //         consumer.consumeTally(this.globalTallyState);
-    //     }
-    // }
 
     hasProducer(id: ProducerId): boolean {
         return this.producers.has(id);
