@@ -314,10 +314,10 @@ export default function SettingsPage() {
     setSaving(true)
     try {
       if (pendingPort !== null || pendingKeepalive !== null) {
-        await updateConsumer('aedes', {
+        await updateConsumer<AedesConsumerConfig>('aedes', {
           ...(pendingPort      !== null ? { port: pendingPort }               : {}),
           ...(pendingKeepalive !== null ? { keep_alive_ms: pendingKeepalive } : {}),
-        } as Partial<AedesConsumerConfig>)
+        })
       }
       if (pendingDisconnect !== null) {
         await updateOrchestratorConfig({ state_on_disconnect: pendingDisconnect })

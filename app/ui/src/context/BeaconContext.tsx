@@ -47,7 +47,7 @@ interface BeaconState {
     updateOrchestratorConfig: (config: Partial<OrchestratorConfig>) => Promise<void>
 
     setConsumerEnabled: (id: ConsumerId, enabled: boolean) => Promise<void>
-    updateConsumer: (id: ConsumerId, config: ConsumerConfig) => Promise<void>
+    updateConsumer: <T extends ConsumerConfig>(id: ConsumerId, config: Partial<T>) => Promise<void>
 
     patchDevice: (device: DeviceAddress, patch: GlobalSource[]) => Promise<void>
     renameDevice: (device: DeviceAddress, name: { short?: string; long: string }) => Promise<void>
@@ -154,7 +154,7 @@ export function BeaconProvider({ children }: { children: ReactNode }) {
         { loading: enabled ? 'Enabling…' : 'Disabling…', success: enabled ? 'Consumer enabled' : 'Consumer disabled', error: (e: unknown) => e instanceof Error ? e.message : 'Failed to update consumer' }
       )
     }
-    const updateConsumer = async (id: ConsumerId, config: ConsumerConfig) => {
+    const updateConsumer = async <T extends ConsumerConfig>(id: ConsumerId, config: Partial<T>) => {
       await toast.promise(
         api.patchConsumer(id, { config }).then(() => setConsumers(prev => ({
           ...prev,
