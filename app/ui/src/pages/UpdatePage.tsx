@@ -10,11 +10,13 @@ type OverlayState = 'updating' | 'done' | 'error'
 
 const RELEASE_NOTES_STYLE = `
   .release-notes { font-size: 13px; color: var(--color-text-primary); line-height: 1.6; }
-  .release-notes h1 { font-size: 15px; font-weight: 600; margin: 14px 0 8px; }
-  .release-notes h2 { font-size: 14px; font-weight: 600; margin: 12px 0 6px; }
-  .release-notes h3 { font-size: 13px; font-weight: 600; margin: 10px 0 4px; }
-  .release-notes p  { margin-bottom: 8px; }
-  .release-notes ul, .release-notes ol { padding-left: 20px; margin-bottom: 8px; }
+  .release-notes h1 { font-size: 20px; font-weight: 700; line-height: 1.25; margin: 16px 0 10px; }
+  .release-notes h2 { font-size: 17px; font-weight: 650; line-height: 1.3; margin: 14px 0 8px; }
+  .release-notes h3 { font-size: 15px; font-weight: 600; line-height: 1.35; margin: 12px 0 7px; }
+  .release-notes h4 { font-size: 14px; font-weight: 600; line-height: 1.4; margin: 10px 0 6px; }
+  .release-notes h5, .release-notes h6 { font-size: 13px; font-weight: 600; line-height: 1.4; margin: 9px 0 5px; }
+  .release-notes p { margin: 0 0 8px; }
+  .release-notes ul, .release-notes ol { padding-left: 20px; margin: 0 0 8px; }
   .release-notes li { margin-bottom: 3px; }
   .release-notes code { font-family: monospace; font-size: 11px; background: var(--color-background-secondary); padding: 1px 4px; border-radius: 3px; }
   .release-notes pre { background: var(--color-background-secondary); padding: 10px 12px; border-radius: 6px; overflow-x: auto; margin-bottom: 8px; }
@@ -39,14 +41,13 @@ const RELEASE_NOTES_STYLE = `
   }
   .release-notes .markdown-alert > *:last-child { margin-bottom: 0; }
   .release-notes .markdown-alert > br:first-of-type { display: none; }
-  .release-notes .markdown-alert > .markdown-alert-title + p { margin-top: 0; }
   .release-notes .markdown-alert > .markdown-alert-title + :is(p, ul, ol, pre) { margin-top: 0; }
   .release-notes .markdown-alert-title {
     display: flex;
     align-items: center;
     gap: 6px;
     margin-bottom: 4px;
-    font-size: 16px;
+    font-size: 14px;
     font-weight: 600;
     text-transform: uppercase;
     line-height: 1.2;
