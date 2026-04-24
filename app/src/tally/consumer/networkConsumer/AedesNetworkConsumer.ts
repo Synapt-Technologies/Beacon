@@ -175,20 +175,24 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer {
         super.destroy(); // sets status OFFLINE and stops keep-alive
 
         try {
-            // Close aedes first — this sends DISCONNECT to all MQTT clients so
-            // their TCP/WS connections drain before we close the servers.
-            await new Promise<void>((resolve) => {
-                this.aedes.close(() => resolve());
-            });
+            // Close aedes first — sends DISCONNECT to all MQTT clients so connections drain.
+            await new Promise<void>((resolve) => this.aedes.close(() => resolve()));
 
-            // Terminate any remaining WebSocket clients that didn't disconnect.
+            // Terminate any remaining WebSocket clients that didn't respond to DISCONNECT.
             if (this.wss) {
                 for (const client of this.wss.clients) client.terminate();
-                await new Promise<void>((r) => this.wss!.close(() => r()));
             }
 
-            if (this.wsHttpServer) await new Promise<void>((r) => this.wsHttpServer!.close(() => r()));
-            if (this.server)       await new Promise<void>((r) => this.server.close(() => r()));
+            // Close all servers in parallel — WSS/HTTP/TCP are independent at this point.
+            const results = await Promise.allSettled([
+                this.wss        ? new Promise<void>((r) => this.wss!.close(() => r()))           : Promise.resolve(),
+                this.wsHttpServer ? new Promise<void>((r) => this.wsHttpServer!.close(() => r())) : Promise.resolve(),
+                this.server     ? new Promise<void>((r) => this.server.close(() => r()))          : Promise.resolve(),
+            ]);
+
+            for (const result of results) {
+                if (result.status === 'rejected') this.logger.error('Error closing server:', result.reason);
+            }
 
             this.logger.debug('Destroyed successfully.');
         } catch (err) {
