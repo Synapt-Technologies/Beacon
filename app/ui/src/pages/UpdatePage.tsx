@@ -134,7 +134,7 @@ function ReleaseDetailView({ release, isCurrent, onBack, onUpdate }: {
   release: GitHubRelease
   isCurrent: boolean
   onBack: () => void
-  onUpdate: () => void
+  onUpdate: () => void | Promise<void>
 }) {
   return (
     <div>
@@ -396,15 +396,17 @@ export default function UpdatePage() {
     }
   }
 
-  const handleApply = async (ref: string, type: 'release' | 'branch') => {
-    if (!confirm(`Update to ${ref}? The app will restart.`)) return
+  const handleApply = async (ref: string, type: 'release' | 'branch'): Promise<boolean> => {
+    if (!confirm(`Update to ${ref}? The app will restart.`)) return false
     try {
       sessionStorage.setItem('beacon-update-pending', 'true')
       await BeaconApi.applyUpdate(ref, type)
       setStatus(s => s ? { ...s, updating: true } : s)
       setOverlay('updating')
+      return true
     } catch {
       sessionStorage.removeItem('beacon-update-pending')
+      return false
     }
   }
 
@@ -415,7 +417,10 @@ export default function UpdatePage() {
         release={detailRelease}
         isCurrent={isCurrent}
         onBack={() => setDetailRelease(null)}
-        onUpdate={() => { handleApply(detailRelease.tag, 'release'); setDetailRelease(null) }}
+        onUpdate={async () => {
+          const started = await handleApply(detailRelease.tag, 'release')
+          if (started) setDetailRelease(null)
+        }}
       />
     )
   }
