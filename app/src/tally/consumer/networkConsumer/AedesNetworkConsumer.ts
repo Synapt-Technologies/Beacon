@@ -5,9 +5,8 @@ import { Aedes, type Client, type Subscription } from "aedes";
 import { createServer, Server } from "node:net";
 import { createServer as createHttpServer, type Server as HttpServer } from "node:http";
 import { WebSocketServer, createWebSocketStream } from "ws";
-import { type DeviceAlertBundle, type DeviceTallyBundle, DeviceTallyState, type TallyDevice, type TallyDevice, TallyDeviceDto } from "../../types/DeviceTypes";
+import { type DeviceAlertBundle, type DeviceTallyBundle, DeviceTallyState } from "../../types/DeviceTypes";
 import type { SourceBus } from "../../types/SourceTypes";
-import { SimpleBusNode } from "../../types/LogicTypes";
 
 export interface AedesConsumerInfo extends NetworkConsumerInfo {
     tcp_active: boolean;
