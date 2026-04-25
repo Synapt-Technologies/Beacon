@@ -482,13 +482,13 @@ export default function SettingsPage() {
       <div className="s-card">
         <div className="s-row">
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 13, color: 'var(--color-text-primary)' }}>Reset alert buttons</div>
-            <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginTop: 1 }}>Restore alert slots to defaults</div>
+            <div style={{ fontSize: 13, color: 'var(--color-text-primary)' }}>Reset System</div>
+            <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginTop: 1 }}>Restore all configuration to factory defaults</div>
           </div>
           <button
             className="sm-btn"
             style={{ color: '#E24B4A', borderColor: 'color-mix(in srgb, #E24B4A 35%, transparent)' }}
-            onClick={() => { if (confirm('Reset alert buttons to defaults?')) handleResetAlerts() }}
+            onClick={() => { if (confirm('Reset system to factory defaults?')) alert("Not yet implemented") }}
           >
             Reset
           </button>
