@@ -405,13 +405,6 @@ export default function SettingsPage() {
       <div className="sec-lbl">Network</div>
       <div className="s-card">
         <NetworkRow
-          label="Admin port"
-          sub="Web UI server — requires restart to change"
-          value={parseInt(window.location.port) || 3000}
-          defaultVal={3000}
-          readOnly
-        />
-        <NetworkRow
           label="MQTT port"
           value={pendingPort ?? aedesConfig?.port}
           defaultVal={1883}
