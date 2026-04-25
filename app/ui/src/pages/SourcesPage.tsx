@@ -127,7 +127,7 @@ function FilterChips({ producers, active, onChange }: FilterChipsProps) {
 
 // ? Page
 
-export default function WebTallyPage() {
+export default function SourcesPage() {
   const navigate = useNavigate()
   const { producer: producerId, source: sourceId } = useParams()
   const { producers, orchestratorConfig } = useBeacon()

@@ -15,13 +15,12 @@ function NavItems({ collapsed }: { collapsed: boolean }) {
     return (
         <nav style={{ flex: 1, padding: '6px 0', overflow: 'hidden' }}>
             <SectionLabel collapsed={collapsed}>Monitor</SectionLabel>
-            <SidebarItem to="/overview"    icon={<IconGrid />}        label="Tally overview" collapsed={collapsed} />
-            <SidebarItem to="/web-tally"   icon={<IconCircleDot />}   label="Web tally"      collapsed={collapsed} />
+            <SidebarItem to="/devices"     icon={<IconGrid />}          label="Devices"     collapsed={collapsed} />
+            <SidebarItem to="/sources"   icon={<IconCircleDot />}       label="Sources"     collapsed={collapsed} />
 
             <SectionLabel collapsed={collapsed}>Configure</SectionLabel>
-            <SidebarItem to="/devices"     icon={<IconOutput />}      label="Devices"        collapsed={collapsed} />
-            <SidebarItem to="/connections" icon={<IconConnections />} label="Connections"    collapsed={collapsed} />
-            <SidebarItem to="/settings"    icon={<IconSettings />}    label="Settings"       collapsed={collapsed} />
+            <SidebarItem to="/connections" icon={<IconConnections />}   label="Connections" collapsed={collapsed} />
+            <SidebarItem to="/settings"    icon={<IconSettings />}      label="Settings"    collapsed={collapsed} />
         </nav>
     )
 }
