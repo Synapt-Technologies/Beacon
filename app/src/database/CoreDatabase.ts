@@ -11,6 +11,13 @@ import type { LifeCycleConsumerConfig } from '../tally/TallyLifecycle';
 import { type OrchestratorConfig } from '../tally/TallyOrchestrator';
 import type { ConsumerId } from '../tally/types/ConsumerTypes';
 import type { UIConfig } from '../types/UIStates';
+export interface DatabaseBackup {
+    version: 310;
+    producers: Array<{ id: string; type: string; config: string; enabled: number }>;
+    settings: Array<{ key: string; value: string }>;
+    consumer_devices: Array<{ id: string; consumer_id: string; data: string }>;
+}
+
 export const SettingKey = {
     consumers: {
         aedes: "consumers.aedes",
@@ -249,6 +256,48 @@ export class CoreDatabase {
         } catch (err) {
             return this.logger.fatal(`Failed to save setting:`, key, err);
         }
+    }
+
+    public exportDatabase(): DatabaseBackup {
+        const producers = this.db.prepare('SELECT id, type, config, enabled FROM producers').all() as DatabaseBackup['producers'];
+        const settings = this.db.prepare('SELECT key, value FROM settings').all() as DatabaseBackup['settings'];
+        const consumer_devices = this.db.prepare('SELECT id, consumer_id, data FROM consumer_devices').all() as DatabaseBackup['consumer_devices'];
+        return { version: 310, producers, settings, consumer_devices };
+    }
+
+    public importDatabase(backup: DatabaseBackup): void {
+        this.db.transaction(() => {
+            this.db.exec('DELETE FROM producers');
+            this.db.exec('DELETE FROM producer_info');
+            this.db.exec('DELETE FROM consumer_devices');
+            this.db.exec('DELETE FROM settings');
+
+            const insertProducer = this.db.prepare('INSERT INTO producers (id, type, config, enabled) VALUES (?, ?, ?, ?)');
+            for (const p of backup.producers) {
+                insertProducer.run(p.id, p.type, p.config, p.enabled);
+            }
+
+            const insertSetting = this.db.prepare('INSERT INTO settings (key, value) VALUES (?, ?)');
+            for (const s of backup.settings) {
+                insertSetting.run(s.key, s.value);
+            }
+
+            const insertDevice = this.db.prepare('INSERT INTO consumer_devices (id, consumer_id, data) VALUES (?, ?, ?)');
+            for (const d of backup.consumer_devices) {
+                insertDevice.run(d.id, d.consumer_id, d.data);
+            }
+        })();
+        this.logger.info(`Database restored from backup (${backup.producers.length} producers, ${backup.consumer_devices.length} devices).`);
+    }
+
+    public clearDatabase(): void {
+        this.db.transaction(() => {
+            this.db.exec('DELETE FROM producers');
+            this.db.exec('DELETE FROM producer_info');
+            this.db.exec('DELETE FROM consumer_devices');
+            this.db.exec('DELETE FROM settings');
+        })();
+        this.logger.info(`Database cleared (factory reset).`);
     }
 
     public static destroy(): void {

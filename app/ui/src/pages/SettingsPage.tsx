@@ -296,6 +296,7 @@ export default function SettingsPage() {
     resetAlertSlot,
     exportConfig,
     importConfig,
+    resetDatabase,
     system,
   } = useBeacon()
 
@@ -470,17 +471,17 @@ export default function SettingsPage() {
       <div className="s-card">
         <div className="s-row">
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 13, color: 'var(--color-text-primary)' }}>Export config</div>
-            <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginTop: 1 }}>Download beacon-config.json</div>
+            <div style={{ fontSize: 13, color: 'var(--color-text-primary)' }}>Export backup</div>
+            <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginTop: 1 }}>Download beacon-backup.json</div>
           </div>
           <button className="sm-btn" onClick={exportConfig}>Export</button>
         </div>
         <div className="s-row">
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 13, color: 'var(--color-text-primary)' }}>Import config</div>
-            <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginTop: 1 }}>Restore from JSON file</div>
+            <div style={{ fontSize: 13, color: 'var(--color-text-primary)' }}>Restore backup</div>
+            <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginTop: 1 }}>Restore full database from JSON file</div>
           </div>
-          <button className="sm-btn" onClick={handleImport}>Import</button>
+          <button className="sm-btn" onClick={handleImport}>Restore</button>
         </div>
       </div>
 
@@ -496,6 +497,19 @@ export default function SettingsPage() {
             className="sm-btn"
             style={{ color: '#E24B4A', borderColor: 'color-mix(in srgb, #E24B4A 35%, transparent)' }}
             onClick={() => { if (confirm('Reset alert buttons to defaults?')) handleResetAlerts() }}
+          >
+            Reset
+          </button>
+        </div>
+        <div className="s-row">
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 13, color: 'var(--color-text-primary)' }}>Factory reset</div>
+            <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginTop: 1 }}>Clear all producers, devices and settings</div>
+          </div>
+          <button
+            className="sm-btn"
+            style={{ color: '#E24B4A', borderColor: 'color-mix(in srgb, #E24B4A 35%, transparent)' }}
+            onClick={() => { if (confirm('Factory reset? This will delete all producers, devices and settings.')) resetDatabase() }}
           >
             Reset
           </button>

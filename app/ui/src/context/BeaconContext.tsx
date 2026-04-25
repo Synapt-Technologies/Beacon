@@ -11,7 +11,8 @@ import * as api from '../api/BeaconApi'
 import { HardwareVersion, SystemInfo } from '../../../src/types/SystemInfo'
 import type { ProducerBundle, ProducerId } from '../../../src/tally/types/ProducerTypes'
 import type { GlobalSource } from '../../../src/tally/types/SourceTypes'
-import { ConsumerExportMap, type OrchestratorConfig, type LifecycleConfig } from '../../../src/tally/TallyLifecycle'
+import { ConsumerExportMap, type OrchestratorConfig } from '../../../src/tally/TallyLifecycle'
+import type { DatabaseBackup } from '../../../src/database/CoreDatabase'
 import { UITallyDevice } from '../types/DeviceStates'
 import { DeviceAddress, DeviceAlertAction, DeviceAlertTarget } from '../../../src/tally/types/DeviceTypes'
 import { DEFAULT_UI_ALERT_CONFIG, UIAlertSlot, UIConfig } from '../../../src/types/UIStates'
@@ -59,6 +60,7 @@ interface BeaconState {
 
     exportConfig: () => Promise<void>
     importConfig: (file: File) => Promise<void>
+    resetDatabase: () => Promise<void>
 }
 
 const BeaconContext = createContext<BeaconState | null>(null)
@@ -224,14 +226,18 @@ export function BeaconProvider({ children }: { children: ReactNode }) {
       await api.exportConfig()
     }
     const importConfig = async (file: File) => {
-      let config: unknown
+      let backup: unknown
       try {
-        config = JSON.parse(await file.text())
+        backup = JSON.parse(await file.text())
       } catch {
-        setError('Invalid config file — could not parse JSON')
+        setError('Invalid backup file — could not parse JSON')
         return
       }
-      await api.importConfig(config as LifecycleConfig)
+      await api.importConfig(backup as DatabaseBackup)
+    }
+
+    const resetDatabase = async () => {
+      await api.resetDatabase()
     }
 
     return (
@@ -246,7 +252,7 @@ export function BeaconProvider({ children }: { children: ReactNode }) {
             setConsumerEnabled, updateConsumer,
             patchDevice, renameDevice, removeDevice, sendAlert,
             updateAlertSlot, resetAlertSlot,
-            exportConfig, importConfig,
+            exportConfig, importConfig, resetDatabase,
         }}>
         {children}
         </BeaconContext>

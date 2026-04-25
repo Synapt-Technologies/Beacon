@@ -9,7 +9,7 @@ import type { ProducerBundle, ProducerId } from "../tally/types/ProducerTypes";
 import type { OrchestratorConfig } from "../tally/TallyLifecycle";
 import { HardwareVersion, type SystemInfo } from "../types/SystemInfo";
 import { UpdateManager } from "../system/UpdateManager";
-import { CoreDatabase, SettingKey } from "../database/CoreDatabase";
+import { CoreDatabase, SettingKey, type DatabaseBackup } from "../database/CoreDatabase";
 import { type UIConfig, DEFAULT_UI_ALERT_CONFIG } from "../types/UIStates";
 
 export interface AdminState {
@@ -34,7 +34,8 @@ export interface AdminMutationHandlers {
     sendAlert:    (address: DeviceAddress, type: DeviceAlertAction, target: DeviceAlertTarget, time: number) => void
 
     updateOrchestrator: (config: Partial<OrchestratorConfig>) => Promise<void>
-    importConfig:       (config: LifecycleConfig) => Promise<void>
+    restoreDatabase:    (backup: DatabaseBackup) => Promise<void>
+    resetDatabase:      () => Promise<void>
 }
 
 export class AdminServer {
@@ -79,6 +80,12 @@ export class AdminServer {
         if (this._sseClients.size === 0) return;
         const data = `data: ${JSON.stringify(this._serializeState())}\n\n`;
         for (const res of this._sseClients) res.write(data);
+    }
+
+    public reloadUIConfig(): void {
+        const stored = CoreDatabase.getInstance().getSetting(SettingKey.ui);
+        this._uiConfig = stored ?? { alerts: DEFAULT_UI_ALERT_CONFIG };
+        this._broadcast();
     }
 
     public setState(state: AdminState): void {
@@ -291,18 +298,33 @@ export class AdminServer {
         // ? Config
 
         this.app.get("/api/config/export", (_req, res) => {
-            const producers = this.state.producers.map(({ type, config }) => ({ type, config }));
-            res.json({ producers, consumers: this.state.consumers });
+            res.json(CoreDatabase.getInstance().exportDatabase());
         });
 
         this.app.post("/api/config/import", async (req, res) => {
+            const backup = req.body as DatabaseBackup;
+            if (backup?.version !== 310 || !Array.isArray(backup.producers) || !Array.isArray(backup.settings) || !Array.isArray(backup.consumer_devices)) {
+                res.status(400).json({ error: "Invalid backup file" });
+                return;
+            }
             try {
-                await this.handlers.importConfig(req.body as LifecycleConfig);
+                await this.handlers.restoreDatabase(backup);
                 res.status(204).send();
-                this.logger.info(`Config imported.`);
+                this.logger.info(`Database restored from backup.`);
             } catch (e) {
-                this.logger.error("Failed to import config:", e);
-                res.status(500).json({ error: e instanceof Error ? e.message : "Failed to import config" });
+                this.logger.error("Failed to restore database:", e);
+                res.status(500).json({ error: e instanceof Error ? e.message : "Failed to restore database" });
+            }
+        });
+
+        this.app.post("/api/config/reset", async (_req, res) => {
+            try {
+                await this.handlers.resetDatabase();
+                res.status(204).send();
+                this.logger.info(`Database reset to factory defaults.`);
+            } catch (e) {
+                this.logger.error("Failed to reset database:", e);
+                res.status(500).json({ error: e instanceof Error ? e.message : "Failed to reset database" });
             }
         });
 

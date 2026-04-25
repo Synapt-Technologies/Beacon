@@ -55,7 +55,6 @@ export class AppCore {
     }
 
     private _wireAdminServer(): void {
-        const orchestrator = this.lifecycle.getOrchestrator();
 
         const syncState = () => {
             this.admin.setState({
@@ -67,13 +66,16 @@ export class AppCore {
             });
         };
 
-        // TODO: Should go through the lifecycle
-        orchestrator.on("producer_added",    syncState);
-        orchestrator.on("producer_removed",  syncState);
-        orchestrator.on("consumer_added",    syncState);
-        orchestrator.on("consumer_removed",  syncState);
-        orchestrator.on("producer_info",     syncState);
+        const wireOrchestrator = () => {
+            const orchestrator = this.lifecycle.getOrchestrator();
+            orchestrator.on("producer_added",    syncState);
+            orchestrator.on("producer_removed",  syncState);
+            orchestrator.on("consumer_added",    syncState);
+            orchestrator.on("consumer_removed",  syncState);
+            orchestrator.on("producer_info",     syncState);
+        };
 
+        wireOrchestrator();
         syncState();
 
         this.admin.setHandlers({
@@ -128,8 +130,18 @@ export class AppCore {
                 await this.lifecycle.updateOrchestratorConfig(config);
                 syncState();
             },
-            importConfig: async (config) => {
-                await this.lifecycle.importConfig(config);
+            restoreDatabase: async (backup) => {
+                CoreDatabase.getInstance().importDatabase(backup);
+                await this.lifecycle.reload();
+                wireOrchestrator();
+                this.admin.reloadUIConfig();
+                syncState();
+            },
+            resetDatabase: async () => {
+                CoreDatabase.getInstance().clearDatabase();
+                await this.lifecycle.reload();
+                wireOrchestrator();
+                this.admin.reloadUIConfig();
                 syncState();
             },
 

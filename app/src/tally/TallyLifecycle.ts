@@ -84,6 +84,11 @@ export class TallyLifecycle {
         }
     };
 
+    private static readonly _CONSUMER_DEFAULTS: Record<RegisteredConsumerId, LifeCycleConsumerConfig> = {
+        aedes: { enabled: true,  config: {} },
+        gpio:  { enabled: true,  config: {} },
+    };
+
     private _config: LifecycleConfigInternal = {
         orchestrator: {} as Partial<OrchestratorConfig>,
         consumers: {
@@ -91,15 +96,13 @@ export class TallyLifecycle {
                 factory: (config: AedesConsumerConfig) => TallyFactory.createConsumer('AedesNetworkConsumer', config),
                 isAvailable: () => true,
                 isDisableable: () => false,
-                enabled: true,
-                config: {},
+                ...TallyLifecycle._CONSUMER_DEFAULTS.aedes,
             },
             gpio: {
                 factory: (config: GpioConsumerConfig) => TallyFactory.createConsumer('RpiGpioHardwareConsumer', config),
                 isAvailable: () => this.info.system.hardware == HardwareVersion.V2,
                 isDisableable: () => true,
-                enabled: true,
-                config: {},
+                ...TallyLifecycle._CONSUMER_DEFAULTS.gpio,
             },
         } as ConsumerEntryMap,
     };
@@ -225,6 +228,17 @@ export class TallyLifecycle {
         this.logger.info(`Config imported.`);
     }
 
+
+    public async reload(): Promise<void> {
+        await this.shutdown();
+        this._config.orchestrator = {};
+        for (const id of Object.keys(this._config.consumers) as RegisteredConsumerId[]) {
+            const defaults = TallyLifecycle._CONSUMER_DEFAULTS[id];
+            this._config.consumers[id].enabled = defaults.enabled ?? true;
+            this._config.consumers[id].config  = { ...defaults.config };
+        }
+        await this.boot();
+    }
 
     public hasConfig(): boolean {
         return this.db.getProducers().length > 0;

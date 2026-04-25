@@ -1,7 +1,8 @@
 import type { ProducerBundle, ProducerId } from '../../../src/tally/types/ProducerTypes'
 import type { GlobalSource } from '../../../src/tally/types/SourceTypes'
-import type { ConsumerExportMap, LifeCycleConsumerConfig, LifecycleConfig, OrchestratorConfig } from '../../../src/tally/TallyLifecycle'
+import type { ConsumerExportMap, LifeCycleConsumerConfig, OrchestratorConfig } from '../../../src/tally/TallyLifecycle'
 import type { UIConfig } from '../../../src/types/UIStates'
+import type { DatabaseBackup } from '../../../src/database/CoreDatabase'
 import type { TallyDevice, DeviceAddress, DeviceAlertAction, DeviceAlertTarget } from '../../../src/tally/types/DeviceTypes'
 import type { ConsumerId } from '../types/beacon'
 import { SystemInfo } from '../../../src/types/SystemInfo'
@@ -104,10 +105,10 @@ export function sendAlert(device: DeviceAddress, type: DeviceAlertAction, target
 // ? Config
 
 export async function exportConfig(): Promise<void> {
-    const config = await request<LifecycleConfig>('/config/export')
-    const blob = new Blob([JSON.stringify(config, null, 2)], { type: 'application/json' })
+    const backup = await request<DatabaseBackup>('/config/export')
+    const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
-    const a = Object.assign(document.createElement('a'), { href: url, download: 'beacon-config.json' })
+    const a = Object.assign(document.createElement('a'), { href: url, download: 'beacon-backup.json' })
     a.click()
     URL.revokeObjectURL(url)
 }
@@ -124,12 +125,16 @@ export function updateOrchestratorConfig(config: Partial<OrchestratorConfig>): P
     })
 }
 
-export function importConfig(config: LifecycleConfig): Promise<void> {
+export function importConfig(backup: DatabaseBackup): Promise<void> {
     return request('/config/import', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(config),
+        body: JSON.stringify(backup),
     })
+}
+
+export function resetDatabase(): Promise<void> {
+    return request('/config/reset', { method: 'POST' })
 }
 
 export function getUIConfig(): Promise<UIConfig> {
