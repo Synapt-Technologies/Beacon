@@ -370,7 +370,7 @@ export default function SettingsPage() {
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: 13, color: 'var(--color-text-primary)' }}>MQTT broker</div>
             <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginTop: 1 }}>
-              Network tally over MQTT{!aedesAvailable ? ' — not available' : ''}
+              Network tally over MQTT
             </div>
           </div>
           <StatusPill ok={aedesEnabled} text="Running" />
@@ -385,7 +385,7 @@ export default function SettingsPage() {
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: 13, color: 'var(--color-text-primary)' }}>GPIO hardware</div>
             <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginTop: 1 }}>
-              Raspberry Pi pin outputs{!gpioAvailable ? ' — not available on this hardware' : ''}
+              Raspberry Pi GPIO outputs
             </div>
           </div>
           <StatusPill 
