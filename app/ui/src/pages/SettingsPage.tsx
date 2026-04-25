@@ -412,7 +412,7 @@ export default function SettingsPage() {
         />
         <NetworkRow
           label="Keep-alive interval"
-          sub="MQTT heartbeat in ms"
+          sub="MQTT heartbeat interval in ms"
           value={pendingKeepalive ?? aedesConfig?.keep_alive_ms}
           defaultVal={500}
           onChange={setPendingKeepalive}
