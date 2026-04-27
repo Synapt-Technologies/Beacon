@@ -16,8 +16,8 @@ export default function DevicesPage() {
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
-        <span style={{ fontSize: 11, color: 'var(--color-text-tertiary)' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, height: '25px' }}>
+        <span style={{ display: 'flex', alignItems: 'center', fontSize: 11, color: 'var(--color-text-tertiary)' }}>
           {devices.length} device{devices.length !== 1 ? 's' : ''} across {consumerCount} consumer{consumerCount !== 1 ? 's' : ''}
         </span>
       </div>

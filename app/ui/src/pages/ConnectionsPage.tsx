@@ -17,8 +17,8 @@ export default function ConnectionsPage() {
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-        <span style={{ fontSize: 11, color: 'var(--color-text-tertiary)' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, height: '25px' }}>
+        <span style={{ display: 'flex', alignItems: 'center', fontSize: 11, color: 'var(--color-text-tertiary)' }}>
           ATEM switcher connections
         </span>
         <button

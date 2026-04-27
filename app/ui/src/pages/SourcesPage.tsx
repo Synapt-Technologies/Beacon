@@ -167,16 +167,8 @@ export default function SourcesPage() {
 
   return (
     <div>
-      {/* <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginBottom: 12 }}>
-        Source states from all producers — click to view, then go fullscreen
-      </div> */}
-      
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, height: '25px' }}>
         <span style={{ display: 'flex', alignItems: 'center', fontSize: 11, color: 'var(--color-text-tertiary)' }}>
-          <span style={{
-            display: 'inline-block', width: 6, height: 6, borderRadius: '50%', marginRight: 6, flexShrink: 0,
-            background: connected ? 'var(--pvw)' : 'var(--color-border-secondary)',
-          }} />
           {sourceCount} source{sourceCount !== 1 ? 's' : ''} across {producers.length} producer{producers.length !== 1 ? 's' : ''}
         </span>
       </div>
