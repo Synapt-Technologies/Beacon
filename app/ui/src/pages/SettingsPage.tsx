@@ -408,31 +408,35 @@ export default function SettingsPage() {
             </div>
           </div>
           <StatusPill ok={aedesEnabled} text="Running" />
+          {aedesDisableable && !aedesEnabled &&
           <Toggle
             checked={aedesEnabled}
-            disabled={!aedesAvailable || (aedesEnabled && !aedesDisableable)}
+            disabled={!aedesAvailable}
             onChange={v => setConsumerEnabled('aedes', v)}
           />
+}
         </div>
 
-        <div className="s-row">
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 13, color: 'var(--color-text-primary)' }}>GPIO hardware</div>
-            <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginTop: 1 }}>
-              Raspberry Pi GPIO outputs
+        {gpioAvailable && 
+          <div className="s-row">
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 13, color: 'var(--color-text-primary)' }}>GPIO hardware</div>
+              <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginTop: 1 }}>
+                Raspberry Pi GPIO outputs
+              </div>
             </div>
+            <StatusPill 
+              ok={gpioEnabled} 
+              text={gpioEnabled ? "Running" : "Disabled"} 
+              disabled={!gpioAvailable}
+            />
+            <Toggle
+              checked={gpioEnabled}
+              disabled={!gpioAvailable}
+              onChange={v => setConsumerEnabled('gpio', v)}
+            />
           </div>
-          <StatusPill 
-            ok={gpioEnabled} 
-            text={gpioAvailable ? (gpioEnabled ? "Running" : "Disabled") : "Not available"} 
-            disabled={!gpioAvailable}
-          />
-          <Toggle
-            checked={gpioEnabled}
-            disabled={!gpioAvailable}
-            onChange={v => setConsumerEnabled('gpio', v)}
-          />
-        </div>
+        }
       </div>
 
       {/* Network */}
