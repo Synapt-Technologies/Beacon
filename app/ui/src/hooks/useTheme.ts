@@ -1,17 +1,21 @@
 import { useState } from 'react'
 
-export type Theme = 'auto' | 'light' | 'dark'
+export enum Theme {
+  Auto = 'auto',
+  Light = 'light',
+  Dark = 'dark'
+}
 
 const KEY = 'beacon-theme'
 
 export function useTheme() {
-  const [theme, setThemeState] = useState<Theme>(
-    () => (localStorage.getItem(KEY) as Theme | null) ?? 'auto'
+  const [theme, setThemeState] = useState<Theme | null>(
+    () => Theme[localStorage.getItem(KEY) as keyof typeof Theme] ?? Theme.Auto
   )
 
   const setTheme = (t: Theme) => {
     localStorage.setItem(KEY, t)
-    if (t === 'auto') delete document.documentElement.dataset.theme
+    if (t === Theme.Auto) delete document.documentElement.dataset.theme
     else document.documentElement.dataset.theme = t
     setThemeState(t)
   }

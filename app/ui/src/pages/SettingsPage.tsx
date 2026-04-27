@@ -4,7 +4,7 @@ import { useBeacon } from '../context/BeaconContext'
 import { Toggle } from '../components/Toggle'
 import { IconReset } from '../components/icons'
 import Savebar from '../components/layout/savebar/Savebar'
-import { useTheme, type Theme } from '../hooks/useTheme'
+import { useTheme, Theme } from '../hooks/useTheme'
 import { DeviceAlertState, DeviceAlertTarget } from '../../../src/tally/types/ConsumerStates'
 import { UIAlertSlot, DEFAULT_UI_ALERT_CONFIG } from '../../../src/types/UIStates'
 import type { AlertSlot, AlertAction, AlertTarget } from '../types/beacon'
@@ -376,18 +376,18 @@ export default function SettingsPage() {
             <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginTop: 1 }}>Override the system color scheme</div>
           </div>
           <div style={{ display: 'flex', borderRadius: 'var(--border-radius-md)', overflow: 'hidden', border: '0.5px solid var(--color-border-tertiary)' }}>
-            {(['auto', 'light', 'dark'] as Theme[]).map((t, i, arr) => (
+            {(Object.keys(Theme) as Array<keyof typeof Theme>).map((t, i, arr) => (
               <button
                 key={t}
-                onClick={() => setTheme(t)}
+                onClick={() => setTheme(Theme[t])}
                 style={{
                   fontSize: 12,
                   padding: '5px 12px',
                   border: 'none',
                   borderRight: i < arr.length - 1 ? '0.5px solid var(--color-border-tertiary)' : 'none',
-                  background: theme === t ? 'var(--color-border-tertiary)' : 'none',
-                  color: theme === t ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
-                  fontWeight: theme === t ? 500 : 400,
+                  background: theme === Theme[t] ? 'var(--color-border-tertiary)' : 'none',
+                  color: theme === Theme[t] ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
+                  fontWeight: theme === Theme[t] ? 500 : 400,
                   cursor: 'pointer',
                   textTransform: 'capitalize',
                 }}
