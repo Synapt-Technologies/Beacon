@@ -69,3 +69,6 @@ If you are compiling the image on windows, you must use WSL.
     - [ ] The device saves that and connects to the topic.
   - [ ] The Orchestrator sends the relevant devices to the right consumers.
 - [ ] Add multi output devices!
+- [ ] Unify UI structure:
+  - [ ] List page for devices, sources and connections
+  - [ ] Tallyrow for devices and sources
