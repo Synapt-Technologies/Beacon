@@ -342,11 +342,12 @@ export default function SettingsPage() {
   const { theme, setTheme } = useTheme()
   const [editingAlert, setEditingAlert] = useState<number | null>(null)
 
-  const gpioEnabled      = consumers.gpio?.enabled        ?? true
-  const aedesEnabled     = consumers.aedes?.enabled       ?? true
-  const gpioAvailable    = consumers.gpio?.available      ?? false
-  const aedesAvailable   = consumers.aedes?.available     ?? true
-  const aedesDisableable  = consumers.aedes?.disableable  ?? true
+  const gpioEnabled       = consumers.gpio?.enabled         ?? true
+  const aedesEnabled      = consumers.aedes?.enabled        ?? true
+  const gpioAvailable     = consumers.gpio?.available       ?? false
+  const aedesAvailable    = consumers.aedes?.available      ?? true
+  const gpioDisableable   = consumers.gpio?.disableable     ?? false
+  const aedesDisableable  = consumers.aedes?.disableable    ?? true
 
   const handleImport = async () => {
     const input = document.createElement('input')
@@ -408,13 +409,11 @@ export default function SettingsPage() {
             </div>
           </div>
           <StatusPill ok={aedesEnabled} text="Running" />
-          {aedesDisableable && !aedesEnabled &&
           <Toggle
             checked={aedesEnabled}
-            disabled={!aedesAvailable}
+            disabled={!aedesAvailable || (!aedesDisableable && aedesEnabled)}
             onChange={v => setConsumerEnabled('aedes', v)}
           />
-}
         </div>
 
         {gpioAvailable && 
@@ -432,7 +431,7 @@ export default function SettingsPage() {
             />
             <Toggle
               checked={gpioEnabled}
-              disabled={!gpioAvailable}
+              disabled={!gpioAvailable || (!gpioDisableable && gpioEnabled)}
               onChange={v => setConsumerEnabled('gpio', v)}
             />
           </div>
