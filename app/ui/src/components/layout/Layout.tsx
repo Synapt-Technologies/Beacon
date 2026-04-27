@@ -8,10 +8,9 @@ import { useTallyState } from "../../hooks/useTallyState"
 const CONNECTION_TOAST_ID = 'beacon-connection'
 
 const PAGE_TITLES: Record<string, string> = {
-    '/overview':    'Tally overview',
-    '/web-tally':   'Web tally',
-    '/devices':     'Devices',
-    '/connections': 'Connections',
+    '/devices':         'Devices',
+    '/sources':         'Sources',
+    '/connections':     'Connections',
     '/settings':        'Settings',
     '/settings/update': 'Update',
 }

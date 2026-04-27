@@ -7,6 +7,7 @@ import { IconChevronLeft, IconChevronRight, IconFullscreen } from '../components
 import type { SourceInfo } from '../../../src/tally/types/ProducerStates'
 import { useTallyState } from '../hooks/useTallyState'
 import { stateFromValue, type DeviceDisplayState } from '../types/beacon'
+import StatusPill from '../components/statusPill/StatusPill'
 
 interface SelectedSource extends SourceInfo {
   prodName: string
@@ -33,14 +34,14 @@ function SourceDetail({
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
         <button
-          onClick={() => navigate('/web-tally')}
+          onClick={() => navigate('/sources')}
           style={{
             display: 'flex', alignItems: 'center', gap: 5, fontSize: 13,
             color: 'var(--color-text-secondary)', border: 'none', background: 'none',
             cursor: 'pointer', padding: '4px 8px', borderRadius: 'var(--border-radius-md)',
           }}
         >
-          <IconChevronLeft /> All sources
+          <IconChevronLeft /> Sources
         </button>
         <button
           onClick={() => navigate(`${basePath}/fullscreen`)}
@@ -127,7 +128,7 @@ function FilterChips({ producers, active, onChange }: FilterChipsProps) {
 
 // ? Page
 
-export default function WebTallyPage() {
+export default function SourcesPage() {
   const navigate = useNavigate()
   const { producer: producerId, source: sourceId } = useParams()
   const { producers, orchestratorConfig } = useBeacon()
@@ -151,7 +152,7 @@ export default function WebTallyPage() {
     }
   }
 
-  const basePath = producerId && sourceId ? `/web-tally/${producerId}/${sourceId}` : '/web-tally'
+  const basePath = '/sources' + (producerId && sourceId && `/${producerId}/${sourceId}`)
 
   if (selectedSource) {
     return <SourceDetail source={selectedSource} basePath={basePath} sourceState={sourceState} />
@@ -167,16 +168,8 @@ export default function WebTallyPage() {
 
   return (
     <div>
-      {/* <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginBottom: 12 }}>
-        Source states from all producers — click to view, then go fullscreen
-      </div> */}
-      
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, height: '25px' }}>
         <span style={{ display: 'flex', alignItems: 'center', fontSize: 11, color: 'var(--color-text-tertiary)' }}>
-          <span style={{
-            display: 'inline-block', width: 6, height: 6, borderRadius: '50%', marginRight: 6, flexShrink: 0,
-            background: connected ? 'var(--pvw)' : 'var(--color-border-secondary)',
-          }} />
           {sourceCount} source{sourceCount !== 1 ? 's' : ''} across {producers.length} producer{producers.length !== 1 ? 's' : ''}
         </span>
       </div>
@@ -191,7 +184,7 @@ export default function WebTallyPage() {
 
       {producers.length === 0 && (
         <div style={{ padding: '32px 0', textAlign: 'center', fontSize: 13, color: 'var(--color-text-tertiary)' }}>
-          No producers connected — add a connection first
+          No producers connected - <a style={{ textDecoration: 'underline', cursor: 'pointer' }} onClick={() => navigate('/connections')}>Add a connection</a>
         </div>
       )}
 
@@ -199,11 +192,13 @@ export default function WebTallyPage() {
         const sources = Object.values(prod.info.sources as unknown as Record<string, SourceInfo>)
         return (
           <div key={prod.config.id} style={{ marginBottom: 16 }}>
-            <div className="sec-lbl">{prod.config.name ?? prod.config.id}</div>
-
-            {sources.length === 0 && (
+              <div className="sec-lbl">
+                {prod.config.name ?? prod.config.id}
+                {prod.info.status !== 'Online' && ' - ' + prod.info.status}
+                </div>
+            {prod.info.status === 'Online' && sources.length === 0 && (
               <div style={{ fontSize: 12, color: 'var(--color-text-tertiary)', padding: '8px 0' }}>
-                No sources — producer may not be connected
+                No sources found
               </div>
             )}
 
@@ -214,7 +209,7 @@ export default function WebTallyPage() {
                 <div
                   key={key}
                   className={`row-card tl-${state}`}
-                  onClick={() => navigate(`/web-tally/${src.source.producer}/${src.source.source}`)}
+                  onClick={() => navigate(`/sources/${src.source.producer}/${src.source.source}`)}
                 >
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-primary)' }}>

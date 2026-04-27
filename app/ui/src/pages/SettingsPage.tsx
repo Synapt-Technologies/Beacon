@@ -4,6 +4,7 @@ import { useBeacon } from '../context/BeaconContext'
 import { Toggle } from '../components/Toggle'
 import { IconReset } from '../components/icons'
 import Savebar from '../components/layout/savebar/Savebar'
+import { useTheme, Theme } from '../hooks/useTheme'
 import { DeviceAlertState, DeviceAlertTarget } from '../../../src/tally/types/ConsumerStates'
 import { UIAlertSlot, DEFAULT_UI_ALERT_CONFIG } from '../../../src/types/UIStates'
 import type { AlertSlot, AlertAction, AlertTarget } from '../types/beacon'
@@ -338,13 +339,16 @@ export default function SettingsPage() {
     setPendingDisconnect(null)
   }
 
+  const { theme, setTheme } = useTheme()
   const [editingAlert, setEditingAlert] = useState<number | null>(null)
 
-  const gpioEnabled      = consumers.gpio?.enabled        ?? true
-  const aedesEnabled     = consumers.aedes?.enabled       ?? true
-  const gpioAvailable    = consumers.gpio?.available      ?? false
-  const aedesAvailable   = consumers.aedes?.available     ?? true
-  const aedesDisableable  = consumers.aedes?.disableable  ?? true
+  // TODO Add consumer info
+  const gpioEnabled       = consumers.gpio?.enabled         ?? true
+  const aedesEnabled      = consumers.aedes?.enabled        ?? true
+  const gpioAvailable     = consumers.gpio?.available       ?? false
+  const aedesAvailable    = consumers.aedes?.available      ?? true
+  const gpioDisableable   = consumers.gpio?.disableable     ?? false
+  const aedesDisableable  = consumers.aedes?.disableable    ?? true
 
   const handleImport = async () => {
     const input = document.createElement('input')
@@ -363,6 +367,37 @@ export default function SettingsPage() {
   return (
     <div style={{ paddingBottom: settingsUnsaved ? 80 : 20 }}>
 
+      {/* Appearance */}
+      <div className="sec-lbl">Appearance</div>
+      <div className="s-card">
+        <div className="s-row">
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 13, color: 'var(--color-text-primary)' }}>Theme</div>
+            <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginTop: 1 }}>Override the system color scheme</div>
+          </div>
+          <div style={{ display: 'flex', borderRadius: 'var(--border-radius-md)', overflow: 'hidden', border: '0.5px solid var(--color-border-tertiary)' }}>
+            {(Object.keys(Theme) as Array<keyof typeof Theme>).map((t, i, arr) => (
+              <button
+                key={t}
+                onClick={() => setTheme(Theme[t])}
+                style={{
+                  fontSize: 12,
+                  padding: '5px 12px',
+                  border: 'none',
+                  borderRight: i < arr.length - 1 ? '0.5px solid var(--color-border-tertiary)' : 'none',
+                  background: theme === Theme[t] ? 'var(--color-border-tertiary)' : 'none',
+                  color: theme === Theme[t] ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
+                  fontWeight: theme === Theme[t] ? 500 : 400,
+                  cursor: 'pointer',
+                  textTransform: 'capitalize',
+                }}
+              >
+                {t}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
       {/* Consumers */}
       <div className="sec-lbl">Consumers</div>
       <div className="s-card">
@@ -370,47 +405,46 @@ export default function SettingsPage() {
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: 13, color: 'var(--color-text-primary)' }}>MQTT broker</div>
             <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginTop: 1 }}>
-              Network tally over MQTT{!aedesAvailable ? ' — not available' : ''}
+              Network tally over MQTT
             </div>
           </div>
-          <StatusPill ok={aedesEnabled} text="Running" />
+          <StatusPill 
+            ok={aedesEnabled} 
+            text={aedesEnabled ? "Running" : "Disabled"}
+            disabled={!aedesAvailable}
+          />
           <Toggle
             checked={aedesEnabled}
-            disabled={!aedesAvailable || (aedesEnabled && !aedesDisableable)}
+            disabled={!aedesAvailable || (!aedesDisableable && aedesEnabled)}
             onChange={v => setConsumerEnabled('aedes', v)}
           />
         </div>
 
-        <div className="s-row">
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 13, color: 'var(--color-text-primary)' }}>GPIO hardware</div>
-            <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginTop: 1 }}>
-              Raspberry Pi pin outputs{!gpioAvailable ? ' — not available on this hardware' : ''}
+        {gpioAvailable && 
+          <div className="s-row">
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 13, color: 'var(--color-text-primary)' }}>GPIO hardware</div>
+              <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginTop: 1 }}>
+                Raspberry Pi GPIO outputs
+              </div>
             </div>
+            <StatusPill 
+              ok={gpioEnabled} 
+              text={gpioEnabled ? "Running" : "Disabled"} 
+              disabled={!gpioAvailable}
+            />
+            <Toggle
+              checked={gpioEnabled}
+              disabled={!gpioAvailable || (!gpioDisableable && gpioEnabled)}
+              onChange={v => setConsumerEnabled('gpio', v)}
+            />
           </div>
-          <StatusPill 
-            ok={gpioEnabled} 
-            text={gpioAvailable ? (gpioEnabled ? "Running" : "Disabled") : "Not available"} 
-            disabled={!gpioAvailable}
-          />
-          <Toggle
-            checked={gpioEnabled}
-            disabled={!gpioAvailable}
-            onChange={v => setConsumerEnabled('gpio', v)}
-          />
-        </div>
+        }
       </div>
 
       {/* Network */}
-      <div className="sec-lbl">Network</div>
+      {/* <div className="sec-lbl">Network</div>
       <div className="s-card">
-        <NetworkRow
-          label="Admin port"
-          sub="Web UI server — requires restart to change"
-          value={parseInt(window.location.port) || 3000}
-          defaultVal={3000}
-          readOnly
-        />
         <NetworkRow
           label="MQTT port"
           value={pendingPort ?? aedesConfig?.port}
@@ -419,12 +453,30 @@ export default function SettingsPage() {
         />
         <NetworkRow
           label="Keep-alive interval"
-          sub="MQTT heartbeat in ms"
+          sub="MQTT heartbeat interval in ms"
           value={pendingKeepalive ?? aedesConfig?.keep_alive_ms}
           defaultVal={500}
           onChange={setPendingKeepalive}
         />
+      </div> */}
+      
+      {/* Alert buttons */}
+      <div className="sec-lbl">Alert buttons</div>
+      <div className="s-card">
+        {uiConfig.alerts.map((slot, i) => (
+          <AlertRow
+            key={i}
+            slot={toAlertSlot(slot)}
+            index={i}
+            editing={editingAlert === i}
+            onEdit={() => setEditingAlert(i)}
+            onSave={updated => { updateAlertSlot(i, toUIAlertSlot(updated)); setEditingAlert(null) }}
+            onReset={() => { resetAlertSlot(i); setEditingAlert(null) }}
+            onCancel={() => setEditingAlert(null)}
+          />
+        ))}
       </div>
+
 
       {/* Tally behaviour */}
       <div className="sec-lbl">Tally behaviour</div>
@@ -446,23 +498,6 @@ export default function SettingsPage() {
             <option value={7}>Program</option>
           </select>
         </div>
-      </div>
-
-      {/* Alert buttons */}
-      <div className="sec-lbl">Alert buttons</div>
-      <div className="s-card">
-        {uiConfig.alerts.map((slot, i) => (
-          <AlertRow
-            key={i}
-            slot={toAlertSlot(slot)}
-            index={i}
-            editing={editingAlert === i}
-            onEdit={() => setEditingAlert(i)}
-            onSave={updated => { updateAlertSlot(i, toUIAlertSlot(updated)); setEditingAlert(null) }}
-            onReset={() => { resetAlertSlot(i); setEditingAlert(null) }}
-            onCancel={() => setEditingAlert(null)}
-          />
-        ))}
       </div>
 
       {/* Config */}
@@ -489,13 +524,13 @@ export default function SettingsPage() {
       <div className="s-card">
         <div className="s-row">
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 13, color: 'var(--color-text-primary)' }}>Reset alert buttons</div>
-            <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginTop: 1 }}>Restore alert slots to defaults</div>
+            <div style={{ fontSize: 13, color: 'var(--color-text-primary)' }}>Reset System</div>
+            <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginTop: 1 }}>Restore all configuration to factory defaults</div>
           </div>
           <button
             className="sm-btn"
             style={{ color: '#E24B4A', borderColor: 'color-mix(in srgb, #E24B4A 35%, transparent)' }}
-            onClick={() => { if (confirm('Reset alert buttons to defaults?')) handleResetAlerts() }}
+            onClick={() => { if (confirm('Reset system to factory defaults?')) alert("Not yet implemented") }}
           >
             Reset
           </button>
