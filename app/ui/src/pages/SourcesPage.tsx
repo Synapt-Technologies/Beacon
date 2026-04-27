@@ -41,7 +41,7 @@ function SourceDetail({
             cursor: 'pointer', padding: '4px 8px', borderRadius: 'var(--border-radius-md)',
           }}
         >
-          <IconChevronLeft /> All sources
+          <IconChevronLeft /> Sources
         </button>
         <button
           onClick={() => navigate(`${basePath}/fullscreen`)}
