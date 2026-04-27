@@ -342,6 +342,7 @@ export default function SettingsPage() {
   const { theme, setTheme } = useTheme()
   const [editingAlert, setEditingAlert] = useState<number | null>(null)
 
+  // TODO Add consumer info
   const gpioEnabled       = consumers.gpio?.enabled         ?? true
   const aedesEnabled      = consumers.aedes?.enabled        ?? true
   const gpioAvailable     = consumers.gpio?.available       ?? false
@@ -407,7 +408,11 @@ export default function SettingsPage() {
               Network tally over MQTT
             </div>
           </div>
-          <StatusPill ok={aedesEnabled} text="Running" />
+          <StatusPill 
+            ok={aedesEnabled} 
+            text={aedesEnabled ? "Running" : "Disabled"}
+            disabled={!aedesAvailable}
+          />
           <Toggle
             checked={aedesEnabled}
             disabled={!aedesAvailable || (!aedesDisableable && aedesEnabled)}
