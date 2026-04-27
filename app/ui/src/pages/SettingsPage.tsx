@@ -4,6 +4,7 @@ import { useBeacon } from '../context/BeaconContext'
 import { Toggle } from '../components/Toggle'
 import { IconReset } from '../components/icons'
 import Savebar from '../components/layout/savebar/Savebar'
+import { useTheme, type Theme } from '../hooks/useTheme'
 import { DeviceAlertState, DeviceAlertTarget } from '../../../src/tally/types/ConsumerStates'
 import { UIAlertSlot, DEFAULT_UI_ALERT_CONFIG } from '../../../src/types/UIStates'
 import type { AlertSlot, AlertAction, AlertTarget } from '../types/beacon'
@@ -338,6 +339,7 @@ export default function SettingsPage() {
     setPendingDisconnect(null)
   }
 
+  const { theme, setTheme } = useTheme()
   const [editingAlert, setEditingAlert] = useState<number | null>(null)
 
   const gpioEnabled      = consumers.gpio?.enabled        ?? true
@@ -362,6 +364,38 @@ export default function SettingsPage() {
 
   return (
     <div style={{ paddingBottom: settingsUnsaved ? 80 : 20 }}>
+
+      {/* Appearance */}
+      <div className="sec-lbl">Appearance</div>
+      <div className="s-card">
+        <div className="s-row">
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 13, color: 'var(--color-text-primary)' }}>Theme</div>
+            <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginTop: 1 }}>Override the system color scheme</div>
+          </div>
+          <div style={{ display: 'flex', borderRadius: 'var(--border-radius-md)', overflow: 'hidden', border: '0.5px solid var(--color-border-tertiary)' }}>
+            {(['auto', 'light', 'dark'] as Theme[]).map((t, i, arr) => (
+              <button
+                key={t}
+                onClick={() => setTheme(t)}
+                style={{
+                  fontSize: 12,
+                  padding: '5px 12px',
+                  border: 'none',
+                  borderRight: i < arr.length - 1 ? '0.5px solid var(--color-border-tertiary)' : 'none',
+                  background: theme === t ? 'var(--color-border-tertiary)' : 'none',
+                  color: theme === t ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
+                  fontWeight: theme === t ? 500 : 400,
+                  cursor: 'pointer',
+                  textTransform: 'capitalize',
+                }}
+              >
+                {t}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
 
       {/* Consumers */}
       <div className="sec-lbl">Consumers</div>
