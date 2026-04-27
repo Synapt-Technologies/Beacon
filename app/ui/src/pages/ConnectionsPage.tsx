@@ -131,7 +131,7 @@ function ProducerCard({ producer: prod, editing, onEdit, onRemove }: ProducerCar
           disabled={!prod.enabled}
         />
         <span style={{ fontSize: 11, color: 'var(--color-text-tertiary)' }}>
-          {[typeLabel, model, prod.enabled && prod.info.status !== 'Online' ? 'Offline' : null, `${sources.length} source${sources.length !== 1 ? 's' : ''}`].filter(Boolean).join(' · ')}
+          {[typeLabel, model].filter(Boolean).join(' · ')}
         </span>
         <Toggle checked={prod.enabled} onChange={v => setProducerEnabled(prod.config.id, v)} />
         <button className="sm-btn" onClick={onEdit}>
@@ -167,7 +167,7 @@ function ProducerCard({ producer: prod, editing, onEdit, onRemove }: ProducerCar
           {sources.length > 0 && (
             <div style={{ marginBottom: 10 }}>
               <div style={{ fontSize: 10, fontWeight: 500, color: 'var(--color-text-tertiary)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 6 }}>
-                Sources ({sources.length} auto-discovered)
+                {sources.length} sources
               </div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
                 {sources.slice(0, 12).map(s => (
