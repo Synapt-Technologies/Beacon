@@ -77,7 +77,7 @@ function ProducerCard({ producer: prod, editing, onEdit, onRemove }: ProducerCar
 
   const sources    = Object.values(prod.info.sources as unknown as Record<string, SourceInfo>)
   const model      = prod.info.model.short ?? prod.info.model.long
-  const typeLabel  = PRODUCER_TYPE_MAP[prod.type]?.shortLabel ?? prod.type
+  const typeLabel  = PRODUCER_TYPE_MAP[prod.type]?.label ?? prod.type
 
   const handleSave = async () => {
     if (cfg.host !== undefined && host && !IPV4_RE.test(host)) {
@@ -125,9 +125,6 @@ function ProducerCard({ producer: prod, editing, onEdit, onRemove }: ProducerCar
         }}>
           {prod.config.name ?? prod.config.id}
         </div>
-        <span style={{ fontSize: 11, color: 'var(--color-text-tertiary)' }}>
-          {[typeLabel, model].filter(Boolean).join(' · ')}
-        </span>
         <StatusPill 
           ok={prod.info.status === 'Online'} 
           text={prod.info.status} 
@@ -149,7 +146,10 @@ function ProducerCard({ producer: prod, editing, onEdit, onRemove }: ProducerCar
               <input className="pf-input" value={name} onChange={e => setName(e.target.value)} placeholder={prod.config.id} />
             </Field>
             <Field label="Type">
-              <div style={{ fontSize: 12, color: 'var(--color-text-secondary)', paddingTop: 6 }}>{prod.type}</div>
+              {/* <div style={{ fontSize: 12, color: 'var(--color-text-secondary)', paddingTop: 6 }}>{prod.type}</div> */}
+              <span style={{ fontSize: 12, color: 'var(--color-text-secondary)', paddingTop: 6 }}>
+                {[typeLabel, model].filter(Boolean).join(' · ')}
+              </span>
             </Field>
             {cfg.host !== undefined && (
               <Field label="Host / IP">
