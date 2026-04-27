@@ -34,7 +34,7 @@ function SourceDetail({
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
         <button
-          onClick={() => navigate('/web-tally')}
+          onClick={() => navigate('/sources')}
           style={{
             display: 'flex', alignItems: 'center', gap: 5, fontSize: 13,
             color: 'var(--color-text-secondary)', border: 'none', background: 'none',
@@ -152,7 +152,7 @@ export default function SourcesPage() {
     }
   }
 
-  const basePath = producerId && sourceId ? `/web-tally/${producerId}/${sourceId}` : '/web-tally'
+  const basePath = '/sources' + (producerId && sourceId && `/${producerId}/${sourceId}`)
 
   if (selectedSource) {
     return <SourceDetail source={selectedSource} basePath={basePath} sourceState={sourceState} />
@@ -209,7 +209,7 @@ export default function SourcesPage() {
                 <div
                   key={key}
                   className={`row-card tl-${state}`}
-                  onClick={() => navigate(`/web-tally/${src.source.producer}/${src.source.source}`)}
+                  onClick={() => navigate(`/sources/${src.source.producer}/${src.source.source}`)}
                 >
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-primary)' }}>

@@ -9,7 +9,7 @@ const CONNECTION_TOAST_ID = 'beacon-connection'
 
 const PAGE_TITLES: Record<string, string> = {
     '/devices':         'Devices',
-    '/web-tally':       'Sources',
+    '/sources':         'Sources',
     '/connections':     'Connections',
     '/settings':        'Settings',
     '/settings/update': 'Update',

@@ -35,15 +35,15 @@ export default function DevicesPage() {
         <DeviceRow
           key={GlobalDeviceTools.create(device.id.consumer, device.id.device)}
           device={device}
-          onSelect={() => navigate(`/overview/${device.id.consumer}/${device.id.device}`)}
+          onSelect={() => navigate(`/devices/${device.id.consumer}/${device.id.device}`)}
         />
       ))}
 
       {selectedDevice && (
         <DeviceDetailOverlay
           device={selectedDevice}
-          backPath="/overview"
-          backLabel="Overview"
+          backPath="/devices"
+          backLabel="Devices"
         />
       )}
     </div>

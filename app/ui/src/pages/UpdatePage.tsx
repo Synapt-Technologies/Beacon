@@ -338,7 +338,7 @@ function UpdateSuccessModal({ version, onStay, onNavigate }: {
               border: 'none', background: 'var(--acc)', color: '#fff', cursor: 'pointer',
             }}
           >
-            Go to overview
+            Go to home
           </button>
         </div>
       </div>
