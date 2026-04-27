@@ -96,7 +96,8 @@ export default function App() {
             <BrowserRouter>
                 <Routes>
                     <Route element={<Layout />}>
-                        <Route index element={<Navigate to="/devices" replace />} />
+                        <Route index            element={<Navigate to="/devices" replace />} />
+                        <Route path="overview"  element={<Navigate to="/devices" replace />} />
 
                         <Route path="devices" element={<DevicesPage />} />
                         <Route path="devices/:consumer/:device" element={<DevicesPage />} />
