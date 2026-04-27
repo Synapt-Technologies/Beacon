@@ -12,7 +12,7 @@ export function Toggle({ checked, onChange, disabled }: ToggleProps) {
       onClick={() => !disabled && onChange(!checked)}
       style={{
         width: 30, height: 17,
-        background: checked ? '#1D9E75' : 'var(--color-border-secondary)',
+        background: checked && !disabled ? '#1D9E75' : 'var(--color-border-secondary)',
         borderRadius: 9, position: 'relative',
         cursor: disabled ? 'not-allowed' : 'pointer',
         transition: 'background .15s', flexShrink: 0,
