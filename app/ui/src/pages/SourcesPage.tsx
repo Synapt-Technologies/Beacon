@@ -183,7 +183,7 @@ export default function SourcesPage() {
 
       {producers.length === 0 && (
         <div style={{ padding: '32px 0', textAlign: 'center', fontSize: 13, color: 'var(--color-text-tertiary)' }}>
-          No producers connected — add a connection first
+          No producers connected - <a style={{ textDecoration: 'underline', cursor: 'pointer' }} onClick={() => navigate('/connections')}>Add a connection</a>
         </div>
       )}
 

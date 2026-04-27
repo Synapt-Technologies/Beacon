@@ -27,7 +27,7 @@ export default function DevicesPage() {
           padding: '32px 0', textAlign: 'center',
           fontSize: 13, color: 'var(--color-text-tertiary)',
         }}>
-          No devices found — configure consumers and check connections
+          No devices found
         </div>
       )}
 
