@@ -2,13 +2,14 @@ import { useState } from 'react'
 import toast from 'react-hot-toast'
 import { useBeacon } from '../context/BeaconContext'
 
-const IPV4_RE = /^((25[0-5]|2[0-4]\d|1\d{2}|[1-9]\d|\d)\.){3}(25[0-5]|2[0-4]\d|1\d{2}|[1-9]\d|\d)$/
 import { AddConnectionModal } from '../components/AddConnectionModal'
 import type { ProducerBundle, SourceInfo } from '../../../src/tally/types/ProducerStates'
 import type { ProducerConfig } from '../../../src/tally/producer/AbstractTallyProducer'
 import { PRODUCER_TYPE_MAP } from '../config/producers'
 import { Toggle } from '../components/Toggle'
 import StatusPill from '../components/statusPill/StatusPill'
+
+const IPV4_RE = /^((25[0-5]|2[0-4]\d|1\d{2}|[1-9]\d|\d)\.){3}(25[0-5]|2[0-4]\d|1\d{2}|[1-9]\d|\d)$/
 
 export default function ConnectionsPage() {
   const { producers, removeProducer } = useBeacon()
