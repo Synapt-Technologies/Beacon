@@ -397,7 +397,6 @@ export default function SettingsPage() {
           </div>
         </div>
       </div>
-
       {/* Consumers */}
       <div className="sec-lbl">Consumers</div>
       <div className="s-card">
@@ -439,7 +438,7 @@ export default function SettingsPage() {
       </div>
 
       {/* Network */}
-      <div className="sec-lbl">Network</div>
+      {/* <div className="sec-lbl">Network</div>
       <div className="s-card">
         <NetworkRow
           label="MQTT port"
@@ -454,7 +453,25 @@ export default function SettingsPage() {
           defaultVal={500}
           onChange={setPendingKeepalive}
         />
+      </div> */}
+      
+      {/* Alert buttons */}
+      <div className="sec-lbl">Alert buttons</div>
+      <div className="s-card">
+        {uiConfig.alerts.map((slot, i) => (
+          <AlertRow
+            key={i}
+            slot={toAlertSlot(slot)}
+            index={i}
+            editing={editingAlert === i}
+            onEdit={() => setEditingAlert(i)}
+            onSave={updated => { updateAlertSlot(i, toUIAlertSlot(updated)); setEditingAlert(null) }}
+            onReset={() => { resetAlertSlot(i); setEditingAlert(null) }}
+            onCancel={() => setEditingAlert(null)}
+          />
+        ))}
       </div>
+
 
       {/* Tally behaviour */}
       <div className="sec-lbl">Tally behaviour</div>
@@ -476,23 +493,6 @@ export default function SettingsPage() {
             <option value={7}>Program</option>
           </select>
         </div>
-      </div>
-
-      {/* Alert buttons */}
-      <div className="sec-lbl">Alert buttons</div>
-      <div className="s-card">
-        {uiConfig.alerts.map((slot, i) => (
-          <AlertRow
-            key={i}
-            slot={toAlertSlot(slot)}
-            index={i}
-            editing={editingAlert === i}
-            onEdit={() => setEditingAlert(i)}
-            onSave={updated => { updateAlertSlot(i, toUIAlertSlot(updated)); setEditingAlert(null) }}
-            onReset={() => { resetAlertSlot(i); setEditingAlert(null) }}
-            onCancel={() => setEditingAlert(null)}
-          />
-        ))}
       </div>
 
       {/* Config */}
