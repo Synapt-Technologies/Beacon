@@ -110,6 +110,9 @@ export default function App() {
                         <Route path="connections" element={<ConnectionsPage />} />
                         <Route path="settings" element={<SettingsPage />} />
                         <Route path="settings/update" element={<UpdatePage />} />
+
+                        <Route path="*"  element={<Navigate to="/devices" replace />} />
+
                     </Route>
                 </Routes>
             </BrowserRouter>
