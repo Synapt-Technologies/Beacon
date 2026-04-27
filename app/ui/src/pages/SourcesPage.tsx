@@ -7,6 +7,7 @@ import { IconChevronLeft, IconChevronRight, IconFullscreen } from '../components
 import type { SourceInfo } from '../../../src/tally/types/ProducerStates'
 import { useTallyState } from '../hooks/useTallyState'
 import { stateFromValue, type DeviceDisplayState } from '../types/beacon'
+import StatusPill from '../components/statusPill/StatusPill'
 
 interface SelectedSource extends SourceInfo {
   prodName: string
@@ -191,11 +192,10 @@ export default function SourcesPage() {
         const sources = Object.values(prod.info.sources as unknown as Record<string, SourceInfo>)
         return (
           <div key={prod.config.id} style={{ marginBottom: 16 }}>
-            <div className="sec-lbl">{prod.config.name ?? prod.config.id}</div>
-
+              <div className="sec-lbl">{prod.config.name ?? prod.config.id}</div>
             {sources.length === 0 && (
               <div style={{ fontSize: 12, color: 'var(--color-text-tertiary)', padding: '8px 0' }}>
-                No sources — producer may not be connected
+                {prod.info.status === 'Online' ? 'No sources found' : prod.info.status}
               </div>
             )}
 
