@@ -9,9 +9,12 @@ export enum Theme {
 const KEY = 'beacon-theme'
 
 export function useTheme() {
-  const [theme, setThemeState] = useState<Theme | null>(
-    () => Theme[localStorage.getItem(KEY) as keyof typeof Theme] ?? Theme.Auto
-  )
+  const [theme, setThemeState] = useState<Theme | null>(() => {
+    const storedTheme = localStorage.getItem(KEY)
+    return Object.values(Theme).includes(storedTheme as Theme)
+      ? (storedTheme as Theme)
+      : Theme.Auto
+  })
 
   const setTheme = (t: Theme) => {
     localStorage.setItem(KEY, t)
