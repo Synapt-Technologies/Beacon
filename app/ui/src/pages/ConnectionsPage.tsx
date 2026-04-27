@@ -23,7 +23,7 @@ export default function ConnectionsPage() {
         </span>
         <button
           className="sm-btn"
-          style={{ color: 'var(--acc)', borderColor: 'color-mix(in srgb, var(--acc) 35%, transparent)' }}
+          style={{ backgroundColor: 'var(--color-background-primary)', color: 'var(--color-text-secondary)' }}
           onClick={() => setAddOpen(true)}
         >
           + Add connection
@@ -125,14 +125,14 @@ function ProducerCard({ producer: prod, editing, onEdit, onRemove }: ProducerCar
         }}>
           {prod.config.name ?? prod.config.id}
         </div>
+        <span style={{ fontSize: 11, color: 'var(--color-text-tertiary)' }}>
+          {[typeLabel, model].filter(Boolean).join(' · ')}
+        </span>
         <StatusPill 
           ok={prod.info.status === 'Online'} 
           text={prod.info.status} 
           disabled={!prod.enabled}
         />
-        <span style={{ fontSize: 11, color: 'var(--color-text-tertiary)' }}>
-          {[typeLabel, model].filter(Boolean).join(' · ')}
-        </span>
         <Toggle checked={prod.enabled} onChange={v => setProducerEnabled(prod.config.id, v)} />
         <button className="sm-btn" onClick={onEdit}>
           {editing ? 'Close' : 'Edit'}
