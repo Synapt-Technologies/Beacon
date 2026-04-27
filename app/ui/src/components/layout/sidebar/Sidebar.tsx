@@ -3,7 +3,7 @@ import Logo from "../../logo/Logo";
 import SectionLabel from "./SectionLabel";
 import SidebarItem from "./SidebarItem";
 import CollapseButton from "./CollapseButton";
-import { IconGrid, IconCircleDot, IconConnections, IconSettings, IconTallyDevice, IconSource } from '../../icons'
+import { IconConnections, IconSettings, IconTallyDevice, IconSource } from '../../icons'
 
 interface SidebarProps {
     isMobile:   boolean
