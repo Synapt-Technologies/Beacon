@@ -229,7 +229,7 @@ function UpdateProgressOverlay() {
         Updating Beacon…
       </div>
       <div style={{ fontSize: 12, color: 'var(--color-text-tertiary)' }}>
-        The app is restarting. Please wait.
+        Restarting, please wait.
       </div>
     </div>
   )
@@ -384,14 +384,14 @@ export default function UpdatePage() {
             setOverlay('error')
             sessionStorage.removeItem('beacon-update-pending')
           } else {
-            // Express is up, but wait for Vite middleware too before reloading —
+            // Express is up, but wait for Vite middleware too before reloading -
             // GET / goes through Vite so a 200 means both are ready.
             const viteReady = await fetch('/', { method: 'HEAD' }).then(r => r.ok).catch(() => false)
             if (viteReady) window.location.reload()
           }
         }
       } catch {
-        // server still restarting — keep polling
+        // server still restarting - keep polling
       }
     }, 2000)
     return () => clearInterval(id)
@@ -526,7 +526,7 @@ export default function UpdatePage() {
         })}
       </div>
 
-      {/* Branches — developer */}
+      {/* Branches - developer */}
       {status && status.branches.length > 0 && (
         <>
           <button
@@ -540,7 +540,7 @@ export default function UpdatePage() {
             <svg width="10" height="10" viewBox="0 0 10 10" style={{ transform: showBranches ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s', flexShrink: 0 }}>
               <path d="M3 2l4 3-4 3" stroke="currentColor" strokeWidth="1.3" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
-            Developer — branches
+            Developer - branches
           </button>
 
           {showBranches && (
