@@ -553,7 +553,7 @@ export default function UpdatePage() {
                 >
                   <div style={{ flex: 1, fontSize: 13, color: 'var(--color-text-primary)' }}>{b.name}</div>
                   <button className="sm-btn" onClick={() => handleApply(b.name, 'branch')}>
-                    Switch
+                    Load
                   </button>
                 </div>
               ))}
