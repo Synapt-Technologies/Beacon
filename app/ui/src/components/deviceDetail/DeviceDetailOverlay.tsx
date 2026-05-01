@@ -113,10 +113,11 @@ export function DeviceDetailOverlay({ device, backPath, backLabel }: DeviceDetai
                     <TallyBlock name={deviceLong} sub={stateSub(stateStr)} state={stateStr} />
 
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 14 }}>
-                        <InfoBox label="Consumer"    value={device.consumer.name} />
+                        <InfoBox label="Short Name"  value={device.name.short ?? ""} />
                         <InfoBox label="Connection"  value={CONNECTION_LABELS[device.connection] ?? 'Unknown'} />
                         <InfoBox label="Device ID"   value={deviceKey} />
-                        <InfoBox label="Last update" value={formatTs(device.last_update)} />
+                        <InfoBox label="Consumer"    value={device.consumer.name} />
+                        {/* <InfoBox label="Last update" value={formatTs(device.last_update)} /> */}
                     </div>
 
                     <div className="sec-lbl">Patched sources</div>
