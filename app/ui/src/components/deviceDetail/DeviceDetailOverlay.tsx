@@ -49,13 +49,10 @@ export function DeviceDetailOverlay({ device, backPath, backLabel }: DeviceDetai
 
     const basePath    = `${backPath}/${device.id.consumer}/${device.id.device}`
     const fsOpen      = location.pathname.endsWith('/fullscreen')
-    const liveState: DeviceDisplayState = systemConnected
+    const stateStr: DeviceDisplayState = systemConnected
         ? (deviceStates.get(GlobalDeviceTools.create(device.id.consumer, device.id.device)) ?? 'none')
         : disconnectState
-    const stateStr = liveState
     const deviceKey   = GlobalDeviceTools.create(device.id.consumer, device.id.device)
-    const deviceLong  = device.name.long
-    const deviceShort = device.name.short ?? device.name.long ?? device.id.device
 
     const handlePatchApply = async (patch: GlobalTallySource[]) => {
         setPatchOpen(false)
@@ -93,7 +90,7 @@ export function DeviceDetailOverlay({ device, backPath, backLabel }: DeviceDetai
                         <IconChevronLeft /> {backLabel}
                     </button>
                     <span style={{ flex: 1, fontSize: 14, fontWeight: 500, color: 'var(--color-text-primary)' }}>
-                        {deviceLong}
+                        {device.name.long}
                     </span>
                     <button
                         onClick={() => navigate(`${basePath}/fullscreen`)}
@@ -110,14 +107,13 @@ export function DeviceDetailOverlay({ device, backPath, backLabel }: DeviceDetai
 
                 {/* Body */}
                 <div style={{ flex: 1, overflowY: 'auto', padding: '16px 18px' }}>
-                    <TallyBlock name={deviceLong} sub={stateSub(stateStr)} state={stateStr} />
+                    <TallyBlock name={device.name.long} sub={device.name.short ?? ""} state={stateStr} />
 
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 14 }}>
-                        <InfoBox label="Short Name"  value={device.name.short ?? ""} />
+                        <InfoBox label="Consumer"    value={device.consumer.name} />
                         <InfoBox label="Connection"  value={CONNECTION_LABELS[device.connection] ?? 'Unknown'} />
                         <InfoBox label="Device ID"   value={deviceKey} />
-                        <InfoBox label="Consumer"    value={device.consumer.name} />
-                        {/* <InfoBox label="Last update" value={formatTs(device.last_update)} /> */}
+                        <InfoBox label="Last update" value={formatTs(device.last_update)} />
                     </div>
 
                     <div className="sec-lbl">Patched sources</div>
@@ -151,15 +147,15 @@ export function DeviceDetailOverlay({ device, backPath, backLabel }: DeviceDetai
                 <FullscreenOverlay
                     open={fsOpen}
                     state={stateStr}
-                    name={deviceShort}
-                    sub={deviceLong}
+                    name={device.name.short ?? device.name.long ?? device.id.device}
+                    sub={device.name.long}
                     onClose={() => navigate(basePath)}
                 />
 
                 {/* producers.info.sources is a plain object at runtime */}
                 <PatchModal
                     open={patchOpen}
-                    deviceName={deviceLong}
+                    deviceName={device.name.long}
                     consumerName={device.consumer.name}
                     currentPatch={device.patch}
                     producers={producers}
