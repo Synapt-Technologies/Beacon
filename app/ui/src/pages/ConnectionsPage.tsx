@@ -2,13 +2,14 @@ import { useState } from 'react'
 import toast from 'react-hot-toast'
 import { useBeacon } from '../context/BeaconContext'
 
-const IPV4_RE = /^((25[0-5]|2[0-4]\d|1\d{2}|[1-9]\d|\d)\.){3}(25[0-5]|2[0-4]\d|1\d{2}|[1-9]\d|\d)$/
 import { AddConnectionModal } from '../components/AddConnectionModal'
 import type { ProducerBundle, SourceInfo } from '../../../src/tally/types/ProducerStates'
 import type { ProducerConfig } from '../../../src/tally/producer/AbstractTallyProducer'
 import { PRODUCER_TYPE_MAP } from '../config/producers'
 import { Toggle } from '../components/Toggle'
 import StatusPill from '../components/statusPill/StatusPill'
+
+const IPV4_RE = /^((25[0-5]|2[0-4]\d|1\d{2}|[1-9]\d|\d)\.){3}(25[0-5]|2[0-4]\d|1\d{2}|[1-9]\d|\d)$/
 
 export default function ConnectionsPage() {
   const { producers, removeProducer } = useBeacon()
@@ -17,13 +18,13 @@ export default function ConnectionsPage() {
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-        <span style={{ fontSize: 11, color: 'var(--color-text-tertiary)' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, height: '25px' }}>
+        <span style={{ display: 'flex', alignItems: 'center', fontSize: 11, color: 'var(--color-text-tertiary)' }}>
           ATEM switcher connections
         </span>
         <button
           className="sm-btn"
-          style={{ color: 'var(--acc)', borderColor: 'color-mix(in srgb, var(--acc) 35%, transparent)' }}
+          style={{ backgroundColor: 'var(--color-background-primary)', color: 'var(--color-text-secondary)' }}
           onClick={() => setAddOpen(true)}
         >
           + Add connection
@@ -77,7 +78,7 @@ function ProducerCard({ producer: prod, editing, onEdit, onRemove }: ProducerCar
 
   const sources    = Object.values(prod.info.sources as unknown as Record<string, SourceInfo>)
   const model      = prod.info.model.short ?? prod.info.model.long
-  const typeLabel  = PRODUCER_TYPE_MAP[prod.type]?.shortLabel ?? prod.type
+  const typeLabel  = PRODUCER_TYPE_MAP[prod.type]?.label ?? prod.type
 
   const handleSave = async () => {
     if (cfg.host !== undefined && host && !IPV4_RE.test(host)) {
@@ -130,9 +131,6 @@ function ProducerCard({ producer: prod, editing, onEdit, onRemove }: ProducerCar
           text={prod.info.status} 
           disabled={!prod.enabled}
         />
-        <span style={{ fontSize: 11, color: 'var(--color-text-tertiary)' }}>
-          {[typeLabel, model, prod.enabled && prod.info.status !== 'Online' ? 'Offline' : null, `${sources.length} source${sources.length !== 1 ? 's' : ''}`].filter(Boolean).join(' · ')}
-        </span>
         <Toggle checked={prod.enabled} onChange={v => setProducerEnabled(prod.config.id, v)} />
         <button className="sm-btn" onClick={onEdit}>
           {editing ? 'Close' : 'Edit'}
@@ -149,7 +147,10 @@ function ProducerCard({ producer: prod, editing, onEdit, onRemove }: ProducerCar
               <input className="pf-input" value={name} onChange={e => setName(e.target.value)} placeholder={prod.config.id} />
             </Field>
             <Field label="Type">
-              <div style={{ fontSize: 12, color: 'var(--color-text-secondary)', paddingTop: 6 }}>{prod.type}</div>
+              {/* <div style={{ fontSize: 12, color: 'var(--color-text-secondary)', paddingTop: 6 }}>{prod.type}</div> */}
+              <span style={{ fontSize: 12, color: 'var(--color-text-secondary)', paddingTop: 6 }}>
+                {[typeLabel, model].filter(Boolean).join(' · ')}
+              </span>
             </Field>
             {cfg.host !== undefined && (
               <Field label="Host / IP">
@@ -167,7 +168,7 @@ function ProducerCard({ producer: prod, editing, onEdit, onRemove }: ProducerCar
           {sources.length > 0 && (
             <div style={{ marginBottom: 10 }}>
               <div style={{ fontSize: 10, fontWeight: 500, color: 'var(--color-text-tertiary)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 6 }}>
-                Sources ({sources.length} auto-discovered)
+                {sources.length} sources
               </div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
                 {sources.slice(0, 12).map(s => (

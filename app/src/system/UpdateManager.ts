@@ -138,6 +138,7 @@ export class UpdateManager {
                     name:        (r['name'] as string) || (r['tag_name'] as string),
                     publishedAt: r['published_at'] as string,
                     prerelease:  r['prerelease']  as boolean,
+                    body:        (r['body'] as string) || '',
                 }))
                 .filter(r => !isOlderThan(r.tag, MIN_UPDATABLE_TAG));
 

@@ -6,7 +6,7 @@
 # Run from WSL2 (the project can stay on the Windows filesystem):
 #   bash /mnt/c/Users/ijssl/Programming\ Projects/Beacon/pi-image/build.sh
 #
-# Output: ~/beacon-image-work/work/image-Beacon/  →  Beacon.img
+# Output: ~/beacon-image-work/work/image-Beacon/  →  Beacon.img.xz
 # ---------------------------------------------------------------------------
 set -euo pipefail
 
@@ -66,6 +66,25 @@ mkdir -p "${WORK_DIR}/work"
     -c beacon.yaml \
     -B "${WORK_DIR}/work"
 
+# ---------------------------------------------------------------------------
+# Compress final image to .xz (preferred over .zst for distribution)
+# ---------------------------------------------------------------------------
+echo "==> Compressing image to .xz..."
+IMG_DIR="${WORK_DIR}/work/image-Beacon"
+RAW_IMG="$(ls "${IMG_DIR}"/*.img 2>/dev/null | head -1 || true)"
+ZST_IMG="$(ls "${IMG_DIR}"/*.img.zst 2>/dev/null | head -1 || true)"
+
+if [ -n "${RAW_IMG}" ]; then
+    xz -vv -T0 -6 -f "${RAW_IMG}"
+elif [ -n "${ZST_IMG}" ]; then
+    echo "==> Uncompressed image not found, re-compressing .zst..."
+    zstd -d -f "${ZST_IMG}" -o "${ZST_IMG%.zst}"
+    xz -vv -T0 -6 -f "${ZST_IMG%.zst}"
+    rm -f "${ZST_IMG}"
+else
+    echo "    ERROR: Failed to compress image to .xz — No .img or .img.zst found in ${IMG_DIR}"
+fi
+
 echo ""
 echo "==> Done! Image is in: ${WORK_DIR}/work/image-Beacon/"
-echo "    Copy to repo:    mkdir -p \"${SCRIPT_DIR}/rpi-build\" && cp \"\$(ls ${WORK_DIR}/work/image-Beacon/*.img | head -1)\" \"${SCRIPT_DIR}/rpi-build/Beacon.img\""
+echo "    Copy to repo:    mkdir -p \"${SCRIPT_DIR}/rpi-build\" && cp \"\$(ls ${WORK_DIR}/work/image-Beacon/*.img.xz | head -1)\" \"${SCRIPT_DIR}/rpi-build/Beacon.img.xz\""

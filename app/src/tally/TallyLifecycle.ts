@@ -24,7 +24,7 @@ export interface LifeCycleConsumerConfig<T extends ConsumerConfig = ConsumerConf
     config?: Partial<T>;
 }
 
-type ConsumerConfigMap = {
+type ConsumerConfigMap = { // TODO Add consumer info
     aedes: AedesConsumerConfig;
     gpio: GpioConsumerConfig;
 };

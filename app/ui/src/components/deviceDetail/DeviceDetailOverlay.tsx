@@ -17,7 +17,7 @@ import { DeviceEditModal } from '../devices/DeviceEditPanel'
 
 interface DeviceDetailOverlayProps {
     device: UITallyDevice
-    backPath: string    // e.g. '/overview' or '/devices'
+    backPath: string    // e.g. '/devices' or '/sources'
     backLabel: string
 }
 
