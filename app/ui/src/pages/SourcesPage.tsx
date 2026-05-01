@@ -56,14 +56,14 @@ function SourceDetail({
         </button>
       </div>
 
-      <TallyBlock name={source.long} sub={stateSub(state)} state={state} height={160} nameFontSize={26} />
+      <TallyBlock name={source.long} sub={source.short ?? ""} state={state} height={160} nameFontSize={26} />
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
         {([
           ['Producer',   source.prodName],
           ['Short name', source.short],
           ['Source ID',  `${source.source.producer}:${source.source.source}`],
-          ['State',      stateSub(state)],
+          ['State',      stateSub(state)], // TODO State not needed. Replace.
         ] as [string, string][]).map(([label, value]) => (
           <div key={label} style={{
             background: 'var(--color-background-primary)',
