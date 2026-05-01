@@ -32,11 +32,11 @@ export function TallyBlock({ name, sub, state, height = 110, nameFontSize = 22 }
 }
 
 const STATE_SUB: Record<DeviceDisplayState, string> = {
-  pgm:     'Program — on air',
-  pvw:     'Preview — standing by',
+  pgm:     'Program - on air',
+  pvw:     'Preview - standing by',
   danger:  'Danger',
   warning: 'Warning',
-  none:    'Idle — not active',
+  none:    'Idle - not active',
 }
 
 export function stateSub(state: DeviceDisplayState) {
