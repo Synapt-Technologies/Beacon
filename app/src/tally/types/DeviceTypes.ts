@@ -41,10 +41,11 @@ export enum DeviceAlertTarget {
 
 export enum DeviceTallyState {
     NONE = 0,
-    DANGER = 1, // Light redish
-    WARNING = 3, // Yellow
-    PREVIEW = 6,
-    PROGRAM = 9
+    DANGER = 4, // Light redish
+    INFO = 8, // bLUE
+    WARNING = 12, // Yellow
+    PREVIEW = 16,
+    PROGRAM = 20
 }
 
 export interface AlertSlotConfig {
