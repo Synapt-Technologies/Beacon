@@ -25,18 +25,18 @@ export interface DeviceName {
 // TODO: More of a DeviceAlertAction?
 // TODO CHECK STRING VALUES
 export enum DeviceAlertAction { // TODO Check if these are desired types
-    IDENT,
-    INFO,
-    NORMAL,
-    PRIO,
-    CLEAR
+    CLEAR = 0,
+    IDENT = 2,
+    INFO = 4,
+    NORMAL = 6,
+    PRIO = 8,
 }
 
 // TODO CHECK STRING VALUES
 export enum DeviceAlertTarget {
-    OPERATOR,
-    TALENT,
-    ALL
+    ALL = 0,
+    OPERATOR = 1,
+    TALENT = 2,
 }
 
 export enum DeviceTallyState {
