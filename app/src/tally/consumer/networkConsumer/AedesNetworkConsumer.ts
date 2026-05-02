@@ -262,7 +262,8 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer implements IGl
         }
 
         const payload = JSON.stringify({
-            state: DeviceTallyState[device.state], // Maybe send number for efficiency?
+            state: DeviceTallyState[device.state],
+            ss: device.state,
             name: device.name,
             moment: this.tallyState.moment
         });
