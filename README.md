@@ -16,6 +16,7 @@ Find the light in your darkness. Highly configurable networked tally system.
 * Tally and Device web view.
 * Companion module. **WIP**
 * Device alerting.
+* Open source, with support for DIY devices.
 
 <p style="width:100%; box-sizing: border-box; display: flex; gap: 10px; flex-wrap: nowrap">
   <img style="width:75%; border-radius: 5px" alt="BEACON CONTROL HOME" src="https://raw.githubusercontent.com/IJIJI/Beacon/refs/heads/main/assets/Main-Page.png" />
