@@ -1,0 +1,582 @@
+/* ─── Custom properties (dark theme) ──────────────────────────────────────── */
+
+:root {
+  --bg-primary:   #1c1c1c;
+  --bg-secondary: #272727;
+  --bg-tertiary:  #111111;
+
+  --bg-success: #04342c;
+  --bg-danger:  #501313;
+  --bg-warning: #412402;
+
+  --text-primary:   #e8e6de;
+  --text-secondary: #b4b2a9;
+  --text-tertiary:  #6b6a64;
+  --text-success:   #5dcaa5;
+  --text-danger:    #E93838;
+  --text-warning:   #D4930A;
+
+  --border-t: rgba(255,255,255,.10);
+  --border-s: rgba(255,255,255,.16);
+  --border-p: rgba(255,255,255,.26);
+
+  --radius-md: 8px;
+  --radius-lg: 12px;
+
+  --acc:     #E85D30;
+  --success: #1D9E75;
+  --danger:  #E24B4A;
+  --warning: #D4930A;
+  --pvw:     #16B658;
+
+  --font:      -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+  --font-mono: 'SF Mono', 'Fira Code', 'Fira Mono', monospace;
+}
+
+/* ─── Reset ────────────────────────────────────────────────────────────────── */
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  min-height: 100%;
+  font-family: var(--font);
+  font-size: 14px;
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+}
+
+button, input, select, textarea { font-family: inherit; }
+button { cursor: pointer; }
+
+/* ─── Header card ──────────────────────────────────────────────────────────── */
+
+.header-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 16px;
+  height: 52px;
+  background: var(--bg-primary);
+  border: 0.5px solid var(--border-t);
+  border-radius: var(--radius-lg);
+  margin-bottom: 14px;
+}
+
+.app-title {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: .01em;
+}
+
+/* ─── Monospace utility ────────────────────────────────────────────────────── */
+
+.mono { font-family: var(--font-mono); }
+
+/* ─── Status pills ─────────────────────────────────────────────────────────── */
+
+.status-pills {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 4px 9px;
+  border-radius: 99px;
+  border: 0.5px solid var(--border-t);
+  background: var(--bg-secondary);
+  color: var(--text-tertiary);
+  transition: color .2s, background .2s, border-color .2s;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.status-pill.ok {
+  color: var(--text-success);
+  background: var(--bg-success);
+  border-color: rgba(93,202,165,.2);
+}
+
+.status-pill.err {
+  color: var(--text-danger);
+  background: var(--bg-danger);
+  border-color: rgba(233,56,56,.2);
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1;   transform: scale(1);   }
+  50%       { opacity: 0.4; transform: scale(0.75); }
+}
+
+.pill-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+.status-pill.ok .pill-dot {
+  animation: pulse-dot 2.5s ease-in-out infinite;
+}
+
+/* ─── Page layout ──────────────────────────────────────────────────────────── */
+
+.page {
+  padding: 16px 18px 24px;
+  max-width: 660px;
+  margin: 75px auto 30px;
+  transition: padding-bottom .2s;
+}
+
+.page.has-savebar {
+  padding-bottom: 80px;
+}
+
+/* ─── Section label ────────────────────────────────────────────────────────── */
+
+.sec-lbl {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  margin-bottom: 8px;
+}
+
+/* ─── Settings card ────────────────────────────────────────────────────────── */
+
+.s-card {
+  background: var(--bg-primary);
+  border: 0.5px solid var(--border-t);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  margin-bottom: 14px;
+}
+
+/* ─── Settings row ─────────────────────────────────────────────────────────── */
+
+.s-row {
+  display: flex;
+  align-items: center;
+  padding: 12px 14px;
+  gap: 12px;
+  border-left: 2.5px solid transparent;
+  transition: border-left-color .15s;
+}
+
+.s-row.changed { border-left-color: var(--acc); }
+
+/* column layout for textarea rows */
+.s-row--col {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+}
+
+/* ─── Field label ──────────────────────────────────────────────────────────── */
+
+.field-label { flex: 1; }
+
+.field-name {
+  font-size: 13px;
+  color: var(--text-primary);
+}
+
+.field-sub {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  margin-top: 1px;
+}
+
+/* ─── Field control ────────────────────────────────────────────────────────── */
+
+.field-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* ─── Reboot badge ─────────────────────────────────────────────────────────── */
+
+.reboot-badge {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border-radius: 99px;
+  background: rgba(212,147,10,.12);
+  color: var(--warning);
+  border: 0.5px solid rgba(212,147,10,.28);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ─── Text / number input ──────────────────────────────────────────────────── */
+
+.s-input {
+  font-size: 12px;
+  padding: 5px 9px;
+  border: 0.5px solid var(--border-t);
+  border-radius: var(--radius-md);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  outline: none;
+  width: 150px;
+  transition: border-color .15s;
+}
+
+.s-input:focus { border-color: var(--border-p); }
+.s-input.changed { border-color: var(--acc); }
+
+.s-input--num {
+  width: 100px;
+  text-align: right;
+}
+
+/* ─── Select ───────────────────────────────────────────────────────────────── */
+
+.s-select {
+  font-size: 12px;
+  padding: 5px 8px;
+  border: 0.5px solid var(--border-t);
+  border-radius: var(--radius-md);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  outline: none;
+  cursor: pointer;
+  transition: border-color .15s;
+}
+
+.s-select:focus  { border-color: var(--border-p); }
+.s-select.changed { border-color: var(--acc); }
+
+/* ─── Password ─────────────────────────────────────────────────────────────── */
+
+.password-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-wrap .s-input { padding-right: 46px; }
+
+.pw-toggle {
+  position: absolute;
+  right: 7px;
+  font-size: 10px;
+  font-weight: 500;
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: none;
+  background: none;
+  color: var(--text-tertiary);
+  transition: color .1s;
+}
+
+.pw-toggle:hover { color: var(--text-secondary); }
+
+/* ─── Slider ───────────────────────────────────────────────────────────────── */
+
+.field-control .s-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 130px;
+  height: 4px;
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+  background: linear-gradient(
+    to right,
+    var(--acc) var(--fill, 15%),
+    var(--border-s) var(--fill, 15%)
+  );
+}
+
+.s-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--acc);
+  cursor: pointer;
+  border: 2px solid var(--bg-primary);
+  box-shadow: 0 0 0 1px var(--acc);
+}
+
+.s-slider::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--acc);
+  cursor: pointer;
+  border: 2px solid var(--bg-primary);
+  box-shadow: 0 0 0 1px var(--acc);
+  box-sizing: border-box;
+}
+
+.slider-value {
+  font-size: 12px;
+  font-weight: 500;
+  font-family: var(--font-mono);
+  color: var(--text-secondary);
+  min-width: 30px;
+  text-align: right;
+}
+
+/* ─── Toggle ───────────────────────────────────────────────────────────────── */
+
+.toggle {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.toggle input[type="checkbox"] {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-track {
+  position: relative;
+  width: 36px;
+  height: 20px;
+  border-radius: 10px;
+  background: var(--border-s);
+  border: 0.5px solid var(--border-t);
+  transition: background .2s, border-color .2s;
+  flex-shrink: 0;
+}
+
+.toggle input[type="checkbox"]:checked + .toggle-track {
+  background: var(--pvw);
+  border-color: transparent;
+}
+
+.toggle-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0,0,0,.35);
+  transition: transform .18s;
+}
+
+.toggle input[type="checkbox"]:checked + .toggle-track .toggle-thumb {
+  transform: translateX(16px);
+}
+
+/* ─── Radio group ──────────────────────────────────────────────────────────── */
+
+.radio-group {
+  display: flex;
+  border: 0.5px solid var(--border-t);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.radio-opt {
+  display: flex;
+  align-items: center;
+  padding: 5px 13px;
+  font-size: 12px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  border-right: 0.5px solid var(--border-t);
+  transition: background .1s, color .1s;
+  user-select: none;
+}
+
+.radio-opt:last-child { border-right: none; }
+
+.radio-opt input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.radio-opt:has(input:checked) {
+  background: var(--border-t);
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.radio-group.changed {
+  border-color: var(--acc);
+}
+
+/* ─── Textarea ─────────────────────────────────────────────────────────────── */
+
+.s-textarea {
+  width: 100%;
+  font-size: 12px;
+  padding: 8px 10px;
+  border: 0.5px solid var(--border-t);
+  border-radius: var(--radius-md);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  outline: none;
+  resize: vertical;
+  min-height: 72px;
+  transition: border-color .15s;
+}
+
+.s-textarea:focus  { border-color: var(--border-p); }
+.s-textarea.changed { border-color: var(--acc); }
+
+/* ─── Color picker ─────────────────────────────────────────────────────────── */
+
+.color-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.s-color {
+  width: 36px;
+  height: 28px;
+  padding: 2px 3px;
+  border: 0.5px solid var(--border-t);
+  border-radius: var(--radius-md);
+  background: var(--bg-secondary);
+  cursor: pointer;
+  outline: none;
+  transition: border-color .15s;
+}
+
+.s-color:focus  { border-color: var(--border-p); }
+.s-color.changed { border-color: var(--acc); }
+
+.color-hex {
+  font-size: 11px;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  color: var(--text-tertiary);
+}
+
+/* ─── Savebar ──────────────────────────────────────────────────────────────── */
+
+.savebar {
+  position: fixed;
+  bottom: 14px;
+  left: 14px;
+  right: 14px;
+  max-width: 660px;
+  margin: 0 auto;
+  padding: 10px 14px;
+  background: var(--bg-primary);
+  border: 0.5px solid var(--border-s);
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  z-index: 100;
+  opacity: 0;
+  transform: translateY(8px);
+  pointer-events: none;
+  transition: opacity .2s, transform .2s;
+}
+
+.savebar.visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: all;
+}
+
+.savebar-info {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.savebar-msg {
+  font-size: 12px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.savebar-reboot {
+  display: none;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  padding: 2px 8px 2px 6px;
+  border-radius: 99px;
+  background: rgba(212,147,10,.12);
+  color: var(--warning);
+  border: 0.5px solid rgba(212,147,10,.28);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.savebar-reboot.visible { display: flex; }
+
+.savebar-btn {
+  font-size: 12px;
+  font-weight: 500;
+  padding: 6px 14px;
+  border-radius: var(--radius-md);
+  border: none;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: opacity .1s;
+}
+
+.savebar-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.savebar-btn--discard {
+  background: var(--danger);
+  color: #fff;
+}
+
+.savebar-btn--save {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--success);
+  color: #fff;
+  min-width: 114px;
+  justify-content: center;
+}
+
+/* ─── Spinner ──────────────────────────────────────────────────────────────── */
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.spin { animation: spin .7s linear infinite; }
+
+/* ─── Scrollbar ────────────────────────────────────────────────────────────── */
+
+::-webkit-scrollbar { width: 6px; }
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,.1);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,.18); }
