@@ -20,17 +20,19 @@ export enum DeviceAlertTarget {
     ALL
 }
 
-export enum DeviceTallyState { // TODO maybe add an warning state that is yellow, in the future logic in the ui can dictate what state means what.
+export enum DeviceTallyState {
     NONE = 0,
-    DANGER = 2, // Light redish
-    WARNING = 1, // Yellow
-    PREVIEW = 4,
-    PROGRAM = 7
+    DANGER = 4, // Light redish
+    INFO = 8, // bLUE
+    WARNING = 12, // Yellow
+    PREVIEW = 16,
+    PROGRAM = 20
 }
 
 /** Maps each DeviceTallyState enum key (as published on the MQTT wire) to the UI display string. */
 export const DeviceTallyDisplayName: { readonly [K in keyof typeof DeviceTallyState]: string } = {
     NONE:    'none',
+    INFO:    'info',
     WARNING: 'warning',
     DANGER:  'danger',
     PREVIEW: 'pvw',
