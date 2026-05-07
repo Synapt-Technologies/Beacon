@@ -74,6 +74,7 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer implements IGl
         if (this.config.serve_tcp) {
             try {
                 this.server = createServer(this.aedes.handle);
+                this.server.on('connection', (socket) => socket.setNoDelay(true));
 
                 await new Promise<void>((resolve, reject) => {
                     this.server.listen(this.config.port, () => {
