@@ -61,9 +61,12 @@ export const DEFAULT_ALERT_SLOTS: AlertSlotConfig[] = [
     { action: DeviceAlertAction.CLEAR,  target: null,                       timeout: null },
 ]
 
+// TODO: Add a way to differentiate between device capabilities. Probably inheritance.
 export interface TallyDevice {
     id: DeviceAddress;
     name: DeviceName;
+    brightness?: number; // 0-100
+    flip?: boolean;
     connection: ConnectionType;
     patch: Array<GlobalSource>;
     // TODO ADD SOURCES LEADING TO TALLY
@@ -72,6 +75,18 @@ export interface TallyDevice {
 }
 
 export abstract class GlobalDeviceTools { // Todo: Maybe a device DTO?
+    // TODO Move / refactor?
+    static defaultDevice(partial: Partial<TallyDevice> & Pick<TallyDevice, 'id' | 'name'>): TallyDevice {
+        return {
+            brightness: 100,
+            flip: false,
+            connection: ConnectionType.VIRTUAL,
+            patch: [],
+            state: DeviceTallyState.NONE,
+            ...partial,
+        }
+    }
+
     static create (consumer: ConsumerId, device: DeviceId): DeviceKey { 
         return `${consumer}:${device}`;
     } 

@@ -72,6 +72,8 @@ export const DEFAULT_ALERT_SLOTS: AlertSlotConfig[] = [
 export interface TallyDevice {
     id: DeviceAddress;
     name: DeviceName;
+    brightness?: number; // 0-100
+    flip?: boolean;
     connection: ConnectionType;
     patch: Array<GlobalTallySource>;
     // TODO ADD SOURCES LEADING TO TALLY
@@ -81,6 +83,18 @@ export interface TallyDevice {
 
 
 export abstract class GlobalDeviceTools {
+    // TODO Move / refactor?
+    static defaultDevice(partial: Partial<TallyDevice> & Pick<TallyDevice, 'id' | 'name'>): TallyDevice {
+        return {
+            brightness: 100,
+            flip: false,
+            connection: ConnectionType.VIRTUAL,
+            patch: [],
+            state: DeviceTallyState.NONE,
+            ...partial,
+        }
+    }
+
     static create (consumer: ConsumerId, device: DeviceId): string { // Todo: Maybe global addressing tools?
         return `${consumer}:${device}`;
     } 
