@@ -135,6 +135,7 @@ export abstract class AbstractConsumer<T extends ConsumerEvents & Record<string,
         this.info.device_count = this.devices.size;
         this.store.saveDevice(device);
         this.setTallyDevice(device);
+        this.sendDeviceConfig(device);
     }
     setDeviceName(address: DeviceAddress, name: DeviceName): void {
         const key = this.getDeviceKey(address);
@@ -147,6 +148,7 @@ export abstract class AbstractConsumer<T extends ConsumerEvents & Record<string,
         
         device.name = name;
         this.store.saveDevice(device);
+        this.sendDeviceConfig(device);
         (this as EventEmitter<ConsumerEvents>).emit('device_update', device);
         this.logger.debug(`Device ${key} renamed to: ${name}`);
     }
@@ -209,6 +211,7 @@ export abstract class AbstractConsumer<T extends ConsumerEvents & Record<string,
     }
 
     protected abstract sendTallyDevice(device: TallyDevice): void;
+    protected abstract sendDeviceConfig(device: TallyDevice): void;
 
     consumeTally(state: TallyState): void {
         this.tallyState = state;

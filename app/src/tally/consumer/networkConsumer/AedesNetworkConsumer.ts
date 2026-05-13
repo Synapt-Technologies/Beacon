@@ -255,7 +255,7 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer implements IGl
 
     }
 
-
+    //TODO Refactor/Rename to better support tally/config split
     protected sendTallyDevice(device: TallyDevice): void {
         if (!this.aedes) {
             this.logger.warn("Discarding Tally: Attempted to send before initialization.");
@@ -277,6 +277,38 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer implements IGl
             qos: 1,
             dup: false,
             topic: `tally/device/${device.id.consumer}/${device.id.device}`,
+            payload: Buffer.from(payload),
+            retain: true
+        }, () => {});
+
+        this.logger.debug(`Sent payload to device:`, payload);
+       
+    }
+    
+    protected sendDeviceConfig(device: TallyDevice): void {
+        if (!this.aedes) {
+            this.logger.warn("Discarding CONFIG: Attempted to send before initialization.");
+            return;
+        }
+
+        //TODO Maybe use defaultDevice helper?
+
+        const payload = JSON.stringify({
+            brightness: device.brightness ?? 100,
+            name: device.name,
+            state_on_disconnect: DeviceTallyState.INFO,
+            flip_sides: device.flip ?? false,
+            moment: Date.now()
+        });
+        
+        this.logger.debug(`Attempting to publish CONFIG over MQTT for ${device.id.device}...`);
+        
+        this.aedes.publish(
+        {
+            cmd: 'publish',
+            qos: 1,
+            dup: false,
+            topic: `tally/device/${device.id.consumer}/${device.id.device}/config`,
             payload: Buffer.from(payload),
             retain: true
         }, () => {});
