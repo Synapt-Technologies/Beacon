@@ -91,6 +91,7 @@ export abstract class AbstractConsumer<T extends ConsumerEvents & Record<string,
         preview: new Set<string>()
     };
 
+    // TODO Lot of duplucate code, maybe disconnect bool, or move all tally config building to orchestrator.
     protected baseState: DeviceTallyState = DeviceTallyState.NONE;
 
     setBaseState(state: DeviceTallyState): void {
@@ -99,6 +100,19 @@ export abstract class AbstractConsumer<T extends ConsumerEvents & Record<string,
             this.setTallyDevice(device);
         }
     }
+
+    protected disconnectState: DeviceTallyState = DeviceTallyState.NONE;
+
+    setDisconnectState(state: DeviceTallyState): void {
+        if (this.disconnectState == state) return;
+
+        this.disconnectState = state;
+        for (const device of this.devices.values()) {
+            this.sendDeviceConfig(device);
+        }
+
+    }
+
         
     protected checkConfig(config: ConsumerConfig) {
         if (!config.id || config.id == "")
