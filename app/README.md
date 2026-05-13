@@ -66,6 +66,10 @@ If you are compiling the image on windows, you must use WSL.
     - [x] Aedes is the active consumer on that mqtt -> It assigns its ConsumerId + a DeviceId (mac based?)
     - [x] The device saves that and connects to the topic.
   - [x] The Orchestrator sends the relevant devices to the right consumers.
+  - [ ] Implement clear split between config, tally and alert.
+  - [ ] Add text alert type.
+  - [ ] Rename orchestrator and lifecycle. Logic and orchestrator, or coordinator?
+  - [ ] Move consumer responsibilities to orchestrator.
 - [ ] Add multi output devices!
 - [ ] Duplicate producer ID is just skipped on add.
 - [ ] Unify UI structure:
