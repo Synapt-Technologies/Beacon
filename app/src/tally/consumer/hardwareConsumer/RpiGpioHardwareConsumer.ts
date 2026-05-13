@@ -36,6 +36,8 @@ interface AlertPatternConfig {
     pattern: Array<DeviceTallyState | null>,
 }
 
+
+// TODO: Move to class, make it user configurable and broadcast it to devices (via consumer) to sync patterns.
 const ALERT_PATTERNS: Record<DeviceAlertState, AlertPatternConfig | null> = {
     [DeviceAlertState.IDENT]: {
         speedMs: 400,
