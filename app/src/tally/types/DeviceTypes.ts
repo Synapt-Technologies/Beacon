@@ -62,6 +62,7 @@ export const DEFAULT_ALERT_SLOTS: AlertSlotConfig[] = [
 ]
 
 // TODO: Add a way to differentiate between device capabilities. Probably inheritance.
+// TODO: split config and state. Makes capabilities easier too.
 export interface TallyDevice {
     id: DeviceAddress;
     name: DeviceName;
