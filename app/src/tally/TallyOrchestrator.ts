@@ -86,6 +86,10 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
                     consumer.setBaseState(this.config.state_on_disconnect);
                 }
             }
+
+            for (const consumer of this.consumers.values()) {
+                consumer.setDisconnectState(this.config.state_on_disconnect);
+            }
         }
     }
 
@@ -104,6 +108,8 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
         if (this.disconnectedProducers.size !== 0) {
             consumer.setBaseState(this.config.state_on_disconnect);
         }
+
+        consumer.setDisconnectState(this.config.state_on_disconnect);
 
         this._parseGlobalTally();
     }

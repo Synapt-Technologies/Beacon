@@ -296,7 +296,7 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer implements IGl
         const payload = JSON.stringify({
             brightness: device.brightness ?? 100,
             name: device.name,
-            state_on_disconnect: DeviceTallyState.INFO,
+            state_on_disconnect: this.disconnectState,
             flip_sides: device.flip ?? false,
             moment: Date.now()
         });
