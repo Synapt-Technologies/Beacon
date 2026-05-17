@@ -273,7 +273,7 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer implements IGl
             cmd: 'publish',
             qos: 1,
             dup: false,
-            topic: `tally/device/${device.id.consumer}/${device.id.device}`,
+            topic: `tally/device/${device.id.consumer}/${device.id.device}`, // TODO: Add /tally?
             payload: Buffer.from(payload),
             retain: true
         }, () => {});
