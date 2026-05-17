@@ -221,7 +221,7 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
     }
     
     
-    protected sendTallyDevice(device: TallyDevice): void {
+    protected sendDeviceTally(device: TallyDevice): void {
         
         if (this.gpioMap.size <= 0){
             this.logger.warn("Discarding Tally: Attempted to send with an empty GPIO map. Probably not initialised.");

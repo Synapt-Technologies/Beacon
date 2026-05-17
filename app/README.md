@@ -57,7 +57,7 @@ If you are compiling the image on windows, you must use WSL.
   - [x] Consumers don't own the tally process
   - [x] Consumer exports tally devices. 
   - [x] The orchestrator sets the tallystate 
-  - [x] The Consumer exposes sendTallyDevice (or similar)
+  - [x] The Consumer exposes sendDeviceTally (or similar)
   - [x] No ConsumeTally
   - [x] The orchestrator decides which devices to send
   - [x] GlobalConsumer gets all, non global only the devices mapped to their consumerId
