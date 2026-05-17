@@ -220,11 +220,11 @@ export abstract class AbstractConsumer<T extends ConsumerEvents & Record<string,
             device.state = newState;
             this.logger.debug(`Device ${this.getDeviceKey(device.id)} state changed to ${DeviceTallyState[device.state]}`);
             (this as EventEmitter<ConsumerEvents>).emit('device_update', device);
-            this.sendTallyDevice(device);
+            this.sendDeviceTally(device);
         }
     }
 
-    protected abstract sendTallyDevice(device: TallyDevice): void;
+    protected abstract sendDeviceTally(device: TallyDevice): void;
     protected abstract sendDeviceConfig(device: TallyDevice): void;
 
     consumeTally(state: TallyState): void {

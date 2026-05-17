@@ -208,7 +208,7 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer implements IGl
     }
 
     public publishDeviceTally(device: TallyDevice): void {
-        this.sendTallyDevice(device);
+        this.sendDeviceTally(device);
     }
 
     broadcastTally(): void {
@@ -255,8 +255,7 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer implements IGl
 
     }
 
-    //TODO Refactor/Rename to better support tally/config split
-    protected sendTallyDevice(device: TallyDevice): void {
+    protected sendDeviceTally(device: TallyDevice): void {
         if (!this.aedes) {
             this.logger.warn("Discarding Tally: Attempted to send before initialization.");
             return;
@@ -264,8 +263,6 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer implements IGl
 
         const payload = JSON.stringify({
             state: DeviceTallyState[device.state],
-            ss: device.state,
-            name: device.name,
             moment: this.tallyState.moment
         });
         
@@ -277,6 +274,33 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer implements IGl
             qos: 1,
             dup: false,
             topic: `tally/device/${device.id.consumer}/${device.id.device}`,
+            payload: Buffer.from(payload),
+            retain: true
+        }, () => {});
+
+        this.logger.debug(`Sent payload to device:`, payload);
+       
+    }
+
+    // TODO Implement configurable/variable fields.
+    protected sendDeviceFields(device: TallyDevice): void {
+        if (!this.aedes) {
+            this.logger.warn("Discarding FIELDS: Attempted to send before initialization.");
+            return;
+        }
+
+        const payload = JSON.stringify({
+            "1": device.name,
+        });
+        
+        this.logger.debug(`Attempting to publish to MQTT for ${device.id.device}...`);
+        
+        this.aedes.publish(
+        {
+            cmd: 'publish',
+            qos: 1,
+            dup: false,
+            topic: `tally/device/${device.id.consumer}/${device.id.device}/fields`,
             payload: Buffer.from(payload),
             retain: true
         }, () => {});
