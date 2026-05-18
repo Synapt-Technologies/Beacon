@@ -75,3 +75,4 @@ If you are compiling the image on windows, you must use WSL.
 - [ ] Unify UI structure:
   - [ ] List page for devices, sources and connections
   - [ ] Tallyrow for devices and sources
+- [ ] Add device state on disconnect: When a device disconnects from beacon, not beacon from producer
