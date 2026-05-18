@@ -492,10 +492,11 @@ export default function SettingsPage() {
             onChange={e => setPendingDisconnect(parseInt(e.target.value) as OrchestratorConfig['state_on_disconnect'])}
           >
             <option value={0}>None</option>
-            <option value={1}>Warning</option>
-            <option value={2}>Danger</option>
-            <option value={4}>Preview</option>
-            <option value={7}>Program</option>
+            <option value={4}>Danger</option>
+            <option value={8}>Info</option>
+            <option value={12}>Warning</option>
+            <option value={16}>Preview</option>
+            <option value={20}>Program</option>
           </select>
         </div>
       </div>
