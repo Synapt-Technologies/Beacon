@@ -38,7 +38,9 @@ function setFieldValue(row, val) {
     box.checked = Boolean(val)
   } else if (visual) {
     visual.value = val
-    if (slider) updateSliderDisplay(slider)
+    if (slider) slider.classList.contains('trim-slider')
+      ? updateTrimSlider(slider)
+      : updateSliderDisplay(slider)
   }
   const color = row.querySelector('input[type=color]')
   if (color) syncColorHex(color)
