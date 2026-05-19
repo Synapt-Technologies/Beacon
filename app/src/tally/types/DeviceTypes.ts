@@ -74,6 +74,28 @@ export interface TallyDevice {
     // TODO ADD SOURCES LEADING TO TALLY
     state: DeviceTallyState;
     last_update?: number;
+    model: string;
+}
+
+
+interface NewTallyDevice { // TODO
+    id: DeviceAddress;
+    state: { // Tally logic, on base device topic.
+        patch: Array<GlobalSource>;
+        state: DeviceTallyState;
+        last_update?: number;
+    }
+    runtime: { // Runtime config, on config device topic. Might be variable per device type in the future.
+        brightness: number;
+        flip: boolean;
+        name: DeviceName;
+        last_update?: number;
+    }
+    info: {
+        connection: ConnectionType;
+        model: string;
+        last_response?: number;
+    }
 }
 
 export abstract class GlobalDeviceTools { // Todo: Maybe a device DTO?
