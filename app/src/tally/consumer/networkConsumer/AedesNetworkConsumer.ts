@@ -320,7 +320,8 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer implements IGl
 
         // TODO: Make flips sides boolean?
         const payload = JSON.stringify({
-            brightness: device.brightness ?? 100,
+            brightness: device.brightness ?? 255,
+            // brightness: 10,
             name: device.name,
             state_on_disconnect: this.disconnectState,
             flip_sides: device.flip ? 1 : 0,
