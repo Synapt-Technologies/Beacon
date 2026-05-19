@@ -93,6 +93,7 @@ interface NewTallyDevice { // TODO
     }
     info: {
         connection: ConnectionType;
+        identifier: string; // Name defined in the device, used to differentiate.
         model: string;
         last_response?: number;
     }
