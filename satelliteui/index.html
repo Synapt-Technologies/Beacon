@@ -235,6 +235,124 @@
 
     </div>
 
+    <!-- ── Read-only ──────────────────────────────────────────────────── -->
+    <div class="sec-lbl">Read-only</div>
+    <div class="s-card">
+
+      <!-- Text -->
+      <div class="s-row s-row--ro">
+        <div class="field-label">
+          <div class="field-name">Hostname</div>
+          <div class="field-sub">Device name on the network</div>
+        </div>
+        <div class="field-control">
+          <input class="s-input" type="text" value="beacon-satellite" readonly>
+        </div>
+      </div>
+
+      <!-- Number -->
+      <div class="s-row s-row--ro">
+        <div class="field-label">
+          <div class="field-name">Port</div>
+          <div class="field-sub">UDP port for telemetry</div>
+        </div>
+        <div class="field-control">
+          <input class="s-input s-input--num mono" type="number" value="4242" readonly>
+        </div>
+      </div>
+
+      <!-- Password -->
+      <div class="s-row s-row--ro">
+        <div class="field-label">
+          <div class="field-name">WiFi Password</div>
+          <div class="field-sub">WPA2 passphrase</div>
+        </div>
+        <div class="field-control">
+          <div class="password-wrap">
+            <input class="s-input" type="password" value="mypassword" readonly>
+          </div>
+        </div>
+      </div>
+
+      <!-- Select -->
+      <div class="s-row s-row--ro">
+        <div class="field-label">
+          <div class="field-name">WiFi Network</div>
+          <div class="field-sub">Network to connect to</div>
+        </div>
+        <div class="field-control">
+          <select class="s-select" tabindex="-1">
+            <option selected>HomeNetwork</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Slider (static bar — master style) -->
+      <div class="s-row s-row--ro">
+        <div class="field-label">
+          <div class="field-name">Transmit interval</div>
+          <div class="field-sub">How often to send telemetry packets</div>
+        </div>
+        <div class="field-control">
+          <div class="master-track"><div class="master-fill" style="--fill:15%"></div></div>
+          <span class="slider-value">10s</span>
+        </div>
+      </div>
+
+      <!-- Toggle -->
+      <div class="s-row s-row--ro">
+        <div class="field-label">
+          <div class="field-name">Enable telemetry</div>
+          <div class="field-sub">Broadcast status packets over RF</div>
+        </div>
+        <div class="field-control">
+          <label class="toggle">
+            <input type="checkbox" checked>
+            <span class="toggle-track"><span class="toggle-thumb"></span></span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Radio -->
+      <div class="s-row s-row--ro">
+        <div class="field-label">
+          <div class="field-name">TX power</div>
+          <div class="field-sub">RF output power level</div>
+        </div>
+        <div class="field-control">
+          <div class="radio-group">
+            <label class="radio-opt"><input type="radio" name="txPowerRo" value="low"> Low</label>
+            <label class="radio-opt"><input type="radio" name="txPowerRo" value="med" checked> Med</label>
+            <label class="radio-opt"><input type="radio" name="txPowerRo" value="high"> High</label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Color -->
+      <div class="s-row s-row--ro">
+        <div class="field-label">
+          <div class="field-name">Status LED color</div>
+          <div class="field-sub">RGB color for the onboard LED</div>
+        </div>
+        <div class="field-control">
+          <div class="color-wrap">
+            <input class="s-color" type="color" value="#E85D30">
+            <span class="color-hex">#E85D30</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Textarea -->
+      <div class="s-row s-row--col s-row--ro">
+        <div class="field-label">
+          <div class="field-name">Notes</div>
+          <div class="field-sub">Free-form configuration notes</div>
+        </div>
+        <textarea class="s-textarea" rows="3" readonly>Example configuration note for this satellite device.</textarea>
+      </div>
+
+    </div>
+
   </main>
 
   <!-- ── Savebar ─────────────────────────────────────────────────────── -->

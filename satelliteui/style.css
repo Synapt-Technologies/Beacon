@@ -698,6 +698,45 @@ button { cursor: pointer; }
   flex-shrink: 0;
 }
 
+/* ─── Read-only rows ───────────────────────────────────────────────────────── */
+
+.s-row--ro {
+  cursor: default;
+}
+
+/* Text-based inputs: sunken inset box, muted text, no interaction */
+.s-row--ro .s-input,
+.s-row--ro .s-select,
+.s-row--ro .s-textarea {
+  pointer-events: none;
+  background: var(--bg-tertiary);
+  border-color: var(--border-t);
+  color: var(--text-secondary);
+  -webkit-text-fill-color: var(--text-secondary);
+}
+
+/* Select: also hide the dropdown arrow */
+.s-row--ro .s-select {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+/* Toggle, radio, color: preserve visual state, block interaction */
+.s-row--ro .toggle,
+.s-row--ro .radio-group {
+  pointer-events: none;
+}
+
+.s-row--ro .s-color {
+  pointer-events: none;
+  border-color: transparent;
+}
+
+/* Hide password reveal button */
+.s-row--ro .pw-toggle {
+  display: none;
+}
+
 /* ─── Scrollbar ────────────────────────────────────────────────────────────── */
 
 ::-webkit-scrollbar { width: 6px; }
