@@ -53,10 +53,10 @@ button { cursor: pointer; }
 
 .header-card {
   display: flex;
-  align-items: center;
+  align-items: start;
+  justify-content: space-between;
   gap: 10px;
-  padding: 0 16px;
-  height: 52px;
+  padding: 10px 16px 14px;
   background: var(--bg-primary);
   border: 0.5px solid var(--border-t);
   border-radius: var(--radius-lg);
@@ -65,10 +65,20 @@ button { cursor: pointer; }
 
 .app-title {
   flex: 1;
-  font-size: 14px;
+  font-size: 30px;
   font-weight: 600;
   color: var(--text-primary);
   letter-spacing: .01em;
+  margin: 0;
+}
+.app-subtitle {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin: 0 0 0 2px;
+}
+
+.header-card .status-pills {
+  margin-top: 7px;
 }
 
 /* ─── Monospace utility ────────────────────────────────────────────────────── */
