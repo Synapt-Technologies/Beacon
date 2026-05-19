@@ -171,10 +171,14 @@ function updateStatusPills(data) {
   wifiPill.className            = data.wifi ? 'status-pill ok' : 'status-pill err'
   document.getElementById('pill-wifi-text').textContent
     = data.wifi ? `WiFi · ${data.ssid ?? 'Connected'}` : 'WiFi · Offline'
+  if (data.ip) wifiPill.dataset.tooltip = data.ip
+  else wifiPill.removeAttribute('data-tooltip')
 
-  beaconPill.className          = data.beacon ? 'status-pill ok' : 'status-pill'
+  beaconPill.className = data.beacon ? 'status-pill ok' : 'status-pill'
   document.getElementById('pill-beacon-text').textContent
     = data.beacon ? 'Beacon · Online' : 'Beacon · Offline'
+  if (data.beaconIp) beaconPill.dataset.tooltip = data.beaconIp
+  else beaconPill.removeAttribute('data-tooltip')
 }
 
 async function loadSettings() {
