@@ -222,6 +222,13 @@ function init() {
     updateTrimSlider(s)
   })
 
+  document.querySelectorAll('input[type=range][data-default]').forEach(slider => {
+    slider.addEventListener('dblclick', () => {
+      slider.value = slider.dataset.default
+      slider.dispatchEvent(new Event('input', { bubbles: true }))
+    })
+  })
+
   document.querySelectorAll('.pw-toggle').forEach(btn => {
     btn.addEventListener('click', () => {
       const input = btn.closest('.password-wrap').querySelector('input')

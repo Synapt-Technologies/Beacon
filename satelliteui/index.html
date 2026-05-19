@@ -107,7 +107,7 @@
         </div>
         <div class="field-control">
           <input class="s-slider" type="range" id="txInterval"
-                 min="1" max="60" step="1" value="10" data-unit="s">
+                 min="1" max="60" step="1" value="10" data-unit="s" data-default="10">
           <span class="slider-value" id="txIntervalVal">10s</span>
         </div>
       </div>
@@ -192,28 +192,26 @@
     <div class="sec-lbl">Brightness</div>
     <div class="s-card">
 
-      <!-- Master row: tiny column hints sit below the bar -->
+      <!-- Master row: tiny column hints pinned to bottom-right -->
       <div class="s-row s-row--master">
         <div class="field-label">
           <div class="field-name">Master</div>
           <div class="field-sub">Controlled by Beacon, read-only</div>
         </div>
-        <div class="field-control-stack">
-          <div class="field-control">
-            <div class="master-track"><div class="master-fill" style="--fill:80%"></div></div>
-            <span class="slider-value">80%</span>
-          </div>
-          <div class="trim-mini-header">
-            <span class="trim-mini-lbl trim-mini-lbl--trim">Trim</span>
-            <span class="trim-mini-lbl trim-mini-lbl--eff">Output</span>
-          </div>
+        <div class="field-control">
+          <div class="master-track"><div class="master-fill" style="--fill:80%"></div></div>
+          <span class="slider-value">80%</span>
+        </div>
+        <div class="trim-mini-header">
+          <span class="trim-mini-lbl trim-mini-lbl--trim">Trim</span>
+          <span class="trim-mini-lbl trim-mini-lbl--eff">Output</span>
         </div>
       </div>
 
       <div class="s-row s-row--trim" data-field="m-trimFront">
         <div class="field-label"><div class="field-name">Front Display</div></div>
         <div class="field-control">
-          <input class="s-slider trim-slider" type="range" id="mTrimFront" min="-50" max="50" step="1" value="18" data-master="80">
+          <input class="s-slider trim-slider" type="range" id="mTrimFront" min="-50" max="50" step="1" value="18" data-master="80" data-default="0">
           <span class="slider-value" id="mTrimFrontVal">+18%</span>
           <span class="effective-val" id="mTrimFrontEff">98%</span>
         </div>
@@ -221,7 +219,7 @@
       <div class="s-row s-row--trim" data-field="m-trimBack">
         <div class="field-label"><div class="field-name">Back Panel</div></div>
         <div class="field-control">
-          <input class="s-slider trim-slider" type="range" id="mTrimBack" min="-50" max="50" step="1" value="0" data-master="80">
+          <input class="s-slider trim-slider" type="range" id="mTrimBack" min="-50" max="50" step="1" value="0" data-master="80" data-default="0">
           <span class="slider-value" id="mTrimBackVal">+0%</span>
           <span class="effective-val" id="mTrimBackEff">80%</span>
         </div>
@@ -229,7 +227,7 @@
       <div class="s-row s-row--trim" data-field="m-trimSide">
         <div class="field-label"><div class="field-name">Side Strip</div></div>
         <div class="field-control">
-          <input class="s-slider trim-slider" type="range" id="mTrimSide" min="-50" max="50" step="1" value="-22" data-master="80">
+          <input class="s-slider trim-slider" type="range" id="mTrimSide" min="-50" max="50" step="1" value="-22" data-master="80" data-default="0">
           <span class="slider-value" id="mTrimSideVal">-22%</span>
           <span class="effective-val" id="mTrimSideEff">58%</span>
         </div>
