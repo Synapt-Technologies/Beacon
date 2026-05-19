@@ -123,6 +123,22 @@ function setSaving(on) {
        </svg> Save changes`
 }
 
+function updateTrimSlider(slider) {
+  const v   = parseInt(slider.value)           // -50 to +50
+  const pos = (v + 50) / 100 * 100            // 0–100%
+  slider.style.setProperty('--fill-start', Math.min(50, pos) + '%')
+  slider.style.setProperty('--fill-end',   Math.max(50, pos) + '%')
+
+  const valEl = document.getElementById(slider.id + 'Val')
+  if (valEl) valEl.textContent = (v >= 0 ? '+' : '') + v + '%'
+
+  const effEl = document.getElementById(slider.id + 'Eff')
+  if (effEl) {
+    const master = parseInt(slider.dataset.master ?? 80)
+    effEl.textContent = Math.max(0, Math.min(100, master + v)) + '%'
+  }
+}
+
 function updateSliderDisplay(slider) {
   const pct = ((slider.value - slider.min) / (slider.max - slider.min)) * 100
   slider.style.setProperty('--fill', pct + '%')
@@ -199,6 +215,11 @@ function init() {
   document.querySelectorAll('input[type=color]').forEach(c => {
     c.addEventListener('input', () => syncColorHex(c))
     syncColorHex(c)
+  })
+
+  document.querySelectorAll('.trim-slider').forEach(s => {
+    s.addEventListener('input', () => updateTrimSlider(s))
+    updateTrimSlider(s)
   })
 
   document.querySelectorAll('.pw-toggle').forEach(btn => {

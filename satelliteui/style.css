@@ -12,6 +12,7 @@
   --text-primary:   #e8e6de;
   --text-secondary: #b4b2a9;
   --text-tertiary:  #6b6a64;
+  --text-quartary:  #404040;
   --text-success:   #5dcaa5;
   --text-danger:    #E93838;
   --text-warning:   #D4930A;
@@ -579,6 +580,124 @@ button { cursor: pointer; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
 .spin { animation: spin .7s linear infinite; }
+
+/* ─── Brightness section ───────────────────────────────────────────────────── */
+
+.s-row--master {
+  background: var(--bg-secondary);
+  cursor: default;
+}
+
+.master-track {
+  width: 130px;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--border-s);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.master-fill {
+  height: 100%;
+  border-radius: 3px;
+  background: var(--text-tertiary);
+  width: var(--fill, 0%);
+  transition: width .2s;
+}
+
+/* Trim slider – center-origin fill */
+.s-slider.trim-slider {
+  background: linear-gradient(
+    to right,
+    var(--border-s)  var(--fill-start, 50%),
+    var(--acc)       var(--fill-start, 50%),
+    var(--acc)       var(--fill-end, 50%),
+    var(--border-s)  var(--fill-end, 50%)
+  );
+}
+
+/* Per-row tree (M variant — rows are direct .s-card children, border-left stays at card edge) */
+.s-row--trim {
+  position: relative;
+  padding-left: 38px; /* 14px base + 24px tree indent */
+}
+
+.s-row--trim::before {
+  content: '';
+  position: absolute;
+  left: 26px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 12px;
+  height: 2px;
+  background: var(--text-quartary);
+}
+
+/* Vertical segment — full height on middle rows, half-height on last (└ shape) */
+.s-row--trim::after {
+  content: '';
+  position: absolute;
+  left: 26px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--text-quartary);
+}
+
+.s-row--trim:last-child::after {
+  bottom: 50%;
+}
+
+
+/* Stacked control column (used by B and M variants) */
+.field-control-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+  flex-shrink: 0;
+}
+
+/* Tiny labels above or below the control area */
+.trim-mini-header {
+  display: flex;
+  gap: 8px;
+}
+
+.trim-mini-lbl {
+  font-size: 8px;
+  font-weight: 500;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+  opacity: 0.55;
+  flex-shrink: 0;
+}
+
+.trim-mini-lbl--trim {
+  min-width: 172px; /* slider 130 + gap 8 + val ~34 */
+  text-align: center;
+}
+
+.trim-mini-lbl--eff {
+  min-width: 46px;
+  text-align: right;
+  padding-left: 8px;
+  border-left: 0.5px solid var(--border-t);
+}
+
+/* Effective output value */
+.effective-val {
+  font-size: 12px;
+  font-weight: 500;
+  font-family: var(--font-mono);
+  color: var(--text-tertiary);
+  min-width: 38px;
+  text-align: right;
+  padding-left: 8px;
+  border-left: 0.5px solid var(--border-t);
+  flex-shrink: 0;
+}
 
 /* ─── Scrollbar ────────────────────────────────────────────────────────────── */
 
