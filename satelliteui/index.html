@@ -18,21 +18,17 @@
         <span class="app-subtitle">CYD Satellite - DIY</span>
       </div>
       <div class="status-pills">
-
         <div class="status-pill" id="pill-wifi">
           <span class="pill-dot"></span>
           <span id="pill-wifi-text">Connecting…</span>
         </div>
-
         <div class="status-pill" id="pill-beacon">
           <span class="pill-dot"></span>
           <span id="pill-beacon-text">Offline</span>
         </div>
-
       </div>
     </div>
 
-    <!-- ── Network ─────────────────────────────────────────────────── -->
     <div class="sec-lbl">Network</div>
     <div class="s-card">
 
@@ -81,7 +77,6 @@
 
     </div>
 
-    <!-- ── Telemetry ────────────────────────────────────────────────── -->
     <div class="sec-lbl">Telemetry</div>
     <div class="s-card">
 
@@ -119,7 +114,7 @@
           <div class="field-sub">RF output power level</div>
         </div>
         <div class="field-control">
-          <div class="radio-group" id="txPowerGroup">
+          <div class="radio-group">
             <label class="radio-opt"><input type="radio" name="txPower" value="low"> Low</label>
             <label class="radio-opt"><input type="radio" name="txPower" value="med" checked> Med</label>
             <label class="radio-opt"><input type="radio" name="txPower" value="high"> High</label>
@@ -129,7 +124,6 @@
 
     </div>
 
-    <!-- ── Device ───────────────────────────────────────────────────── -->
     <div class="sec-lbl">Device</div>
     <div class="s-card">
 
@@ -168,7 +162,6 @@
 
     </div>
 
-    <!-- ── Indicators ───────────────────────────────────────────────── -->
     <div class="sec-lbl">Indicators</div>
     <div class="s-card">
 
@@ -188,11 +181,10 @@
 
     </div>
 
-    <!-- ── Brightness ───────────────────────────────────────────────────── -->
+    <!-- ── Brightness ─────────────────────────────────────────────────── -->
     <div class="sec-lbl">Brightness</div>
     <div class="s-card">
 
-      <!-- Master row: tiny column hints pinned to bottom-right -->
       <div class="s-row s-row--master">
         <div class="field-label">
           <div class="field-name">Master</div>
@@ -208,28 +200,30 @@
         </div>
       </div>
 
-      <div class="s-row s-row--trim" data-field="m-trimFront">
+      <div class="s-row s-row--trim" data-field="trimFront">
         <div class="field-label"><div class="field-name">Front Display</div></div>
         <div class="field-control">
-          <input class="s-slider trim-slider" type="range" id="mTrimFront" min="-50" max="50" step="1" value="18" data-master="80" data-default="0">
-          <span class="slider-value" id="mTrimFrontVal">+18%</span>
-          <span class="effective-val" id="mTrimFrontEff">98%</span>
+          <input class="s-slider trim-slider" type="range" id="trimFront" min="-50" max="50" step="1" value="18" data-master="80" data-default="0">
+          <span class="slider-value" id="trimFrontVal">+18%</span>
+          <span class="effective-val" id="trimFrontEff">98%</span>
         </div>
       </div>
-      <div class="s-row s-row--trim" data-field="m-trimBack">
+
+      <div class="s-row s-row--trim" data-field="trimBack">
         <div class="field-label"><div class="field-name">Back Panel</div></div>
         <div class="field-control">
-          <input class="s-slider trim-slider" type="range" id="mTrimBack" min="-50" max="50" step="1" value="0" data-master="80" data-default="0">
-          <span class="slider-value" id="mTrimBackVal">+0%</span>
-          <span class="effective-val" id="mTrimBackEff">80%</span>
+          <input class="s-slider trim-slider" type="range" id="trimBack" min="-50" max="50" step="1" value="0" data-master="80" data-default="0">
+          <span class="slider-value" id="trimBackVal">+0%</span>
+          <span class="effective-val" id="trimBackEff">80%</span>
         </div>
       </div>
-      <div class="s-row s-row--trim" data-field="m-trimSide">
+
+      <div class="s-row s-row--trim" data-field="trimSide">
         <div class="field-label"><div class="field-name">Side Strip</div></div>
         <div class="field-control">
-          <input class="s-slider trim-slider" type="range" id="mTrimSide" min="-50" max="50" step="1" value="-22" data-master="80" data-default="0">
-          <span class="slider-value" id="mTrimSideVal">-22%</span>
-          <span class="effective-val" id="mTrimSideEff">58%</span>
+          <input class="s-slider trim-slider" type="range" id="trimSide" min="-50" max="50" step="1" value="-22" data-master="80" data-default="0">
+          <span class="slider-value" id="trimSideVal">-22%</span>
+          <span class="effective-val" id="trimSideEff">58%</span>
         </div>
       </div>
 
@@ -287,7 +281,7 @@
         </div>
       </div>
 
-      <!-- Slider (static bar — master style) -->
+      <!-- Slider (static bar) -->
       <div class="s-row s-row--ro">
         <div class="field-label">
           <div class="field-name">Transmit interval</div>
@@ -355,7 +349,7 @@
 
   </main>
 
-  <!-- ── Savebar ─────────────────────────────────────────────────────── -->
+  <!-- ── Savebar ────────────────────────────────────────────────────────── -->
   <div class="savebar" id="savebar">
     <div class="savebar-info">
       <span class="savebar-msg">Unsaved changes</span>

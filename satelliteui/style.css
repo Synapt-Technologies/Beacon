@@ -65,12 +65,9 @@ button { cursor: pointer; }
 }
 
 .app-title {
-  flex: 1;
   font-size: 30px;
   font-weight: 600;
-  color: var(--text-primary);
   letter-spacing: .01em;
-  margin: 0;
 }
 .app-subtitle {
   font-size: 12px;
@@ -502,7 +499,7 @@ button { cursor: pointer; }
 
 .color-hex {
   font-size: 11px;
-  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-family: var(--font-mono);
   color: var(--text-tertiary);
 }
 
@@ -532,7 +529,7 @@ button { cursor: pointer; }
 .savebar.visible {
   opacity: 1;
   transform: translateY(0);
-  pointer-events: all;
+  pointer-events: auto;
 }
 
 .savebar-info {

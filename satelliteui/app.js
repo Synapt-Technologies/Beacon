@@ -124,8 +124,8 @@ function setSaving(on) {
 }
 
 function updateTrimSlider(slider) {
-  const v   = parseInt(slider.value)           // -50 to +50
-  const pos = (v + 50) / 100 * 100            // 0–100%
+  const v   = parseInt(slider.value)
+  const pos = (v + 50) / 100 * 100
   slider.style.setProperty('--fill-start', Math.min(50, pos) + '%')
   slider.style.setProperty('--fill-end',   Math.max(50, pos) + '%')
 
@@ -211,7 +211,7 @@ function init() {
   elSaveBtn.addEventListener('click', saveChanges)
   elDiscardBtn.addEventListener('click', discardChanges)
 
-  document.querySelectorAll('.s-slider').forEach(s => {
+  document.querySelectorAll('.s-slider:not(.trim-slider)').forEach(s => {
     s.addEventListener('input', () => updateSliderDisplay(s))
     updateSliderDisplay(s)
   })
