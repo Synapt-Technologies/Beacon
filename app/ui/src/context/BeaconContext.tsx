@@ -49,7 +49,10 @@ interface BeaconState {
     updateConsumer: (id: ConsumerId, config: ConsumerConfig) => Promise<void>
 
     patchDevice: (device: DeviceAddress, patch: GlobalTallySource[]) => Promise<void>
-    renameDevice: (device: DeviceAddress, name: { short?: string; long: string }) => Promise<void>
+    // renameDevice: (device: DeviceAddress, name: { short?: string; long: string }) => Promise<void>
+    // setDeviceBrightness: (device: DeviceAddress, brightness: number) => Promise<void>
+    // setDeviceFlip: (device: DeviceAddress, flip: boolean) => Promise<void>
+    updateDeviceRuntimeConfig: (device: DeviceAddress, config: { name?: { short?: string; long: string }; brightness?: number; flip?: boolean }) => Promise<void>
     removeDevice: (device: DeviceAddress) => Promise<void>
     sendAlert: (device: DeviceAddress, type: DeviceAlertState, target: DeviceAlertTarget, time: number) => Promise<void>
 
@@ -164,6 +167,7 @@ export function BeaconProvider({ children }: { children: ReactNode }) {
     }
 
     // ? Devices
+    // TODO: Combine device runtime config?
     const patchDevice = async (device: DeviceAddress, patch: GlobalTallySource[]) => {
       await toast.promise(
         api.patchDevice(device, patch).then(() => setDevices(prev => prev.map(d =>
@@ -172,14 +176,39 @@ export function BeaconProvider({ children }: { children: ReactNode }) {
         { loading: 'Saving…', success: 'Device updated', error: (e: unknown) => e instanceof Error ? e.message : 'Failed to patch device' }
       )
     }
-    const renameDevice = async (device: DeviceAddress, name: { short?: string; long: string }) => {
+    // const renameDevice = async (device: DeviceAddress, name: { short?: string; long: string }) => {
+    //   await toast.promise(
+    //     api.renameDevice(device, name).then(() => setDevices(prev => prev.map(d =>
+    //       d.id.consumer === device.consumer && d.id.device === device.device ? { ...d, name } : d
+    //     ))),
+    //     { loading: 'Renaming…', success: 'Device renamed', error: (e: unknown) => e instanceof Error ? e.message : 'Failed to rename device' }
+    //   )
+    // }
+    // const setDeviceBrightness = async (device: DeviceAddress, brightness: number) => {
+    //   await toast.promise(
+    //     api.setDeviceBrightness(device, brightness).then(() => setDevices(prev => prev.map(d =>
+    //       d.id.consumer === device.consumer && d.id.device === device.device ? { ...d, brightness } : d
+    //     ))),
+    //     { loading: 'Updating brightness…', success: 'Brightness updated', error: (e: unknown) => e instanceof Error ? e.message : 'Failed to update brightness' }
+    //   )
+    // }
+    // const setDeviceFlip = async (device: DeviceAddress, flip: boolean) => {
+    //   await toast.promise(
+    //     api.setDeviceFlip(device, flip).then(() => setDevices(prev => prev.map(d =>
+    //       d.id.consumer === device.consumer && d.id.device === device.device ? { ...d, flip } : d
+    //     ))),
+    //     { loading: 'Updating flip…', success: 'Flip updated', error: (e: unknown) => e instanceof Error ? e.message : 'Failed to update flip' }
+    //   )
+    // }
+    const updateDeviceRuntimeConfig = async (device: DeviceAddress, config: { name?: { short?: string; long: string }; brightness?: number; flip?: boolean }) => {
       await toast.promise(
-        api.renameDevice(device, name).then(() => setDevices(prev => prev.map(d =>
-          d.id.consumer === device.consumer && d.id.device === device.device ? { ...d, name } : d
+        api.updateDeviceRuntimeConfig(device, config).then(() => setDevices(prev => prev.map(d =>
+          d.id.consumer === device.consumer && d.id.device === device.device ? { ...d, ...config } : d
         ))),
-        { loading: 'Renaming…', success: 'Device renamed', error: (e: unknown) => e instanceof Error ? e.message : 'Failed to rename device' }
+        { loading: 'Updating…', success: 'Device updated', error: (e: unknown) => e instanceof Error ? e.message : 'Failed to update device' }
       )
     }
+
     const removeDevice = async (device: DeviceAddress) => {
       await toast.promise(
         api.removeDevice(device).then(() => setDevices(prev => prev.filter(d =>
@@ -235,7 +264,7 @@ export function BeaconProvider({ children }: { children: ReactNode }) {
             addProducer, removeProducer, updateProducer, setProducerEnabled,
             updateOrchestratorConfig,
             setConsumerEnabled, updateConsumer,
-            patchDevice, renameDevice, removeDevice, sendAlert,
+            patchDevice, updateDeviceRuntimeConfig, removeDevice, sendAlert,
             updateAlertSlot, resetAlertSlot,
             exportConfig, importConfig,
         }}>

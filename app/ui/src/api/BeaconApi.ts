@@ -79,11 +79,36 @@ export function patchDevice(device: DeviceAddress, patch: GlobalTallySource[]): 
     })
 }
 
-export function renameDevice(device: DeviceAddress, name: { short?: string; long: string }): Promise<void> {
-    return request(`/devices/${device.consumer}/${device.device}/name`, {
+// export function renameDevice(device: DeviceAddress, name: { short?: string; long: string }): Promise<void> {
+//     return request(`/devices/${device.consumer}/${device.device}/name`, {
+//         method: 'PATCH',
+//         headers: { 'Content-Type': 'application/json' },
+//         body: JSON.stringify({ name }),
+//     })
+// }
+
+
+// export function setDeviceBrightness(device: DeviceAddress, brightness: number): Promise<void> {
+//     return request(`/devices/${device.consumer}/${device.device}/brightness`, {
+//         method: 'PATCH',
+//         headers: { 'Content-Type': 'application/json' },
+//         body: JSON.stringify({ brightness }),
+//     })
+// }
+
+// export function setDeviceFlip(device: DeviceAddress, flip: boolean): Promise<void> {
+//     return request(`/devices/${device.consumer}/${device.device}/flip`, {
+//         method: 'PATCH',
+//         headers: { 'Content-Type': 'application/json' },
+//         body: JSON.stringify({ flip }),
+//     })
+// }
+
+export function updateDeviceRuntimeConfig(device: DeviceAddress, config: { name?: { short?: string; long: string }; brightness?: number; flip?: boolean }): Promise<void> {
+    return request(`/devices/${device.consumer}/${device.device}/runtime`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name }),
+        body: JSON.stringify(config),
     })
 }
 

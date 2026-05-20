@@ -296,6 +296,43 @@ input, select { font-family: inherit; }
   margin-bottom: 8px;
 }
 
+/* ─── Slider ────────────────────────────────────────────────────────────────── */
+
+.beacon-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  border-radius: 2px;
+  outline: none;
+  width: 100%;
+  cursor: pointer;
+  background: linear-gradient(
+    to right,
+    var(--acc) var(--fill, 0%),
+    var(--color-border-secondary) var(--fill, 0%)
+  );
+}
+.beacon-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--acc);
+  cursor: pointer;
+  border: 2px solid var(--color-background-primary);
+  box-shadow: 0 0 0 1px var(--acc);
+}
+.beacon-slider::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--acc);
+  cursor: pointer;
+  border: 2px solid var(--color-background-primary);
+  box-shadow: 0 0 0 1px var(--acc);
+  box-sizing: border-box;
+}
+
 /* ─── Scrollbar content ──────────────────────────────────────────────────────── */
 ::-webkit-scrollbar {
   width: 8px;

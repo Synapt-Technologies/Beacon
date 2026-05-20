@@ -41,7 +41,7 @@ function formatTs(ms?: number): string { // TODO: move to shared util
 export function DeviceDetailOverlay({ device, backPath, backLabel }: DeviceDetailOverlayProps) {
     const navigate = useNavigate()
     const location = useLocation()
-    const { producers, uiConfig, orchestratorConfig, patchDevice, renameDevice, removeDevice } = useBeacon()
+    const { producers, uiConfig, orchestratorConfig, patchDevice, updateDeviceRuntimeConfig, removeDevice } = useBeacon()
     const { states, deviceStates, systemConnected } = useTallyState()
     const disconnectState = stateFromValue(orchestratorConfig.state_on_disconnect ?? 0)
     const [patchOpen, setPatchOpen] = useState(false)
@@ -59,9 +59,9 @@ export function DeviceDetailOverlay({ device, backPath, backLabel }: DeviceDetai
         await patchDevice(device.id, patch)
     }
     
-    const handleSaveName = async (name: { short?: string; long: string }) => {
+    const handleRuntimeConfigUpdate = async (config: { name?: { short?: string; long: string }; brightness?: number; flip?: boolean }) => {
         setEditOpen(false)
-        await renameDevice(device.id, name)
+        await updateDeviceRuntimeConfig(device.id, config)
     }
 
     const handleRemove = async () => {
@@ -167,7 +167,7 @@ export function DeviceDetailOverlay({ device, backPath, backLabel }: DeviceDetai
                 <DeviceEditModal
                     device={device}
                     open={editOpen}
-                    onSave={name => handleSaveName(name)}
+                    onSave={config => handleRuntimeConfigUpdate(config)}
                     onRemove={() => handleRemove()}
                     onClose={() => setEditOpen(false)}
                 />
