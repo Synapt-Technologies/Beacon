@@ -8,7 +8,8 @@ import { Logger } from "../logging/Logger";
 import type { AedesConsumerConfig } from "./consumer/networkConsumer/AedesNetworkConsumer";
 import type { GpioConsumerConfig } from "./consumer/hardwareConsumer/RpiGpioHardwareConsumer";
 import type { AbstractConsumer, ConsumerConfig, ConsumerInfo } from "./consumer/AbstractConsumer";
-import type { ConsumerId, DeviceAddress, DeviceAlertState, DeviceAlertTarget, DeviceName, TallyDevice } from "./types/ConsumerStates";
+import type { ConsumerId, DeviceAddress, DeviceAlertState, DeviceAlertTarget, TallyDevice } from "./types/ConsumerStates";
+import type { DeviceRuntimeConfig } from "./types/DeviceTypes";
 import type { GlobalTallySource } from "./types/ProducerStates";
 import { HardwareVersion, type SystemInfo } from "../types/SystemInfo";
 import SystemInfoUtil from "../system/SystemInfoUtil";
@@ -336,10 +337,10 @@ export class TallyLifecycle {
         consumer.setDevicePatch(address, patch);
     }
 
-    public renameDevice(address: DeviceAddress, name: DeviceName): void {
+    public updateDeviceRuntimeConfig(address: DeviceAddress, config: Partial<DeviceRuntimeConfig>): void {
         const consumer = this.orchestrator.getConsumer(address.consumer);
-        if (!consumer) { this.logger.warn(`renameDevice: no consumer for`, address.consumer); return; }
-        consumer.setDeviceName(address, name);
+        if (!consumer) { this.logger.warn(`updateDeviceRuntimeConfig: no consumer for`, address.consumer); return; }
+        consumer.setDeviceRuntimeConfig(address, config);
     }
 
     public removeDevice(address: DeviceAddress): void {

@@ -109,8 +109,8 @@ export class AppCore {
                 this.lifecycle.patchDevice(address, patch);
                 syncState();
             },
-            renameDevice: (address, name) => {
-                this.lifecycle.renameDevice(address, name);
+            updateDeviceRuntimeConfig: (address, config) => {
+                this.lifecycle.updateDeviceRuntimeConfig(address, config);
                 syncState();
             },
             removeDevice: (address) => {

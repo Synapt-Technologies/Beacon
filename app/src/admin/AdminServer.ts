@@ -3,7 +3,8 @@ import ViteExpress from "vite-express";
 import { Logger } from "../logging/Logger";
 import type { ProducerConfig } from "../tally/producer/AbstractTallyProducer";
 import type { ConsumerUpdate, LifecycleConfig } from "../tally/TallyLifecycle";
-import  { type DeviceAddress,  DeviceAlertState, DeviceAlertTarget, type DeviceName, type TallyDevice } from "../tally/types/ConsumerStates";
+import  { type DeviceAddress,  DeviceAlertState, DeviceAlertTarget, type TallyDevice } from "../tally/types/ConsumerStates";
+import type { DeviceRuntimeConfig } from "../tally/types/DeviceTypes";
 import type { GlobalTallySource, ProducerBundle, ProducerId } from "../tally/types/ProducerStates";
 import type { OrchestratorConfig } from "../tally/TallyLifecycle";
 import type { SystemInfo } from "../types/SystemInfo";
@@ -25,9 +26,9 @@ export interface AdminMutationHandlers {
 
     updateConsumer: (update: ConsumerUpdate) => Promise<void>
 
-    patchDevice:  (address: DeviceAddress, patch: GlobalTallySource[]) => void
-    renameDevice: (address: DeviceAddress, name: DeviceName) => void
-    removeDevice: (address: DeviceAddress) => void
+    patchDevice:              (address: DeviceAddress, patch: GlobalTallySource[]) => void
+    updateDeviceRuntimeConfig:(address: DeviceAddress, config: Partial<DeviceRuntimeConfig>) => void
+    removeDevice:             (address: DeviceAddress) => void
     sendAlert:    (address: DeviceAddress, type: DeviceAlertState, target: DeviceAlertTarget, time: number) => void
 
     updateOrchestrator: (config: Partial<OrchestratorConfig>) => Promise<void>
@@ -225,16 +226,38 @@ export class AdminServer {
             this.logger.info(`Device patched:`, { consumer, device }, patch);
         });
 
-        this.app.patch("/api/devices/:consumer/:device/name", (req, res) => {
+        this.app.patch("/api/devices/:consumer/:device/runtime", (req, res) => {
             const { consumer, device } = req.params;
-            const name: DeviceName = req.body.name;
-            if (!name?.long) {
-                res.status(400).json({ error: "name.long is required" });
+            const config: Partial<DeviceRuntimeConfig> = req.body;
+
+            if (config.name !== undefined) {
+                if (typeof config.name?.long !== 'string' || !config.name.long.trim()) {
+                    res.status(400).json({ error: "name.long must be a non-empty string" });
+                    return;
+                }
+                if (config.name.short !== undefined && typeof config.name.short !== 'string') {
+                    res.status(400).json({ error: "name.short must be a string" });
+                    return;
+                }
+            }
+            if (config.brightness !== undefined) {
+                if (typeof config.brightness !== 'number' || config.brightness < 0 || config.brightness > 100) {
+                    res.status(400).json({ error: "brightness must be a number between 0 and 100" });
+                    return;
+                }
+            }
+            if (config.flip !== undefined && typeof config.flip !== 'boolean') {
+                res.status(400).json({ error: "flip must be a boolean" });
                 return;
             }
-            this.handlers.renameDevice({ consumer, device }, name);
+            if (config.name === undefined && config.brightness === undefined && config.flip === undefined) {
+                res.status(400).json({ error: "at least one field (name, brightness, flip) must be provided" });
+                return;
+            }
+
+            this.handlers.updateDeviceRuntimeConfig({ consumer, device }, config);
             res.status(204).send();
-            this.logger.info(`Device renamed:`, { consumer, device }, name);
+            this.logger.info(`Device runtime config updated:`, { consumer, device }, config);
         });
 
         this.app.delete("/api/devices/:consumer/:device", (req, res) => {

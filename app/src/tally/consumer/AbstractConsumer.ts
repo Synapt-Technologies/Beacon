@@ -1,7 +1,8 @@
 import { EventEmitter } from "node:events";
 import { GlobalSourceTools, type GlobalTallySource, type TallyState } from "../types/ProducerStates";
 import { Logger } from "../../logging/Logger";
-import { type ConsumerId, type DeviceAddress, DeviceAlertState, DeviceAlertTarget, type DeviceName, DeviceTallyState, type TallyDevice } from "../types/ConsumerStates";
+import { type ConsumerId, type DeviceAddress, DeviceAlertState, DeviceAlertTarget, DeviceTallyState, type TallyDevice } from "../types/ConsumerStates";
+import type { DeviceRuntimeConfig } from "../types/DeviceTypes";
 import { ConsumerStore } from "../../database/ConsumerStore";
 import type { SystemInfo } from "../../types/SystemInfo";
 
@@ -151,20 +152,22 @@ export abstract class AbstractConsumer<T extends ConsumerEvents & Record<string,
         this.setTallyDevice(device);
         this.sendDeviceConfig(device);
     }
-    setDeviceName(address: DeviceAddress, name: DeviceName): void {
+    setDeviceRuntimeConfig(address: DeviceAddress, config: Partial<DeviceRuntimeConfig>): void {
         const key = this.getDeviceKey(address);
-        
+
         const device = this.devices.get(key);
-        if (!device){
-            this.logger.warn(`Attempted to set name:`, name, `for unknown device at address:`, address)
+        if (!device) {
+            this.logger.warn(`Attempted to set runtime config for unknown device at address:`, address);
             return;
         }
-        
-        device.name = name;
+
+        if (config.name       !== undefined) device.name       = config.name;
+        if (config.brightness !== undefined) device.brightness = config.brightness;
+        if (config.flip       !== undefined) device.flip       = config.flip;
         this.store.saveDevice(device);
         this.sendDeviceConfig(device);
         (this as EventEmitter<ConsumerEvents>).emit('device_update', device);
-        this.logger.debug(`Device ${key} renamed to: ${name}`);
+        this.logger.debug(`Device ${key} runtime config updated:`, config);
     }
     setDevicePatch(address: DeviceAddress, patch: Array<GlobalTallySource>): void{
         const key = this.getDeviceKey(address);
