@@ -74,9 +74,14 @@ export interface TallyDevice {
     // TODO ADD SOURCES LEADING TO TALLY
     state: DeviceTallyState;
     last_update?: number;
-    model: string;
+    model?: string;
 }
 
+export interface DeviceRuntimeConfig {
+    brightness: number;
+    flip: boolean;
+    name: DeviceName;
+}
 
 interface NewTallyDevice { // TODO
     id: DeviceAddress;
@@ -85,12 +90,7 @@ interface NewTallyDevice { // TODO
         state: DeviceTallyState;
         last_update?: number;
     }
-    runtime: { // Runtime config, on config device topic. Might be variable per device type in the future.
-        brightness: number;
-        flip: boolean;
-        name: DeviceName;
-        last_update?: number;
-    }
+    runtime: DeviceRuntimeConfig;
     info: {
         connection: ConnectionType;
         identifier: string; // Name defined in the device, used to differentiate.
