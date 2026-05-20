@@ -106,11 +106,21 @@ async function saveChanges() {
     changed.clear()
     updateSavebar()
   } catch {
-    // savebar stays open for retry
+    showSaveError()
   }
 
   setSaving(false)
   elSaveBtn.disabled = elDiscardBtn.disabled = false
+}
+
+function showSaveError() {
+  const msg = elSavebar.querySelector('.savebar-msg')
+  elSavebar.classList.add('err')
+  msg.textContent = 'Save failed — try again'
+  setTimeout(() => {
+    elSavebar.classList.remove('err')
+    msg.textContent = 'Unsaved changes'
+  }, 3000)
 }
 
 function setSaving(on) {
@@ -153,6 +163,68 @@ function syncColorHex(input) {
   if (el) el.textContent = input.value.toUpperCase()
 }
 
+// ── Master brightness ──────────────────────────────────────────────────────────
+
+function setMasterBrightness(pct) {
+  const fill = document.querySelector('.master-fill')
+  const val  = document.querySelector('.s-row--master .slider-value')
+  if (fill) fill.style.setProperty('--fill', pct + '%')
+  if (val)  val.textContent = pct + '%'
+  document.querySelectorAll('.trim-slider').forEach(s => {
+    s.dataset.master = pct
+    updateTrimSlider(s)
+  })
+}
+
+// ── WiFi scan ──────────────────────────────────────────────────────────────────
+
+async function startScan() {
+  const btn = document.getElementById('btn-scan')
+  btn.classList.add('scanning')
+  btn.disabled = true
+  try {
+    await fetchWithTimeout('/api/scan/start', { method: 'POST' })
+  } catch {}
+  pollScan()
+}
+
+async function pollScan() {
+  try {
+    const res = await fetchWithTimeout('/api/scan')
+    if (res.ok) {
+      const data = await res.json()
+      if (data.scanning) { setTimeout(pollScan, 1000); return }
+      populateScanResults(data.results || [])
+    }
+  } catch {}
+  const btn = document.getElementById('btn-scan')
+  btn.classList.remove('scanning')
+  btn.disabled = false
+}
+
+function populateScanResults(results) {
+  const dd = document.getElementById('scan-dropdown')
+  dd.innerHTML = ''
+  if (!results.length) { dd.hidden = true; return }
+
+  results.sort((a, b) => b.rssi - a.rssi)
+  results.forEach(({ ssid, rssi }) => {
+    const item = document.createElement('button')
+    item.type = 'button'
+    item.className = 'scan-item'
+    item.innerHTML =
+      `<span class="scan-ssid">${ssid}</span><span class="scan-rssi">${rssi} dBm</span>`
+    item.addEventListener('click', () => {
+      const input = document.getElementById('wifiSsid')
+      input.value = ssid
+      input.dispatchEvent(new Event('input', { bubbles: true }))
+      dd.hidden = true
+    })
+    dd.appendChild(item)
+  })
+  dd.hidden = false
+}
+
 let pollDelay = 5000
 async function pollStatus() {
   try {
@@ -189,6 +261,7 @@ async function loadSettings() {
     if (!res.ok) return
     const data = await res.json()
     Object.entries(data).forEach(([id, val]) => {
+      if (id === 'masterBrightness') { setMasterBrightness(Number(val)); return }
       const row = document.querySelector(`.s-row[data-field="${id}"]`)
       if (row) setFieldValue(row, val)
     })
@@ -233,6 +306,16 @@ function init() {
       slider.value = slider.dataset.default
       slider.dispatchEvent(new Event('input', { bubbles: true }))
     })
+  })
+
+  const scanBtn = document.getElementById('btn-scan')
+  if (scanBtn) scanBtn.addEventListener('click', startScan)
+
+  document.addEventListener('click', e => {
+    if (!e.target.closest('#wifiCombo')) {
+      const dd = document.getElementById('scan-dropdown')
+      if (dd) dd.hidden = true
+    }
   })
 
   document.querySelectorAll('.pw-toggle').forEach(btn => {
