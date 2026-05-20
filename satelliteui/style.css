@@ -558,6 +558,60 @@ button { cursor: pointer; }
 
 .scan-btn.scanning svg { animation: spin .7s linear infinite; }
 
+/* ─── WiFi combo ───────────────────────────────────────────────────────────── */
+
+.wifi-combo { position: relative; }
+
+.wifi-input-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.wifi-input-row .s-input { width: 150px; }
+
+.scan-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  min-width: 180px;
+  background: var(--bg-secondary);
+  border: 0.5px solid var(--border-s);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  z-index: 50;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.scan-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 7px 10px;
+  border: none;
+  background: none;
+  color: var(--text-primary);
+  text-align: left;
+  cursor: pointer;
+  font-size: 12px;
+  transition: background .1s;
+}
+
+.scan-item:hover { background: var(--border-t); }
+.scan-item + .scan-item { border-top: 0.5px solid var(--border-t); }
+.scan-ssid { font-family: var(--font-mono); }
+
+.scan-rssi {
+  font-size: 10px;
+  color: var(--text-tertiary);
+  font-family: var(--font-mono);
+  flex-shrink: 0;
+  margin-left: 8px;
+}
+
 /* ─── Savebar ──────────────────────────────────────────────────────────────── */
 
 .savebar {

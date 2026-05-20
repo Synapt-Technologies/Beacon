@@ -318,6 +318,15 @@ function init() {
     }
   })
 
+  document.querySelectorAll('.clear-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const input = document.getElementById(btn.dataset.clears)
+      if (!input) return
+      input.value = ''
+      input.dispatchEvent(new Event('input', { bubbles: true }))
+    })
+  })
+
   document.querySelectorAll('.pw-toggle').forEach(btn => {
     btn.addEventListener('click', () => {
       const input = btn.closest('.password-wrap').querySelector('input')
