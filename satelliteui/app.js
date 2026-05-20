@@ -3,12 +3,16 @@ const changed   = new Set()
 
 let elSavebar, elPage, elReboot, elSaveBtn, elDiscardBtn
 
+// ── Fetch helper ───────────────────────────────────────────────────────────────
+
 async function fetchWithTimeout(url, opts = {}, ms = 4000) {
   const ctrl = new AbortController()
   const tid  = setTimeout(() => ctrl.abort(), ms)
   try { return await fetch(url, { ...opts, signal: ctrl.signal }) }
   finally { clearTimeout(tid) }
 }
+
+// ── Field access ───────────────────────────────────────────────────────────────
 
 function getCurrentValue(row) {
   const radio = row.querySelector('input[type=radio]')
@@ -33,7 +37,7 @@ function setFieldValue(row, val) {
   const visual = getVisualInput(row)
   if (radio) {
     document.querySelectorAll(`input[name="${radio.name}"]`)
-      .forEach(r => r.checked = r.value === val)
+      .forEach(r => r.checked = r.value === String(val))
   } else if (box) {
     box.checked = Boolean(val)
   } else if (visual) {
@@ -46,17 +50,19 @@ function setFieldValue(row, val) {
   if (color) syncColorHex(color)
 }
 
+// ── Change detection ───────────────────────────────────────────────────────────
+
 function onFieldChange(row) {
   const id       = row.dataset.field
-  const changed_ = getCurrentValue(row) !== originals[id]
+  const isChange = getCurrentValue(row) !== originals[id]
   const visual   = getVisualInput(row)
   const rg       = row.querySelector('.radio-group')
 
-  row.classList.toggle('changed', changed_)
-  visual?.classList.toggle('changed', changed_)
-  rg?.classList.toggle('changed', changed_)
+  row.classList.toggle('changed', isChange)
+  visual?.classList.toggle('changed', isChange)
+  rg?.classList.toggle('changed', isChange)
 
-  changed_  ? changed.add(id) : changed.delete(id)
+  isChange ? changed.add(id) : changed.delete(id)
   updateSavebar()
 }
 
@@ -84,25 +90,26 @@ function discardChanges() {
   updateSavebar()
 }
 
+// ── Save ───────────────────────────────────────────────────────────────────────
+
 async function saveChanges() {
   setSaving(true)
   elSaveBtn.disabled = elDiscardBtn.disabled = true
 
-  const payload = {}
-  changed.forEach(id => {
-    const row = document.querySelector(`.s-row[data-field="${id}"]`)
-    if (row) payload[id] = getCurrentValue(row)
-  })
-
   try {
-    const res = await fetchWithTimeout('/api/settings', {
+    const res = await fetchWithTimeout('/api/config', {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify(payload),
+      body:    JSON.stringify(buildPayload()),
     })
     if (!res.ok) throw new Error()
-    Object.assign(originals, payload)
-    document.querySelectorAll('.changed').forEach(el => el.classList.remove('changed'))
+
+    document.querySelectorAll('.s-row[data-field]').forEach(row => {
+      originals[row.dataset.field] = getCurrentValue(row)
+      row.classList.remove('changed')
+      getVisualInput(row)?.classList.remove('changed')
+      row.querySelector('.radio-group')?.classList.remove('changed')
+    })
     changed.clear()
     updateSavebar()
   } catch {
@@ -111,6 +118,38 @@ async function saveChanges() {
 
   setSaving(false)
   elSaveBtn.disabled = elDiscardBtn.disabled = false
+}
+
+function buildPayload() {
+  const cfg = {}
+  changed.forEach(id => {
+    const row = document.querySelector(`.s-row[data-field="${id}"]`)
+    if (!row) return
+    applyToPayload(cfg, id, getCurrentValue(row))
+  })
+  return cfg
+}
+
+function applyToPayload(cfg, id, val) {
+  if (id === 'deviceName') {
+    (cfg.device ??= {}).name = val
+  } else if (id === 'wifiSsid') {
+    (cfg.network ??= {}).ssid = val
+  } else if (id === 'wifiPassword') {
+    if (val) (cfg.network ??= {}).password = val
+  } else if (id === 'apPassword') {
+    (cfg.network ??= {}).apPassword = val
+  } else if (id === 'baseUrl') {
+    (cfg.beacon ??= {}).mqttUrl = val
+  } else if (id === 'consumerId' || id === 'deviceId') {
+    cfg.beacon ??= {}
+    cfg.beacon.consumers ??= [{}]
+    if (id === 'consumerId') cfg.beacon.consumers[0].consumerId = val
+    else                     cfg.beacon.consumers[0].deviceId   = val
+  } else if (/^trim\d+$/.test(id)) {
+    cfg.display ??= {}
+    if (!cfg.display.brightnessTrims) cfg.display.brightnessTrims = collectTrimValues()
+  }
 }
 
 function showSaveError() {
@@ -134,6 +173,8 @@ function setSaving(on) {
                stroke-linecap="round" stroke-linejoin="round"/>
        </svg> Save changes`
 }
+
+// ── Slider display ─────────────────────────────────────────────────────────────
 
 function updateTrimSlider(slider) {
   const v   = parseInt(slider.value)
@@ -176,6 +217,77 @@ function setMasterBrightness(pct) {
   })
 }
 
+// ── Brightness trim rows ───────────────────────────────────────────────────────
+
+const TRIM_LABELS = ['Front Display', 'Back Panel', 'Side Strip']
+
+function collectTrimValues() {
+  return Array.from(document.querySelectorAll('.trim-slider'))
+              .map(s => parseInt(s.value))
+}
+
+function renderTrimRows(count, trims) {
+  const card = document.getElementById('brightness-card')
+  if (!card) return
+
+  card.querySelectorAll('.s-row--trim').forEach(r => r.remove())
+
+  const master = parseInt(document.querySelector('.trim-slider')?.dataset.master ?? 80)
+
+  for (let i = 0; i < count; i++) {
+    const id    = `trim${i}`
+    const label = TRIM_LABELS[i] ?? `Channel ${i + 1}`
+    const val   = trims[i] ?? 0
+    const row   = document.createElement('div')
+    row.className        = 's-row s-row--trim'
+    row.dataset.field    = id
+    row.innerHTML = `
+      <div class="field-label"><div class="field-name">${label}</div></div>
+      <div class="field-control">
+        <input class="s-slider trim-slider" type="range" id="${id}" min="-50" max="50" step="1"
+               value="${val}" data-master="${master}" data-default="0">
+        <span class="slider-value" id="${id}Val">${val >= 0 ? '+' : ''}${val}%</span>
+        <span class="effective-val" id="${id}Eff">${Math.max(0, Math.min(100, master + val))}%</span>
+      </div>`
+    card.appendChild(row)
+
+    originals[id] = val
+
+    const slider = row.querySelector('.trim-slider')
+    slider.addEventListener('input', () => {
+      updateTrimSlider(slider)
+      onFieldChange(row)
+    })
+    slider.addEventListener('dblclick', () => {
+      slider.value = slider.dataset.default
+      slider.dispatchEvent(new Event('input', { bubbles: true }))
+    })
+    updateTrimSlider(slider)
+  }
+}
+
+// ── Runtime readonly fields ────────────────────────────────────────────────────
+
+function setRuntimeFields(runtime) {
+  if (!runtime) return
+
+  const name0 = Array.isArray(runtime.names) ? runtime.names[0] : null
+  if (name0) {
+    const shortEl = document.getElementById('rt-short-name')
+    const longEl  = document.getElementById('rt-long-name')
+    if (shortEl) shortEl.value = name0.short ?? ''
+    if (longEl)  longEl.value  = name0.long  ?? ''
+  }
+
+  const stateEl = document.getElementById('rt-state')
+  if (stateEl && runtime.stateOnDisconnect != null)
+    stateEl.value = String(runtime.stateOnDisconnect)
+
+  const flipEl = document.getElementById('rt-flip-sides')
+  if (flipEl && runtime.flipSides != null)
+    flipEl.checked = Boolean(runtime.flipSides)
+}
+
 // ── WiFi scan ──────────────────────────────────────────────────────────────────
 
 async function startScan() {
@@ -210,10 +322,9 @@ function populateScanResults(results) {
   results.sort((a, b) => b.rssi - a.rssi)
   results.forEach(({ ssid, rssi }) => {
     const item = document.createElement('button')
-    item.type = 'button'
+    item.type      = 'button'
     item.className = 'scan-item'
-    item.innerHTML =
-      `<span class="scan-ssid">${ssid}</span><span class="scan-rssi">${rssi} dBm</span>`
+    item.innerHTML = `<span class="scan-ssid">${ssid}</span><span class="scan-rssi">${rssi} dBm</span>`
     item.addEventListener('click', () => {
       const input = document.getElementById('wifiSsid')
       input.value = ssid
@@ -225,7 +336,10 @@ function populateScanResults(results) {
   dd.hidden = false
 }
 
+// ── Status polling ─────────────────────────────────────────────────────────────
+
 let pollDelay = 5000
+
 async function pollStatus() {
   try {
     const res = await fetchWithTimeout('/api/status')
@@ -242,7 +356,7 @@ function updateStatusPills(data) {
   const wifiPill   = document.getElementById('pill-wifi')
   const beaconPill = document.getElementById('pill-beacon')
 
-  wifiPill.className            = data.wifi ? 'status-pill ok' : 'status-pill err'
+  wifiPill.className = data.wifi ? 'status-pill ok' : 'status-pill err'
   document.getElementById('pill-wifi-text').textContent
     = data.wifi ? `WiFi · ${data.ssid ?? 'Connected'}` : 'WiFi · Offline'
   if (data.ip) wifiPill.dataset.tooltip = data.ip
@@ -251,22 +365,59 @@ function updateStatusPills(data) {
   beaconPill.className = data.beacon ? 'status-pill ok' : 'status-pill'
   document.getElementById('pill-beacon-text').textContent
     = data.beacon ? 'Beacon · Online' : 'Beacon · Offline'
-  if (data.beaconIp) beaconPill.dataset.tooltip = data.beaconIp
-  else beaconPill.removeAttribute('data-tooltip')
 }
 
-async function loadSettings() {
+// ── Load config ────────────────────────────────────────────────────────────────
+
+async function loadConfig() {
   try {
-    const res = await fetchWithTimeout('/api/settings')
+    const res = await fetchWithTimeout('/api/config')
     if (!res.ok) return
-    const data = await res.json()
-    Object.entries(data).forEach(([id, val]) => {
-      if (id === 'masterBrightness') { setMasterBrightness(Number(val)); return }
-      const row = document.querySelector(`.s-row[data-field="${id}"]`)
-      if (row) setFieldValue(row, val)
-    })
+    applyConfig(await res.json())
   } catch {}
 }
+
+function applyConfig(cfg) {
+  // Header
+  if (cfg.device) {
+    const nameEl  = document.getElementById('app-device-name')
+    const modelEl = document.getElementById('app-device-model')
+    if (nameEl  && cfg.device.name)  nameEl.textContent  = cfg.device.name
+    if (modelEl && cfg.device.model) modelEl.textContent = cfg.device.model
+  }
+
+  // AP SSID (readonly display only)
+  const apSsidEl = document.getElementById('apSsid')
+  if (apSsidEl) apSsidEl.value = cfg.network?.apSsid ?? ''
+
+  // Editable fields
+  const fieldMap = {
+    deviceName: cfg.device?.name,
+    wifiSsid:   cfg.network?.ssid,
+    baseUrl:    cfg.beacon?.mqttUrl,
+    consumerId: cfg.beacon?.consumers?.[0]?.consumerId,
+    deviceId:   cfg.beacon?.consumers?.[0]?.deviceId,
+  }
+  Object.entries(fieldMap).forEach(([id, val]) => {
+    if (val == null) return
+    const row = document.querySelector(`.s-row[data-field="${id}"]`)
+    if (row) setFieldValue(row, val)
+  })
+
+  // Brightness trims (dynamic per consumerCount)
+  const count = cfg.device?.consumerCount ?? 1
+  const trims = cfg.display?.brightnessTrims ?? []
+  renderTrimRows(count, trims)
+
+  // Master brightness (0–100%)
+  if (cfg.runtime?.masterBrightness != null)
+    setMasterBrightness(cfg.runtime.masterBrightness)
+
+  // Runtime readonly display
+  setRuntimeFields(cfg.runtime)
+}
+
+// ── Init ───────────────────────────────────────────────────────────────────────
 
 function init() {
   elSavebar    = document.getElementById('savebar')
@@ -291,20 +442,35 @@ function init() {
     updateSliderDisplay(s)
   })
 
+  document.querySelectorAll('.trim-slider').forEach(updateTrimSlider)
+
   document.querySelectorAll('input[type=color]').forEach(c => {
     c.addEventListener('input', () => syncColorHex(c))
     syncColorHex(c)
   })
 
-  document.querySelectorAll('.trim-slider').forEach(s => {
-    s.addEventListener('input', () => updateTrimSlider(s))
-    updateTrimSlider(s)
-  })
-
-  document.querySelectorAll('input[type=range][data-default]').forEach(slider => {
+  document.querySelectorAll('input[type=range][data-default]:not(.trim-slider)').forEach(slider => {
     slider.addEventListener('dblclick', () => {
       slider.value = slider.dataset.default
       slider.dispatchEvent(new Event('input', { bubbles: true }))
+    })
+  })
+
+  document.querySelectorAll('.pw-toggle').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const input = btn.closest('.password-wrap').querySelector('input')
+      const show  = input.type === 'text'
+      input.type      = show ? 'password' : 'text'
+      btn.textContent = show ? 'Show' : 'Hide'
+    })
+  })
+
+  document.querySelectorAll('.clear-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const input = document.getElementById(btn.dataset.clears)
+      if (!input) return
+      input.value = ''
+      input.dispatchEvent(new Event('input', { bubbles: true }))
     })
   })
 
@@ -317,28 +483,10 @@ function init() {
       if (dd) dd.hidden = true
     }
   })
-
-  document.querySelectorAll('.clear-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const input = document.getElementById(btn.dataset.clears)
-      if (!input) return
-      input.value = ''
-      input.dispatchEvent(new Event('input', { bubbles: true }))
-    })
-  })
-
-  document.querySelectorAll('.pw-toggle').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const input = btn.closest('.password-wrap').querySelector('input')
-      const show  = input.type === 'text'
-      input.type      = show ? 'password' : 'text'
-      btn.textContent = show ? 'Show' : 'Hide'
-    })
-  })
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-  await loadSettings()
+  await loadConfig()
   init()
   pollStatus()
 })

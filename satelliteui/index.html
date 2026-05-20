@@ -14,8 +14,8 @@
     <!-- ── Header card ───────────────────────────────────────────────── -->
     <div class="header-card">
       <div>
-        <h1 class="app-title">Beacon Satellite</h1>
-        <span class="app-subtitle">CYD Satellite - DIY</span>
+        <h1 class="app-title" id="app-device-name">Beacon Satellite</h1>
+        <span class="app-subtitle" id="app-device-model">CYD Satellite - DIY</span>
       </div>
       <div class="status-pills">
         <div class="status-pill" id="pill-wifi">
@@ -31,7 +31,7 @@
 
     <!-- ── Brightness ─────────────────────────────────────────────────── -->
     <div class="sec-lbl">Brightness</div>
-    <div class="s-card">
+    <div class="s-card" id="brightness-card">
 
       <div class="s-row s-row--master">
         <div class="field-label">
@@ -48,21 +48,22 @@
         </div>
       </div>
 
-      <div class="s-row s-row--trim" data-field="trimFront">
+      <!-- Trim rows injected here by JS (renderTrimRows) -->
+      <div class="s-row s-row--trim" data-field="trim0">
         <div class="field-label"><div class="field-name">Front Display</div></div>
         <div class="field-control">
-          <input class="s-slider trim-slider" type="range" id="trimFront" min="-50" max="50" step="1" value="18" data-master="80" data-default="0">
-          <span class="slider-value" id="trimFrontVal">+18%</span>
-          <span class="effective-val" id="trimFrontEff">98%</span>
+          <input class="s-slider trim-slider" type="range" id="trim0" min="-50" max="50" step="1" value="0" data-master="80" data-default="0">
+          <span class="slider-value" id="trim0Val">+0%</span>
+          <span class="effective-val" id="trim0Eff">80%</span>
         </div>
       </div>
 
-      <div class="s-row s-row--trim" data-field="trimBack">
+      <div class="s-row s-row--trim" data-field="trim1">
         <div class="field-label"><div class="field-name">Back Panel</div></div>
         <div class="field-control">
-          <input class="s-slider trim-slider" type="range" id="trimBack" min="-50" max="50" step="1" value="0" data-master="80" data-default="0">
-          <span class="slider-value" id="trimBackVal">+0%</span>
-          <span class="effective-val" id="trimBackEff">80%</span>
+          <input class="s-slider trim-slider" type="range" id="trim1" min="-50" max="50" step="1" value="0" data-master="80" data-default="0">
+          <span class="slider-value" id="trim1Val">+0%</span>
+          <span class="effective-val" id="trim1Eff">80%</span>
         </div>
       </div>
 
@@ -81,7 +82,7 @@
           <div class="field-sub">Shown in compact display mode</div>
         </div>
         <div class="field-control">
-          <input class="s-input" type="text" value="CAM 1" readonly>
+          <input class="s-input" type="text" id="rt-short-name" value="CAM 1" readonly>
         </div>
       </div>
 
@@ -91,7 +92,7 @@
           <div class="field-sub">Shown in full display mode</div>
         </div>
         <div class="field-control">
-          <input class="s-input" type="text" value="Camera 1" readonly>
+          <input class="s-input" type="text" id="rt-long-name" value="Camera 1" readonly>
         </div>
       </div>
 
@@ -101,11 +102,11 @@
           <div class="field-sub">Display state when Base is unreachable</div>
         </div>
         <div class="field-control">
-          <select class="s-select" tabindex="-1">
-            <option value="0" selected>Off</option>
+          <select class="s-select" id="rt-state" tabindex="-1">
+            <option value="0">Off</option>
             <option value="4">Danger</option>
             <option value="8">Info</option>
-            <option value="12">Warning</option>
+            <option value="12" selected>Warning</option>
             <option value="16">Preview</option>
             <option value="20">Program</option>
           </select>
@@ -119,7 +120,7 @@
         </div>
         <div class="field-control">
           <label class="toggle">
-            <input type="checkbox">
+            <input type="checkbox" id="rt-flip-sides">
             <span class="toggle-track"><span class="toggle-thumb"></span></span>
           </label>
         </div>
@@ -170,28 +171,28 @@
 
       <div class="sub-sec-lbl">Access Point</div>
 
-      <div class="s-row" data-field="apEnabled" data-reboot="true">
+      <!-- AP always enabled — fixed on, not configurable -->
+      <div class="s-row s-row--ro">
         <div class="field-label">
-          <div class="field-name">Enable AP</div>
-          <div class="field-sub">Broadcast a setup network when offline</div>
+          <div class="field-name">AP Always Enabled</div>
+          <div class="field-sub">Access point is always active as a fallback</div>
         </div>
         <div class="field-control">
-          <span class="reboot-badge">Reboot</span>
           <label class="toggle">
-            <input type="checkbox" id="apEnabled" checked>
+            <input type="checkbox" checked>
             <span class="toggle-track"><span class="toggle-thumb"></span></span>
           </label>
         </div>
       </div>
 
-      <div class="s-row" data-field="apSsid" data-reboot="true">
+      <!-- AP SSID — readonly, auto-generated -->
+      <div class="s-row s-row--ro">
         <div class="field-label">
           <div class="field-name">AP Network Name</div>
-          <div class="field-sub">Name of the access point this device broadcasts</div>
+          <div class="field-sub">Auto-generated from device name</div>
         </div>
         <div class="field-control">
-          <span class="reboot-badge">Reboot</span>
-          <input class="s-input" type="text" id="apSsid" value="Beacon-Setup" placeholder="AP name">
+          <input class="s-input" type="text" id="apSsid" readonly placeholder="—">
         </div>
       </div>
 
