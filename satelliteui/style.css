@@ -195,7 +195,7 @@ button { cursor: pointer; }
 
 .sec-from {
   font-size: 10px;
-  color: var(--text-quartary);
+  color: var(--acc);
   letter-spacing: .02em;
 }
 
