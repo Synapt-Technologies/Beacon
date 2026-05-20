@@ -176,13 +176,43 @@ button { cursor: pointer; }
 
 /* ─── Section label ────────────────────────────────────────────────────────── */
 
+.sec-hdr {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
 .sec-lbl {
   font-size: 10px;
   font-weight: 600;
   color: var(--text-tertiary);
   text-transform: uppercase;
   letter-spacing: .07em;
-  margin-bottom: 8px;
+}
+
+.sec-hdr > .sec-lbl { margin-bottom: 0; }
+
+.sec-from {
+  font-size: 10px;
+  color: var(--text-quartary);
+  letter-spacing: .02em;
+}
+
+/* Stand-alone sec-lbl (not inside sec-hdr) */
+.page > .sec-lbl { margin-bottom: 8px; }
+
+/* ─── Sub-section label (inside a card) ────────────────────────────────────── */
+
+.sub-sec-lbl {
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--text-quartary);
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  padding: 8px 14px 6px;
+  border-top: 0.5px solid var(--border-t);
+  margin-top: 2px;
 }
 
 /* ─── Settings card ────────────────────────────────────────────────────────── */
@@ -503,17 +533,7 @@ button { cursor: pointer; }
   color: var(--text-tertiary);
 }
 
-/* ─── WiFi combo ───────────────────────────────────────────────────────────── */
-
-.wifi-combo { position: relative; }
-
-.wifi-input-row {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.wifi-input-row .s-input { width: 150px; }
+/* ─── Scan button ──────────────────────────────────────────────────────────── */
 
 .scan-btn {
   display: flex;
@@ -537,50 +557,6 @@ button { cursor: pointer; }
 .scan-btn:disabled { opacity: 0.5; cursor: default; }
 
 .scan-btn.scanning svg { animation: spin .7s linear infinite; }
-
-.scan-dropdown {
-  position: absolute;
-  top: calc(100% + 4px);
-  left: 0;
-  right: 0;
-  min-width: 180px;
-  background: var(--bg-secondary);
-  border: 0.5px solid var(--border-s);
-  border-radius: var(--radius-md);
-  overflow: hidden;
-  z-index: 50;
-  max-height: 200px;
-  overflow-y: auto;
-}
-
-.scan-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  padding: 7px 10px;
-  border: none;
-  background: none;
-  color: var(--text-primary);
-  text-align: left;
-  cursor: pointer;
-  font-size: 12px;
-  transition: background .1s;
-}
-
-.scan-item:hover { background: var(--border-t); }
-
-.scan-item + .scan-item { border-top: 0.5px solid var(--border-t); }
-
-.scan-ssid { font-family: var(--font-mono); }
-
-.scan-rssi {
-  font-size: 10px;
-  color: var(--text-tertiary);
-  font-family: var(--font-mono);
-  flex-shrink: 0;
-  margin-left: 8px;
-}
 
 /* ─── Savebar ──────────────────────────────────────────────────────────────── */
 
@@ -800,6 +776,67 @@ button { cursor: pointer; }
   border-left: 0.5px solid var(--border-t);
   flex-shrink: 0;
 }
+
+/* ─── Developer section ────────────────────────────────────────────────────── */
+
+.dev-section {
+  border-top: 0.5px solid var(--border-t);
+}
+
+.dev-summary {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-quartary);
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  padding: 10px 14px;
+  cursor: pointer;
+  user-select: none;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: color .15s;
+}
+
+.dev-summary::-webkit-details-marker { display: none; }
+
+.dev-summary::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: rotate(-45deg);
+  transition: transform .15s;
+  flex-shrink: 0;
+  margin-top: -2px;
+}
+
+.dev-section[open] .dev-summary::before {
+  transform: rotate(45deg);
+  margin-top: 0;
+  margin-bottom: -2px;
+}
+
+.dev-summary:hover { color: var(--text-tertiary); }
+
+/* ─── Clear button ──────────────────────────────────────────────────────────── */
+
+.clear-btn {
+  font-size: 10px;
+  font-weight: 500;
+  padding: 3px 8px;
+  border-radius: var(--radius-md);
+  border: 0.5px solid rgba(226,75,74,.35);
+  background: rgba(226,75,74,.08);
+  color: var(--danger);
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: background .1s;
+}
+
+.clear-btn:hover { background: rgba(226,75,74,.15); }
 
 /* ─── Read-only rows ───────────────────────────────────────────────────────── */
 
