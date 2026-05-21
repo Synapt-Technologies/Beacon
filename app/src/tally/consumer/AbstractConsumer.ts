@@ -142,10 +142,12 @@ export abstract class AbstractConsumer<T extends ConsumerEvents & Record<string,
         return this.devices.get(this.getDeviceKey(address)) || null;
     }
 
-    protected _addDevice(device: TallyDevice) {
+    protected _addDevice(device: TallyDevice, override: boolean = false) {
 
         device.id.consumer = this.config.id;
         const key = this.getDeviceKey(device.id);
+
+        if (this.devices.has(key) && !override) { return; }
 
         this.devices.set(key, device);
         this.info.device_count = this.devices.size;
