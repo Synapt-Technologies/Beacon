@@ -79,6 +79,19 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer implements IGl
             return this.logger.fatal('Error starting Aedes broker:', err);
         }
 
+        await new Promise<void>((resolve) => {
+            const stream = this.aedes.persistence.createRetainedStream('#');
+            const clears: Promise<void>[] = [];
+            stream.on('data', (packet: { topic: string }) => {
+                clears.push(new Promise<void>((res) =>
+                    this.aedes.persistence.cleanRetained(packet.topic, () => res())
+                ));
+            });
+            stream.on('end', async () => { await Promise.all(clears); resolve(); });
+            stream.on('error', () => resolve());
+        });
+        this.logger.debug('Cleared retained messages.');
+
         if (this.config.serve_tcp) {
             try {
                 this.server = createServer(this.aedes.handle);
