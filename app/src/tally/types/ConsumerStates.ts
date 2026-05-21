@@ -79,7 +79,7 @@ export interface TallyDevice {
     // TODO ADD SOURCES LEADING TO TALLY
     state: DeviceTallyState;
     last_update?: number;
-    model: string;
+    model?: string;
 }
 
 

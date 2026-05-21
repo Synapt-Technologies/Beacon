@@ -28,6 +28,7 @@ export interface ConsumerConfig {
 export type ConsumerEvents = {
     device_update: [device: TallyDevice];
     device_removed: [address: DeviceAddress];
+    device_discovery: [device: TallyDevice];
 }
 
 // TODO: Maybe IConnection to force getId and get and setName and other shared ops like db?
@@ -151,6 +152,7 @@ export abstract class AbstractConsumer<T extends ConsumerEvents & Record<string,
         this.store.saveDevice(device);
         this.setTallyDevice(device);
         this.sendDeviceConfig(device);
+        (this as EventEmitter<ConsumerEvents>).emit('device_discovery', device);
     }
     setDeviceRuntimeConfig(address: DeviceAddress, config: Partial<DeviceRuntimeConfig>): void {
         const key = this.getDeviceKey(address);

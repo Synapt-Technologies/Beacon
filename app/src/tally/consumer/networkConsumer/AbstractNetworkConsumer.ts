@@ -18,7 +18,6 @@ export interface NetworkConsumerConfig extends ConsumerConfig {
 export type NetworkConsumerEvents = ConsumerEvents & {
     connection: []; // When A client loads, subscribes or whatever.
     disconnection: []; // When A client loads, subscribes or whatever.
-    device_discovery: [device: TallyDevice];
 }
 
 export abstract class AbstractNetworkConsumer<T extends NetworkConsumerEvents = NetworkConsumerEvents> extends AbstractConsumer<T> {

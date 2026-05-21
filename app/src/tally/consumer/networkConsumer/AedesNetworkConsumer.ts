@@ -6,7 +6,7 @@ import { Aedes, type Client, type Subscription } from "aedes";
 import { createServer, Server } from "node:net";
 import { createServer as createHttpServer, type Server as HttpServer } from "node:http";
 import { WebSocketServer, createWebSocketStream } from "ws";
-import { type DeviceAddress, DeviceAlertState, DeviceAlertTarget, DeviceTallyState, type TallyDevice } from "../../types/ConsumerStates";
+import { ConnectionType, type DeviceAddress, DeviceAlertState, DeviceAlertTarget, DeviceTallyState, type TallyDevice } from "../../types/ConsumerStates";
 
 export interface AedesConsumerInfo extends NetworkConsumerInfo {
     tcp_active: boolean;
@@ -18,6 +18,14 @@ export interface AedesConsumerConfig extends NetworkConsumerConfig {
     serve_tcp?: boolean;
     serve_ws?: boolean;
     ws_port?: number;
+}
+
+export interface DeviceDiscoveryPacket {
+    id:           string; // TODO: Device ID type with consumerid?
+    name?:         string;
+    model?:        string;
+    output_count?: number;
+    connection?:   ConnectionType;
 }
 
 
@@ -130,9 +138,20 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer implements IGl
             //     this.emit('connection'); // TODO: Device Discovery
         });
 
-        this.aedes.on('publish',  (packet, client) => {if (client) {
-            this.logger.debug('Message: MQTT Client', (client ? client.id : 'UNKNOWN ID'), 'has published message on', packet.topic);
-        }});
+        this.aedes.on('publish', (packet, client) => {
+            if (!client) return; // broker-internal messages
+
+            this.logger.debug('Message: MQTT Client', client.id, 'has published message on', packet.topic);
+
+            if (packet.topic === 'device/discovery') {
+                try {
+                    const discovery: DeviceDiscoveryPacket = JSON.parse(packet.payload.toString());
+                    this.onDeviceDiscovered(discovery);
+                } catch (err) {
+                    this.logger.warn(`Failed to parse discovery packet from client ${client.id}:`, err);
+                }
+            }
+        });
 
         this.aedes.on('clientReady', (client: Client) => {
             this.info.client_count++;
@@ -207,6 +226,21 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer implements IGl
         this.info.client_count = 0;
     }
 
+    protected onDeviceDiscovered(packet: DeviceDiscoveryPacket): void {
+        this.logger.info(`Device discovered via MQTT: ${packet.name} (${packet.id})`);
+
+        const device: TallyDevice = {
+            id: { consumer: this.config.id, device: packet.id },
+            name: { long: packet.name ?? packet.model ?? packet.id },
+            model: packet.model,
+            connection: packet.connection ?? ConnectionType.NETWORK, // Discovered, but not yet patched
+            patch: [],
+            state: DeviceTallyState.NONE,
+        };
+
+        this._addDevice(device);
+    }
+
     public publishDeviceTally(device: TallyDevice): void {
         this.sendDeviceTally(device);
     }
@@ -227,7 +261,7 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer implements IGl
             cmd: 'publish',
             qos: 1, // At least once, or more
             dup: false,
-            topic: 'tally/global',
+            topic: 'tally/global', 
             payload: Buffer.from(payload),
             retain: true
         }, () => {});
@@ -273,7 +307,7 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer implements IGl
         {
             cmd: 'publish',
             qos: 1,
-            dup: false,
+            dup: false, // TODO: topic becomes /device/x/x/tally?
             topic: `tally/device/${device.id.consumer}/${device.id.device}`, // TODO: Add /tally?
             payload: Buffer.from(payload),
             retain: true
@@ -300,7 +334,7 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer implements IGl
         {
             cmd: 'publish',
             qos: 1,
-            dup: false,
+            dup: false,  // TODO: topic becomes /device/x/x/fields?
             topic: `tally/device/${device.id.consumer}/${device.id.device}/fields`,
             payload: Buffer.from(payload),
             retain: true
@@ -335,7 +369,7 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer implements IGl
         {
             cmd: 'publish',
             qos: 1,
-            dup: false,
+            dup: false, // TODO: topic becomes /device/x/x/config?
             topic: `tally/device/${device.id.consumer}/${device.id.device}/config`,
             payload: Buffer.from(payload),
             retain: true
@@ -354,7 +388,7 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer implements IGl
         this.aedes.publish({
             cmd: 'publish',
             qos: 2, // High priority for alerts
-            dup: false,
+            dup: false,  // TODO: topic becomes /device/x/x/alert?
             topic: `tally/device/${address.consumer}/${address.device}/alert`,
             payload: Buffer.from(JSON.stringify({ type, target, time })),
             retain: false // Alerts are momentary, no retain

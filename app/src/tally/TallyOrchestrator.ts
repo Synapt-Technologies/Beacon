@@ -24,7 +24,8 @@ export interface OrchestratorEvents {
     consumer_added: [consumer: ConsumerId];
     consumer_removed: [consumer: ConsumerId];
 
-    device_connected: [device: TallyDevice];
+    // TODO: Check if these types are correct.
+    device_added: [device: TallyDevice];
     device_info: [device: TallyDevice];
 }
 
@@ -101,6 +102,10 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
         this.consumers.set(consumer.getId(), consumer);
         consumer.on('device_update', (device: TallyDevice) => {
             this._notifyBroadcasters(consumer.getId(), device);
+        });
+        consumer.on('device_discovery', (device: TallyDevice) => {
+            this._notifyBroadcasters(consumer.getId(), device);
+            this.emit('device_added', device);
         });
         this.emit('consumer_added', consumer.getId());
 
