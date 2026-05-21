@@ -109,6 +109,7 @@ interface NewTallyDevice { // TODO
 export abstract class GlobalDeviceTools { // Todo: Maybe a device DTO?
     // TODO Move / refactor?
     static defaultDevice(partial: Partial<TallyDevice> & Pick<TallyDevice, 'id' | 'name'>): TallyDevice {
+
         return {
             brightness: 100,
             flip: false,
@@ -116,6 +117,10 @@ export abstract class GlobalDeviceTools { // Todo: Maybe a device DTO?
             patch: [],
             state: DeviceTallyState.NONE,
             ...partial,
+            name: {
+                short: partial.name.short ?? partial.name.long,
+                long: partial.name.long,
+            },
         }
     }
 
