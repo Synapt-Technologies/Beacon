@@ -6,7 +6,7 @@ import { Aedes, type Client, type Subscription } from "aedes";
 import { createServer, Server } from "node:net";
 import { createServer as createHttpServer, type Server as HttpServer } from "node:http";
 import { WebSocketServer, createWebSocketStream } from "ws";
-import { ConnectionType, type DeviceAddress, DeviceAlertState, DeviceAlertTarget, DeviceTallyState, type TallyDevice } from "../../types/ConsumerStates";
+import { ConnectionType, type DeviceAddress, DeviceAlertState, DeviceAlertTarget, DeviceTallyState, GlobalDeviceTools, type TallyDevice } from "../../types/ConsumerStates";
 
 export interface AedesConsumerInfo extends NetworkConsumerInfo {
     tcp_active: boolean;
@@ -242,14 +242,14 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer implements IGl
     protected onDeviceDiscovered(packet: DeviceDiscoveryPacket): void {
         this.logger.info(`Device discovered via MQTT: ${packet.name} (${packet.id})`);
 
-        const device: TallyDevice = {
+        const device: TallyDevice = GlobalDeviceTools.defaultDevice({
             id: { consumer: this.config.id, device: packet.id },
-            name: { long: packet.name ?? packet.model ?? packet.id },
+            name: { 
+                long: packet.name ?? packet.model ?? packet.id 
+            },
             model: packet.model,
             connection: packet.connection ?? ConnectionType.NETWORK, // Discovered, but not yet patched
-            patch: [],
-            state: DeviceTallyState.NONE,
-        };
+        });
 
         this._addDevice(device);
     }
