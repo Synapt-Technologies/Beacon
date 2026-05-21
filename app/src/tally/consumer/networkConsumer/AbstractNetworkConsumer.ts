@@ -1,5 +1,6 @@
 import { AbstractConsumer, ConsumerStatus, type ConsumerConfig, type ConsumerEvents, type ConsumerInfo } from "../AbstractConsumer";
 import type { TallyState } from "../../types/ProducerStates";
+import type { TallyDevice } from "../../types/DeviceTypes";
 
 
 export interface NetworkConsumerInfo extends ConsumerInfo {
@@ -17,7 +18,7 @@ export interface NetworkConsumerConfig extends ConsumerConfig {
 export type NetworkConsumerEvents = ConsumerEvents & {
     connection: []; // When A client loads, subscribes or whatever.
     disconnection: []; // When A client loads, subscribes or whatever.
-    discovery: [id:string, outputs: any]
+    device_discovery: [device: TallyDevice];
 }
 
 export abstract class AbstractNetworkConsumer<T extends NetworkConsumerEvents = NetworkConsumerEvents> extends AbstractConsumer<T> {
