@@ -21,7 +21,7 @@ export interface AedesConsumerConfig extends NetworkConsumerConfig {
 }
 
 export interface DeviceDiscoveryPacket {
-    id:           string; // TODO: Device ID type with consumerid?
+    id:            string; // TODO: Device ID type with consumerid?
     name?:         string;
     model?:        string;
     output_count?: number;
