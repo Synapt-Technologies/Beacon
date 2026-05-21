@@ -45,10 +45,11 @@ export interface DeviceAddress {
 }
 
 export enum ConnectionType {
-    HARDWARE,
-    NETWORK,
-    WIRELESS,
-    VIRTUAL
+    HARDWARE = 0,
+    VIRTUAL = 1,
+    NETWORK = 2,
+    WIRELESS = 3,
+    BEACON_MESH = 4,
 }
 
 export interface DeviceName {
