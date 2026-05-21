@@ -176,6 +176,8 @@ function setSaving(on) {
 
 // ── Slider display ─────────────────────────────────────────────────────────────
 
+function formatTrimVal(v) { return (v >= 0 ? '+' : '') + v + '%' }
+
 function updateTrimSlider(slider) {
   const v   = parseInt(slider.value)
   const pos = (v + 50) / 100 * 100
@@ -183,13 +185,40 @@ function updateTrimSlider(slider) {
   slider.style.setProperty('--fill-end',   Math.max(50, pos) + '%')
 
   const valEl = document.getElementById(slider.id + 'Val')
-  if (valEl) valEl.textContent = (v >= 0 ? '+' : '') + v + '%'
+  if (valEl && document.activeElement !== valEl) {
+    if (valEl.tagName === 'INPUT') valEl.value = formatTrimVal(v)
+    else valEl.textContent = formatTrimVal(v)
+  }
 
   const effEl = document.getElementById(slider.id + 'Eff')
   if (effEl) {
     const master = parseInt(slider.dataset.master ?? 80)
     effEl.textContent = Math.max(0, Math.min(100, master + v)) + '%'
   }
+}
+
+function wireTrimValInput(valInput, slider, row) {
+  valInput.addEventListener('focus', () => {
+    valInput.value = String(parseInt(slider.value))
+    valInput.select()
+  })
+  valInput.addEventListener('input', () => {
+    const v = parseInt(valInput.value)
+    if (!isNaN(v)) {
+      slider.value = Math.max(-50, Math.min(50, v))
+      updateTrimSlider(slider)
+      onFieldChange(row)
+    }
+  })
+  valInput.addEventListener('blur', () => {
+    const v = Math.max(-50, Math.min(50, parseInt(valInput.value) || parseInt(slider.value)))
+    slider.value = v
+    slider.dispatchEvent(new Event('input', { bubbles: true }))
+  })
+  valInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter')  valInput.blur()
+    if (e.key === 'Escape') { valInput.value = formatTrimVal(parseInt(slider.value)); valInput.blur() }
+  })
 }
 
 function updateSliderDisplay(slider) {
@@ -246,14 +275,15 @@ function renderTrimRows(count, trims) {
       <div class="field-control">
         <input class="s-slider trim-slider" type="range" id="${id}" min="-50" max="50" step="1"
                value="${val}" data-master="${master}" data-default="0">
-        <span class="slider-value" id="${id}Val">${val >= 0 ? '+' : ''}${val}%</span>
+        <input type="text" class="slider-value trim-val" id="${id}Val" value="${formatTrimVal(val)}">
         <span class="effective-val" id="${id}Eff">${Math.max(0, Math.min(100, master + val))}%</span>
       </div>`
     card.appendChild(row)
 
     originals[id] = val
 
-    const slider = row.querySelector('.trim-slider')
+    const slider   = row.querySelector('.trim-slider')
+    const valInput = row.querySelector('.trim-val')
     slider.addEventListener('input', () => {
       updateTrimSlider(slider)
       onFieldChange(row)
@@ -262,6 +292,7 @@ function renderTrimRows(count, trims) {
       slider.value = slider.dataset.default
       slider.dispatchEvent(new Event('input', { bubbles: true }))
     })
+    wireTrimValInput(valInput, slider, row)
     updateTrimSlider(slider)
   }
 }
@@ -442,7 +473,12 @@ function init() {
     updateSliderDisplay(s)
   })
 
-  document.querySelectorAll('.trim-slider').forEach(updateTrimSlider)
+  document.querySelectorAll('.trim-slider').forEach(s => {
+    updateTrimSlider(s)
+    const row      = s.closest('.s-row[data-field]')
+    const valInput = document.getElementById(s.id + 'Val')
+    if (row && valInput?.tagName === 'INPUT') wireTrimValInput(valInput, s, row)
+  })
 
   document.querySelectorAll('input[type=color]').forEach(c => {
     c.addEventListener('input', () => syncColorHex(c))
