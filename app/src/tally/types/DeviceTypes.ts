@@ -84,6 +84,17 @@ export interface DeviceRuntimeConfig {
     name: DeviceName;
 }
 
+export interface DeviceInfo {
+    connection?: ConnectionType;
+    name?: string; // Name defined in the device, used to differentiate.
+    model?: string;
+    output_count?: number;
+}
+
+interface DeviceDiscoveryPacket extends DeviceInfo {
+    id: DeviceId;
+}
+
 interface NewTallyDevice { // TODO
     id: DeviceAddress;
     state: { // Tally logic, on base device topic.
@@ -92,12 +103,7 @@ interface NewTallyDevice { // TODO
         last_update?: number;
     }
     runtime: DeviceRuntimeConfig;
-    info: {
-        connection: ConnectionType;
-        identifier: string; // Name defined in the device, used to differentiate.
-        model: string;
-        last_response?: number;
-    }
+    info: DeviceInfo
 }
 
 export abstract class GlobalDeviceTools { // Todo: Maybe a device DTO?
