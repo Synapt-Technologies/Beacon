@@ -302,6 +302,45 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer implements IGl
 
     }
 
+    deleteDevice(address: DeviceAddress): void {
+        super.deleteDevice(address);
+        
+
+        //Remove retained messages.
+        if (!this.aedes) {
+            this.logger.warn("Discarding Device Deletion: Attempted to send before initialization.");
+            return;
+        }
+
+        this.aedes.publish({
+            cmd: 'publish',
+            qos: 1,
+            dup: false,
+            topic: `tally/device/${address.consumer}/${address.device}`,
+            payload: Buffer.alloc(0), // Empty payload to clear retained message
+            retain: true
+        }, () => {});
+
+        this.aedes.publish({
+            cmd: 'publish',
+            qos: 1,
+            dup: false,
+            topic: `tally/device/${address.consumer}/${address.device}/config`,
+            payload: Buffer.alloc(0), // Empty payload to clear retained message
+            retain: true
+        }, () => {});
+
+        this.aedes.publish({
+            cmd: 'publish',
+            qos: 1,
+            dup: false,            
+            topic: `tally/device/${address.consumer}/${address.device}/fields`,
+            payload: Buffer.alloc(0), // Empty payload to clear retained message
+            retain: true
+        }, () => {});
+    }
+
+
     protected sendDeviceTally(device: TallyDevice): void {
         if (!this.aedes) {
             this.logger.warn("Discarding Tally: Attempted to send before initialization.");
