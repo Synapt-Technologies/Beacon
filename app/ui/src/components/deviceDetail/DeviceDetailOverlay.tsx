@@ -67,6 +67,7 @@ export function DeviceDetailOverlay({ device, backPath, backLabel }: DeviceDetai
     const handleRemove = async () => {
         setEditOpen(false)
         await removeDevice(device.id)
+        navigate(backPath)
     }
 
     return (
