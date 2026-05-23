@@ -4,7 +4,7 @@
 # Uses rpi-image-gen (https://github.com/raspberrypi/rpi-image-gen).
 #
 # Run from WSL2 (the project can stay on the Windows filesystem):
-#   bash /mnt/c/Users/ijssl/Programming\ Projects/Beacon/pi-image/build.sh
+#   bash /mnt/path/to/Beacon/pi-image/build.sh
 #
 # Output: ~/beacon-image-work/work/image-Beacon/  →  Beacon.img.xz
 # ---------------------------------------------------------------------------
