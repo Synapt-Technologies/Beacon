@@ -24,13 +24,14 @@ jobs:
       - name: Resolve tags
         id: tags
         run: |
+          REPO=$(echo "ghcr.io/${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
           if [ "${{ github.event.release.draft }}" = "true" ]; then
-            echo "tags=ghcr.io/${{ github.repository }}:draft" >> $GITHUB_OUTPUT
+            echo "tags=${REPO}:draft" >> $GITHUB_OUTPUT
           else
             {
               echo "tags<<EOF"
-              echo "ghcr.io/${{ github.repository }}:latest"
-              echo "ghcr.io/${{ github.repository }}:${{ github.event.release.tag_name }}"
+              echo "${REPO}:latest"
+              echo "${REPO}:${{ github.event.release.tag_name }}"
               echo "EOF"
             } >> $GITHUB_OUTPUT
           fi
