@@ -2,7 +2,7 @@ name: Build Pi Image
 
 on:
   release:
-    types: [created, published]
+    types: [published]
   workflow_dispatch:
     inputs:
       branch:
