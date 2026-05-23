@@ -17,7 +17,7 @@ Find the light in your darkness. A highly configurable, networked tally system.
 * Device alerting
 * Open source, with support for DIY devices
 
-<p style="width:100%; box-sizing: border-box; display: flex; gap: 10px; flex-wrap: nowrap">
+<p style="width:90%; box-sizing: border-box; display: flex; gap: 10px; flex-wrap: nowrap">
   <img style="width:40%; border-radius: 5px" alt="BEACON CONTROL HOME" src="https://raw.githubusercontent.com/Synapt-Technologies/Beacon/refs/heads/dev/img/Beacon_devices.png" />
   <img style="width:40%; border-radius: 5px" alt="BEACON PHONE TALLY" src="https://raw.githubusercontent.com/Synapt-Technologies/Beacon/refs/heads/dev/img/Beacon_device_page.png" /> 
   <img style="width:20%; border-radius: 5px" alt="BEACON PHONE TALLY" src="https://raw.githubusercontent.com/Synapt-Technologies/Beacon/refs/heads/dev/img/Beacon_fullscreen_tally.png" /> 
