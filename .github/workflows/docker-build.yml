@@ -25,13 +25,14 @@ jobs:
         id: tags
         run: |
           REPO=$(echo "ghcr.io/${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          TAG="${{ github.event.release.tag_name }}"
           if [ "${{ github.event.release.draft }}" = "true" ]; then
             echo "tags=${REPO}:draft" >> $GITHUB_OUTPUT
           else
             {
               echo "tags<<EOF"
               echo "${REPO}:latest"
-              echo "${REPO}:${{ github.event.release.tag_name }}"
+              [ -n "$TAG" ] && echo "${REPO}:${TAG}"
               echo "EOF"
             } >> $GITHUB_OUTPUT
           fi
