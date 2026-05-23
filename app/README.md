@@ -7,6 +7,7 @@ If you are compiling the image on windows, you must use WSL.
 
 
 ## TODO
+- [ ] Docker Documentation!
 - [x] !! PLATFORM NEED MANUAL RESTART ON UI CHANGE AFTER UPDATE !!
 - [x] Implement mqtt ws tally for devices
   - [ ] Add alerts
