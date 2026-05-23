@@ -61,14 +61,13 @@ jobs:
           fi
 
           for img in "${IMAGES[@]}"; do
-            xz -v -T0 -6 -f -k "${img}"
+            xz -v -T0 -6 -f "${img}"
           done
 
       - name: Upload to release
         if: github.event_name == 'release'
         run: |
           gh release upload "${{ github.event.release.tag_name }}" \
-            /tmp/beacon-work/work/image-Beacon/*.img \
             /tmp/beacon-work/work/image-Beacon/*.img.xz \
             --clobber
         env:
