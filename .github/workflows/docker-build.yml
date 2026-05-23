@@ -26,7 +26,12 @@ jobs:
           if [ "${{ github.event.release.draft }}" = "true" ]; then
             echo "tags=ghcr.io/${{ github.repository }}:draft" >> $GITHUB_OUTPUT
           else
-            printf 'tags=ghcr.io/${{ github.repository }}:latest\nghcr.io/${{ github.repository }}:${{ github.event.release.tag_name }}\n' >> $GITHUB_OUTPUT
+            {
+              echo "tags<<EOF"
+              echo "ghcr.io/${{ github.repository }}:latest"
+              echo "ghcr.io/${{ github.repository }}:${{ github.event.release.tag_name }}"
+              echo "EOF"
+            } >> $GITHUB_OUTPUT
           fi
       - uses: docker/build-push-action@v6
         with:
