@@ -3,6 +3,7 @@ name: Build Docker Image
 on:
   release:
     types: [created, published]
+  workflow_dispatch:
 
 jobs:
   build:
