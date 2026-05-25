@@ -1,7 +1,7 @@
 import { DeviceTallyState, DeviceTallyDisplayName } from '../../../src/tally/types/ConsumerStates'
 
 // ─── Tally state ─────────────────────────────────────────────────────────────
-
+// TODO Import from backend!
 /** Live MQTT source state — only what tally/global can carry */
 export type TallyState = 'pgm' | 'pvw' | 'none'
 
