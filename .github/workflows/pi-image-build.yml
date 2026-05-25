@@ -66,6 +66,13 @@ jobs:
           IMAGES=("${IMG_DIR}"/*.img.xz)
           if [ ${#IMAGES[@]} -eq 0 ]; then
             echo "ERROR: No .img.xz files found in ${IMG_DIR}"
+            ls -la "${IMG_DIR}" || true
+            exit 1
+          fi
+          if [ ${#IMAGES[@]} -ne 1 ]; then
+            echo "ERROR: Expected exactly one .img.xz file in ${IMG_DIR}, found ${#IMAGES[@]}"
+            printf 'Matched files:\n%s\n' "${IMAGES[@]}"
+            ls -la "${IMG_DIR}" || true
             exit 1
           fi
           mv "${IMAGES[0]}" "${IMG_DIR}/Beacon_PI3_PI4.img.xz"
