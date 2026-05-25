@@ -1,14 +1,14 @@
 import { IconChevronRight } from '../icons'
 import { UITallyDevice } from '../../types/DeviceStates'
-import { stateFromValue, type DeviceDisplayState, type TallyState } from '../../types/beacon'
+import { stateFromValue, type DeviceDisplayState, type TallyState, TALLY_COLOR } from '../../types/beacon'
 import { useBeacon } from '../../context/BeaconContext'
 import { useTallyState } from '../../hooks/useTallyState'
 import { GlobalDeviceTools } from '../../../../src/tally/types/ConsumerStates'
 import type { ProducerId, SourceId, SourceInfo } from '../../../../src/tally/types/ProducerStates'
 
 const SOURCE_CHIP_STYLE: Record<TallyState, object> = {
-    program: { background: 'none', color: 'var(--pgm)', borderColor: 'transparent' },
-    preview: { background: 'none', color: 'var(--pvw)', borderColor: 'transparent' },
+    program: { background: 'none', color: TALLY_COLOR.program, borderColor: 'transparent' },
+    preview: { background: 'none', color: TALLY_COLOR.preview, borderColor: 'transparent' },
     none:    { background: 'none', color: 'var(--color-text-tertiary)', borderColor: 'transparent' },
 }
 

@@ -5,6 +5,13 @@ import { DeviceTallyState, DeviceTallyDisplayName } from '../../../src/tally/typ
 /** Live MQTT source state — only what tally/global can carry */
 export type TallyState = 'program' | 'preview' | 'none'
 
+/** CSS value for each TallyState — single source of truth for inline tally colouring */
+export const TALLY_COLOR: Record<TallyState, string> = {
+  program: 'var(--program)',
+  preview: 'var(--preview)',
+  none:    'var(--color-border-tertiary)',
+}
+
 /** Full device display state — includes alert/disconnect states */
 export type DeviceDisplayState = TallyState | 'danger' | 'info' | 'warning' | 'light'
 
