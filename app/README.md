@@ -9,6 +9,7 @@ If you are compiling the image on windows, you must use WSL.
 ## TODO
 - [x] Docker Documentation!
 - [ ] Dev/prod mode for ui logging
+- [ ] Easier way to page through devices. Some sort of arrow keys in the navbar?
 - [x] !! PLATFORM NEED MANUAL RESTART ON UI CHANGE AFTER UPDATE !!
 - [x] Implement mqtt ws tally for devices
   - [ ] Add alerts
