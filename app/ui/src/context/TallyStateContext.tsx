@@ -3,11 +3,11 @@ import mqtt from 'mqtt'
 import { useBeacon } from './BeaconContext'
 import type { AedesConsumerConfig } from '../../../src/tally/consumer/networkConsumer/AedesNetworkConsumer'
 import { DeviceTallyDisplayName, GlobalDeviceTools } from '../../../src/tally/types/ConsumerStates'
-import type { DeviceDisplayState, TallyState } from '../types/beacon'
+import type { TallyState } from '../types/beacon'
 
 export interface TallyStateResult {
   states: Map<string, TallyState>
-  deviceStates: Map<string, DeviceDisplayState>
+  deviceStates: Map<string, TallyState>
   connected: boolean
   systemConnected: boolean
 }
@@ -24,7 +24,7 @@ export function TallyStateProvider({ children }: { children: ReactNode }) {
   const wsUrl       = `${wsScheme}://${window.location.hostname}:${wsPort}`
 
   const [states,        setStates]        = useState<Map<string, TallyState>>(new Map())
-  const [deviceStates,  setDeviceStates]  = useState<Map<string, DeviceDisplayState>>(new Map())
+  const [deviceStates,  setDeviceStates]  = useState<Map<string, TallyState>>(new Map())
   const [connected,     setConnected]     = useState(false)
   const [initialized,   setInitialized]   = useState(false)
   const [lastKeepalive, setLastKeepalive] = useState<number | null>(null)
@@ -67,7 +67,7 @@ export function TallyStateProvider({ children }: { children: ReactNode }) {
           console.debug(`Received device update for ${consumerId}/${deviceId}`)
 
           const name        = (data as { state?: string }).state ?? ''
-          const display     = (DeviceTallyDisplayName[name as keyof typeof DeviceTallyDisplayName] ?? 'none') as DeviceDisplayState
+          const display     = (DeviceTallyDisplayName[name as keyof typeof DeviceTallyDisplayName] ?? 'none') as TallyState
           const fullKey     = GlobalDeviceTools.create(consumerId, deviceId)
           setDeviceStates(prev => new Map(prev).set(fullKey, display))
         } else if (topic === 'system/info') {

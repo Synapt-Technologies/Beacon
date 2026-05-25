@@ -9,6 +9,10 @@ import type { ProducerId, SourceId, SourceInfo } from '../../../../src/tally/typ
 const SOURCE_CHIP_STYLE: Record<TallyState, object> = {
     program: { background: 'none', color: TALLY_COLOR.program, borderColor: 'transparent' },
     preview: { background: 'none', color: TALLY_COLOR.preview, borderColor: 'transparent' },
+    danger:  { background: 'none', color: TALLY_COLOR.danger,  borderColor: 'transparent' },
+    warning: { background: 'none', color: TALLY_COLOR.warning, borderColor: 'transparent' },
+    info:    { background: 'none', color: TALLY_COLOR.info,    borderColor: 'transparent' },
+    light:   { background: 'none', color: TALLY_COLOR.light,   borderColor: 'transparent' },
     none:    { background: 'none', color: 'var(--color-text-tertiary)', borderColor: 'transparent' },
 }
 

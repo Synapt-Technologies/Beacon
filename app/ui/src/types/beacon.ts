@@ -1,24 +1,28 @@
-import { DeviceTallyState, DeviceTallyDisplayName } from '../../../src/tally/types/ConsumerStates'
+import { DeviceTallyState } from '../../../src/tally/types/DeviceTypes'
 
 // ─── Tally state ─────────────────────────────────────────────────────────────
-// TODO Import from backend!
-/** Live MQTT source state — only what tally/global can carry */
-export type TallyState = 'program' | 'preview' | 'none'
 
-/** CSS value for each TallyState — single source of truth for inline tally colouring */
+/** All possible tally display states — derived from the backend DeviceTallyState enum. */
+export type TallyState = Lowercase<keyof typeof DeviceTallyState>
+// = 'none' | 'danger' | 'info' | 'warning' | 'light' | 'preview' | 'program'
+
+/** @deprecated Use TallyState directly. */
+export type DeviceDisplayState = TallyState
+
+/** CSS value for each TallyState — single source of truth for inline tally colouring. */
 export const TALLY_COLOR: Record<TallyState, string> = {
   program: 'var(--program)',
   preview: 'var(--preview)',
+  danger:  'var(--danger)',
+  warning: 'var(--warning)',
+  info:    'var(--info)',
+  light:   'var(--light)',
   none:    'var(--color-border-tertiary)',
 }
 
-/** Full device display state — includes alert/disconnect states */
-export type DeviceDisplayState = TallyState | 'danger' | 'info' | 'warning' | 'light'
-
-/** Maps a numeric DeviceTallyState value (from REST or orchestratorConfig) to a display string. */
-export function stateFromValue(v: number): DeviceDisplayState {
-  const key = DeviceTallyState[v] as keyof typeof DeviceTallyState | undefined
-  return ((key && DeviceTallyDisplayName[key]) ?? 'none') as DeviceDisplayState
+/** Maps a numeric DeviceTallyState value (from REST or orchestratorConfig) to a TallyState string. */
+export function stateFromValue(v: number): TallyState {
+  return (DeviceTallyState[v]?.toLowerCase() ?? 'none') as TallyState
 }
 
 // ─── Consumers ───────────────────────────────────────────────────────────────
