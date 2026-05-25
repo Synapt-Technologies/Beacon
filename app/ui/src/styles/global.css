@@ -39,6 +39,8 @@
   --pvw:     #16B658;
   --danger:  #E57373;
   --warning: #D4930A;
+  --info:    #185fa5;
+  --light:   #eeeeea;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -141,26 +143,32 @@ input, select { font-family: inherit; }
 
 /* ─── Tally state colours ──────────────────────────────────────────────────── */
 
-.tl-pgm     { border-left-color: var(--pgm)     !important; }
-.tl-pvw     { border-left-color: var(--pvw)     !important; }
+.tl-program { border-left-color: var(--pgm)     !important; }
+.tl-preview { border-left-color: var(--pvw)     !important; }
 .tl-danger  { border-left-color: var(--danger)  !important; }
 .tl-warning { border-left-color: var(--warning) !important; }
+.tl-info    { border-left-color: var(--info)    !important; }
+.tl-light   { border-left-color: var(--light)   !important; }
 .tl-none    { border-left-color: var(--color-border-tertiary) !important; }
 
-.blk-pgm { background: var(--pgm) !important; color: #fff !important; }
-.blk-pvw { background: var(--pvw) !important; color: #fff !important; }
+.blk-program { background: var(--pgm)     !important; color: #fff !important; }
+.blk-preview { background: var(--pvw)     !important; color: #fff !important; }
 .blk-danger  { background: var(--danger)  !important; color: #fff !important; }
 .blk-warning { background: var(--warning) !important; color: #fff !important; }
+.blk-info    { background: var(--info)    !important; color: #fff !important; }
+.blk-light   { background: var(--light)   !important; color: var(--color-text-primary) !important; }
 .blk-none {
   background: var(--color-background-tertiary) !important;
   color: var(--color-text-tertiary) !important;
   border: 0.5px solid var(--color-border-tertiary);
 }
 
-.dot-pgm     { background: var(--pgm); }
-.dot-pvw     { background: var(--pvw); }
+.dot-program { background: var(--pgm); }
+.dot-preview { background: var(--pvw); }
 .dot-danger  { background: var(--danger); }
 .dot-warning { background: var(--warning); }
+.dot-info    { background: var(--info); }
+.dot-light   { background: var(--light); }
 .dot-none    { background: var(--color-border-secondary); }
 
 /* ─── Shared component primitives ──────────────────────────────────────────── */
