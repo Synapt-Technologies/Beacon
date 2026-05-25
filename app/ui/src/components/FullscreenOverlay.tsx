@@ -11,7 +11,6 @@ interface FullscreenOverlayProps {
 export function FullscreenOverlay({ open, state, name, sub, onClose }: FullscreenOverlayProps) {
   if (!open) return null
 
-  
   return (
     <div style={{ position: 'absolute', inset: 0, zIndex: 20, display: 'flex', flexDirection: 'column' }}>
       <div className={`blk-${state}`} style={{
