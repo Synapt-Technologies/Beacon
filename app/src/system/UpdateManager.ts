@@ -171,7 +171,7 @@ export class UpdateManager {
                 await this._exec(`git fetch origin ${ref}`);
                 await this._exec(`git checkout -B ${ref} FETCH_HEAD`);
             } else {
-                await this._exec('git fetch origin --tags');
+                await this._exec('git fetch origin --tags --force');
                 await this._exec(`git checkout ${ref}`);
             }
 
