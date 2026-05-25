@@ -495,6 +495,7 @@ export default function SettingsPage() {
             <option value={4}>Danger</option>
             <option value={8}>Info</option>
             <option value={12}>Warning</option>
+            <option value={14}>Light</option>
             <option value={16}>Preview</option>
             <option value={20}>Program</option>
           </select>

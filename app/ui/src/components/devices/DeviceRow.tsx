@@ -1,17 +1,19 @@
 import { IconChevronRight } from '../icons'
 import { UITallyDevice } from '../../types/DeviceStates'
-import { stateFromValue, type DeviceDisplayState } from '../../types/beacon'
+import { stateFromValue, type TallyState, TALLY_COLOR } from '../../types/beacon'
 import { useBeacon } from '../../context/BeaconContext'
 import { useTallyState } from '../../hooks/useTallyState'
 import { GlobalDeviceTools } from '../../../../src/tally/types/ConsumerStates'
 import type { ProducerId, SourceId, SourceInfo } from '../../../../src/tally/types/ProducerStates'
 
-type SourceState = 'pgm' | 'pvw' | 'none'
-
-const SOURCE_CHIP_STYLE: Record<SourceState, object> = {
-    pgm:  { background: 'none', color: 'var(--pgm)', borderColor: 'transparent' },
-    pvw:  { background: 'none', color: 'var(--pvw)', borderColor: 'transparent' },
-    none: { background: 'none', color: 'var(--color-text-tertiary)', borderColor: 'transparent' },
+const SOURCE_CHIP_STYLE: Record<TallyState, object> = {
+    program: { background: 'none', color: TALLY_COLOR.program, borderColor: 'transparent' },
+    preview: { background: 'none', color: TALLY_COLOR.preview, borderColor: 'transparent' },
+    danger:  { background: 'none', color: TALLY_COLOR.danger,  borderColor: 'transparent' },
+    warning: { background: 'none', color: TALLY_COLOR.warning, borderColor: 'transparent' },
+    info:    { background: 'none', color: TALLY_COLOR.info,    borderColor: 'transparent' },
+    light:   { background: 'none', color: TALLY_COLOR.light,   borderColor: 'transparent' },
+    none:    { background: 'none', color: 'var(--color-text-tertiary)', borderColor: 'transparent' },
 }
 
 export default function DeviceRow({
@@ -26,7 +28,7 @@ export default function DeviceRow({
 
     const disconnectState = stateFromValue(orchestratorConfig.state_on_disconnect ?? 0)
     const deviceKey       = GlobalDeviceTools.create(device.id.consumer, device.id.device)
-    const liveState: DeviceDisplayState = systemConnected
+    const liveState: TallyState = systemConnected
         ? (deviceStates.get(deviceKey) ?? 'none')
         : disconnectState
 

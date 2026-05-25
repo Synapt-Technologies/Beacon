@@ -12,7 +12,7 @@ import DeviceAlerts from './DeviceAlerts'
 import { UITallyDevice } from '../../types/DeviceStates'
 import { ConnectionType, GlobalDeviceTools } from '../../../../src/tally/types/ConsumerStates'
 import type { GlobalTallySource } from '../../../../src/tally/types/ProducerStates'
-import { stateFromValue, type DeviceDisplayState } from '../../types/beacon'
+import { stateFromValue, type TallyState } from '../../types/beacon'
 import { DeviceEditModal } from '../devices/DeviceEditPanel'
 
 interface DeviceDetailOverlayProps {
@@ -22,10 +22,11 @@ interface DeviceDetailOverlayProps {
 }
 
 const CONNECTION_LABELS: Record<ConnectionType, string> = {
-    [ConnectionType.HARDWARE]: 'Hardware',
-    [ConnectionType.NETWORK]:  'Network',
-    [ConnectionType.WIRELESS]: 'Wireless',
-    [ConnectionType.VIRTUAL]:  'Virtual',
+    [ConnectionType.HARDWARE]:    'Hardware',
+    [ConnectionType.NETWORK]:     'Network',
+    [ConnectionType.WIRELESS]:    'Wireless',
+    [ConnectionType.VIRTUAL]:     'Virtual',
+    [ConnectionType.BEACON_MESH]: 'Beacon Mesh',
 }
 
 function formatTs(ms?: number): string { // TODO: move to shared util
@@ -49,7 +50,7 @@ export function DeviceDetailOverlay({ device, backPath, backLabel }: DeviceDetai
 
     const basePath    = `${backPath}/${device.id.consumer}/${device.id.device}`
     const fsOpen      = location.pathname.endsWith('/fullscreen')
-    const stateStr: DeviceDisplayState = systemConnected
+    const stateStr: TallyState = systemConnected
         ? (deviceStates.get(GlobalDeviceTools.create(device.id.consumer, device.id.device)) ?? 'none')
         : disconnectState
     const deviceKey   = GlobalDeviceTools.create(device.id.consumer, device.id.device)

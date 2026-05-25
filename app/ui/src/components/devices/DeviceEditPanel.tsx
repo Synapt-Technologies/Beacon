@@ -188,8 +188,8 @@ export function DeviceEditModal({ device, open, onSave, onRemove, onClose }: Dev
             style={{
               fontSize: 12, padding: '5px 12px',
               borderRadius: 'var(--border-radius-md)',
-              border: '0.5px solid color-mix(in srgb, var(--pgm) 35%, transparent)',
-              background: 'none', color: 'var(--pgm)', cursor: 'pointer',
+              border: '0.5px solid color-mix(in srgb, var(--color-text-danger) 35%, transparent)',
+              background: 'none', color: 'var(--color-text-danger)', cursor: 'pointer',
             }}
           >
             Remove

@@ -1,12 +1,5 @@
 import type { GlobalTallySource, ProducerBundle, SourceInfo } from '../../../../src/tally/types/ProducerStates'
-
-type TallyState = 'pgm' | 'pvw' | 'none'
-
-const TALLY_COLOR: Record<TallyState, string> = {
-    pgm:  'var(--pgm)',
-    pvw:  'var(--pvw)',
-    none: 'var(--color-border-tertiary)',
-}
+import { TALLY_COLOR, type TallyState } from '../../types/beacon'
 
 interface PatchedSourceRowProps {
     src: GlobalTallySource
