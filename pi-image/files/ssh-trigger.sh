@@ -1,2 +1,4 @@
 #!/bin/sh
-[ -f /boot/firmware/ssh ] && systemctl start ssh || true
+if [ -f /boot/firmware/ssh ]; then
+  systemctl start ssh
+fi
