@@ -89,7 +89,7 @@ Running Beacon in docker can be done with the following command:
 docker run -p 80:80 -p 1883:1883 -p 9001:9001 ghcr.io/synapt-technologies/beacon:latest
 ```
 
-Or with docker compose:
+Or with [docker compose](https://raw.githubusercontent.com/Synapt-Technologies/Beacon/refs/heads/main/docker-image/docker-compose.yml):
 
 ```yml
 name: Beacon Base
