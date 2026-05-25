@@ -13,7 +13,7 @@
         "dev": "tsx supervisor.ts",
         "typecheck": "tsc --noEmit && tsc --noEmit -p ui/tsconfig.json",
         "build": "vite build && tsup",
-        "run": "NODE_ENV=production node dist/supervisor.js",
+        "serve": "NODE_ENV=production node dist/supervisor.js",
         "start": "yarn build && NODE_ENV=production node dist/supervisor.js"
     },
     "packageManager": "yarn@4.13.0",
