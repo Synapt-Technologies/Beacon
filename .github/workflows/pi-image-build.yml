@@ -4,11 +4,6 @@ on:
   release:
     types: [published]
   workflow_dispatch:
-    inputs:
-      branch:
-        description: 'Branch to build from'
-        required: false
-        default: 'dev'
 
 jobs:
   build:
@@ -16,7 +11,7 @@ jobs:
     permissions:
       contents: write
     env:
-      TARGET_BRANCH: ${{ github.event.release.target_commitish || inputs.branch }}
+      TARGET_BRANCH: ${{ github.event.release.target_commitish || github.ref_name }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -67,9 +62,13 @@ jobs:
       - name: Rename image
         run: |
           IMG_DIR="/tmp/beacon-work/work/image-Beacon"
-          for f in "${IMG_DIR}"/*.img.xz; do
-            mv "$f" "${IMG_DIR}/Beacon_PI3_PI4.img.xz"
-          done
+          shopt -s nullglob
+          IMAGES=("${IMG_DIR}"/*.img.xz)
+          if [ ${#IMAGES[@]} -eq 0 ]; then
+            echo "ERROR: No .img.xz files found in ${IMG_DIR}"
+            exit 1
+          fi
+          mv "${IMAGES[0]}" "${IMG_DIR}/Beacon_PI3_PI4.img.xz"
 
       - name: Upload to release
         if: github.event_name == 'release'
@@ -79,3 +78,10 @@ jobs:
             --clobber
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload artifact (manual run)
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v4
+        with:
+          name: Beacon_PI3_PI4
+          path: /tmp/beacon-work/work/image-Beacon/Beacon_PI3_PI4.img.xz
