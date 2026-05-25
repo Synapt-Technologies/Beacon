@@ -11,22 +11,13 @@ interface FullscreenOverlayProps {
 export function FullscreenOverlay({ open, state, name, sub, onClose }: FullscreenOverlayProps) {
   if (!open) return null
 
-  const bg =
-    state === 'pgm'     ? 'var(--pgm)'     :
-    state === 'pvw'     ? 'var(--pvw)'     :
-    state === 'danger'  ? 'var(--danger)'  :
-    state === 'warning' ? 'var(--warning)' :
-    '#111'
-
-  const color =
-    state === 'none' ? '#555' : '#fff'
-
+  
   return (
     <div style={{ position: 'absolute', inset: 0, zIndex: 20, display: 'flex', flexDirection: 'column' }}>
-      <div style={{
+      <div className={`blk-${state}`} style={{
         flex: 1, display: 'flex', flexDirection: 'column',
         alignItems: 'center', justifyContent: 'center', gap: 10,
-        background: bg, color, transition: 'background .25s',
+        transition: 'background .25s',
       }}>
         <span style={{ fontSize: 36, fontWeight: 500 }}>{name}</span>
         <span style={{ fontSize: 16, opacity: .75, fontWeight: 400 }}>{sub}</span>

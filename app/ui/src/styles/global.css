@@ -156,7 +156,7 @@ input, select { font-family: inherit; }
 .blk-danger  { background: var(--danger)  !important; color: #fff !important; }
 .blk-warning { background: var(--warning) !important; color: #fff !important; }
 .blk-info    { background: var(--info)    !important; color: #fff !important; }
-.blk-light   { background: var(--light)   !important; color: var(--color-text-primary) !important; }
+.blk-light   { background: var(--light)   !important; color: #1a1a18 !important; }
 .blk-none {
   background: var(--color-background-tertiary) !important;
   color: var(--color-text-tertiary) !important;

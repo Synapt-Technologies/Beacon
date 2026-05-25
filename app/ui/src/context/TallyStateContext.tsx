@@ -3,12 +3,10 @@ import mqtt from 'mqtt'
 import { useBeacon } from './BeaconContext'
 import type { AedesConsumerConfig } from '../../../src/tally/consumer/networkConsumer/AedesNetworkConsumer'
 import { DeviceTallyDisplayName, GlobalDeviceTools } from '../../../src/tally/types/ConsumerStates'
-import type { DeviceDisplayState } from '../types/beacon'
-
-type SourceState = 'pgm' | 'pvw' | 'none'
+import type { DeviceDisplayState, TallyState } from '../types/beacon'
 
 export interface TallyStateResult {
-  states: Map<string, SourceState>
+  states: Map<string, TallyState>
   deviceStates: Map<string, DeviceDisplayState>
   connected: boolean
   systemConnected: boolean
@@ -25,7 +23,7 @@ export function TallyStateProvider({ children }: { children: ReactNode }) {
   const wsScheme    = window.location.protocol === 'https:' ? 'wss' : 'ws'
   const wsUrl       = `${wsScheme}://${window.location.hostname}:${wsPort}`
 
-  const [states,        setStates]        = useState<Map<string, SourceState>>(new Map())
+  const [states,        setStates]        = useState<Map<string, TallyState>>(new Map())
   const [deviceStates,  setDeviceStates]  = useState<Map<string, DeviceDisplayState>>(new Map())
   const [connected,     setConnected]     = useState(false)
   const [initialized,   setInitialized]   = useState(false)
@@ -52,9 +50,9 @@ export function TallyStateProvider({ children }: { children: ReactNode }) {
         const data = JSON.parse(payload.toString())
 
         if (topic === 'tally/global') {
-          const next = new Map<string, SourceState>()
-          ;(data as { program?: string[] }).program?.forEach(key => next.set(key, 'pgm'))
-          ;(data as { preview?: string[] }).preview?.forEach(key => { if (!next.has(key)) next.set(key, 'pvw') })
+          const next = new Map<string, TallyState>()
+          ;(data as { program?: string[] }).program?.forEach(key => next.set(key, 'program'))
+          ;(data as { preview?: string[] }).preview?.forEach(key => { if (!next.has(key)) next.set(key, 'preview') })
           setStates(next)
         } else if (topic.startsWith('tally/device/')) {
           const deviceAddress = topic.slice('tally/device/'.length).split('/')
