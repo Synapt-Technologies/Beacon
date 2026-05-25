@@ -64,11 +64,18 @@ jobs:
             xz -v -T0 -6 -f "${img}"
           done
 
+      - name: Rename image
+        run: |
+          IMG_DIR="/tmp/beacon-work/work/image-Beacon"
+          for f in "${IMG_DIR}"/*.img.xz; do
+            mv "$f" "${IMG_DIR}/Beacon_PI3_PI4.img.xz"
+          done
+
       - name: Upload to release
         if: github.event_name == 'release'
         run: |
           gh release upload "${{ github.event.release.tag_name }}" \
-            /tmp/beacon-work/work/image-Beacon/*.img.xz \
+            /tmp/beacon-work/work/image-Beacon/Beacon_PI3_PI4.img.xz \
             --clobber
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
