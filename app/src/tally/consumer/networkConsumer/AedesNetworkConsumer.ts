@@ -80,11 +80,12 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer implements IGl
         }
 
         await new Promise<void>((resolve) => {
-            const stream = this.aedes.persistence.createRetainedStream('#');
+            const persistence = (this.aedes as unknown as { persistence: { createRetainedStream(topic: string): NodeJS.ReadableStream; cleanRetained(topic: string, cb: () => void): void } }).persistence;
+            const stream = persistence.createRetainedStream('#');
             const clears: Promise<void>[] = [];
             stream.on('data', (packet: { topic: string }) => {
                 clears.push(new Promise<void>((res) =>
-                    this.aedes.persistence.cleanRetained(packet.topic, () => res())
+                    persistence.cleanRetained(packet.topic, () => res())
                 ));
             });
             stream.on('end', async () => { await Promise.all(clears); resolve(); });
