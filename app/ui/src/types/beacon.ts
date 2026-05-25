@@ -6,8 +6,6 @@ import { DeviceTallyState } from '../../../src/tally/types/DeviceTypes'
 export type TallyState = Lowercase<keyof typeof DeviceTallyState>
 // = 'none' | 'danger' | 'info' | 'warning' | 'light' | 'preview' | 'program'
 
-/** @deprecated Use TallyState directly. */
-export type DeviceDisplayState = TallyState
 
 /** CSS value for each TallyState — single source of truth for inline tally colouring. */
 export const TALLY_COLOR: Record<TallyState, string> = {

@@ -6,8 +6,7 @@ import { FullscreenOverlay } from '../components/FullscreenOverlay'
 import { IconChevronLeft, IconChevronRight, IconFullscreen } from '../components/icons'
 import type { SourceInfo } from '../../../src/tally/types/ProducerStates'
 import { useTallyState } from '../hooks/useTallyState'
-import { stateFromValue, type DeviceDisplayState } from '../types/beacon'
-import StatusPill from '../components/statusPill/StatusPill'
+import { stateFromValue, type TallyState } from '../types/beacon'
 
 interface SelectedSource extends SourceInfo {
   prodName: string
@@ -22,7 +21,7 @@ function SourceDetail({
 }: {
   source: SelectedSource
   basePath: string
-  sourceState: (key: string) => DeviceDisplayState
+  sourceState: (key: string) => TallyState
 }) {
   const navigate = useNavigate()
   const location = useLocation()
@@ -136,7 +135,7 @@ export default function SourcesPage() {
   const { states, connected, systemConnected } = useTallyState()
 
   const disconnectState = stateFromValue(orchestratorConfig.state_on_disconnect ?? 0)
-  const sourceState = (key: string): DeviceDisplayState =>
+  const sourceState = (key: string): TallyState =>
     systemConnected ? (states.get(key) ?? 'none') : disconnectState
 
   // Reconstruct SelectedSource from URL params + loaded producers

@@ -1,6 +1,6 @@
 import { IconChevronRight } from '../icons'
 import { UITallyDevice } from '../../types/DeviceStates'
-import { stateFromValue, type DeviceDisplayState, type TallyState, TALLY_COLOR } from '../../types/beacon'
+import { stateFromValue, type TallyState, TALLY_COLOR } from '../../types/beacon'
 import { useBeacon } from '../../context/BeaconContext'
 import { useTallyState } from '../../hooks/useTallyState'
 import { GlobalDeviceTools } from '../../../../src/tally/types/ConsumerStates'
@@ -28,7 +28,7 @@ export default function DeviceRow({
 
     const disconnectState = stateFromValue(orchestratorConfig.state_on_disconnect ?? 0)
     const deviceKey       = GlobalDeviceTools.create(device.id.consumer, device.id.device)
-    const liveState: DeviceDisplayState = systemConnected
+    const liveState: TallyState = systemConnected
         ? (deviceStates.get(deviceKey) ?? 'none')
         : disconnectState
 

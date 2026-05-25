@@ -1,8 +1,8 @@
-import type { DeviceDisplayState } from '../types/beacon'
+import type { TallyState } from '../types/beacon'
 
 interface FullscreenOverlayProps {
   open: boolean
-  state: DeviceDisplayState
+  state: TallyState
   name: string
   sub: string
   onClose: () => void
