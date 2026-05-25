@@ -66,11 +66,10 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
 
         this.logger.info(`Updated config:`, config);
 
-        let state_on_disconnect_change = false;
+        const state_on_disconnect_change =
+            config.state_on_disconnect !== undefined &&
+            config.state_on_disconnect !== this.config.state_on_disconnect;
 
-        if (config.state_on_disconnect != this.config.state_on_disconnect)
-            state_on_disconnect_change = true;
-        
 
 
         this.config = { ...this.config, ...config };
