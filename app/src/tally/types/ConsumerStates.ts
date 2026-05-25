@@ -25,18 +25,20 @@ export enum DeviceTallyState {
     DANGER = 4, // Light redish
     INFO = 8, // bLUE
     WARNING = 12, // Yellow
+    LIGHT = 14, // White
     PREVIEW = 16,
     PROGRAM = 20
 }
 
 /** Maps each DeviceTallyState enum key (as published on the MQTT wire) to the UI display string. */
 export const DeviceTallyDisplayName: { readonly [K in keyof typeof DeviceTallyState]: string } = {
-    NONE:    'none',
+    NONE:    '-',
+    DANGER:  'danger',
     INFO:    'info',
     WARNING: 'warning',
-    DANGER:  'danger',
-    PREVIEW: 'pvw',
-    PROGRAM: 'pgm',
+    LIGHT:   'light',
+    PREVIEW: 'preview',
+    PROGRAM: 'program',
 } as const
 
 export interface DeviceAddress {
