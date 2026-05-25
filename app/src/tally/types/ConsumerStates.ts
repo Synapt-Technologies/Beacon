@@ -30,9 +30,10 @@ export enum DeviceTallyState {
     PROGRAM = 20
 }
 
+//TODO Get rid of this
 /** Maps each DeviceTallyState enum key (as published on the MQTT wire) to the UI display string. */
 export const DeviceTallyDisplayName: { readonly [K in keyof typeof DeviceTallyState]: string } = {
-    NONE:    '-',
+    NONE:    'none',
     DANGER:  'danger',
     INFO:    'info',
     WARNING: 'warning',

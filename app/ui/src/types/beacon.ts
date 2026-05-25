@@ -3,10 +3,10 @@ import { DeviceTallyState, DeviceTallyDisplayName } from '../../../src/tally/typ
 // ─── Tally state ─────────────────────────────────────────────────────────────
 // TODO Import from backend!
 /** Live MQTT source state — only what tally/global can carry */
-export type TallyState = 'pgm' | 'pvw' | 'none'
+export type TallyState = 'program' | 'preview' | 'none'
 
 /** Full device display state — includes alert/disconnect states */
-export type DeviceDisplayState = TallyState | 'danger' | 'warning'
+export type DeviceDisplayState = TallyState | 'danger' | 'info' | 'warning' | 'light'
 
 /** Maps a numeric DeviceTallyState value (from REST or orchestratorConfig) to a display string. */
 export function stateFromValue(v: number): DeviceDisplayState {
