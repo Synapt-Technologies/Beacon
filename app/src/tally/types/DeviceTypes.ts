@@ -45,6 +45,7 @@ export enum DeviceTallyState {
     DANGER = 4, // Light redish
     INFO = 8, // bLUE
     WARNING = 12, // Yellow
+    LIGHT = 14, // White
     PREVIEW = 16,
     PROGRAM = 20
 }

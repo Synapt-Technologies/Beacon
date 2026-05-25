@@ -270,6 +270,8 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
                 break;
                 case DeviceTallyState.DANGER: // TODO: Maybe different state? No PWM though, not sure if possible.
                 case DeviceTallyState.WARNING:
+                case DeviceTallyState.INFO:
+                case DeviceTallyState.LIGHT:
                 output.program.digitalWrite(1);
                 output.preview.digitalWrite(1);
                 break;
