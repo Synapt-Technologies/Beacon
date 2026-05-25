@@ -16,8 +16,10 @@ mmdebstrap:
 
   customize-hooks:
     - |-
-      # Enable SSH
-      chroot $1 systemctl enable ssh
+      # SSH is disabled by default. To enable it, place an empty file named
+      # "ssh" in the root of the FAT boot partition before powering on.
+      # The ssh-trigger service checks for this file on every boot.
+      chroot $1 systemctl disable ssh
 
     - |-
       # Install Node.js 20 LTS ARM64 by extracting the pre-built binary directly
@@ -49,3 +51,13 @@ mmdebstrap:
       mkdir -p $1/lib/systemd/system
       install -m 644 "${SRCROOT}/files/beacon.service" "$1/lib/systemd/system/beacon.service"
       chroot $1 systemctl enable beacon.service
+
+    - |-
+      # Install the SSH trigger: starts SSH if /boot/firmware/ssh exists at boot
+      install -m 755 "${SRCROOT}/files/ssh-trigger.sh" "$1/usr/local/bin/ssh-trigger.sh"
+      install -m 644 "${SRCROOT}/files/ssh-trigger.service" "$1/lib/systemd/system/ssh-trigger.service"
+      chroot $1 systemctl enable ssh-trigger.service
+
+    - |-
+      # Force password change on first login
+      chroot $1 chage -d 0 beacon
