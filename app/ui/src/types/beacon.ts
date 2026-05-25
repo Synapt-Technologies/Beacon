@@ -29,7 +29,7 @@ export type AlertTarget = 'ALL' | 'OPERATOR' | 'TALENT'
 export interface AlertSlot {
   action: AlertAction
   target: AlertTarget | null  // null for CLEAR
-  timeout: number | null      // miliseconds; 0 = hold until cleared; null for CLEAR
+  timeout: number | null      // milliseconds; 0 = hold until cleared; null for CLEAR
 }
 
 export const ALERT_COLORS: Record<AlertAction, string> = {
