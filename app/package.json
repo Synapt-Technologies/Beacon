@@ -8,7 +8,7 @@
         "url": "https://github.com/Synapt-Technologies/Beacon",
         "type": "git"
     },
-    "license": "GPL-3.0-only",
+    "license": "AGPL-3.0-only",
     "scripts": {
         "dev": "tsx supervisor.ts",
         "typecheck": "tsc --noEmit && tsc --noEmit -p ui/tsconfig.json",
