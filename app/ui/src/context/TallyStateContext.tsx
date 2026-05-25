@@ -65,7 +65,8 @@ export function TallyStateProvider({ children }: { children: ReactNode }) {
           
           const consumerId = deviceAddress[0]
           const deviceId = deviceAddress[1]
-          console.log(`Received device update for ${consumerId}/${deviceId}`)
+          // TODO: Only when not in prod
+          console.debug(`Received device update for ${consumerId}/${deviceId}`)
 
           const name        = (data as { state?: string }).state ?? ''
           const display     = (DeviceTallyDisplayName[name as keyof typeof DeviceTallyDisplayName] ?? 'none') as DeviceDisplayState
