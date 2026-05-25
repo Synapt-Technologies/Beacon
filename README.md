@@ -92,14 +92,24 @@ docker run -p 80:80 -p 1883:1883 -p 9001:9001 ghcr.io/synapt-technologies/beacon
 Or with docker compose:
 
 ```yml
-name: Beacon Base
 services:
-    beacon:
-        ports:
-            - 80:80
-            - 1883:1883
-            - 9001:9001
-        image: ghcr.io/synapt-technologies/beacon:latest
+  beacon:
+    image: ghcr.io/synapt-technologies/beacon:latest
+    ports:
+      - "80:80"
+      - "1883:1883"
+      - "9001:9001"
+    volumes:
+      - beacon_db:/app/db
+      - beacon_logs:/app/logs
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+
+volumes:
+  beacon_db:
+  beacon_logs:
+
 ```
 
 The web interface will then be available on the IP of your computer, and on http://localhost/
