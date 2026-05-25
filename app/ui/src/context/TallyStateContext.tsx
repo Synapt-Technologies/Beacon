@@ -21,7 +21,9 @@ export function TallyStateProvider({ children }: { children: ReactNode }) {
   const aedesCfg    = consumers.aedes?.config as Partial<AedesConsumerConfig> | undefined
   const wsPort      = aedesCfg?.ws_port        ?? 9001
   const keepAliveMs = aedesCfg?.keep_alive_ms  ?? 500
-  const wsUrl       = `ws://${window.location.hostname}:${wsPort}`
+
+  const wsScheme    = window.location.protocol === 'https:' ? 'wss' : 'ws'
+  const wsUrl       = `${wsScheme}://${window.location.hostname}:${wsPort}`
 
   const [states,        setStates]        = useState<Map<string, SourceState>>(new Map())
   const [deviceStates,  setDeviceStates]  = useState<Map<string, DeviceDisplayState>>(new Map())
