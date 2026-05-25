@@ -81,6 +81,15 @@ The web interface will then be available on the IP of your Raspberry Pi
 http://<ip-of-the-pi>/
 ```
 
+#### SSH Access
+
+SSH is disabled by default. To enable it, create an empty file named `ssh` in the root of the boot partition on the SD card. 
+
+SSH will start on every boot as long as the file is present. To disable SSH again, delete the file and reboot. The default credentials are `beacon` as username with `Welcome@Beacon3` as password. You will be prompted to change the password on first login.
+
+
+
+
 ### Docker
 
 Running Beacon in docker can be done with the following command:
