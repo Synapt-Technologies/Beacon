@@ -131,6 +131,7 @@ To contribute to Beacon, you should run it locally in Node.js. To start off foll
 There are multiple commands usable for development:
 - `yarn dev`: Runs in development mode. This will hot reload the ui, and doesn't compile the Typescript.
 - `yarn typecheck`: Runs the typecheck, first for the backend, then the UI.
+- `yarn lint`: Runs ESLint.
 - `yarn build`: Builds vite and then the backend.
 - `yarn serve`: Starts the project in production mode. `yarn build` must have been run before this.
 - `yarn start`: Runs `build`, then `serve`.
