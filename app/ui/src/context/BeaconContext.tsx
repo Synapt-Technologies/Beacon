@@ -77,7 +77,13 @@ export function BeaconProvider({ children }: { children: ReactNode }) {
 
     const haptics = new WebHaptics();
 
-    const applySSEPayload = useCallback((s: any) => {
+    const applySSEPayload = useCallback((s: {
+        producers?: ProducerBundle[];
+        consumers?: Partial<ConsumerExportMap>;
+        orchestratorConfig?: Partial<OrchestratorConfig>;
+        devices?: Record<string, UITallyDevice[]>;
+        info?: Partial<SystemInfo>;
+    }) => {
         setProducers(s.producers ?? [])
         setConsumers(s.consumers ?? {})
         setOrchestratorConfig(s.orchestratorConfig ?? {})

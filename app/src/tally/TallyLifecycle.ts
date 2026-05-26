@@ -37,7 +37,7 @@ type ConsumerMap<Extra extends object = object> = {
 };
 
 type ConsumerRuntime = {
-    factory: (config: any) => AbstractConsumer;
+    factory: (config: ConsumerConfig) => AbstractConsumer;
     isAvailable: () => boolean;
     isDisableable: () => boolean;
 };
@@ -383,7 +383,7 @@ export class TallyLifecycle {
 
                 // Dry-construct: runs checkConfig() in ctor, no port binding until init().
                 // Throws here if config is invalid, before the old consumer is touched.
-                const consumer = entry.factory(entry.config);
+                const consumer = entry.factory(entry.config ?? {});
 
                 if (this.orchestrator.hasConsumer(id)) {
                     this.logger.info(`Stopping consumer:`, id);
