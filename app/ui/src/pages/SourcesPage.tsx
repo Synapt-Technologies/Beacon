@@ -132,7 +132,7 @@ export default function SourcesPage() {
   const { producer: producerId, source: sourceId } = useParams()
   const { producers, orchestratorConfig } = useBeacon()
   const [filterProducer, setFilterProducer] = useState<string | null>(null)
-  const { states, connected, systemConnected } = useTallyState()
+  const { states, systemConnected } = useTallyState()
 
   const disconnectState = stateFromValue(orchestratorConfig.state_on_disconnect ?? 0)
   const sourceState = (key: string): TallyState =>

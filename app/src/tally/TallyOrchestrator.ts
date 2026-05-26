@@ -93,7 +93,7 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
         }
     }
 
-    protected checkConfig(config: OrchestratorConfig){
+    protected checkConfig(_config: OrchestratorConfig){
 
     }
 

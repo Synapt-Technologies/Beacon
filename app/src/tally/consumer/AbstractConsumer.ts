@@ -235,7 +235,7 @@ export abstract class AbstractConsumer<T extends ConsumerEvents & Record<string,
     }
 
     protected abstract sendDeviceTally(device: TallyDevice):  void;
-    protected          sendDeviceConfig(device: TallyDevice): void {}; // TODO: Right place?
+    protected          sendDeviceConfig(_device: TallyDevice): void {}; // TODO: Right place?
 
     consumeTally(state: TallyState): void {
         this.tallyState = state;

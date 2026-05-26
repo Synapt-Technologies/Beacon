@@ -5,6 +5,7 @@ import type { Gpio } from 'pigpio';
 
 // TODO: Populate this. Pinouts?
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface GpioConsumerConfig extends ConsumerConfig {
     // Pin mappings TBD
     // TODO move hw discovery to another class.
@@ -167,7 +168,7 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
                             long: `Local ${i+1}`
                         },
                         connection: ConnectionType.HARDWARE,
-                        patch: new Array(),
+                        patch: [],
                         state: DeviceTallyState.NONE,
                     }
                     

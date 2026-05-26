@@ -6,8 +6,8 @@ import { ProducerStatus } from '../tally/producer/AbstractTallyProducer';
 import { GlobalSourceTools, type ProducerBundle, type SourceInfo } from '../tally/types/ProducerStates';
 import { DeviceTallyState, GlobalDeviceTools, type DeviceAddress, type TallyDevice } from '../tally/types/ConsumerStates';
 import { Logger } from '../logging/Logger';
-import type { LifecycleConfig, LifeCycleConsumerConfig } from '../tally/TallyLifecycle';
-import { TallyOrchestrator, type OrchestratorConfig } from '../tally/TallyOrchestrator';
+import type { LifeCycleConsumerConfig } from '../tally/TallyLifecycle';
+import type { OrchestratorConfig } from '../tally/TallyOrchestrator';
 export const SettingKey = {
     consumers: {
         aedes: "consumers.aedes",

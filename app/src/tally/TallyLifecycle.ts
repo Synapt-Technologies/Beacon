@@ -32,7 +32,7 @@ type ConsumerConfigMap = { // TODO Add consumer info
 
 type RegisteredConsumerId = keyof ConsumerConfigMap;
 
-type ConsumerMap<Extra extends object = {}> = {
+type ConsumerMap<Extra extends object = object> = {
     [K in keyof ConsumerConfigMap]: LifeCycleConsumerConfig<ConsumerConfigMap[K]> & Extra;
 };
 
