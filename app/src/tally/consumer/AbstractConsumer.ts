@@ -32,7 +32,7 @@ export type ConsumerEvents = {
 }
 
 // TODO: Maybe IConnection to force getId and get and setName and other shared ops like db?
-export abstract class AbstractConsumer<T extends ConsumerEvents & Record<string, any[]> = ConsumerEvents> extends EventEmitter<T> {
+export abstract class AbstractConsumer<T extends ConsumerEvents & Record<string, unknown[]> = ConsumerEvents> extends EventEmitter<T> {
     
     protected readonly conType: string = "CONS";
 
