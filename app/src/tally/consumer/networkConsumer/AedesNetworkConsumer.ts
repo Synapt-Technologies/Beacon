@@ -145,7 +145,7 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer implements IGl
             }
         }
 
-        this.aedes.on('subscribe', (subscriptions: Subscription[], client: Client) => {
+        this.aedes.on('subscribe', (subscriptions: Subscription[], _client: Client) => {
             this.logger.debug('Subscription:', subscriptions);
 
             // if (subscriptions.some(sub => sub.topic == 'tally' || sub.topic.startsWith('tally/') ))

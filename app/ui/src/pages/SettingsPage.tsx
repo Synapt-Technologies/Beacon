@@ -6,7 +6,7 @@ import { IconReset } from '../components/icons'
 import Savebar from '../components/layout/savebar/Savebar'
 import { useTheme, Theme } from '../hooks/useTheme'
 import { DeviceAlertState, DeviceAlertTarget } from '../../../src/tally/types/ConsumerStates'
-import { UIAlertSlot, DEFAULT_UI_ALERT_CONFIG } from '../../../src/types/UIStates'
+import { UIAlertSlot } from '../../../src/types/UIStates'
 import type { AlertSlot, AlertAction, AlertTarget } from '../types/beacon'
 import { ALERT_COLORS, ALERT_SHORT, ALERT_LONG } from '../types/beacon'
 import type { OrchestratorConfig } from '../../../src/tally/TallyLifecycle'
@@ -66,41 +66,6 @@ const ALERT_ICONS: Record<AlertAction, React.ReactNode> = {
       <path d="M4.5 4.5L9.5 9.5M9.5 4.5L4.5 9.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
     </svg>
   ),
-}
-
-// ? NetworkRow — stateless, controlled by parent pending state
-
-function NetworkRow({ label, sub, value, defaultVal, readOnly, onChange }: {
-  label: string
-  sub?: string
-  value: number | undefined
-  defaultVal: number
-  readOnly?: boolean
-  onChange?: (v: number) => void
-}) {
-  return (
-    <div className="s-row">
-      <div style={{ flex: 1 }}>
-        <div style={{ fontSize: 13, color: 'var(--color-text-primary)' }}>{label}</div>
-        {sub && <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginTop: 1 }}>{sub}</div>}
-      </div>
-      <input
-        className="s-input"
-        type="number"
-        min={1}
-        max={65535}
-        step={1}
-        value={value ?? defaultVal}
-        readOnly={readOnly}
-        disabled={readOnly}
-        onChange={readOnly ? undefined : e => {
-          const v = parseInt(e.target.value)
-          if (!isNaN(v) && v >= 1 && v <= 65535) onChange?.(v)
-        }}
-        style={readOnly ? { color: 'var(--color-text-tertiary)' } : undefined}
-      />
-    </div>
-  )
 }
 
 // ? AlertRow
@@ -300,8 +265,6 @@ export default function SettingsPage() {
     system,
   } = useBeacon()
 
-  const aedesConfig = consumers.aedes?.config as Partial<AedesConsumerConfig> | undefined
-
   // ? Pending state for savebar — network and tally behaviour fields
   const [pendingPort,         setPendingPort]         = useState<number | null>(null)
   const [pendingKeepalive,    setPendingKeepalive]    = useState<number | null>(null)
@@ -358,10 +321,6 @@ export default function SettingsPage() {
       if (input.files?.[0]) await importConfig(input.files[0])
     }
     input.click()
-  }
-
-  const handleResetAlerts = () => {
-    for (let i = 0; i < DEFAULT_UI_ALERT_CONFIG.length; i++) resetAlertSlot(i)
   }
 
   return (

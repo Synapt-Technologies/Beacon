@@ -92,11 +92,11 @@ export interface DeviceInfo {
     output_count?: number;
 }
 
-interface DeviceDiscoveryPacket extends DeviceInfo {
+export interface DeviceDiscoveryPacket extends DeviceInfo {
     id: DeviceId;
 }
 
-interface NewTallyDevice { // TODO
+export interface NewTallyDevice { // TODO
     id: DeviceAddress;
     state: { // Tally logic, on base device topic.
         patch: Array<GlobalSource>;

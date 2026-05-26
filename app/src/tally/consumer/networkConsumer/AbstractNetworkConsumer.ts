@@ -1,6 +1,5 @@
 import { AbstractConsumer, ConsumerStatus, type ConsumerConfig, type ConsumerEvents, type ConsumerInfo } from "../AbstractConsumer";
 import type { TallyState } from "../../types/ProducerStates";
-import type { TallyDevice } from "../../types/DeviceTypes";
 
 
 export interface NetworkConsumerInfo extends ConsumerInfo {

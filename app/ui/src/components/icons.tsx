@@ -1,6 +1,6 @@
 interface IconProps { size?: number; className?: string; style?: React.CSSProperties }
 
-const i = (d: string, extra?: string) =>
+const _i = (d: string, extra?: string) =>
   ({ size = 16, className, style }: IconProps) => (
     <svg width={size} height={size} viewBox="0 0 16 16" fill="none"
          className={className} style={style} xmlns="http://www.w3.org/2000/svg">

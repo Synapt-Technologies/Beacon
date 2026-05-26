@@ -1,7 +1,5 @@
 import { useState } from 'react'
 import { UITallyDevice } from '../../types/DeviceStates'
-import type { GlobalTallySource, SourceInfo } from '../../../../src/tally/types/ProducerStates'
-import { useBeacon } from '../../context/BeaconContext'
 import { Toggle } from '../Toggle'
 
 // ? Consumer-specific config sections
@@ -71,20 +69,8 @@ export function DeviceEditModal({ device, open, onSave, onRemove, onClose }: Dev
   const [long,       setLong]       = useState(device.name.long)
   const [brightness, setBrightness] = useState<number>(device.brightness ?? 100)
   const [flip,       setFlip]       = useState<boolean>(device.flip ?? false)
-  const { producers } = useBeacon()
 
   if (!open) return null
-
-  const patch = device.patch
-
-  function shortName(producer: string, source: string): string {
-    const key = `${producer}:${source}`
-    for (const p of producers) {
-      const sources = p.info?.sources as unknown as Record<string, SourceInfo>
-      if (sources?.[key]) return sources[key].short ?? source
-    }
-    return source
-  }
 
   const handleSave = () => {
     onSave({ name: { long, short: short || undefined }, brightness, flip })
