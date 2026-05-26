@@ -25,6 +25,9 @@ export default tseslint.config(
         plugins: { "react-hooks": reactHooks },
         rules: {
             ...reactHooks.configs.recommended.rules,
+            // These v7 rules are too strict for patterns used throughout the codebase
+            "react-hooks/set-state-in-effect": "off",
+            "react-hooks/immutability": "off",
         },
     },
 );

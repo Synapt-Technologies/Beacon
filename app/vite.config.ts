@@ -3,6 +3,7 @@ import react from "@vitejs/plugin-react";
 import { Logger } from "./src/logging/Logger.js";
 
 const logger = new Logger(["ADMIN", "VITE"]);
+// eslint-disable-next-line no-control-regex
 const stripAnsi = (str: string) => str.replace(/\x1b\[[0-9;]*m/g, "");
 const warnedOnce = new Set<string>();
 
