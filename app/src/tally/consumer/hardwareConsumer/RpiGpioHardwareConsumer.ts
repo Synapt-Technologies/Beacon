@@ -3,7 +3,7 @@ import { ConnectionType, DeviceAlertState, DeviceTallyState, GlobalDeviceTools, 
 import { HARDWARE_VERSION_STRING, HardwareVersion } from "../../../types/SystemInfo";
 import type { Gpio } from 'pigpio';
 
-// TODO: check if this is the right GPIO library. Was rpi-gpio before, but it's not updated.
+// TODO: Populate this. Pinouts?
 
 export interface GpioConsumerConfig extends ConsumerConfig {
     // Pin mappings TBD
