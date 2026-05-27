@@ -1,6 +1,5 @@
 import type { SourceMap } from "./SourceTypes";
 import type { ConnectionState, DisplayName } from "./CommonTypes";
-import e from "express";
 
 export type ProducerId = string;
 
@@ -12,7 +11,6 @@ export interface ProducerConfig {
 
 //? Producer Info (producer output)
 export interface ProducerState {
-    id: ProducerId;
     state: ConnectionState;
     moment: number;
 }
