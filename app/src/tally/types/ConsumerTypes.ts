@@ -9,8 +9,8 @@ export interface ConsumerConfig {
 }
 
 export interface ConsumerInfo {
-    moment: number | null;
-    status: ConnectionState;
+    state: ConnectionState;
+    moment: number;
     device_count: number;
 }
 
