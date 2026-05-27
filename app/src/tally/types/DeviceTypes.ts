@@ -33,11 +33,26 @@ export interface BaseDeviceRuntimeConfig {
     flip: boolean;
 }
 
+
+//? Info about the device (and its capabilities). Doesn't change a lot.
 export interface DeviceInfo {
-    connection?: ConnectionType;
-    deviceName?: string; // TODO: Move to telemetry. | Name defined in the device, used to differentiate.
+    label?: string; // Name defined in the device, used to differentiate.
     model?: string;
+    firmware?: {
+        type: string;      // Support for non beacon-device firmware. e.g. app?
+        version: string;   // version as string. Preference for semantic.
+    };
+    connection: ConnectionType;
     output_count?: number;
+}
+
+//? Info about the device's situation. Is updated on the ping the device sends.
+export interface DeviceTelemetry {
+    last_seen: number;
+    uptime?: number;
+    rssi?: number;
+    ip?: string;
+    error?: string | null; // TODO: Different type, maybe a fixed error type/interface the devices adhere to?
 }
 
 export interface BaseTallyDevice {
@@ -48,11 +63,13 @@ export interface MinimalTallyDevice extends BaseTallyDevice {
     info: DeviceInfo;
 }
 
-export interface TallyDevice extends MinimalTallyDevice {
+export interface StoredTallyDevice extends MinimalTallyDevice {
     logic: PatchNode;
     runtime: BaseDeviceRuntimeConfig;
-    telemetry?: null; // TODO: Combine telemetry and last seen. Last seen can also be set by discovery.
-    last_seen: number;
+};
+
+export interface TallyDevice extends StoredTallyDevice {
+    telemetry?: DeviceTelemetry;
 }
 
 // ? ALERTS
@@ -81,17 +98,21 @@ export enum DeviceTallyState {
     PROGRAM = 20
 }
 
-export interface AlertSlotConfig {
+export interface DeviceAlertPackage {
     action: DeviceAlertAction;
     target: DeviceAlertTarget | null;
     timeout: number | null;
 }
 
+export interface AlertSlotConfig {
+    alert: DeviceAlertPackage;
+}
+
 export const DEFAULT_ALERT_SLOTS: AlertSlotConfig[] = [
-    { action: DeviceAlertAction.IDENT,  target: DeviceAlertTarget.ALL,      timeout: 4000 },
-    { action: DeviceAlertAction.PRIO,   target: DeviceAlertTarget.OPERATOR, timeout: 1250 },
-    { action: DeviceAlertAction.NORMAL, target: DeviceAlertTarget.ALL,      timeout: 3000 },
-    { action: DeviceAlertAction.CLEAR,  target: null,                       timeout: null },
+    { alert: { action: DeviceAlertAction.IDENT,  target: DeviceAlertTarget.ALL,      timeout: 4000 } },
+    { alert: { action: DeviceAlertAction.PRIO,   target: DeviceAlertTarget.OPERATOR, timeout: 1250 } },
+    { alert: { action: DeviceAlertAction.NORMAL, target: DeviceAlertTarget.ALL,      timeout: 3000 } },
+    { alert: { action: DeviceAlertAction.CLEAR,  target: null,                       timeout: null } },
 ]
 
 
@@ -107,54 +128,52 @@ export interface DeviceStatePackage {
     active_sources: GlobalSource[]; // TODO: Implement or remove.
 }
 
-export interface DeviceStateBundle extends DeviceStatePackage, BaseDeviceBundle {}
+export interface DeviceStateBundle extends DeviceStatePackage, BaseDeviceBundle {/* empty */}
 
-export interface DeviceAlertPackage {
-    action: DeviceAlertAction;
-    target: DeviceAlertTarget | null;
-    timeout: number | null;
+export interface DeviceAlertBundle extends DeviceAlertPackage, BaseDeviceBundle {/* empty */}
+
+export interface DeviceDiscoveryBundle {
+    id: DeviceId;
+    info: DeviceInfo;
 }
-
-export interface DeviceAlertBundle extends DeviceAlertPackage, BaseDeviceBundle {}
-
-export interface DeviceDiscoveryBundle extends MinimalTallyDevice {} // Empty for now, might add more in the future
 
 //? Device tools and DTOs
 const defaultTallyDevice = (): Omit<TallyDevice, "id"> => ({
+    info: {
+        connection: ConnectionType.VIRTUAL,
+    },
     logic: LogicFactory.createSimpleBusNode(),
     runtime: {
         name: { long: "Unnamed Device" },
         brightness: 100,
         flip: false,
     },
-    info: {},
-    last_seen: Date.now(),
 });
 
 export class TallyDeviceDto implements TallyDevice {
     id: DeviceAddress;
+    info: DeviceInfo;
     logic: PatchNode;
     runtime: BaseDeviceRuntimeConfig;
-    info: DeviceInfo;
-    telemetry?: null; 
-    last_seen: number;
+    telemetry?: DeviceTelemetry; 
 
     constructor(device: Partial<TallyDevice> & Pick<TallyDevice, "id">) {
         const newDevice = { ...defaultTallyDevice(), ...device };
         this.id = newDevice.id;
+        this.info = newDevice.info;
         this.logic = newDevice.logic;
         this.runtime = newDevice.runtime;
-        this.info = newDevice.info;
         this.telemetry = newDevice.telemetry;
-        this.last_seen = newDevice.last_seen;
     }
 
-    static fromDiscoveryBundle(bundle: DeviceDiscoveryBundle): TallyDevice {
-        return new TallyDeviceDto(bundle);
-    }
-
-    toInterface(): TallyDevice {
-        return this as TallyDevice;
+    static fromDiscoveryBundle(bundle: DeviceDiscoveryBundle, consumer: ConsumerId): TallyDevice {
+        return new TallyDeviceDto({ 
+            ...bundle, 
+            id: { 
+                consumer, 
+                device: bundle.id 
+            } 
+        });
     }
 
     toKey(): DeviceKey {
@@ -162,27 +181,50 @@ export class TallyDeviceDto implements TallyDevice {
     }
 
 
+    toBaseBundle(): BaseDeviceBundle {
+        return {
+            id: this.id,
+            moment: Date.now(),
+        }
+    }
+
     //? Bundles
     toStateBundle(pckg: DeviceStatePackage): DeviceStateBundle {
-        return {
-            ...this,
+
+        const output: DeviceStateBundle = {
             ...pckg,
-            moment: Date.now(),
+            ...this.toBaseBundle(),
         };
+        return output;
     }
 
     toAlertBundle(pckg: DeviceAlertPackage): DeviceAlertBundle {
         return {
-            ...this,
             ...pckg,
-            moment: Date.now(),
+            ...this.toBaseBundle(),
         };
+    }
+
+
+    //? Sub Interfaces
+    toStored(): StoredTallyDevice {
+        const sDev: StoredTallyDevice = {
+            id: this.id,
+            info: this.info,
+            logic: this.logic,
+            runtime: this.runtime,
+        };
+        return sDev;
     }
 
 
     //? Serialisation
     serialize(): string {
-        return JSON.stringify(this.toInterface());
+        return JSON.stringify(this);
+    }
+
+    serialiseForStorage(): string {
+        return JSON.stringify(this.toStored());
     }
     
 }
