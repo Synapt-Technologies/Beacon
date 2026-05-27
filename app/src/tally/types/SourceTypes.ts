@@ -48,6 +48,8 @@ export interface ProducerBusState extends ProducerState{
 
 export type GlobalProducerMap = Map<ProducerId, ProducerBusState>;
 
+// TODO: Add an interface to map Busses to colors or select which busses to display?
+
 
 export abstract class SourceTools {
     //? Source Address
