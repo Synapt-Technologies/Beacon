@@ -1,13 +1,8 @@
 import type { SourceMap } from "./SourceTypes";
-import type { ConnectionState } from "./StatusTypes";
+import type { ConnectionState, DisplayName } from "./CommonTypes";
 
 export type ProducerId = string;
 
-
-export interface ProducerModel {
-    long: string;
-    short?: string;
-}
 
 export interface ProducerConfig {
     id: ProducerId,
@@ -16,7 +11,7 @@ export interface ProducerConfig {
 
 export interface ProducerInfo {
     moment: number | null;
-    model: ProducerModel;
+    model: DisplayName;
     sources: SourceMap;
     status: ConnectionState;
 }
