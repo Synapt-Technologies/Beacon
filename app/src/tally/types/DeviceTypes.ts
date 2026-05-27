@@ -1,5 +1,5 @@
 import type { ConsumerId } from "./ConsumerTypes";
-import { SimpleBusNode, type PatchNode } from "./LogicTypes";
+import { LogicFactory, type PatchNode } from "./LogicTypes";
 import type { GlobalSource } from "./SourceTypes";
 
 export type DeviceId = string;
@@ -120,9 +120,8 @@ export interface DeviceAlertBundle extends DeviceAlertPackage, BaseDeviceBundle 
 export interface DeviceDiscoveryBundle extends MinimalTallyDevice {} // Empty for now, might add more in the future
 
 //? Device tools and DTOs
-
 const defaultTallyDevice = (): Omit<TallyDevice, "id"> => ({
-    logic: new SimpleBusNode(),
+    logic: LogicFactory.createSimpleBusNode(),
     runtime: {
         name: { long: "Unnamed Device" },
         brightness: 100,
@@ -159,7 +158,7 @@ export class TallyDeviceDto implements TallyDevice {
     }
 
     toKey(): DeviceKey {
-        return GlobalDeviceTools.create(this.id.consumer, this.id.device);
+        return DeviceTools.create(this.id.consumer, this.id.device);
     }
 
 
@@ -188,7 +187,8 @@ export class TallyDeviceDto implements TallyDevice {
     
 }
 
-export abstract class GlobalDeviceTools {
+
+export abstract class DeviceTools {
 
     static create (consumer: ConsumerId, device: DeviceId): DeviceKey { 
         return `${consumer}:${device}`;
