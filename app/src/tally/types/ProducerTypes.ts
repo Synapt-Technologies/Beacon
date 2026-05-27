@@ -10,9 +10,9 @@ export interface ProducerConfig {
 }
 
 //? Producer Info (producer output)
+// TODO: Add moment if needed, or make ProducerStateBundle (and ProducerInfoBundle) with it.
 export interface ProducerState {
     state: ConnectionState;
-    moment: number;
 }
 
 export interface ProducerInfo extends ProducerState {

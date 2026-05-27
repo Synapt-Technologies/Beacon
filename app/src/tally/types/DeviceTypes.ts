@@ -23,7 +23,8 @@ export enum ConnectionType {
 
 
 // TODO: Brightness as float?
-export interface BaseDeviceRuntimeConfig {
+// TODO: Add support for device specific settings?
+export interface DeviceRuntimeConfig {
     name: DisplayName;
     brightness: number; // 0-100
     flip: boolean;
@@ -61,7 +62,7 @@ export interface MinimalTallyDevice extends BaseTallyDevice {
 
 export interface StoredTallyDevice extends MinimalTallyDevice {
     logic: PatchNode;
-    runtime: BaseDeviceRuntimeConfig;
+    runtime: DeviceRuntimeConfig;
 };
 
 export interface TallyDevice extends StoredTallyDevice {
@@ -133,6 +134,8 @@ export interface DeviceDiscoveryBundle {
     info: DeviceInfo;
 }
 
+export type TallyDeviceMap = Map<DeviceKey, TallyDevice>;
+
 //? Device tools and DTOs
 const defaultTallyDevice = (): Omit<TallyDevice, "id"> => ({
     info: {
@@ -150,7 +153,7 @@ export class TallyDeviceDto implements TallyDevice {
     id: DeviceAddress;
     info: DeviceInfo;
     logic: PatchNode;
-    runtime: BaseDeviceRuntimeConfig;
+    runtime: DeviceRuntimeConfig;
     telemetry?: DeviceTelemetry; 
 
     constructor(device: Partial<TallyDevice> & Pick<TallyDevice, "id">) {

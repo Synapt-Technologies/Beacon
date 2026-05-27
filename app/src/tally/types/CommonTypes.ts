@@ -12,3 +12,5 @@ export enum ConnectionState {
     ONLINE = "Online",
     ERROR = "Error"
 }
+
+export type WithRequired<T, K extends keyof T> = Partial<T> & Required<Pick<T, K>>;

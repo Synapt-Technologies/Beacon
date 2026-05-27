@@ -8,9 +8,9 @@ export interface ConsumerConfig {
     name: string;
 }
 
+// TODO: Add moment if needed, or make ConsumerInfoBundle with it.
 export interface ConsumerInfo {
     state: ConnectionState;
-    moment: number;
     device_count: number;
 }
 
