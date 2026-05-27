@@ -230,7 +230,7 @@ export class TallyDeviceDto implements TallyDevice {
 export abstract class DeviceTools {
 
     static create (consumer: ConsumerId, device: DeviceId): DeviceKey { 
-        return `${consumer}:${device}`;
+        return `${consumer}:${device}` as DeviceKey;
     } 
 
     static parse (key: DeviceKey): DeviceAddress {

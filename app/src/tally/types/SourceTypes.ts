@@ -49,10 +49,10 @@ export interface ProducerBusState extends ProducerState{
 export type GlobalProducerMap = Map<ProducerId, ProducerBusState>;
 
 
-export abstract class GlobalSourceTools {
+export abstract class SourceTools {
     //? Source Address
     static toSourceKey (producer: ProducerId, source: SourceId): GlobalSourceKey {
-        return `${producer}:${source}`;
+        return `${producer}:${source}` as GlobalSourceKey;
     }
 
     static parseSourceKey (key: GlobalSourceKey): GlobalSourceAddress {
@@ -63,7 +63,7 @@ export abstract class GlobalSourceTools {
 
     //? Source Bus
     static toBusKey (producer: ProducerId, bus: BusId): GlobalBusKey {
-        return `${producer}:${bus}`;
+        return `${producer}:${bus}` as GlobalBusKey;
     }
 
     static parseBusKey (key: GlobalBusKey): GlobalBusAddress {
@@ -114,8 +114,6 @@ export abstract class GlobalSourceTools {
         if (!onlySources) 
         {
             if (a.state !== b.state) return false;
-
-            if (a.id !== b.id) return false;
         }
         
         return this.areBusMapsEqual(a.busses, b.busses, onlySources);
