@@ -7,40 +7,21 @@ If you are compiling the image on windows, you must use WSL.
 
 
 ## TODO
-- [x] Docker Documentation!
+- [ ] CLASS REBUILD:
+  - [ ] Rework buss structure to support more than only program preview.
+
+
 - [ ] Dev/prod mode for ui logging
 - [ ] Easier way to page through devices. Some sort of arrow keys in the navbar?
-- [x] !! PLATFORM NEED MANUAL RESTART ON UI CHANGE AFTER UPDATE !!
 - [x] Implement mqtt ws tally for devices
   - [ ] Add alerts
-- [x] Persist alert config to settings
-- [x] On patch change the web tally does not update.
-- [x] Disconnect warning for tally
-  - [x] State on disconnect also on web interface
-  - [x] State on disconnect also on web interface
-    - [x] On disconnection from api
-      - [x] Add some sort of connection timeout?  
-    - [x] On producer disconnect
-    - [x] Changing the stage while disconnected does not work.
-  - [x] Only the devices that include sources from the disconnected source?
 - [ ] Add "F11" fullscreen button
 - [ ] Show more source info, pimarily consumer:sourceid at the device source list.
-- [x] Fix add connection to show the added connection without reload
 - [ ] Add Virtual tally
   - [ ] Display them at the top of the tally overview
     - [ ] Add tally type / consumer filter
   - [ ] Display them on the web tally page?
-- [x] Better connection (producer and consumer) info
-  - [x] No issue on disabled
-  - [x] Monitor states
-    - [x] Issue on those
 - [ ] Refactor UI settings
-  - [ ] Remove 
-    - [x] Admin port
-    - [ ] MQTT Port
-    - [ ] Keep Alive
-    - [x] Mqtt broker disable
-    - [x] Reset alert buttons
   - [ ] Add
     - [ ] Reset to factory settings
 - [ ] Show more producer info
@@ -56,19 +37,19 @@ If you are compiling the image on windows, you must use WSL.
 - [ ] Implement alert state blinking in GPIOConsumer
 - [ ] Add pagewide haptics ( Currently in context and alert buttons. )
   - [ ] Context the right place?
-- [x] **REFACTOR ORCHESTRATION**
-  - [x] Consumers don't own the tally process
-  - [x] Consumer exports tally devices. 
-  - [x] The orchestrator sets the tallystate 
-  - [x] The Consumer exposes sendDeviceTally (or similar)
-  - [x] No ConsumeTally
-  - [x] The orchestrator decides which devices to send
-  - [x] GlobalConsumer gets all, non global only the devices mapped to their consumerId
-  - [x] Aedes devices on the aedes topic -> Discovery:
-    - [x] Device requests descivery on global topic: tally/discovery
-    - [x] Aedes is the active consumer on that mqtt -> It assigns its ConsumerId + a DeviceId (mac based?)
-    - [x] The device saves that and connects to the topic.
-  - [x] The Orchestrator sends the relevant devices to the right consumers.
+- [ ] **REFACTOR ORCHESTRATION**
+  - [ ] Consumers don't own the tally process
+  - [ ] Consumer exports tally devices. 
+  - [ ] The orchestrator sets the tallystate 
+  - [ ] The Consumer exposes sendDeviceTally (or similar)
+  - [ ] No ConsumeTally
+  - [ ] The orchestrator decides which devices to send
+  - [ ] GlobalConsumer gets all, non global only the devices mapped to their consumerId
+  - [ ] Aedes devices on the aedes topic -> Discovery:
+    - [ ] Device requests descivery on global topic: tally/discovery
+    - [ ] Aedes is the active consumer on that mqtt -> It assigns its ConsumerId + a DeviceId (mac based?)
+    - [ ] The device saves that and connects to the topic.
+  - [ ] The Orchestrator sends the relevant devices to the right consumers.
   - [ ] Implement clear split between config, tally and alert.
   - [ ] Add text alert type.
   - [ ] Rename orchestrator and lifecycle. Logic and orchestrator, or coordinator?
