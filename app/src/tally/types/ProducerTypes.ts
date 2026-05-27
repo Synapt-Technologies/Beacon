@@ -6,7 +6,7 @@ export type ProducerId = string;
 //? Producer Config (producer input)
 export interface ProducerConfig {
     id: ProducerId,
-    name?: string;
+    name: string;
 }
 
 //? Producer Info (producer output)
