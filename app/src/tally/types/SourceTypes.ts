@@ -15,12 +15,12 @@ export interface GlobalSourceAddress {
     source: SourceId;
 }
 
-export interface GlobalSourceInfo {
+export interface SourceInfo {
     id: GlobalSourceAddress;
     name: DisplayName;
 }
 
-export type SourceMap = Map<GlobalSourceKey, GlobalSourceInfo>; // TODO: Should this be a set?
+export type SourceMap = Map<GlobalSourceKey, SourceInfo>; // TODO: Should this be a set?
 
 
 // ? Busses
@@ -51,8 +51,12 @@ export type GlobalProducerMap = Map<ProducerId, ProducerBusState>;
 
 export abstract class SourceTools {
     //? Source Address
-    static toSourceKey (producer: ProducerId, source: SourceId): GlobalSourceKey {
+    static createSourceKey (producer: ProducerId, source: SourceId): GlobalSourceKey {
         return `${producer}:${source}` as GlobalSourceKey;
+    }
+
+    static toSourceKey (key: GlobalSourceAddress): GlobalSourceKey {
+        return `${key.producer}:${key.source}` as GlobalSourceKey;
     }
 
     static parseSourceKey (key: GlobalSourceKey): GlobalSourceAddress {

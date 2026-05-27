@@ -15,6 +15,7 @@ export interface ProducerState {
     state: ConnectionState;
 }
 
+// TODO: Split Info and State?
 export interface ProducerInfo extends ProducerState {
     model: DisplayName;
     sources: SourceMap;
@@ -22,9 +23,12 @@ export interface ProducerInfo extends ProducerState {
 
 
 //? Producer Bundles
-export interface ProducerBundle {
+export interface StoreProducerBundle {
     type: string,
     enabled: boolean,
     config: ProducerConfig,
-    info: ProducerInfo
+}
+
+export interface ProducerBundle extends StoreProducerBundle {
+    info: ProducerInfo,
 }

@@ -176,7 +176,7 @@ export class TallyDeviceDto implements TallyDevice {
     }
 
     toKey(): DeviceKey {
-        return DeviceTools.create(this.id.consumer, this.id.device);
+        return DeviceTools.createKey(this.id.consumer, this.id.device);
     }
 
     toString(): string {
@@ -232,11 +232,15 @@ export class TallyDeviceDto implements TallyDevice {
 
 export abstract class DeviceTools {
 
-    static create (consumer: ConsumerId, device: DeviceId): DeviceKey { 
+    static createKey (consumer: ConsumerId, device: DeviceId): DeviceKey { 
         return `${consumer}:${device}` as DeviceKey;
     } 
 
-    static parse (key: DeviceKey): DeviceAddress {
+    static toKey (address: DeviceAddress): DeviceKey { 
+        return `${address.consumer}:${address.device}` as DeviceKey;
+    } 
+
+    static parseKey (key: DeviceKey): DeviceAddress {
         const [consumer, ...deviceParts] = key.split(":");
         return { consumer, device: deviceParts.join(":") };
     }
