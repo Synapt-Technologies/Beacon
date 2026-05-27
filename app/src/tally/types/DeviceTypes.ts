@@ -1,3 +1,4 @@
+import type { DisplayName } from "./CommonTypes";
 import type { ConsumerId } from "./ConsumerTypes";
 import { LogicFactory, type PatchNode } from "./LogicTypes";
 import type { GlobalSource } from "./SourceTypes";
@@ -20,15 +21,10 @@ export enum ConnectionType {
     MESH        = 4,
 }
 
-export interface DeviceName {
-    long: string;
-    short?: string;
-}
-
 
 // TODO: Brightness as float?
 export interface BaseDeviceRuntimeConfig {
-    name: DeviceName;
+    name: DisplayName;
     brightness: number; // 0-100
     flip: boolean;
 }
@@ -178,6 +174,10 @@ export class TallyDeviceDto implements TallyDevice {
 
     toKey(): DeviceKey {
         return DeviceTools.create(this.id.consumer, this.id.device);
+    }
+
+    toString(): string {
+        return `dev:${this.toKey()}`;
     }
 
 
