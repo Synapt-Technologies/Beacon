@@ -1,13 +1,14 @@
 import Database from 'better-sqlite3';
 import fs from 'node:fs';
 import path from 'path';
-import type { ProducerConfig, ProducerInfo } from '../tally/producer/AbstractTallyProducer';
-import { ProducerStatus } from '../tally/producer/AbstractTallyProducer';
-import { GlobalSourceTools, type ProducerBundle, type SourceInfo } from '../tally/types/ProducerStates';
-import { DeviceTallyState, GlobalDeviceTools, type DeviceAddress, type TallyDevice } from '../tally/types/ConsumerStates';
 import { Logger } from '../logging/Logger';
 import type { LifeCycleConsumerConfig } from '../tally/TallyLifecycle';
 import type { OrchestratorConfig } from '../tally/TallyOrchestrator';
+import { DeviceTools, TallyDeviceDto, type DeviceAddress, type DeviceKey, type StoredTallyDevice, type TallyDeviceMap } from '../tally/types/DeviceTypes';
+import type { ProducerInfo, StoreProducerBundle } from '../tally/types/ProducerTypes';
+import { SourceTools, type SourceInfo } from '../tally/types/SourceTypes';
+import { ConnectionState } from '../tally/types/CommonTypes';
+
 export const SettingKey = {
     consumers: {
         aedes: "consumers.aedes",
@@ -101,7 +102,7 @@ export class CoreDatabase {
 
 
     // ? Producer Methods
-    public saveProducer(entry: { type: string; enabled: boolean; config: ProducerConfig }): void {
+    public saveProducer(entry: StoreProducerBundle): void {
         const stmt = this.db.prepare(`
             INSERT INTO producers (id, type, config, enabled)
             VALUES (?, ?, ?, ?)
@@ -110,8 +111,11 @@ export class CoreDatabase {
         stmt.run(entry.config.id, entry.type, JSON.stringify(entry.config), entry.enabled ? 1 : 0);
     }
 
-    public getProducers(): Required<Omit<ProducerBundle, "info">>[] {
-        const rows = this.db.prepare('SELECT * FROM producers').all() as { id: string, type: string, config: string, enabled: number }[];
+    // public getProducers(): Required<Omit<ProducerBundle, "info">>[] { // TODO: Removed Omit. Check if desired.
+    // TODO: Info contains state. Should be excluded?
+    // TODO: Try and catch?
+    public getProducers(): StoreProducerBundle[] {
+        const rows = this.db.prepare('SELECT * FROM producers').all() as { _id: string, type: string, enabled: number , config: string }[];
         return rows.map(row => ({ type: row.type, enabled: row.enabled === 1, config: JSON.parse(row.config) }));
     }
 
@@ -133,11 +137,11 @@ export class CoreDatabase {
             const parsed = JSON.parse(row.info);
             const sources = new Map<string, SourceInfo>(
                 (parsed.sources ?? []).map((s: SourceInfo) => [
-                    GlobalSourceTools.create(s.source.producer, s.source.source),
+                    SourceTools.toSourceKey(s.id),
                     s
                 ])
             );
-            return { ...parsed, sources, status: parsed.status ?? ProducerStatus.OFFLINE };
+            return { ...parsed, sources, status: parsed.state ?? ConnectionState.OFFLINE };
         } catch {
             this.logger.error(`Failed to parse producer inventory for:`, id);
             return null;
@@ -149,27 +153,27 @@ export class CoreDatabase {
     }
 
     // ? Consumer Device Methods
-    public saveConsumerDevices(devices: TallyDevice[]) {
+    public saveConsumerDevices(devices: StoredTallyDevice[]) {
         devices.forEach(device => this.saveConsumerDevice(device));
     }
 
-    public saveConsumerDevice(device: TallyDevice) {
-        const id = GlobalDeviceTools.create(device.id.consumer, device.id.device);
+    public saveConsumerDevice(device: StoredTallyDevice) {
+        const dto = new TallyDeviceDto(device);
         const stmt = this.db.prepare(`
             INSERT INTO consumer_devices (id, consumer_id, data)
             VALUES (?, ?, ?)
             ON CONFLICT(id) DO UPDATE SET data=excluded.data
         `);
-        stmt.run(id, device.id.consumer, JSON.stringify(device));
+        stmt.run(dto.toKey(), dto.id.consumer, JSON.stringify(dto.toStored()));
     }
 
-    public getConsumerDevice(address: DeviceAddress): TallyDevice | null {
-        const id = GlobalDeviceTools.create(address.consumer, address.device);
+    public getConsumerDevice(address: DeviceAddress): StoredTallyDevice | null {
+        const id = DeviceTools.toKey(address);
         const row = this.db.prepare('SELECT data FROM consumer_devices WHERE id = ?').get(id) as { data: string } | undefined;
         if (!row) return null;
 
         try {
-            return { ...JSON.parse(row.data), state: DeviceTallyState.NONE };
+            return new TallyDeviceDto(JSON.parse(row.data)).toStored();
         } catch {
             this.logger.error(`Failed to parse device with ID:`, id);
             return null;
@@ -177,21 +181,19 @@ export class CoreDatabase {
     }
 
     public deleteConsumerDevice(address: DeviceAddress): void {
-        const id = GlobalDeviceTools.create(address.consumer, address.device);
+        const id = DeviceTools.toKey(address);
         this.db.prepare('DELETE FROM consumer_devices WHERE id = ?').run(id);
     }
 
-    public getConsumerDevices(consumerId: string): Map<string, TallyDevice> {
-        const rows = this.db.prepare('SELECT id, data FROM consumer_devices WHERE consumer_id = ?').all(consumerId) as { id: string, data: string }[];
+    public getConsumerDevices(consumerId: string): TallyDeviceMap {
+        const rows = this.db.prepare('SELECT id, data FROM consumer_devices WHERE consumer_id = ?').all(consumerId) as { id: DeviceKey, data: string }[];
 
-        const output = new Map<string, TallyDevice>();
+        const output = new Map<DeviceKey, StoredTallyDevice>();
 
         for (const row of rows) {
             try {
                 const parsed = JSON.parse(row.data);
-                // Migration: devices stored before name was required get a default.
-                if (!parsed.name) parsed.name = { long: parsed.id?.device ?? row.id };
-                const device: TallyDevice = { ...parsed, state: DeviceTallyState.NONE };
+                const device: StoredTallyDevice = new TallyDeviceDto(parsed).toStored();
                 output.set(row.id, device);
             } catch {
                 this.logger.error(`Failed to parse device with ID:`, row.id);

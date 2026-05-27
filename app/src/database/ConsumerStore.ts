@@ -1,6 +1,6 @@
 import { CoreDatabase } from "./CoreDatabase";
-import type { TallyDevice, DeviceAddress } from "../tally/types/ConsumerStates";
 import { Logger } from "../logging/Logger";
+import type { DeviceAddress, StoredTallyDevice, TallyDeviceMap } from "../tally/types/DeviceTypes";
 
 export class ConsumerStore {
 
@@ -11,7 +11,7 @@ export class ConsumerStore {
         this.logger = new Logger(["Store", "CONS", consumerId]);
     }
 
-    public saveDevice(device: TallyDevice): void {
+    public saveDevice(device: StoredTallyDevice): void {
         this.db.saveConsumerDevice(device);
     }
 
@@ -19,7 +19,7 @@ export class ConsumerStore {
         this.db.deleteConsumerDevice(address);
     }
 
-    public loadDevices(): Map<string, TallyDevice> {
+    public loadDevices(): TallyDeviceMap {
         return this.db.getConsumerDevices(this.consumerId);
     }
 }
