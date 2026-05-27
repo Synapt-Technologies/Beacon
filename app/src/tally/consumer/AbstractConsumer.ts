@@ -1,10 +1,7 @@
 import { EventEmitter } from "node:events";
-import { GlobalSourceTools, type GlobalTallySource, type TallyState } from "../types/ProducerStates";
 import { Logger } from "../../logging/Logger";
-import { type ConsumerId, type DeviceAddress, DeviceAlertState, DeviceAlertTarget, DeviceTallyState, type TallyDevice } from "../types/ConsumerStates";
-import type { TallyDeviceMap, DeviceRuntimeConfig } from "../types/DeviceTypes";
+import { type TallyDeviceMap, type DeviceRuntimeConfig, type TallyDevice, type DeviceAddress, DeviceTools } from "../types/DeviceTypes";
 import { ConsumerStore } from "../../database/ConsumerStore";
-import type { SystemInfo } from "../../types/SystemInfo";
 import type { ConsumerConfig, ConsumerInfo } from "../types/ConsumerTypes";
 import { ConnectionState, type WithRequired } from "../types/CommonTypes";
 
@@ -27,13 +24,13 @@ export abstract class AbstractConsumer<T extends ConsumerEvents & Record<string,
     protected devices: TallyDeviceMap = new Map();
 
     protected config: ConsumerConfig;
+    protected abstract getDefaultConfig(): Omit<ConsumerConfig, 'id'>;
 
     protected info: ConsumerInfo = { 
         state: ConnectionState.OFFLINE, 
         device_count: 0 
     };
 
-    protected abstract getDefaultConfig(): Omit<ConsumerConfig, 'id'>;
 
     getConfig(): ConsumerConfig {
         return this.config;
@@ -42,6 +39,7 @@ export abstract class AbstractConsumer<T extends ConsumerEvents & Record<string,
     getInfo(): ConsumerInfo {
         return this.info;
     }
+    
 
     constructor(config: WithRequired<ConsumerConfig, "id">) {
         super();
@@ -73,13 +71,16 @@ export abstract class AbstractConsumer<T extends ConsumerEvents & Record<string,
         return Array.from(this.devices.values());
     }
     getDevice(address: DeviceAddress): TallyDevice | null {
-        return this.devices.get(this.getDeviceKey(address)) || null;
+        return this.devices.get(DeviceTools.toKey(address)) || null;
     }
+
+
+    //! Refactor below:
 
     protected _addDevice(device: TallyDevice, override: boolean = false) {
 
         device.id.consumer = this.config.id;
-        const key = this.getDeviceKey(device.id);
+        const key = DeviceTools.toKey(device.id);
 
         if (this.devices.has(key) && !override) { return; }
 
