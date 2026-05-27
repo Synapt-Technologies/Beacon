@@ -1,7 +1,7 @@
 import type { DisplayName } from "./CommonTypes";
 import type { ConsumerId } from "./ConsumerTypes";
 import { LogicFactory, type PatchNode } from "./LogicTypes";
-import type { GlobalSource } from "./SourceTypes";
+import type { GlobalSourceAddress } from "./SourceTypes";
 
 export type DeviceId = string;
 export type DeviceKey = `${ConsumerId}:${DeviceId}`;
@@ -121,7 +121,7 @@ export interface BaseDeviceBundle extends BaseTallyDevice {
 
 export interface DeviceStatePackage {
     state: DeviceTallyState;
-    active_sources: GlobalSource[]; // TODO: Implement or remove.
+    active_sources: GlobalSourceAddress[]; // TODO: Implement or remove. Should it be a per bus map?
 }
 
 export interface DeviceStateBundle extends DeviceStatePackage, BaseDeviceBundle {/* empty */}
