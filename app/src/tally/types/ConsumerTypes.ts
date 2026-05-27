@@ -1,4 +1,4 @@
-import type { ConnectionState } from "./StatusTypes";
+import type { ConnectionState } from "./CommonTypes";
 
 export type ConsumerId = string;
 
