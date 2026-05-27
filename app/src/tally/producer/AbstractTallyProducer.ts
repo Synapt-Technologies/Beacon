@@ -1,8 +1,11 @@
 import { EventEmitter } from "node:events";
-import type { ProducerId, TallyState, SourceMap, ProducerModel } from "../types/ProducerStates";
 import { Logger } from "../../logging/Logger";
 import { ProducerStore } from "../../database/ProducerStore";
-import type { ProducerConfig } from "../types/ProducerTypes";
+import type { ProducerConfig, ProducerId, ProducerInfo } from "../types/ProducerTypes";
+import type { TallyState } from "../../../src-old/tally/types/ProducerStates";
+import type { ConsumerConfig } from "../types/ConsumerTypes";
+import { ConnectionState, type DisplayName, type WithRequired } from "../types/CommonTypes";
+import type { ProducerBusMap, SourceMap } from "../types/SourceTypes";
 
 
 
@@ -30,21 +33,34 @@ export abstract class AbstractTallyProducer<T extends TallyProducerEvents & Reco
 
     protected store: ProducerStore;
 
-    protected config: Required<ProducerConfig>;
+    protected config: ProducerConfig;
+    protected abstract getDefaultConfig(): Omit<ProducerConfig, 'id'>;
 
-    // Static + function: Static removes recursion, function makes it so the parent constructor gets the child's values.
-    public static readonly DefaultConfig: Required<ProducerConfig> = {
-        id: "",
-        name: "Producer",
+    protected busState: ProducerBusMap = new Map();
+
+    protected info: ProducerInfo = { // TODO make partial?
+        state: ConnectionState.OFFLINE,
+        model: {
+            long: "Unknown Model",
+            short: "UNKNOWN"
+        },
+        sources: new Map(),
     };
 
-    protected abstract getDefaultConfig(): Omit<ProducerConfig, 'id'>;
 
     getConfig(): ProducerConfig {
         return this.config;
     }
-    
-    constructor(config: ProducerConfig) {
+
+    getInfo(): ProducerInfo {
+        return this.info;
+    }
+
+    getBusState(): ProducerBusMap {
+        return this.busState;
+    }
+
+    constructor(config: WithRequired<ConsumerConfig, "id">) {
         super();
 
         this.config = {...this.getDefaultConfig(), ...config};
@@ -58,52 +74,29 @@ export abstract class AbstractTallyProducer<T extends TallyProducerEvents & Reco
             this.info = storedInfo;
             this.logger.debug(`Loaded stored info.`);
         }
-
         
         this.checkConfig(this.config);
     }
 
     protected checkConfig(config: ProducerConfig) {
         if (!config.id || config.id == "")
-            this.logger.fatal(`Invalid producer ID provided. Submitted config:`, config);
+            this.logger.fatal(`Invalid consumer ID provided. Submitted config:`, config);
+        if (config.name == null || config.name == "")
+            this.logger.fatal(`System name was not provided. Submitted config:`, config);
     }
 
     abstract init(): void | Promise<void>;
     abstract destroy(): void | Promise<void>;
-    
-    protected info: ProducerInfo = { // TODO make partial?
-        update_moment: null,
-        model: {
-            short: "UNKNOWN",
-            long: "Unknown Model"
-        },
-        sources: new Map(),
-        status: ProducerStatus.OFFLINE,
-    };
 
-    protected tallyState: TallyState = {
-        moment: undefined, // TODO: Add check for last updated? Too long ago -> Wrong? -> Update moment even if no change.
-        program: new Set<string>(),
-        preview: new Set<string>(),
-    };
-
-    getTallyState(): TallyState {
-        return this.tallyState;
-    }
-
-    getInfo(): ProducerInfo {
-        return this.info;
-    }
 
     private _destroying = false;
-
     markDestroying(): void {
         this._destroying = true;
     }
-
     isDestroying(): boolean {
         return this._destroying;
     }
+
 
     protected emitInfoUpdate(): void {
         if (this._destroying) return;
@@ -120,7 +113,7 @@ export abstract class AbstractTallyProducer<T extends TallyProducerEvents & Reco
         return this.info.sources;
     }
 
-    getModel(): ProducerModel {
+    getModel(): DisplayName {
         return this.info.model;
     }
 
