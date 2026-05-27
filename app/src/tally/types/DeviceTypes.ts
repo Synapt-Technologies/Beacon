@@ -190,12 +190,10 @@ export class TallyDeviceDto implements TallyDevice {
 
     //? Bundles
     toStateBundle(pckg: DeviceStatePackage): DeviceStateBundle {
-
-        const output: DeviceStateBundle = {
+        return {
             ...pckg,
             ...this.toBaseBundle(),
         };
-        return output;
     }
 
     toAlertBundle(pckg: DeviceAlertPackage): DeviceAlertBundle {
@@ -208,13 +206,12 @@ export class TallyDeviceDto implements TallyDevice {
 
     //? Sub Interfaces
     toStored(): StoredTallyDevice {
-        const sDev: StoredTallyDevice = {
+        return {
             id: this.id,
             info: this.info,
             logic: this.logic,
             runtime: this.runtime,
         };
-        return sDev;
     }
 
 
