@@ -5,6 +5,7 @@ export interface DisplayName {
     short?: string;
 }
 
+// TODO: Add CONNECTING (and even DISCONNECTING?) states?
 export enum ConnectionState {
     DISABLED = "Disabled",
     OFFLINE = "Offline",
