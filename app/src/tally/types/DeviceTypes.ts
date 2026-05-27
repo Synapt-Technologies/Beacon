@@ -1,21 +1,23 @@
 import type { ConsumerId } from "./ConsumerTypes";
+import { SimpleBusNode, type PatchNode } from "./LogicTypes";
 import type { GlobalSource } from "./SourceTypes";
 
 export type DeviceId = string;
+export type DeviceKey = `${ConsumerId}:${DeviceId}`;
 
+
+//? DEVICE Interfaces
 export interface DeviceAddress {
     consumer: ConsumerId;
     device: DeviceId;
 }
 
-export type DeviceKey = `${ConsumerId}:${DeviceId}`;
-
 export enum ConnectionType {
-    HARDWARE = 0,
-    VIRTUAL = 1,
-    NETWORK = 2,
-    WIRELESS = 3,
-    BEACON_MESH = 4,
+    LOCAL       = 0,
+    VIRTUAL     = 1,
+    NETWORK     = 2,
+    WIRELESS    = 3,
+    MESH        = 4,
 }
 
 export interface DeviceName {
@@ -23,9 +25,39 @@ export interface DeviceName {
     short?: string;
 }
 
-// TODO: More of a DeviceAlertAction?
-// TODO CHECK STRING VALUES
-export enum DeviceAlertAction { // TODO Check if these are desired types
+
+// TODO: Brightness as float?
+export interface BaseDeviceRuntimeConfig {
+    name: DeviceName;
+    brightness: number; // 0-100
+    flip: boolean;
+}
+
+export interface DeviceInfo {
+    connection?: ConnectionType;
+    deviceName?: string; // TODO: Move to telemetry. | Name defined in the device, used to differentiate.
+    model?: string;
+    output_count?: number;
+}
+
+export interface BaseTallyDevice {
+    id: DeviceAddress;
+}
+
+export interface MinimalTallyDevice extends BaseTallyDevice {
+    info: DeviceInfo;
+}
+
+export interface TallyDevice extends MinimalTallyDevice {
+    logic: PatchNode;
+    runtime: BaseDeviceRuntimeConfig;
+    telemetry?: null; // TODO: Combine telemetry and last seen. Last seen can also be set by discovery.
+    last_seen: number;
+}
+
+// ? ALERTS
+// TODO More types?
+export enum DeviceAlertAction {
     CLEAR = 0,
     IDENT = 2,
     INFO = 4,
@@ -33,7 +65,6 @@ export enum DeviceAlertAction { // TODO Check if these are desired types
     PRIO = 8,
 }
 
-// TODO CHECK STRING VALUES
 export enum DeviceAlertTarget {
     ALL = 0,
     OPERATOR = 1,
@@ -63,67 +94,101 @@ export const DEFAULT_ALERT_SLOTS: AlertSlotConfig[] = [
     { action: DeviceAlertAction.CLEAR,  target: null,                       timeout: null },
 ]
 
-// TODO: Add a way to differentiate between device capabilities. Probably inheritance.
-// TODO: split config and state. Makes capabilities easier too.
-// TODO: State on disconnect override?
-export interface TallyDevice {
-    id: DeviceAddress;
-    name: DeviceName;
-    brightness?: number; // 0-100
-    flip?: boolean;
-    connection: ConnectionType;
-    patch: Array<GlobalSource>;
-    // TODO ADD SOURCES LEADING TO TALLY
+
+//? Device packages
+
+
+export interface BaseDeviceBundle extends BaseTallyDevice {
+    moment: number;
+}
+
+export interface DeviceStatePackage {
     state: DeviceTallyState;
-    last_update?: number;
-    model?: string;
+    active_sources: GlobalSource[]; // TODO: Implement or remove.
 }
 
-export interface DeviceRuntimeConfig {
-    brightness: number;
-    flip: boolean;
-    name: DeviceName;
+export interface DeviceStateBundle extends DeviceStatePackage, BaseDeviceBundle {}
+
+export interface DeviceAlertPackage {
+    action: DeviceAlertAction;
+    target: DeviceAlertTarget | null;
+    timeout: number | null;
 }
 
-export interface DeviceInfo {
-    connection?: ConnectionType;
-    name?: string; // Name defined in the device, used to differentiate.
-    model?: string;
-    output_count?: number;
-}
+export interface DeviceAlertBundle extends DeviceAlertPackage, BaseDeviceBundle {}
 
-export interface DeviceDiscoveryPacket extends DeviceInfo {
-    id: DeviceId;
-}
+export interface DeviceDiscoveryBundle extends MinimalTallyDevice {} // Empty for now, might add more in the future
 
-export interface NewTallyDevice { // TODO
+//? Device tools and DTOs
+
+const defaultTallyDevice = (): Omit<TallyDevice, "id"> => ({
+    logic: new SimpleBusNode(),
+    runtime: {
+        name: { long: "Unnamed Device" },
+        brightness: 100,
+        flip: false,
+    },
+    info: {},
+    last_seen: Date.now(),
+});
+
+export class TallyDeviceDto implements TallyDevice {
     id: DeviceAddress;
-    state: { // Tally logic, on base device topic.
-        patch: Array<GlobalSource>;
-        state: DeviceTallyState;
-        last_update?: number;
+    logic: PatchNode;
+    runtime: BaseDeviceRuntimeConfig;
+    info: DeviceInfo;
+    telemetry?: null; 
+    last_seen: number;
+
+    constructor(device: Partial<TallyDevice> & Pick<TallyDevice, "id">) {
+        const newDevice = { ...defaultTallyDevice(), ...device };
+        this.id = newDevice.id;
+        this.logic = newDevice.logic;
+        this.runtime = newDevice.runtime;
+        this.info = newDevice.info;
+        this.telemetry = newDevice.telemetry;
+        this.last_seen = newDevice.last_seen;
     }
-    runtime: DeviceRuntimeConfig;
-    info: DeviceInfo
+
+    static fromDiscoveryBundle(bundle: DeviceDiscoveryBundle): TallyDevice {
+        return new TallyDeviceDto(bundle);
+    }
+
+    toInterface(): TallyDevice {
+        return this as TallyDevice;
+    }
+
+    toKey(): DeviceKey {
+        return GlobalDeviceTools.create(this.id.consumer, this.id.device);
+    }
+
+
+    //? Bundles
+    toStateBundle(pckg: DeviceStatePackage): DeviceStateBundle {
+        return {
+            ...this,
+            ...pckg,
+            moment: Date.now(),
+        };
+    }
+
+    toAlertBundle(pckg: DeviceAlertPackage): DeviceAlertBundle {
+        return {
+            ...this,
+            ...pckg,
+            moment: Date.now(),
+        };
+    }
+
+
+    //? Serialisation
+    serialize(): string {
+        return JSON.stringify(this.toInterface());
+    }
+    
 }
 
-export abstract class GlobalDeviceTools { // Todo: Maybe a device DTO?
-    // TODO Move / refactor?
-    static defaultDevice(partial: Partial<TallyDevice> & Pick<TallyDevice, 'id' | 'name'>): TallyDevice {
-
-        return {
-            brightness: 100,
-            flip: false,
-            connection: ConnectionType.VIRTUAL,
-            patch: [],
-            state: DeviceTallyState.NONE,
-            ...partial,
-            name: {
-                short: partial.name.short ?? partial.name.long,
-                long: partial.name.long,
-            },
-        }
-    }
+export abstract class GlobalDeviceTools {
 
     static create (consumer: ConsumerId, device: DeviceId): DeviceKey { 
         return `${consumer}:${device}`;
