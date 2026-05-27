@@ -2,18 +2,10 @@ import { EventEmitter } from "node:events";
 import type { ProducerId, TallyState, SourceMap, ProducerModel } from "../types/ProducerStates";
 import { Logger } from "../../logging/Logger";
 import { ProducerStore } from "../../database/ProducerStore";
+import type { ProducerConfig } from "../types/ProducerTypes";
 
-export interface ProducerConfig {
-    id: ProducerId,
-    name?: string;
-}
 
-export enum ProducerStatus {
-    DISABLED = "Disabled",
-    OFFLINE = "Offline",
-    ONLINE = "Online",
-    ERROR = "Error"
-}
+
 
 // export enum ProducerType { // Move to AbstractProducer once imp, or probably remove.
 //     UNKNOWN = "UNKNWN",
@@ -21,13 +13,7 @@ export enum ProducerStatus {
 //     AUX = "AUXILI",
 //     WEBPAGE = "WEBPAG"
 // }
-export interface ProducerInfo {
-    update_moment: number | null;
-    model: ProducerModel;
-    sources: SourceMap;
-    status: ProducerStatus;
-    // Todo add multi bus support.
-}
+
 
 export type TallyProducerEvents = {
     tally_update: [TallyState];
@@ -52,7 +38,7 @@ export abstract class AbstractTallyProducer<T extends TallyProducerEvents & Reco
         name: "Producer",
     };
 
-    protected abstract getDefaultConfig(): Required<ProducerConfig>;
+    protected abstract getDefaultConfig(): Omit<ProducerConfig, 'id'>;
 
     getConfig(): ProducerConfig {
         return this.config;

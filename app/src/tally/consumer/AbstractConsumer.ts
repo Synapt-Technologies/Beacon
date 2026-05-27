@@ -2,28 +2,12 @@ import { EventEmitter } from "node:events";
 import { GlobalSourceTools, type GlobalTallySource, type TallyState } from "../types/ProducerStates";
 import { Logger } from "../../logging/Logger";
 import { type ConsumerId, type DeviceAddress, DeviceAlertState, DeviceAlertTarget, DeviceTallyState, type TallyDevice } from "../types/ConsumerStates";
-import type { DeviceRuntimeConfig } from "../types/DeviceTypes";
+import type { TallyDeviceMap, DeviceRuntimeConfig } from "../types/DeviceTypes";
 import { ConsumerStore } from "../../database/ConsumerStore";
 import type { SystemInfo } from "../../types/SystemInfo";
+import type { ConsumerConfig, ConsumerInfo } from "../types/ConsumerTypes";
+import { ConnectionState, type WithRequired } from "../types/CommonTypes";
 
-
-export enum ConsumerStatus {
-    DISABLED = "Disabled",
-    OFFLINE = "Offline",
-    ONLINE = "Online",
-    ERROR = "Error"
-}
-
-export interface ConsumerInfo {
-    status: ConsumerStatus;
-    device_count: number;
-}
-
-export interface ConsumerConfig {
-    id?: ConsumerId;
-    name?: string;
-    system_info?: SystemInfo;
-}
 
 export type ConsumerEvents = {
     device_update: [device: TallyDevice];
@@ -40,26 +24,16 @@ export abstract class AbstractConsumer<T extends ConsumerEvents & Record<string,
 
     protected store: ConsumerStore;
 
-    protected devices: Map<string, TallyDevice> = new Map();
+    protected devices: TallyDeviceMap = new Map();
 
-    protected config: Required<ConsumerConfig>;
-
-    // Static + function: Static removes recursion, function makes it so the parent constructor gets the child's values.
-    public static readonly DefaultConfig: Required<ConsumerConfig> = {
-        id: "",
-        name: "Consumer",
-        // system_info: null, // TODO: Remove default system info.
-        system_info: {
-            name: "Beacon-Tally Base"
-        }
-    };
+    protected config: ConsumerConfig;
 
     protected info: ConsumerInfo = { 
-        status: ConsumerStatus.OFFLINE, 
+        state: ConnectionState.OFFLINE, 
         device_count: 0 
     };
 
-    protected abstract getDefaultConfig(): Required<ConsumerConfig>;
+    protected abstract getDefaultConfig(): Omit<ConsumerConfig, 'id'>;
 
     getConfig(): ConsumerConfig {
         return this.config;
@@ -69,7 +43,7 @@ export abstract class AbstractConsumer<T extends ConsumerEvents & Record<string,
         return this.info;
     }
 
-    constructor(config: ConsumerConfig) {
+    constructor(config: WithRequired<ConsumerConfig, "id">) {
         super();
 
         this.config = {...this.getDefaultConfig(), ...config};
@@ -87,52 +61,12 @@ export abstract class AbstractConsumer<T extends ConsumerEvents & Record<string,
 
         this.checkConfig(this.config);
     }
-
-    protected tallyState: TallyState = {
-        program: new Set<string>(),
-        preview: new Set<string>()
-    };
-
-    // TODO Lot of duplucate code, maybe disconnect bool, or move all tally config building to orchestrator.
-    protected baseState: DeviceTallyState = DeviceTallyState.NONE;
-
-    setBaseState(state: DeviceTallyState): void {
-        this.baseState = state;
-        for (const device of this.devices.values()) {
-            this.setTallyDevice(device);
-        }
-    }
-
-    protected disconnectState: DeviceTallyState = DeviceTallyState.NONE;
-
-    setDisconnectState(state: DeviceTallyState): void {
-        if (this.disconnectState == state) return;
-
-        this.disconnectState = state;
-        for (const device of this.devices.values()) {
-            this.sendDeviceConfig(device);
-        }
-
-    }
-
         
     protected checkConfig(config: ConsumerConfig) {
         if (!config.id || config.id == "")
             this.logger.fatal(`Invalid consumer ID provided. Submitted config:`, config);
-        if (config.system_info == null)
-            this.logger.fatal(`System info was not provided. Submitted config:`, config);
-    }
-
-    protected getDeviceKey(address: DeviceAddress): string {
-        return `${address.consumer}:${address.device}`;
-    }
-
-    protected getDeviceAddress(key: string): DeviceAddress {
-        
-        const parts = key.split(":");
-        const consumer = parts.shift() || ""; // Take the first part
-        const device = parts.join(":");    // Put everything else back together
-        return { consumer, device };
+        if (config.name == null || config.name == "")
+            this.logger.fatal(`System name was not provided. Submitted config:`, config);
     }
 
     getAvailableDevices(): Array<TallyDevice> {
@@ -156,6 +90,7 @@ export abstract class AbstractConsumer<T extends ConsumerEvents & Record<string,
         this.sendDeviceConfig(device);
         (this as EventEmitter<ConsumerEvents>).emit('device_discovery', device);
     }
+
     setDeviceRuntimeConfig(address: DeviceAddress, config: Partial<DeviceRuntimeConfig>): void {
         const key = this.getDeviceKey(address);
 
