@@ -1,92 +1,79 @@
-import type { ProducerId } from "./ProducerTypes";
+import type { ConnectionState, DisplayName } from "./CommonTypes";
+import type { ProducerId, ProducerState } from "./ProducerTypes";
 
 
 export type BusId = string;
 export type SourceId = string;
 
 export type GlobalSourceKey = `${ProducerId}:${SourceId}`;
+export type GlobalBusKey = `${ProducerId}:${BusId}`;
 
-export interface ProducerModel {
-    short?: string;
-    long?: string;
+
+// ? Sources
+export interface GlobalSourceAddress {
+    producer: ProducerId;
+    source: SourceId;
+}
+
+export interface GlobalSourceInfo {
+    id: GlobalSourceAddress;
+    name: DisplayName;
+}
+
+export type SourceMap = Map<GlobalSourceKey, GlobalSourceInfo>; // TODO: Should this be a set?
+
+
+// ? Busses
+export interface GlobalBusAddress {
+    producer: ProducerId;
+    bus: BusId;
+}
+
+export interface SourceBusInfo {
+    id: GlobalBusKey;
+    name: DisplayName;
+}
+
+export interface SourceBus extends SourceBusInfo {
+    sources: Set<GlobalSourceKey>;
 }
 
 
-export interface GlobalSource {
-    producer: ProducerId;
-    source: SourceId;
-    // bus?: BusId; // TODO Add bus support, maybe per bus map instead?
+// ? Bus Maps
+export type ProducerBusMap = Map<GlobalBusKey, SourceBus>;
+
+export interface ProducerBusState extends ProducerState{
+    busses: ProducerBusMap;
 }
 
-export class GlobalSourceDto implements GlobalSource {
-    producer: ProducerId;
-    source: SourceId;
+export type GlobalProducerMap = Map<ProducerId, ProducerBusState>;
 
-    constructor(producer: ProducerId, source: SourceId) {
-        this.producer = producer;
-        this.source = source;
+
+export abstract class GlobalSourceTools {
+    //? Source Address
+    static toSourceKey (producer: ProducerId, source: SourceId): GlobalSourceKey {
+        return `${producer}:${source}`;
     }
 
-    static from(source: GlobalSource | GlobalSourceKey): GlobalSourceDto {
-        if (typeof source === "string") {
-            return this.fromKey(source);
-        }
-
-        return new GlobalSourceDto(source.producer, source.source);
-    }
-
-    static fromKey(key: GlobalSourceKey): GlobalSourceDto {
+    static parseSourceKey (key: GlobalSourceKey): GlobalSourceAddress {
         const [producer, ...sourceParts] = key.split(":");
-        return new GlobalSourceDto(producer, sourceParts.join(":"));
+        return { producer, source: sourceParts.join(":") };
     }
 
-    toKey(): GlobalSourceKey {
-        return `${this.producer}:${this.source}` as GlobalSourceKey;
+
+    //? Source Bus
+    static toBusKey (producer: ProducerId, bus: BusId): GlobalBusKey {
+        return `${producer}:${bus}`;
     }
 
-    toString(): string {
-        return this.toKey();
+    static parseBusKey (key: GlobalBusKey): GlobalBusAddress {
+        const [producer, ...busParts] = key.split(":");
+        return { producer, bus: busParts.join(":") };
     }
 
-    toJSON(): GlobalSource {
-        return {
-            producer: this.producer,
-            source: this.source,
-        };
-    }
-}
 
-export interface SourceBus {
-    program: Set<GlobalSourceKey>;
-    preview: Set<GlobalSourceKey>;
-    moment?: number;
-}
-
-export class SourceBusDto implements SourceBus {
-
-    public program: Set<GlobalSourceKey>;
-    public preview: Set<GlobalSourceKey>;
-    public moment?: number;
-
-    constructor(
-        program: Set<GlobalSourceKey>,
-        preview: Set<GlobalSourceKey>,
-        moment?: number
-    ) {
-        this.program = program;
-        this.preview = preview;
-        this.moment = moment;
-    }
-
-    static from(sourceBus: SourceBus): SourceBusDto {
-        return new SourceBusDto(
-            new Set(sourceBus.program),
-            new Set(sourceBus.preview),
-            sourceBus.moment
-        );
-    }
-
-    private areSetsEqual(a: Set<GlobalSourceKey>, b: Set<GlobalSourceKey>): boolean {
+    //? Bus Equals
+    static areSourceSetsEqual(a: Set<GlobalSourceKey>, b: Set<GlobalSourceKey>): boolean {
         if (a.size !== b.size) return false;
         for (const item of a) {
             if (!b.has(item)) return false;
@@ -94,36 +81,55 @@ export class SourceBusDto implements SourceBus {
         return true;
     }
 
-    equals(other: SourceBusDto | SourceBus): boolean {
-        if (!(other instanceof SourceBusDto))
-            other = SourceBusDto.from(other);
+    static areSourceBussesEqual(a: SourceBus, b: SourceBus, onlySources: boolean = true): boolean {
 
-        if (!this.areSetsEqual(this.program, new Set(other.program))) 
-            return false;
-        if (!this.areSetsEqual(this.preview, new Set(other.preview))) 
-            return false;
+
+        if (!onlySources) 
+        {
+            if (a.name.long !== b.name.long) return false;
+            if (a.name.short !== b.name.short) return false;
+
+            if (a.id !== b.id) return false;
+        }
+
+        if (!this.areSourceSetsEqual(a.sources, b.sources)) return false;
 
         return true;
     }
 
-    serialize() {
-        return {
-            program: Array.from(this.program),
-            preview: Array.from(this.preview),
-            moment: this.moment
+    static areBusMapsEqual(a: ProducerBusMap, b: ProducerBusMap, onlySources: boolean = true): boolean {
+        if (a.size !== b.size) return false;
+
+        for (const [key, bus] of a) {
+            const otherBus = b.get(key);
+            if (!otherBus) return false;
+            if (!this.areSourceBussesEqual(bus, otherBus, onlySources)) return false;
         }
+
+        return true;
     }
+
+    static areProducerBusStatesEqual(a: ProducerBusState, b: ProducerBusState, onlySources: boolean = true): boolean {
+
+        if (!onlySources) 
+        {
+            if (a.state !== b.state) return false;
+
+            if (a.id !== b.id) return false;
+        }
+        
+        return this.areBusMapsEqual(a.busses, b.busses, onlySources);
+    }
+
+    static areGlobalProducerMapsEqual(a: GlobalProducerMap, b: GlobalProducerMap, onlySources: boolean = true): boolean {
+        if (a.size !== b.size) return false;
+        for (const [producer, busState] of a) {
+            const otherBusState = b.get(producer);
+            if (!otherBusState) return false;
+            if (!this.areProducerBusStatesEqual(busState, otherBusState, onlySources)) return false;
+        }
+
+        return true;
+    }
+
 }
-
-
-export interface SourceName {
-    long: string;
-    short?: string;
-}
-
-export interface SourceInfo {
-    source: GlobalSource;
-    name: SourceName;
-}
-
-export type SourceMap = Map<GlobalSourceKey, SourceInfo>;
