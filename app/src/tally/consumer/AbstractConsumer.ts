@@ -130,14 +130,12 @@ export abstract class AbstractConsumer<
   }
 
   protected _addDevice(device: TallyDeviceDto, override: boolean = false) {
-    const id = { ...device.id, consumer: this.config.id };
-    const key = DeviceTools.toKey(id);
-    const existing = this.devices.get(key);
-
     const newDevice = new TallyDeviceDto({
       ...device,
-      id,
+      id: { ...device.id, consumer: this.config.id },
     });
+    const key = newDevice.toKey();
+    const existing = this.devices.get(key);
 
     if (existing) {
       newDevice.telemetry ??= existing.telemetry;
@@ -176,7 +174,7 @@ export abstract class AbstractConsumer<
     }
 
     // TODO: Check if this is needed.
-    this.sendDeviceRuntimeConfig(id, newDevice.toRuntimeConfigBundle());
+    this.sendDeviceRuntimeConfig(newDevice.id, newDevice.toRuntimeConfigBundle());
   }
 
   sendDeviceState(address: DeviceAddress, pckg: DeviceStatePackage): void {
