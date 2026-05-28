@@ -19,5 +19,6 @@
         "**/.vexp/.gitignore": true,
         "**/.vexp/.gitattributes": true,
         "**/.vexp/mcp.token": true
-    }
+    },
+    "editor.tabSize": 2
 }
