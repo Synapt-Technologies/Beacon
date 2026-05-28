@@ -105,6 +105,11 @@ export abstract class AbstractConsumer<
         config,
       );
   }
+
+
+  abstract init(): void | Promise<void>;
+  abstract destroy(): void | Promise<void>;
+
   // TODO: Move above to AbstractConnection
 
   protected devices: TallyDeviceMap = new Map();
@@ -261,10 +266,8 @@ export abstract class AbstractConsumer<
   }
 
 
-  //! Refactor below:
-
   deleteDevice(address: DeviceAddress): void {
-    const key = this.getDeviceKey(address);
+    const key = DeviceTools.toKey(address);
 
     if (!this.devices.has(key)) {
       this.logger.warn(
@@ -281,7 +284,4 @@ export abstract class AbstractConsumer<
     this.logger.debug(`Device ${key} deleted.`);
   }
 
-
-  abstract init(): void | Promise<void>;
-  abstract destroy(): void | Promise<void>;
 }
