@@ -8,7 +8,9 @@ export type SourceId = string;
 
 export type GlobalSourceKey = `${ProducerId}:${SourceId}`;
 // TODO: Colon sanitization, some producers might contain colons in their names. Be it due to the source type, or them allowing user defined keys.
-export type GlobalBusKey = `${ProducerId}:${BusId}` | `${ProducerId}:${BusGroupId}:${BusId}`;
+export type GlobalBusKey =
+  | `${ProducerId}:${BusId}`
+  | `${ProducerId}:${BusGroupId}:${BusId}`;
 
 // ? Sources
 export interface GlobalSourceAddress {
@@ -71,7 +73,11 @@ export abstract class BusTools {
     return `${producer}:${bus}` as GlobalBusKey;
   }
 
-  static fromGroupedParts(producer: ProducerId, group: BusGroupId, bus: BusId): GlobalBusKey {
+  static fromGroupedParts(
+    producer: ProducerId,
+    group: BusGroupId,
+    bus: BusId,
+  ): GlobalBusKey {
     return `${producer}:${group}:${bus}` as GlobalBusKey;
   }
 
