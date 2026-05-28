@@ -32,6 +32,7 @@ export abstract class AbstractTallyProducer<
   T extends TallyProducerEvents & Record<string, unknown[]> =
     TallyProducerEvents,
 > extends EventEmitter<T> {
+  // TODO: In AbstractConnection make some sort of array to support flexible lable count.
   public readonly conType: string = "PROD";
   public readonly prodType: string = "SWTCHR";
 
@@ -42,10 +43,7 @@ export abstract class AbstractTallyProducer<
   protected config: ProducerConfig;
   protected abstract getDefaultConfig(): Omit<ProducerConfig, "id">;
 
-  protected busState: ProducerBusMap = new Map();
-
   protected info: ProducerInfo = {
-    // TODO make partial?
     state: ConnectionState.OFFLINE,
     model: {
       long: "Unknown Model",
@@ -57,13 +55,18 @@ export abstract class AbstractTallyProducer<
   getConfig(): ProducerConfig {
     return this.config;
   }
+  getId(): ProducerId {
+    return this.config.id;
+  }
+  setName(name: string): void {
+    this.config.name = name;
+  }
+  getName(): string {
+    return this.config.name;
+  }
 
   getInfo(): ProducerInfo {
     return this.info;
-  }
-
-  getBusState(): ProducerBusMap {
-    return this.busState;
   }
 
   constructor(config: WithRequired<ConsumerConfig, "id">) {
@@ -78,6 +81,9 @@ export abstract class AbstractTallyProducer<
       this.config.id,
     ]);
 
+    this.checkConfig(this.config);
+
+    //? Not in AbstractConnection (Maybe store should)
     this.store = new ProducerStore(this.config.id);
 
     const storedInfo = this.store.loadInfo();
@@ -85,8 +91,7 @@ export abstract class AbstractTallyProducer<
       this.info = storedInfo;
       this.logger.debug(`Loaded stored info.`);
     }
-
-    this.checkConfig(this.config);
+    //? End Not in AbstractConnection
   }
 
   protected checkConfig(config: ProducerConfig) {
@@ -102,9 +107,18 @@ export abstract class AbstractTallyProducer<
       );
   }
 
+  // TODO: Move above to AbstractConnection
+
+  protected busState: ProducerBusMap = new Map();
+
+  getBusState(): ProducerBusMap {
+    return this.busState;
+  }
+
   abstract init(): void | Promise<void>;
   abstract destroy(): void | Promise<void>;
 
+  // TODO: Maybe in AbstractConnection?
   private _destroying = false;
   markDestroying(): void {
     this._destroying = true;
@@ -112,6 +126,7 @@ export abstract class AbstractTallyProducer<
   isDestroying(): boolean {
     return this._destroying;
   }
+  // TODO: End Maybe in AbstractConnection?
 
   protected emitInfoUpdate(): void {
     if (this._destroying) return;
@@ -120,22 +135,11 @@ export abstract class AbstractTallyProducer<
     this.logger.debug(`Persisted info to store.`);
   }
 
-  getId(): ProducerId {
-    return this.config.id;
-  }
-
   getSources(): SourceMap | null {
     return this.info.sources;
   }
 
   getModel(): DisplayName {
     return this.info.model;
-  }
-
-  setName(name: string): void {
-    this.config.name = name;
-  }
-  getName(): string {
-    return this.config.name;
   }
 }
