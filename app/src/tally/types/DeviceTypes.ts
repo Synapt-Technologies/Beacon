@@ -152,6 +152,12 @@ export interface DeviceAlertBundle
 export interface DeviceDiscoveryBundle {
   id: DeviceId;
   info: DeviceInfo;
+  telemetry?: DeviceTelemetry;
+}
+
+export interface DeviceTelemetryBundle
+  extends DeviceTelemetry, BaseTallyDevice {
+  /* empty */
 }
 
 export type TallyDeviceMap = Map<DeviceKey, TallyDevice>;
