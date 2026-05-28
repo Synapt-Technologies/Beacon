@@ -62,6 +62,7 @@ export interface StoredTallyDevice extends MinimalTallyDevice {
   runtime: DeviceRuntimeConfig;
 }
 
+// ! Warning: All fields except logic and runtime are overridden when a device with the same id is added. Telemetry is only overridden if set on the new device.
 export interface TallyDevice extends StoredTallyDevice {
   telemetry?: DeviceTelemetry;
 }

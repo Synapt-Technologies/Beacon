@@ -6,6 +6,7 @@ import {
   type TallyDevice,
   type DeviceAddress,
   DeviceTools,
+  TallyDeviceDto,
 } from "../types/DeviceTypes";
 import { ConsumerStore } from "../../database/ConsumerStore";
 import type {
@@ -102,23 +103,56 @@ export abstract class AbstractConsumer<
     return this.devices.get(DeviceTools.toKey(address)) || null;
   }
 
-  //! Refactor below:
-
+  // TODO: Override true or false by default? What fields should overridden?
   protected _addDevice(device: TallyDevice, override: boolean = false) {
-    device.id.consumer = this.config.id;
-    const key = DeviceTools.toKey(device.id);
+    const id = { ...device.id, consumer: this.config.id };
+    const key = DeviceTools.toKey(id);
+    const existing = this.devices.get(key);
 
-    if (this.devices.has(key) && !override) {
-      return;
+    const newDevice = new TallyDeviceDto({
+      ...device,
+      id,
+    });
+
+    if (existing) {
+      newDevice.telemetry ??= existing.telemetry;
+
+      if (!override) {
+        newDevice.logic = existing.logic;
+        newDevice.runtime = existing.runtime;
+        this.logger.debug(
+          `Device at address ${key} already exists. Merging with existing device:`,
+          existing,
+          `->`,
+          newDevice,
+        );
+      } else {
+        this.logger.debug(
+          `Device at address ${key} already exists. Overriding with new device:`,
+          existing,
+          `->`,
+          newDevice,
+        );
+      }
     }
 
-    this.devices.set(key, device);
+    this.devices.set(key, newDevice);
     this.info.device_count = this.devices.size;
-    this.store.saveDevice(device);
-    this.setTallyDevice(device);
-    this.sendDeviceConfig(device);
-    (this as EventEmitter<ConsumerEvents>).emit("device_discovery", device);
+    this.store.saveDevice(newDevice);
+
+    if (existing) {
+      (this as EventEmitter<ConsumerEvents>).emit("device_update", newDevice);
+    } else {
+      (this as EventEmitter<ConsumerEvents>).emit(
+        "device_discovery",
+        newDevice,
+      );
+    }
+
+    this.setTallyDevice(newDevice);
   }
+
+  //! Refactor below:
 
   setDeviceRuntimeConfig(
     address: DeviceAddress,
