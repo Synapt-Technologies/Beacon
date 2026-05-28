@@ -8,26 +8,30 @@ import {
   DeviceTools,
 } from "../types/DeviceTypes";
 import { ConsumerStore } from "../../database/ConsumerStore";
-import type { ConsumerConfig, ConsumerInfo } from "../types/ConsumerTypes";
+import type {
+  ConsumerConfig,
+  ConsumerId,
+  ConsumerInfo,
+} from "../types/ConsumerTypes";
 import { ConnectionState, type WithRequired } from "../types/CommonTypes";
 
+// TODO: Add (consumer) info_update?
 export type ConsumerEvents = {
+  device_discovery: [device: TallyDevice];
   device_update: [device: TallyDevice];
   device_removed: [address: DeviceAddress];
-  device_discovery: [device: TallyDevice];
 };
 
 // TODO: Maybe IConnection to force getId and get and setName and other shared ops like db?
 export abstract class AbstractConsumer<
   T extends ConsumerEvents & Record<string, unknown[]> = ConsumerEvents,
 > extends EventEmitter<T> {
+  // TODO: In AbstractConnection make some sort of array to support flexible lable count.
   protected readonly conType: string = "CONS";
 
   protected logger: Logger;
 
   protected store: ConsumerStore;
-
-  protected devices: TallyDeviceMap = new Map();
 
   protected config: ConsumerConfig;
   protected abstract getDefaultConfig(): Omit<ConsumerConfig, "id">;
@@ -39,6 +43,15 @@ export abstract class AbstractConsumer<
 
   getConfig(): ConsumerConfig {
     return this.config;
+  }
+  getId(): ConsumerId {
+    return this.config.id;
+  }
+  setName(name: string): void {
+    this.config.name = name;
+  }
+  getName(): string {
+    return this.config.name;
   }
 
   getInfo(): ConsumerInfo {
@@ -52,6 +65,9 @@ export abstract class AbstractConsumer<
 
     this.logger = new Logger(["Tally", this.conType, this.config.id]);
 
+    this.checkConfig(this.config);
+
+    //? Not in AbstractConnection (Maybe store should)
     this.store = new ConsumerStore(this.config.id);
 
     const storedDevices = this.store.loadDevices();
@@ -60,8 +76,7 @@ export abstract class AbstractConsumer<
       this.info.device_count = storedDevices.size;
       this.logger.debug(`Loaded ${storedDevices.size} stored device(s).`);
     }
-
-    this.checkConfig(this.config);
+    //? End Not in AbstractConnection
   }
 
   protected checkConfig(config: ConsumerConfig) {
@@ -76,6 +91,9 @@ export abstract class AbstractConsumer<
         config,
       );
   }
+  // TODO: Move above to AbstractConnection
+
+  protected devices: TallyDeviceMap = new Map();
 
   getAvailableDevices(): Array<TallyDevice> {
     return Array.from(this.devices.values());
@@ -223,15 +241,4 @@ export abstract class AbstractConsumer<
 
   abstract init(): void | Promise<void>;
   abstract destroy(): void | Promise<void>;
-
-  getId(): ConsumerId {
-    return this.config.id;
-  }
-
-  setName(name: string): void {
-    this.config.name = name;
-  }
-  getName(): string {
-    return this.config.name;
-  }
 }
