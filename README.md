@@ -2,7 +2,7 @@
 
 Find the light in your darkness. A highly configurable, networked tally system.
 
-> [!CAUTION]
+> [!WARNING]
 > This version is actively being tested but is still an early release and may contain bugs. If you need a battle-tested version, please use [v2.0.0](https://github.com/Synapt-Technologies/Beacon/releases/tag/v2.0.0) for now. It's a step back in features, but it's stable. If you do find a bug, let us know! We'll do our best to fix it quickly.
 
 ## Features
