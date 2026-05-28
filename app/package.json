@@ -1,65 +1,67 @@
 {
-    "name": "beacon-tally",
-    "version": "3.0.0",
-    "type": "module",
-    "main": "app.ts",
-    "author": "Synapt <contact@synapt.nl>",
-    "repository": {
-        "url": "https://github.com/Synapt-Technologies/Beacon",
-        "type": "git"
-    },
-    "license": "AGPL-3.0-only",
-    "scripts": {
-        "dev": "tsx supervisor.ts",
-        "lint": "eslint .",
-        "typecheck": "tsc --noEmit && tsc --noEmit -p ui/tsconfig.json",
-        "build": "vite build && tsup",
-        "serve": "NODE_ENV=production node dist/supervisor.js",
-        "start": "yarn build && NODE_ENV=production node dist/supervisor.js"
-    },
-    "packageManager": "yarn@4.13.0",
-    "devDependencies": {
-        "@eslint/js": "^10.0.1",
-        "@types/better-sqlite3": "^7.6.13",
-        "@types/express": "^5.0.6",
-        "@types/node": "^25.5.0",
-        "@types/pigpio": "^3.1.0",
-        "@types/react": "^19.2.14",
-        "@types/react-dom": "^19.2.3",
-        "@types/ws": "^8.5.14",
-        "@vitejs/plugin-react": "^6.0.1",
-        "eslint": "^10.4.0",
-        "eslint-plugin-react-hooks": "^7.1.1",
-        "react": "^19.2.4",
-        "react-dom": "^19.2.4",
-        "tsup": "^8.5.1",
-        "typescript": "^5.9.3",
-        "typescript-eslint": "^8.60.0",
-        "vite": "^8.0.7"
-    },
-    "dependencies": {
-        "aedes": "^1.0.1",
-        "atem-connection": "^3.9.0",
-        "better-sqlite3": "^12.8.0",
-        "express": "^5.2.1",
-        "less": "^4.6.4",
-        "mqtt": "^5.10.4",
-        "react-hot-toast": "^2.6.0",
-        "react-markdown": "^10.1.0",
-        "react-router-dom": "^7.14.0",
-        "remark-gfm": "^4.0.1",
-        "remark-github-alerts": "^0.1.1",
-        "tsx": "^4.21.0",
-        "vite-express": "^0.22.1",
-        "web-haptics": "^0.0.6",
-        "ws": "^8.18.3"
-    },
-    "optionalDependencies": {
-        "pigpio": "^3.3.1"
-    },
-    "dependenciesMeta": {
-        "pigpio": {
-            "built": false
-        }
+  "name": "beacon-tally",
+  "version": "3.0.0",
+  "type": "module",
+  "main": "app.ts",
+  "author": "Synapt <contact@synapt.nl>",
+  "repository": {
+    "url": "https://github.com/Synapt-Technologies/Beacon",
+    "type": "git"
+  },
+  "license": "AGPL-3.0-only",
+  "scripts": {
+    "dev": "tsx supervisor.ts",
+    "format": "prettier --write .",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p ui/tsconfig.json",
+    "build": "vite build && tsup",
+    "serve": "NODE_ENV=production node dist/supervisor.js",
+    "start": "yarn build && NODE_ENV=production node dist/supervisor.js"
+  },
+  "packageManager": "yarn@4.13.0",
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/express": "^5.0.6",
+    "@types/node": "^25.5.0",
+    "@types/pigpio": "^3.1.0",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@types/ws": "^8.5.14",
+    "@vitejs/plugin-react": "^6.0.1",
+    "eslint": "^10.4.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "prettier": "^3.8.3",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "tsup": "^8.5.1",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.60.0",
+    "vite": "^8.0.7"
+  },
+  "dependencies": {
+    "aedes": "^1.0.1",
+    "atem-connection": "^3.9.0",
+    "better-sqlite3": "^12.8.0",
+    "express": "^5.2.1",
+    "less": "^4.6.4",
+    "mqtt": "^5.10.4",
+    "react-hot-toast": "^2.6.0",
+    "react-markdown": "^10.1.0",
+    "react-router-dom": "^7.14.0",
+    "remark-gfm": "^4.0.1",
+    "remark-github-alerts": "^0.1.1",
+    "tsx": "^4.21.0",
+    "vite-express": "^0.22.1",
+    "web-haptics": "^0.0.6",
+    "ws": "^8.18.3"
+  },
+  "optionalDependencies": {
+    "pigpio": "^3.3.1"
+  },
+  "dependenciesMeta": {
+    "pigpio": {
+      "built": false
     }
+  }
 }
