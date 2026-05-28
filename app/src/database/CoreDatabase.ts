@@ -137,7 +137,7 @@ export class CoreDatabase {
             const parsed = JSON.parse(row.info);
             const sources = new Map<string, SourceInfo>(
                 (parsed.sources ?? []).map((s: SourceInfo) => [
-                    SourceTools.toSourceKey(s.id),
+                    SourceTools.fromAddress(s.id),
                     s
                 ])
             );

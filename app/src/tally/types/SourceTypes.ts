@@ -48,28 +48,30 @@ export type GlobalProducerMap = Map<ProducerId, ProducerBusState>;
 
 export abstract class SourceTools {
   //? Source Address
-  static createSourceKey(
-    producer: ProducerId,
-    source: SourceId,
-  ): GlobalSourceKey {
+  static fromParts(producer: ProducerId, source: SourceId): GlobalSourceKey {
     return `${producer}:${source}` as GlobalSourceKey;
   }
 
-  static toSourceKey(key: GlobalSourceAddress): GlobalSourceKey {
-    return `${key.producer}:${key.source}` as GlobalSourceKey;
+  static fromAddress(key: GlobalSourceAddress): GlobalSourceKey {
+    return SourceTools.fromParts(key.producer, key.source);
   }
 
-  static parseSourceKey(key: GlobalSourceKey): GlobalSourceAddress {
+  static toAddress(key: GlobalSourceKey): GlobalSourceAddress {
     const [producer, ...sourceParts] = key.split(":");
     return { producer, source: sourceParts.join(":") };
   }
-
+}
+export abstract class BusTools {
   //? Source Bus
-  static toBusKey(producer: ProducerId, bus: BusId): GlobalBusKey {
+  static fromParts(producer: ProducerId, bus: BusId): GlobalBusKey {
     return `${producer}:${bus}` as GlobalBusKey;
   }
 
-  static parseBusKey(key: GlobalBusKey): GlobalBusAddress {
+  static fromAddress(key: GlobalBusAddress): GlobalBusKey {
+    return BusTools.fromParts(key.producer, key.bus);
+  }
+
+  static toAddress(key: GlobalBusKey): GlobalBusAddress {
     const [producer, ...busParts] = key.split(":");
     return { producer, bus: busParts.join(":") };
   }
