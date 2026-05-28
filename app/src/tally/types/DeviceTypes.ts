@@ -162,6 +162,15 @@ export interface DeviceTelemetryBundle
 
 export type TallyDeviceMap = Map<DeviceKey, TallyDevice>;
 
+export interface DeviceDiscoveryReply {
+  topic: DeviceAddress;
+}
+
+export interface DeviceDiscoveryReplyBundle
+  extends DeviceDiscoveryReply, BaseTallyDevice {
+  /* empty */
+}
+
 //? Device tools and DTOs
 const defaultTallyDevice = (): Omit<TallyDevice, "id"> => ({
   info: {
@@ -231,6 +240,13 @@ export class TallyDeviceDto implements TallyDevice {
     return {
       ...pckg,
       ...this.toBaseBundle(),
+    };
+  }
+
+  toDiscoveryReplyBundle(): DeviceDiscoveryReplyBundle {
+    return {
+      ...this.toBaseBundle(),
+      topic: this.id,
     };
   }
 
