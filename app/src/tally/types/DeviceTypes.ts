@@ -149,14 +149,27 @@ export interface DeviceAlertBundle
   /* empty */
 }
 
-export interface DeviceDiscoveryBundle {
-  id: DeviceId;
+export interface DeviceRuntimeConfigBundle
+  extends DeviceRuntimeConfig, BaseDeviceBundle {
+  /* empty */
+}
+
+export interface DeviceDiscoveryPackage {
   info: DeviceInfo;
   telemetry?: DeviceTelemetry;
 }
 
+export interface DeviceDiscoveryBundle
+  extends DeviceDiscoveryPackage, BaseTallyDevice {
+  /* empty */
+}
+
+export interface DeviceTelemetryPackage {
+  telemetry: DeviceTelemetry;
+}
+
 export interface DeviceTelemetryBundle
-  extends DeviceTelemetry, BaseTallyDevice {
+  extends DeviceTelemetryPackage, BaseTallyDevice {
   /* empty */
 }
 
@@ -200,10 +213,16 @@ export class TallyDeviceDto implements TallyDevice {
     this.telemetry = newDevice.telemetry;
   }
 
+  static fromDevice(
+    device: Partial<TallyDevice> & Pick<TallyDevice, "id">,
+  ): TallyDeviceDto {
+    return new TallyDeviceDto(device);
+  }
+
   static fromDiscoveryBundle(
     bundle: DeviceDiscoveryBundle,
     consumer: ConsumerId,
-  ): TallyDevice {
+  ): TallyDeviceDto {
     return new TallyDeviceDto({
       ...bundle,
       id: {
@@ -247,6 +266,13 @@ export class TallyDeviceDto implements TallyDevice {
     return {
       ...this.toBaseBundle(),
       topic: this.id,
+    };
+  }
+
+  toRuntimeConfigBundle(): DeviceRuntimeConfigBundle {
+    return {
+      ...this.runtime,
+      ...this.toBaseBundle(),
     };
   }
 
