@@ -2,10 +2,13 @@ import type { DisplayName } from "./CommonTypes";
 import type { ProducerId, ProducerState } from "./ProducerTypes";
 
 export type BusId = string;
+export type BusGroupId = string;
+// TODO: Colon sanitization, some producers might contain colons in their names. Be it due to the source type, or them allowing user defined keys.
 export type SourceId = string;
 
 export type GlobalSourceKey = `${ProducerId}:${SourceId}`;
-export type GlobalBusKey = `${ProducerId}:${BusId}`;
+// TODO: Colon sanitization, some producers might contain colons in their names. Be it due to the source type, or them allowing user defined keys.
+export type GlobalBusKey = `${ProducerId}:${BusId}` | `${ProducerId}:${BusGroupId}:${BusId}`;
 
 // ? Sources
 export interface GlobalSourceAddress {
@@ -23,6 +26,7 @@ export type SourceMap = Map<GlobalSourceKey, SourceInfo>; // TODO: Should this b
 // ? Busses
 export interface GlobalBusAddress {
   producer: ProducerId;
+  group?: BusGroupId;
   bus: BusId;
 }
 
@@ -67,13 +71,23 @@ export abstract class BusTools {
     return `${producer}:${bus}` as GlobalBusKey;
   }
 
+  static fromGroupedParts(producer: ProducerId, group: BusGroupId, bus: BusId): GlobalBusKey {
+    return `${producer}:${group}:${bus}` as GlobalBusKey;
+  }
+
   static fromAddress(key: GlobalBusAddress): GlobalBusKey {
+    if (key.group != null) {
+      return BusTools.fromGroupedParts(key.producer, key.group, key.bus);
+    }
     return BusTools.fromParts(key.producer, key.bus);
   }
 
   static toAddress(key: GlobalBusKey): GlobalBusAddress {
-    const [producer, ...busParts] = key.split(":");
-    return { producer, bus: busParts.join(":") };
+    const parts = key.split(":");
+    if (parts.length === 3) {
+      return { producer: parts[0], group: parts[1], bus: parts[2] };
+    }
+    return { producer: parts[0], bus: parts[1] };
   }
 
   //? Bus Equals
