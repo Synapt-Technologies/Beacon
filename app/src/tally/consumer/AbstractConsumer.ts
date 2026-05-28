@@ -7,6 +7,12 @@ import {
   type DeviceAddress,
   DeviceTools,
   TallyDeviceDto,
+  type DeviceStatePackage,
+  type DeviceAlertPackage,
+  type DeviceDiscoveryBundle,
+  type DeviceDiscoveryReplyBundle,
+  type DeviceRuntimeConfigBundle,
+  type DeviceTelemetryBundle,
 } from "../types/DeviceTypes";
 import { ConsumerStore } from "../../database/ConsumerStore";
 import type {
@@ -20,8 +26,15 @@ import { ConnectionState, type WithRequired } from "../types/CommonTypes";
 export type ConsumerEvents = {
   device_discovery: [device: TallyDevice];
   device_update: [device: TallyDevice];
+  device_telemetry: [device: TallyDevice];
   device_removed: [address: DeviceAddress];
 };
+/*
+ - New device discovery       -> _addDevice             -> *device_discovery*  -> send discovery reply
+ - Existing device discovery  -> _addDevice             -> *device_update*     -> send discovery reply
+ - Received device telemetry  -> processDeviceTelemetry -> *device_telemetry*
+ - Device removed             -> deleteDevice           -> *device_removed*
+*/
 
 // TODO: Maybe IConnection to force getId and get and setName and other shared ops like db?
 export abstract class AbstractConsumer<
@@ -137,6 +150,7 @@ export abstract class AbstractConsumer<
 
     this.devices.set(key, newDevice);
     this.info.device_count = this.devices.size;
+    // TODO: Try catch needed?
     this.store.saveDevice(newDevice);
 
     if (existing) {
@@ -148,57 +162,107 @@ export abstract class AbstractConsumer<
       );
     }
 
-    this.setTallyDevice(newDevice);
+    // TODO: Check if this is needed.
+    this._sendDeviceRuntimeConfig(id, newDevice.toRuntimeConfigBundle());
+
   }
+
+  sendDeviceState(address: DeviceAddress, pckg: DeviceStatePackage): void {
+    this.logger.debug(`Sending state for device ${address}:`, pckg);
+
+    try {
+      this._sendDeviceState(address, pckg);
+    } catch (error) {
+      this.logger.error(`Error sending state for device ${address}:`, error);
+    }
+  }
+
+  protected abstract _sendDeviceState(
+    address: DeviceAddress,
+    pckg: DeviceStatePackage,
+  ): void;
+
+  sendDeviceAlert(address: DeviceAddress, alert: DeviceAlertPackage): void {
+    this.logger.debug(`Sending alert for device ${address}:`, alert);
+
+    try {
+      this._sendDeviceAlert(address, alert);
+    } catch (error) {
+      this.logger.error(`Error sending alert for device ${address}:`, error);
+    }
+  }
+
+  protected abstract _sendDeviceAlert(
+    address: DeviceAddress,
+    alert: DeviceAlertPackage,
+  ): void;
+
+  protected _processDeviceDiscovery(bundle: DeviceDiscoveryBundle): void {
+    this.logger.debug(`Processing discovered device ${bundle.id}:`, bundle);
+
+    const newDevice: TallyDeviceDto = TallyDeviceDto.fromDiscoveryBundle(
+      bundle,
+      this.config.id,
+    );
+
+    this._addDevice(newDevice);
+
+    this._sendDiscoveryReply(
+      newDevice.toDiscoveryReplyBundle(),
+    );
+  }
+
+  protected abstract _sendDiscoveryReply(
+    bundle: DeviceDiscoveryReplyBundle,
+  ): void;
+
+  sendDeviceRuntimeConfig(address: DeviceAddress, bundle: DeviceRuntimeConfigBundle): void {
+    this.logger.debug(
+      `Setting runtime config for device ${address}:`,
+      bundle,
+    );
+
+    
+    try {
+      this._sendDeviceRuntimeConfig(address, bundle);
+    } catch (error) {
+      this.logger.error(
+        `Error setting runtime config for device ${address}:`,
+        error,
+      );
+    }
+  }
+
+  protected abstract _sendDeviceRuntimeConfig(
+    address: DeviceAddress,
+    bundle: DeviceRuntimeConfigBundle,
+  ): void;
+
+  protected _processDeviceTelemetry(bundle: DeviceTelemetryBundle): void {
+    this.logger.debug(
+      `Processing telemetry for device ${bundle.id}:`,
+      bundle,
+    );
+
+    const key = DeviceTools.toKey(bundle.id);
+    const device = this.devices.get(key);
+    if (!device) {
+      this.logger.warn(
+        `Received telemetry for unknown device at address:`,
+        bundle.id,
+      );
+      return;
+    }
+
+    device.telemetry = bundle.telemetry;
+    this.store.saveDevice(device);
+
+    (this as EventEmitter<ConsumerEvents>).emit("device_telemetry", device);
+  }
+
 
   //! Refactor below:
 
-  setDeviceRuntimeConfig(
-    address: DeviceAddress,
-    config: Partial<DeviceRuntimeConfig>,
-  ): void {
-    const key = this.getDeviceKey(address);
-
-    const device = this.devices.get(key);
-    if (!device) {
-      this.logger.warn(
-        `Attempted to set runtime config for unknown device at address:`,
-        address,
-      );
-      return;
-    }
-
-    if (config.name !== undefined) device.name = config.name;
-    if (config.brightness !== undefined) device.brightness = config.brightness;
-    if (config.flip !== undefined) device.flip = config.flip;
-    this.store.saveDevice(device);
-    this.sendDeviceConfig(device);
-    (this as EventEmitter<ConsumerEvents>).emit("device_update", device);
-    this.logger.debug(`Device ${key} runtime config updated:`, config);
-  }
-  setDevicePatch(
-    address: DeviceAddress,
-    patch: Array<GlobalTallySource>,
-  ): void {
-    const key = this.getDeviceKey(address);
-
-    const device = this.devices.get(key);
-    if (!device) {
-      this.logger.warn(
-        `Attempted to set patch:`,
-        patch,
-        `for unknown device at address:`,
-        address,
-      );
-      return;
-    }
-
-    device.patch = patch;
-    this.store.saveDevice(device);
-    this.setTallyDevice(device);
-    (this as EventEmitter<ConsumerEvents>).emit("device_update", device);
-    this.logger.debug(`Device ${key} set patch to:`, patch);
-  }
   deleteDevice(address: DeviceAddress): void {
     const key = this.getDeviceKey(address);
 
@@ -217,60 +281,6 @@ export abstract class AbstractConsumer<
     this.logger.debug(`Device ${key} deleted.`);
   }
 
-  abstract setDeviceAlert(
-    address: DeviceAddress,
-    type: DeviceAlertState,
-    target: DeviceAlertTarget,
-    time: number,
-  ): void;
-
-  protected setTallyDevice(device: TallyDevice): void {
-    let newState = this.baseState; // Default: NONE, or configured state-on-disconnect
-
-    for (const patch of device.patch) {
-      const parsedSource = GlobalSourceTools.create(
-        patch.producer,
-        patch.source,
-      );
-
-      if (this.tallyState.program.has(parsedSource)) {
-        newState = DeviceTallyState.PROGRAM;
-        break;
-      }
-      if (this.tallyState.preview.has(parsedSource)) {
-        newState = DeviceTallyState.PREVIEW;
-      }
-    }
-
-    if (device.state !== newState || !device.last_update) {
-      device.last_update = Date.now();
-      device.state = newState;
-      this.logger.debug(
-        `Device ${this.getDeviceKey(device.id)} state changed to ${DeviceTallyState[device.state]}`,
-      );
-      (this as EventEmitter<ConsumerEvents>).emit("device_update", device);
-
-      // TODO: sendDevice that each consumer implements, to make consumers that don't send device config easier?
-      this.sendDeviceTally(device);
-      this.sendDeviceConfig(device);
-    }
-  }
-
-  protected abstract sendDeviceTally(device: TallyDevice): void;
-  protected sendDeviceConfig(_device: TallyDevice): void {} // TODO: Right place?
-
-  consumeTally(state: TallyState): void {
-    this.tallyState = state;
-
-    this.logger.debug(
-      "Consumed TallyState:",
-      GlobalSourceTools.serialize(state),
-    );
-
-    for (const device of this.devices.values()) {
-      this.setTallyDevice(device);
-    }
-  }
 
   abstract init(): void | Promise<void>;
   abstract destroy(): void | Promise<void>;
