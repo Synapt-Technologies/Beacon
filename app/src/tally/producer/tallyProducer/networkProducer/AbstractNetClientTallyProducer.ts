@@ -7,12 +7,8 @@ export interface NetClientProducerConfig extends ProducerConfig {
 } 
 
 export interface NetClientProducerInfo extends ProducerInfo {
-    connected: boolean;
 }
-export type NetClientTallyProducerEvents = TallyProducerEvents & {
-    connected: [];
-    disconnected: [];
-}
+export type NetClientTallyProducerEvents = TallyProducerEvents & {}
 
 // TODO: Maybe IConnection to force getId and get and setName and other shared ops like db?
 export abstract class AbstractNetClientTallyProducer<T extends NetClientTallyProducerEvents = NetClientTallyProducerEvents> extends AbstractTallyProducer<T> {

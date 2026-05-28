@@ -23,6 +23,8 @@ import type { ProducerBusMap, SourceMap } from "../../types/SourceTypes";
 // }
 
 export type TallyProducerEvents = {
+  connected: [];
+  disconnected: [];
   tally_update: [TallyState];
   info_update: [ProducerInfo];
 };
