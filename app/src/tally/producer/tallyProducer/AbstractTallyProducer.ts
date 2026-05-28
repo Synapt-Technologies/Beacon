@@ -107,18 +107,6 @@ export abstract class AbstractTallyProducer<
       );
   }
 
-  // TODO: Move above to AbstractConnection
-
-  protected busState: ProducerBusMap = new Map();
-
-  getBusState(): ProducerBusMap {
-    return this.busState;
-  }
-
-  abstract init(): void | Promise<void>;
-  abstract destroy(): void | Promise<void>;
-
-  // TODO: Maybe in AbstractConnection?
   private _destroying = false;
   markDestroying(): void {
     this._destroying = true;
@@ -126,7 +114,16 @@ export abstract class AbstractTallyProducer<
   isDestroying(): boolean {
     return this._destroying;
   }
-  // TODO: End Maybe in AbstractConnection?
+
+  abstract init(): void | Promise<void>;
+  abstract destroy(): void | Promise<void>;
+  // TODO: Move above to AbstractConnection
+
+  protected busState: ProducerBusMap = new Map();
+
+  getBusState(): ProducerBusMap {
+    return this.busState;
+  }
 
   protected emitInfoUpdate(): void {
     if (this._destroying) return;
