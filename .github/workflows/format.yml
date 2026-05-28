@@ -1,0 +1,25 @@
+name: Format
+
+on:
+  pull_request:
+    branches: [main, dev]
+  workflow_dispatch:
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: corepack enable
+      - uses: actions/cache@v4
+        with:
+          path: app/.yarn/cache
+          key: yarn-${{ hashFiles('app/yarn.lock') }}
+      - run: yarn install --immutable
+      - run: yarn prettier --check .
