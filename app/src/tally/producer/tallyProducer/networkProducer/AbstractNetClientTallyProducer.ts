@@ -1,44 +1,23 @@
-import { AbstractTallyProducer, type ProducerConfig, type ProducerInfo, type TallyProducerEvents, ProducerStatus } from "../AbstractTallyProducer";
 import net from "node:net";
+import type { ProducerConfig, ProducerInfo } from "../../../types/ProducerTypes";
+import { AbstractTallyProducer, type TallyProducerEvents } from "../AbstractTallyProducer";
+import { ConnectionState, type WithRequired } from "../../../types/CommonTypes";
 
 export interface NetClientProducerConfig extends ProducerConfig {
-    host?: string;
-    port?: number;
+    host: string;
+    port: number;
 } 
 
-export interface NetClientProducerInfo extends ProducerInfo {
-}
-export type NetClientTallyProducerEvents = TallyProducerEvents & {}
 
-// TODO: Maybe IConnection to force getId and get and setName and other shared ops like db?
-export abstract class AbstractNetClientTallyProducer<T extends NetClientTallyProducerEvents = NetClientTallyProducerEvents> extends AbstractTallyProducer<T> {
+export abstract class AbstractNetClientTallyProducer<T extends TallyProducerEvents = TallyProducerEvents> extends AbstractTallyProducer<T> {
     
-    protected declare config: Required<NetClientProducerConfig>; // Declare to indicate it overwrites the parent's type.
-    
-    public static readonly DefaultConfig: Required<NetClientProducerConfig> = {
-        ...AbstractTallyProducer.DefaultConfig,
-        host: "",
-        port: -1,
-    };
+    protected declare config: NetClientProducerConfig; // Declare to indicate it overwrites the parent's type.
+    protected abstract getDefaultConfig(): Omit<NetClientProducerConfig, "id" | "host">;
 
-    protected abstract getDefaultConfig(): Required<NetClientProducerConfig>;
-
-    constructor(config: NetClientProducerConfig) {
+    constructor(config: WithRequired<NetClientProducerConfig, "id" | "host">) {
         super(config);
     }
 
-    protected info: NetClientProducerInfo = { // TODO make partial?
-        update_moment: null,
-        model: {},
-        sources: new Map(),
-        connected: false,
-        status: ProducerStatus.OFFLINE,
-    };
-
-    isConnected(): boolean {
-        return this.info.connected;
-    }
-            
     protected checkConfig(config: NetClientProducerConfig) {
         super.checkConfig(config);
         
@@ -47,9 +26,6 @@ export abstract class AbstractNetClientTallyProducer<T extends NetClientTallyPro
         if (config.port == null || config.port < 0 || config.port > 65535)
             this.logger.fatal(`Valid Port is required. Submitted config:`, config);
     }
-
-    abstract init(): void | Promise<void>;
-    abstract destroy(): void | Promise<void>;
 
     abstract connect(): void | Promise<void>;
     abstract disconnect(): void | Promise<void>;
