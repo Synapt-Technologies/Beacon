@@ -2,7 +2,6 @@ import { EventEmitter } from "node:events";
 import { Logger } from "../../logging/Logger";
 import {
   type TallyDeviceMap,
-  type DeviceRuntimeConfig,
   type TallyDevice,
   type DeviceAddress,
   DeviceTools,
@@ -22,7 +21,6 @@ import type {
 } from "../types/ConsumerTypes";
 import { ConnectionState, type WithRequired } from "../types/CommonTypes";
 
-// TODO: Add (consumer) info_update?
 export type ConsumerEvents = {
   info_update: [ConsumerInfo];
   device_discovery: [device: TallyDevice];
@@ -115,7 +113,7 @@ export abstract class AbstractConsumer<
   protected emitInfoUpdate(): void {
     if (this._destroying) return;
     (this as EventEmitter<ConsumerEvents>).emit("info_update", this.info);
-    this.logger.debug(`Persisted info to store.`);
+    this.logger.debug(`Info updated.`);
   }
 
   // TODO: Move above to AbstractConnection
@@ -261,7 +259,7 @@ export abstract class AbstractConsumer<
   ): void;
 
   protected _processDeviceTelemetry(bundle: DeviceTelemetryBundle): void {
-    this.logger.debug(`Processing telemetry for device ${bundle.id}:`, bundle);
+    this.logger.debug(`Processing telemetry for device ${DeviceTools.toKey(bundle.id)}:`, bundle);
 
     const key = DeviceTools.toKey(bundle.id);
     const device = this.devices.get(key);
