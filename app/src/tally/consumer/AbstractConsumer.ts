@@ -103,7 +103,6 @@ export abstract class AbstractConsumer<
     return this.devices.get(DeviceTools.toKey(address)) || null;
   }
 
-  // TODO: Override true or false by default? What fields should overridden?
   protected _addDevice(device: TallyDevice, override: boolean = false) {
     const id = { ...device.id, consumer: this.config.id };
     const key = DeviceTools.toKey(id);
