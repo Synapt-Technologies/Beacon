@@ -1,7 +1,8 @@
 import { Atem, type AtemState } from "atem-connection";
 import { Enums as AtemEnums } from "atem-connection";
 import { AbstractNetClientTallyProducer, type NetClientProducerConfig } from "./AbstractNetClientTallyProducer";
-import { ConnectionState, type WithRequired } from "../../../types/CommonTypes";
+import { ConnectionState, type DisplayName, type WithRequired } from "../../../types/CommonTypes";
+import { SourceTools, type SourceInfo, type SourceMap } from "../../../types/SourceTypes";
 
 
 
@@ -42,7 +43,6 @@ export class AtemNetClientTallyProducer extends AbstractNetClientTallyProducer {
       this.info.model =  this._parseModel();
       this.info.sources = this._parseSources();
       
-      this.emit('connected');
       this.logger.info("Connected to model:", this.getModel());
       this.emitInfoUpdate();
       this._parseTallystate();
@@ -51,12 +51,13 @@ export class AtemNetClientTallyProducer extends AbstractNetClientTallyProducer {
     this.atem.on('disconnected', () => {
       this.info.state = ConnectionState.OFFLINE;
       this.atemState = null;
-      this.emit('disconnected');
+
       this.logger.warn("Disconnected", `target=${this.config.host}:${this.config.port}`);
       this.emitInfoUpdate();
       this._parseTallystate();
     })
     
+    // TODO Rewrite VV
     this.atem.on('stateChanged', (state, pathToChange) => {
       this.atemState = state;
       let infoChange: boolean = false;
@@ -87,6 +88,7 @@ export class AtemNetClientTallyProducer extends AbstractNetClientTallyProducer {
         this.emitInfoUpdate();
     })
   }
+  // TODO END Rewrite
   
   async init(): Promise<void> {
     await this.connect();
@@ -103,14 +105,49 @@ export class AtemNetClientTallyProducer extends AbstractNetClientTallyProducer {
   disconnect(): Promise<void> {
     return this.atem.disconnect();
   }
+
+  protected _parseModel(): DisplayName {
+    if (!this.atemState || this.info.state !== ConnectionState.ONLINE) {
+      return this.info.model;
+    } 
+    return {
+      long: this.atemState.info.productIdentifier || "Unknown ATEM Model",
+      short: AtemEnums.Model[this.atemState.info.model],
+    };
+  }
+
+  protected _parseSources(): SourceMap {
+    const sources: SourceMap = new Map();
+    
+    if (this.info.state !== ConnectionState.ONLINE || !this.atemState) {
+      return sources;
+    }
+    
+    for (const [id, input] of Object.entries(this.atemState.inputs)) {
+      if (!input) continue;
+      
+      const globalAddress = { producer: this.config.id, source: id };
+      const globalKey = SourceTools.fromAddress(globalAddress);
+      
+      const sourceInfo: SourceInfo = {
+        id: globalAddress,
+        name: {
+          short: input.shortName || `${id}`,
+          long: input.longName || `Input ${id}`,
+        }
+      };
+      
+      sources.set(globalKey, sourceInfo);
+    }
+    
+    return sources;
+    
+  }
   
+  // TODO: Rewrite Below
   protected _parseTallystate(): void { 
     
-    this.tallyState.moment = Date.now();
-    let rawProgram: number[] = [];
-    let rawPreview: number[] = [];
-    
-    if (this.info.connected){
+    if (this.info.state === ConnectionState.ONLINE){
       try {
         rawProgram = this.atem.listVisibleInputs("program");
         rawPreview = this.atem.listVisibleInputs("preview");
@@ -144,41 +181,6 @@ export class AtemNetClientTallyProducer extends AbstractNetClientTallyProducer {
     }
   }
   
-  protected _parseModel(): ProducerModel {
-    if (!this.info.state || !this.info.connected) {
-      return this.info.model;
-    } 
-    return {
-      short: AtemEnums.Model[this.info.state.info.model],
-      long: this.info.state.info.productIdentifier,
-    };
-  }
   
-  protected _parseSources(): SourceMap {
-    const sources: SourceMap = new Map();
-    
-    if (!this.info.state || !this.info.connected){
-      return sources;
-    }
-    
-    for (const [id, input] of Object.entries(this.info.state.inputs)) {
-      if (!input) continue;
-      
-      const globalKey = GlobalSourceTools.create(this.config.id, id);
-      
-      const sourceInfo: SourceInfo = {
-        source: { producer: this.config.id, source: id },
-        short: input.shortName || `${id}`,
-        long: input.longName || `Input ${id}`,
-      }
-      
-      // this.logger.debug(`Parsing source. ID: ${globalKey}, info:`, sourceInfo);
-      
-      sources.set(globalKey, sourceInfo);
-    }
-    
-    return sources;
-    
-  }
   
 }
