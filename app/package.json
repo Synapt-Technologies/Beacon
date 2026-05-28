@@ -42,7 +42,7 @@
   "dependencies": {
     "aedes": "^1.0.1",
     "atem-connection": "^3.9.0",
-    "better-sqlite3": "^12.8.0",
+    "better-sqlite3": "^12.10.0",
     "express": "^5.2.1",
     "less": "^4.6.4",
     "mqtt": "^5.10.4",
