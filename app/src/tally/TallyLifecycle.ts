@@ -2,7 +2,7 @@ import { CoreDatabase, SettingKey } from "../database/CoreDatabase";
 import { TallyFactory } from "./TallyFactory";
 import { TallyOrchestrator, type OrchestratorConfig } from "./TallyOrchestrator";
 export type { OrchestratorConfig };
-import { ProducerStatus, type ProducerConfig } from "./producer/AbstractTallyProducer";
+import { ProducerStatus, type ProducerConfig } from "./producer/tallyProducer/AbstractTallyProducer";
 import type { ProducerBundle, ProducerId } from "./types/ProducerStates";
 import { Logger } from "../logging/Logger";
 import type { AedesConsumerConfig } from "./consumer/networkConsumer/AedesNetworkConsumer";

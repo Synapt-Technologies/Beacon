@@ -1,7 +1,7 @@
 import express from "express";
 import ViteExpress from "vite-express";
 import { Logger } from "../logging/Logger";
-import type { ProducerConfig } from "../tally/producer/AbstractTallyProducer";
+import type { ProducerConfig } from "../tally/producer/tallyProducer/AbstractTallyProducer";
 import type { ConsumerUpdate, LifecycleConfig } from "../tally/TallyLifecycle";
 import  { type DeviceAddress,  DeviceAlertState, DeviceAlertTarget, type TallyDevice } from "../tally/types/ConsumerStates";
 import type { DeviceRuntimeConfig } from "../tally/types/DeviceTypes";

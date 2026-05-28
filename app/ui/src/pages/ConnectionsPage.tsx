@@ -4,7 +4,7 @@ import { useBeacon } from '../context/BeaconContext'
 
 import { AddConnectionModal } from '../components/AddConnectionModal'
 import type { ProducerBundle, SourceInfo } from '../../../src/tally/types/ProducerStates'
-import type { ProducerConfig } from '../../../src/tally/producer/AbstractTallyProducer'
+import type { ProducerConfig } from '../../../src/tally/producer/tallyProducer/AbstractTallyProducer'
 import { PRODUCER_TYPE_MAP } from '../config/producers'
 import { Toggle } from '../components/Toggle'
 import StatusPill from '../components/statusPill/StatusPill'

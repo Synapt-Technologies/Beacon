@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useBeacon } from '../context/BeaconContext'
-import type { ProducerConfig } from '../../../src/tally/producer/AbstractTallyProducer'
+import type { ProducerConfig } from '../../../src/tally/producer/tallyProducer/AbstractTallyProducer'
 import { PRODUCER_TYPES } from '../config/producers'
 
 function slugify(host: string): string {

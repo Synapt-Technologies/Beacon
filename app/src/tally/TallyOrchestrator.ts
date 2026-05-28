@@ -2,7 +2,7 @@ import { EventEmitter } from "events";
 import { AbstractConsumer } from "./consumer/AbstractConsumer";
 import { isGlobalBroadcastConsumer } from "./consumer/IGlobalBroadcastConsumer";
 import { GlobalSourceTools, type ProducerId, type TallyState } from "./types/ProducerStates";
-import { AbstractTallyProducer, type ProducerInfo, ProducerStatus } from "./producer/AbstractTallyProducer";
+import { AbstractTallyProducer, type ProducerInfo, ProducerStatus } from "./producer/tallyProducer/AbstractTallyProducer";
 import { type AlertSlotConfig, DEFAULT_ALERT_SLOTS, DeviceTallyState, type ConsumerId, type TallyDevice } from "./types/ConsumerStates";
 import { Logger } from "../logging/Logger";
 

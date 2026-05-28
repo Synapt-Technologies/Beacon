@@ -1,7 +1,7 @@
 import { AtemNetClientTallyProducer } from "./producer/networkProducer/AtemNetClientTallyProducer";
 import { AedesNetworkConsumer } from "./consumer/networkConsumer/AedesNetworkConsumer";
 import { RpiGpioHardwareConsumer } from "./consumer/hardwareConsumer/RpiGpioHardwareConsumer";
-import type { AbstractTallyProducer, ProducerConfig } from "./producer/AbstractTallyProducer";
+import type { AbstractTallyProducer, ProducerConfig } from "./producer/tallyProducer/AbstractTallyProducer";
 import type { AbstractConsumer, ConsumerConfig } from "./consumer/AbstractConsumer";
 
 export class TallyFactory {

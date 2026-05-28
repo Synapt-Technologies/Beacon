@@ -1,5 +1,5 @@
 import { CoreDatabase } from "./CoreDatabase";
-import type { ProducerInfo } from "../tally/producer/AbstractTallyProducer";
+import type { ProducerInfo } from "../tally/producer/tallyProducer/AbstractTallyProducer";
 import { Logger } from "../logging/Logger";
 
 export class ProducerStore {

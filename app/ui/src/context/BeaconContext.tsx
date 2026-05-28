@@ -14,7 +14,7 @@ import { ConsumerExportMap, type OrchestratorConfig, type LifecycleConfig } from
 import { UITallyDevice } from '../types/DeviceStates'
 import { DeviceAddress, DeviceAlertState, DeviceAlertTarget } from '../../../src/tally/types/ConsumerStates'
 import { DEFAULT_UI_ALERT_CONFIG, UIAlertSlot, UIConfig } from '../../../src/types/UIStates'
-import { ProducerConfig } from '../../../src/tally/producer/AbstractTallyProducer'
+import { ProducerConfig } from '../../../src/tally/producer/tallyProducer/AbstractTallyProducer'
 import { ConsumerId } from '../types/beacon'
 import { ConsumerConfig } from '../../../src/tally/consumer/AbstractConsumer'
 import { CONSUMER_META } from '../config/consumers'
