@@ -116,7 +116,7 @@ export abstract class AbstractTallyProducer<
     if (this._destroying) return;
     this.store.saveInfo(this.info);
     (this as EventEmitter<TallyProducerEvents>).emit("info_update", this.info);
-    this.logger.debug(`Persisted info to store.`);
+    this.logger.debug(`Info updated.`);
   }
 
   protected busState: ProducerBusMap = new Map();
@@ -133,7 +133,7 @@ export abstract class AbstractTallyProducer<
     return this.busState;
   }
 
-  getSources(): SourceMap | null {
+  getSources(): SourceMap {
     return this.info.sources;
   }
 
