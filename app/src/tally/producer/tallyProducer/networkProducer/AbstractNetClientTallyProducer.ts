@@ -1,7 +1,5 @@
 import net from "node:net";
-import type {
-  ProducerConfig,
-} from "../../../types/ProducerTypes";
+import type { ProducerConfig } from "../../../types/ProducerTypes";
 import {
   AbstractTallyProducer,
   type TallyProducerEvents,
