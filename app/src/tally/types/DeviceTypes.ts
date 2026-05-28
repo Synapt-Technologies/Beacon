@@ -154,14 +154,10 @@ export interface DeviceRuntimeConfigBundle
   /* empty */
 }
 
-export interface DeviceDiscoveryPackage {
+export interface DeviceDiscoveryBundle {
+  id: DeviceId;
   info: DeviceInfo;
   telemetry?: DeviceTelemetry;
-}
-
-export interface DeviceDiscoveryBundle
-  extends DeviceDiscoveryPackage, BaseTallyDevice {
-  /* empty */
 }
 
 export interface DeviceTelemetryPackage {
@@ -175,13 +171,8 @@ export interface DeviceTelemetryBundle
 
 export type TallyDeviceMap = Map<DeviceKey, TallyDevice>;
 
-export interface DeviceDiscoveryReply {
+export interface DeviceDiscoveryReplyBundle {
   topic: DeviceAddress;
-}
-
-export interface DeviceDiscoveryReplyBundle
-  extends DeviceDiscoveryReply, BaseTallyDevice {
-  /* empty */
 }
 
 //? Device tools and DTOs
@@ -213,21 +204,16 @@ export class TallyDeviceDto implements TallyDevice {
     this.telemetry = newDevice.telemetry;
   }
 
-  static fromDevice(
-    device: Partial<TallyDevice> & Pick<TallyDevice, "id">,
-  ): TallyDeviceDto {
-    return new TallyDeviceDto(device);
-  }
-
   static fromDiscoveryBundle(
     bundle: DeviceDiscoveryBundle,
     consumer: ConsumerId,
   ): TallyDeviceDto {
     return new TallyDeviceDto({
-      ...bundle,
+      info: bundle.info,
+      telemetry: bundle.telemetry,
       id: {
         consumer,
-        device: bundle.id.device,
+        device: bundle.id,
       },
     });
   }
@@ -264,7 +250,6 @@ export class TallyDeviceDto implements TallyDevice {
 
   toDiscoveryReplyBundle(): DeviceDiscoveryReplyBundle {
     return {
-      ...this.toBaseBundle(),
       topic: this.id,
     };
   }
