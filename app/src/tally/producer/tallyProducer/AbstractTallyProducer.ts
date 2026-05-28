@@ -6,8 +6,6 @@ import type {
   ProducerId,
   ProducerInfo,
 } from "../../types/ProducerTypes";
-import type { TallyState } from "../../../../src-old/tally/types/ProducerStates";
-import type { ConsumerConfig } from "../../types/ConsumerTypes";
 import {
   ConnectionState,
   type DisplayName,
@@ -23,10 +21,8 @@ import type { ProducerBusMap, SourceMap } from "../../types/SourceTypes";
 // }
 
 export type TallyProducerEvents = {
-  connected: [];
-  disconnected: [];
-  tally_update: [TallyState];
   info_update: [ProducerInfo];
+  tally_update: [ProducerBusMap];
 };
 
 // TODO: Add an AbstractProducer that can be extended by an AbstractAlertProducer
@@ -71,7 +67,7 @@ export abstract class AbstractTallyProducer<
     return this.info;
   }
 
-  constructor(config: WithRequired<ConsumerConfig, "id">) {
+  constructor(config: WithRequired<ProducerConfig, "id">) {
     super();
 
     this.config = { ...this.getDefaultConfig(), ...config };
@@ -98,15 +94,9 @@ export abstract class AbstractTallyProducer<
 
   protected checkConfig(config: ProducerConfig) {
     if (!config.id || config.id == "")
-      this.logger.fatal(
-        `Invalid consumer ID provided. Submitted config:`,
-        config,
-      );
+      this.logger.fatal(`Invalid ID provided. Submitted config:`, config);
     if (config.name == null || config.name == "")
-      this.logger.fatal(
-        `System name was not provided. Submitted config:`,
-        config,
-      );
+      this.logger.fatal(`Name was not provided. Submitted config:`, config);
   }
 
   private _destroying = false;
@@ -119,19 +109,28 @@ export abstract class AbstractTallyProducer<
 
   abstract init(): void | Promise<void>;
   abstract destroy(): void | Promise<void>;
+
   // TODO: Move above to AbstractConnection
-
-  protected busState: ProducerBusMap = new Map();
-
-  getBusState(): ProducerBusMap {
-    return this.busState;
-  }
-
+  // TODO emitInfoUpdate also in AbstractConnection? Or as abstract?
   protected emitInfoUpdate(): void {
     if (this._destroying) return;
     this.store.saveInfo(this.info);
     (this as EventEmitter<TallyProducerEvents>).emit("info_update", this.info);
     this.logger.debug(`Persisted info to store.`);
+  }
+
+  protected busState: ProducerBusMap = new Map();
+
+  protected emitTallyUpdate(): void {
+    if (this._destroying) return;
+    (this as EventEmitter<TallyProducerEvents>).emit(
+      "tally_update",
+      this.busState,
+    );
+  }
+
+  getBusState(): ProducerBusMap {
+    return this.busState;
   }
 
   getSources(): SourceMap | null {
