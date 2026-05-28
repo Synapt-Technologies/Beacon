@@ -1,23 +1,25 @@
 import type { DeviceTallyState } from "./DeviceTypes";
 import type { ProducerId } from "./ProducerTypes";
-import type { SourceInfo, SourceBus } from "./SourceTypes";
+import type { SourceBus, GlobalSourceAddress } from "./SourceTypes";
 
 export interface TallyContext {
-  newbus: SourceBus;
-  oldbus: SourceBus;
+  newBus: SourceBus;
+  oldBus: SourceBus;
   disconnectedProducers: Set<ProducerId>;
   disconnectedState: DeviceTallyState;
 }
 
 export interface SimpleBusNode {
   readonly type: "SimpleBusNode";
-  sources: SourceInfo[];
+  sources: GlobalSourceAddress[];
 }
 
 export type PatchNode = SimpleBusNode;
 
 export abstract class LogicFactory {
-  static createSimpleBusNode(sources: SourceInfo[] = []): SimpleBusNode {
+  static createSimpleBusNode(
+    sources: GlobalSourceAddress[] = [],
+  ): SimpleBusNode {
     return {
       type: "SimpleBusNode",
       sources: sources,
