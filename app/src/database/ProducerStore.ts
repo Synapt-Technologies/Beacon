@@ -12,10 +12,12 @@ export class ProducerStore {
     }
 
     public saveInfo(info: ProducerInfo): void {
+        this.logger.debug(`Saving info for producer ${this.producerId}.`);
         this.db.saveProducerInventory(this.producerId, info);
     }
 
     public loadInfo(): ProducerInfo | null {
+        this.logger.debug(`Loading info for producer ${this.producerId}.`);
         return this.db.getProducerInventory(this.producerId);
     }
 }
