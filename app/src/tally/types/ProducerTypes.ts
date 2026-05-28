@@ -5,30 +5,29 @@ export type ProducerId = string;
 
 //? Producer Config (producer input)
 export interface ProducerConfig {
-    id: ProducerId,
-    name: string;
+  id: ProducerId;
+  name: string;
 }
 
 //? Producer Info (producer output)
 // TODO: Add moment if needed, or make ProducerStateBundle (and ProducerInfoBundle) with it.
 export interface ProducerState {
-    state: ConnectionState;
+  state: ConnectionState;
 }
 
 // TODO: Split Info and State?
 export interface ProducerInfo extends ProducerState {
-    model: DisplayName;
-    sources: SourceMap;
+  model: DisplayName;
+  sources: SourceMap;
 }
-
 
 //? Producer Bundles
 export interface StoreProducerBundle {
-    type: string,
-    enabled: boolean,
-    config: ProducerConfig,
+  type: string;
+  enabled: boolean;
+  config: ProducerConfig;
 }
 
 export interface ProducerBundle extends StoreProducerBundle {
-    info: ProducerInfo,
+  info: ProducerInfo;
 }

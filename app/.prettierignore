@@ -6,7 +6,6 @@ db/
 dist/
 logs/
 node_modules/
-src/
 src-old/
 ui/
 .dockerignore
@@ -23,3 +22,15 @@ tsconfig.json
 tsup.config.ts
 vite.config.ts
 yarn.lock
+
+src/admin/
+src/database/
+src/logging/
+src/system/
+src/tally/consumer/
+src/tally/producer/
+src/tally/TallyFactory.ts
+src/tally/TallyLifecycle.ts
+src/tally/TallyOrchestrator.ts
+src/types/
+src/AppCore.ts
