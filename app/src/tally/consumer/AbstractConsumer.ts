@@ -106,7 +106,6 @@ export abstract class AbstractConsumer<
       );
   }
 
-
   abstract init(): void | Promise<void>;
   abstract destroy(): void | Promise<void>;
 
@@ -169,7 +168,6 @@ export abstract class AbstractConsumer<
 
     // TODO: Check if this is needed.
     this._sendDeviceRuntimeConfig(id, newDevice.toRuntimeConfigBundle());
-
   }
 
   sendDeviceState(address: DeviceAddress, pckg: DeviceStatePackage): void {
@@ -212,22 +210,19 @@ export abstract class AbstractConsumer<
 
     this._addDevice(newDevice);
 
-    this._sendDiscoveryReply(
-      newDevice.toDiscoveryReplyBundle(),
-    );
+    this._sendDiscoveryReply(newDevice.toDiscoveryReplyBundle());
   }
 
   protected abstract _sendDiscoveryReply(
     bundle: DeviceDiscoveryReplyBundle,
   ): void;
 
-  sendDeviceRuntimeConfig(address: DeviceAddress, bundle: DeviceRuntimeConfigBundle): void {
-    this.logger.debug(
-      `Setting runtime config for device ${address}:`,
-      bundle,
-    );
+  sendDeviceRuntimeConfig(
+    address: DeviceAddress,
+    bundle: DeviceRuntimeConfigBundle,
+  ): void {
+    this.logger.debug(`Setting runtime config for device ${address}:`, bundle);
 
-    
     try {
       this._sendDeviceRuntimeConfig(address, bundle);
     } catch (error) {
@@ -244,10 +239,7 @@ export abstract class AbstractConsumer<
   ): void;
 
   protected _processDeviceTelemetry(bundle: DeviceTelemetryBundle): void {
-    this.logger.debug(
-      `Processing telemetry for device ${bundle.id}:`,
-      bundle,
-    );
+    this.logger.debug(`Processing telemetry for device ${bundle.id}:`, bundle);
 
     const key = DeviceTools.toKey(bundle.id);
     const device = this.devices.get(key);
@@ -264,7 +256,6 @@ export abstract class AbstractConsumer<
 
     (this as EventEmitter<ConsumerEvents>).emit("device_telemetry", device);
   }
-
 
   deleteDevice(address: DeviceAddress): void {
     const key = DeviceTools.toKey(address);
@@ -283,5 +274,4 @@ export abstract class AbstractConsumer<
     (this as EventEmitter<ConsumerEvents>).emit("device_removed", address);
     this.logger.debug(`Device ${key} deleted.`);
   }
-
 }
