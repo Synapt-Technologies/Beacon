@@ -172,7 +172,10 @@ export abstract class AbstractConsumer<
     }
 
     // TODO: Check if this is needed.
-    this.sendDeviceRuntimeConfig(newDevice.id, newDevice.toRuntimeConfigBundle());
+    this.sendDeviceRuntimeConfig(
+      newDevice.id,
+      newDevice.toRuntimeConfigBundle(),
+    );
   }
 
   sendDeviceState(address: DeviceAddress, pckg: DeviceStatePackage): void {
@@ -259,7 +262,10 @@ export abstract class AbstractConsumer<
   ): void;
 
   protected _processDeviceTelemetry(bundle: DeviceTelemetryBundle): void {
-    this.logger.debug(`Processing telemetry for device ${DeviceTools.toKey(bundle.id)}:`, bundle);
+    this.logger.debug(
+      `Processing telemetry for device ${DeviceTools.toKey(bundle.id)}:`,
+      bundle,
+    );
 
     const key = DeviceTools.toKey(bundle.id);
     const device = this.devices.get(key);
