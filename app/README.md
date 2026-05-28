@@ -9,6 +9,7 @@ If you are compiling the image on windows, you must use WSL.
 ## TODO
 - [ ] CLASS REBUILD:
   - [ ] Rework buss structure to support more than only program preview.
+  - [ ] Add AbstractConnection that is implemented by AbstractTallyProducer and AbstractConsumer that contains the base fields like config(id name), its getters setters and validation.
 
 
 - [ ] Dev/prod mode for ui logging
