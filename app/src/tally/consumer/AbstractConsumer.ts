@@ -24,6 +24,7 @@ import { ConnectionState, type WithRequired } from "../types/CommonTypes";
 
 // TODO: Add (consumer) info_update?
 export type ConsumerEvents = {
+  info_update: [ConsumerInfo];
   device_discovery: [device: TallyDevice];
   device_update: [device: TallyDevice];
   device_telemetry: [device: TallyDevice];
@@ -95,19 +96,27 @@ export abstract class AbstractConsumer<
 
   protected checkConfig(config: ConsumerConfig) {
     if (!config.id || config.id == "")
-      this.logger.fatal(
-        `Invalid consumer ID provided. Submitted config:`,
-        config,
-      );
+      this.logger.fatal(`Invalid ID provided. Submitted config:`, config);
     if (config.name == null || config.name == "")
-      this.logger.fatal(
-        `System name was not provided. Submitted config:`,
-        config,
-      );
+      this.logger.fatal(`Name was not provided. Submitted config:`, config);
+  }
+
+  private _destroying = false;
+  markDestroying(): void {
+    this._destroying = true;
+  }
+  isDestroying(): boolean {
+    return this._destroying;
   }
 
   abstract init(): void | Promise<void>;
   abstract destroy(): void | Promise<void>;
+
+  protected emitInfoUpdate(): void {
+    if (this._destroying) return;
+    (this as EventEmitter<ConsumerEvents>).emit("info_update", this.info);
+    this.logger.debug(`Persisted info to store.`);
+  }
 
   // TODO: Move above to AbstractConnection
 
@@ -120,7 +129,7 @@ export abstract class AbstractConsumer<
     return this.devices.get(DeviceTools.toKey(address)) || null;
   }
 
-  protected _addDevice(device: TallyDevice, override: boolean = false) {
+  protected _addDevice(device: TallyDeviceDto, override: boolean = false) {
     const id = { ...device.id, consumer: this.config.id };
     const key = DeviceTools.toKey(id);
     const existing = this.devices.get(key);
@@ -167,16 +176,22 @@ export abstract class AbstractConsumer<
     }
 
     // TODO: Check if this is needed.
-    this._sendDeviceRuntimeConfig(id, newDevice.toRuntimeConfigBundle());
+    this.sendDeviceRuntimeConfig(id, newDevice.toRuntimeConfigBundle());
   }
 
   sendDeviceState(address: DeviceAddress, pckg: DeviceStatePackage): void {
-    this.logger.debug(`Sending state for device ${address}:`, pckg);
+    this.logger.debug(
+      `Sending state for device ${DeviceTools.toKey(address)}:`,
+      pckg,
+    );
 
     try {
       this._sendDeviceState(address, pckg);
     } catch (error) {
-      this.logger.error(`Error sending state for device ${address}:`, error);
+      this.logger.error(
+        `Error sending state for device ${DeviceTools.toKey(address)}:`,
+        error,
+      );
     }
   }
 
@@ -186,12 +201,18 @@ export abstract class AbstractConsumer<
   ): void;
 
   sendDeviceAlert(address: DeviceAddress, alert: DeviceAlertPackage): void {
-    this.logger.debug(`Sending alert for device ${address}:`, alert);
+    this.logger.debug(
+      `Sending alert for device ${DeviceTools.toKey(address)}:`,
+      alert,
+    );
 
     try {
       this._sendDeviceAlert(address, alert);
     } catch (error) {
-      this.logger.error(`Error sending alert for device ${address}:`, error);
+      this.logger.error(
+        `Error sending alert for device ${DeviceTools.toKey(address)}:`,
+        error,
+      );
     }
   }
 
@@ -221,13 +242,16 @@ export abstract class AbstractConsumer<
     address: DeviceAddress,
     bundle: DeviceRuntimeConfigBundle,
   ): void {
-    this.logger.debug(`Setting runtime config for device ${address}:`, bundle);
+    this.logger.debug(
+      `Setting runtime config for device ${DeviceTools.toKey(address)}:`,
+      bundle,
+    );
 
     try {
       this._sendDeviceRuntimeConfig(address, bundle);
     } catch (error) {
       this.logger.error(
-        `Error setting runtime config for device ${address}:`,
+        `Error setting runtime config for device ${DeviceTools.toKey(address)}:`,
         error,
       );
     }
