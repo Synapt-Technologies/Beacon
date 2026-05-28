@@ -227,7 +227,7 @@ export class TallyDeviceDto implements TallyDevice {
       ...bundle,
       id: {
         consumer,
-        device: bundle.id,
+        device: bundle.id.device,
       },
     });
   }
