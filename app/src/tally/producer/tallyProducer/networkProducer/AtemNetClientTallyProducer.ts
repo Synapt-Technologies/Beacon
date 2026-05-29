@@ -11,6 +11,7 @@ import {
 } from "../../../types/CommonTypes";
 import {
   SourceTools,
+  BusTools,
   type SourceInfo,
   type SourceMap,
 } from "../../../types/SourceTypes";
@@ -75,37 +76,32 @@ export class AtemNetClientTallyProducer extends AbstractNetClientTallyProducer {
     });
 
     // TODO Rewrite VV
+    // TODO. p.includes is changed to p.startsWith. Check if valid.
     this.atem.on("stateChanged", (state, pathToChange) => {
       this.atemState = state;
       let infoChange: boolean = false;
 
       this.logger.debug("State Changed. Path:", pathToChange);
 
-      // TODO: Add AUX support and check if this fully covers. Maybe startswith?
       if (
         pathToChange.some(
           (p) =>
-            p.includes("video.mixEffects") ||
-            p.includes("video.downstreamKeyers"),
+            p.startsWith("video.mixEffects") ||
+            p.startsWith("video.downstreamKeyers") ||
+            p.startsWith("video.auxilliaries"),
         )
       ) {
         this._parseTallystate();
       }
 
-      // TODO: add check for path
-      // TODO: Change the way unkown is stored and checked.
-      if (!this.info.model || this.info.model.short === "UNKNOWN") {
-        this.info.model = this._parseModel();
+      const newModel = this._parseModel();
+      if (newModel.long !== this.info.model.long || newModel.short !== this.info.model.short) {
+        this.info.model = newModel;
         infoChange = true;
         this.logger.info(`Updated model:`, this.info.model);
       }
 
-      // TODO: Doesn't full cover, sources are empty.
-      if (
-        !this.info.sources ||
-        this.info.sources.size == 0 ||
-        pathToChange.some((p) => p.includes("inputs"))
-      ) {
+      if (this.info.sources.size === 0 || pathToChange.some((p) => p.startsWith("inputs"))) {
         this.info.sources = this._parseSources();
         infoChange = true;
         this.logger.info(`Updated sources:`, this.info.sources);
