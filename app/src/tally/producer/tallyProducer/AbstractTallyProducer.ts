@@ -53,7 +53,7 @@ export abstract class AbstractTallyProducer<
       short: "UNKNOWN",
     },
     sources: new Map(),
-    busses: new Map(),
+    busGroups: new Map(),
   };
 
   getConfig(): ProducerConfig {
@@ -142,8 +142,8 @@ export abstract class AbstractTallyProducer<
     this._emitTallyUpdate();
 
     const newBusInfo = BusTools.groupInfoMapFromStateMap(busState);
-    if (!BusTools.areGroupInfoMapEqual(newBusInfo, this._info.busses)) {
-      this._info.busses = newBusInfo;
+    if (!BusTools.areGroupInfoMapEqual(newBusInfo, this._info.busGroups)) {
+      this._info.busGroups = newBusInfo;
       this._emitInfoUpdate();
     }
   }
@@ -157,7 +157,7 @@ export abstract class AbstractTallyProducer<
   }
 
   getBusInfo(): BusGroupInfoMap {
-    return this._info.busses;
+    return this._info.busGroups;
   }
 
   getModel(): DisplayName {
