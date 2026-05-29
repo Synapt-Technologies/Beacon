@@ -117,6 +117,15 @@ export abstract class BusTools {
   }
 
   //? Bus Equals
+  static areBusInfoEqual(a: SourceBusInfo, b: SourceBusInfo): boolean {
+    if (a.name.long !== b.name.long) return false;
+    if (a.name.short !== b.name.short) return false;
+
+    if (a.id !== b.id) return false;
+
+    return true;
+  }
+
   static areSourceSetsEqual(
     a: Set<GlobalSourceKey>,
     b: Set<GlobalSourceKey>,
@@ -128,19 +137,28 @@ export abstract class BusTools {
     return true;
   }
 
-  static areSourceBussesEqual(
+  static areSourceBusStatesEqual(
     a: SourceBusState,
     b: SourceBusState,
     onlySources: boolean = true,
   ): boolean {
     if (!onlySources) {
-      if (a.name.long !== b.name.long) return false;
-      if (a.name.short !== b.name.short) return false;
-
-      if (a.id !== b.id) return false;
+      if (!this.areBusInfoEqual(a, b)) return false;
     }
 
     if (!this.areSourceSetsEqual(a.sources, b.sources)) return false;
+
+    return true;
+  }
+
+  static areBusInfoMapsEqual(a: BusInfoMap, b: BusInfoMap): boolean {
+    if (a.size !== b.size) return false;
+
+    for (const [key, busInfo] of a) {
+      const otherBusInfo = b.get(key);
+      if (!otherBusInfo) return false;
+      if (!this.areBusInfoEqual(busInfo, otherBusInfo)) return false;
+    }
 
     return true;
   }
@@ -155,7 +173,7 @@ export abstract class BusTools {
     for (const [key, bus] of a) {
       const otherBus = b.get(key);
       if (!otherBus) return false;
-      if (!this.areSourceBussesEqual(bus, otherBus, onlySources)) return false;
+      if (!this.areSourceBusStatesEqual(bus, otherBus, onlySources)) return false;
     }
 
     return true;
