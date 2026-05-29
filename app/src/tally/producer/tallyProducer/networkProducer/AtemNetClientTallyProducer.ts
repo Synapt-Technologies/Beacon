@@ -94,13 +94,19 @@ export class AtemNetClientTallyProducer extends AbstractNetClientTallyProducer {
       }
 
       const newModel = this._parseModel();
-      if (newModel.long !== this.info.model.long || newModel.short !== this.info.model.short) {
+      if (
+        newModel.long !== this.info.model.long ||
+        newModel.short !== this.info.model.short
+      ) {
         this.info.model = newModel;
         infoChange = true;
         this.logger.info(`Updated model:`, this.info.model);
       }
 
-      if (this.info.sources.size === 0 || pathToChange.some((p) => p.startsWith("inputs"))) {
+      if (
+        this.info.sources.size === 0 ||
+        pathToChange.some((p) => p.startsWith("inputs"))
+      ) {
         this.info.sources = this._parseSources();
         infoChange = true;
         this.logger.info(`Updated sources:`, this.info.sources);

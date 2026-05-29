@@ -101,7 +101,10 @@ export abstract class BusTools {
     return { id: state.id, name: state.name };
   }
 
-  static stateFromInfo(info: SourceBusInfo, sources: Set<GlobalSourceKey>): SourceBusState {
+  static stateFromInfo(
+    info: SourceBusInfo,
+    sources: Set<GlobalSourceKey>,
+  ): SourceBusState {
     return { ...info, sources };
   }
 

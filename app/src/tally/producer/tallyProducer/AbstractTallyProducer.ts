@@ -11,7 +11,12 @@ import {
   type DisplayName,
   type WithRequired,
 } from "../../types/CommonTypes";
-import { type BusStateMap, type BusInfoMap, type SourceMap, BusTools } from "../../types/SourceTypes";
+import {
+  type BusStateMap,
+  type BusInfoMap,
+  type SourceMap,
+  BusTools,
+} from "../../types/SourceTypes";
 
 // export enum ProducerType { // Move to AbstractProducer once imp, or probably remove.
 //     UNKNOWN = "UNKNWN",
