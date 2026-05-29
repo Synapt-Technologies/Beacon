@@ -14,9 +14,11 @@ import {
   BusTools,
   type SourceInfo,
   type SourceMap,
+  type BusGroupStateMap,
   type BusStateMap,
+  type SourceBusGroup,
   type SourceBusInfo,
-  type GlobalSourceKey,
+  type SourceSet,
 } from "../../../types/SourceTypes";
 
 // TODO: Any atem specific config?
@@ -173,99 +175,110 @@ export class AtemNetClientTallyProducer extends AbstractNetClientTallyProducer {
   }
 
   protected _parseTallystate(): void {
-    const newBusMap: BusStateMap = new Map();
-    const id = this._config.id;
-
-    if (this.atemState && this._info.state === ConnectionState.ONLINE) {
-      this.atemState.video.mixEffects.forEach((me, i) => {
-        if (!me) return;
-
-        const meGroup = `ME${i + 1}`;
-        const meLabel = `ME-${i + 1}`;
-
-        let pgmInputs: number[] = [];
-        let prevInputs: number[] = [];
-        try {
-          pgmInputs = this.atem.listVisibleInputs("program", i);
-          prevInputs = this.atem.listVisibleInputs("preview", i);
-        } catch (e) {
-          this._logger.error(
-            `Failed to list visible inputs for ${meLabel}:`,
-            e,
-          );
-        }
-
-        const pgmKey = BusTools.fromGroupedParts(id, meGroup, "PRGM");
-        const pgmInfo: SourceBusInfo = {
-          id: pgmKey,
-          name: { long: `${meLabel} Program`, short: `${meLabel} PGM` },
-          index: 0,
-        };
-        newBusMap.set(
-          pgmKey,
-          BusTools.stateFromInfo(
-            pgmInfo,
-            new Set(
-              pgmInputs.map((src) => SourceTools.fromParts(id, String(src))),
-            ),
-          ),
-        );
-
-        const prevKey = BusTools.fromGroupedParts(id, meGroup, "PRVW");
-        const prevInfo: SourceBusInfo = {
-          id: prevKey,
-          name: { long: `${meLabel} Preview`, short: `${meLabel} PRVW` },
-          index: 0,
-        };
-        newBusMap.set(
-          prevKey,
-          BusTools.stateFromInfo(
-            prevInfo,
-            new Set(
-              prevInputs.map((src) => SourceTools.fromParts(id, String(src))),
-            ),
-          ),
-        );
-      });
-
-      this.atemState.video.auxilliaries?.forEach((auxInput, i) => {
-        if (auxInput == null) return;
-
-        const auxKey = BusTools.fromGroupedParts(id, "AUX", String(i));
-        const auxInfo: SourceBusInfo = {
-          id: auxKey,
-          name: { long: `AUX ${i + 1}`, short: `AUX-${i + 1}` },
-          index: 1,
-        };
-        newBusMap.set(
-          auxKey,
-          BusTools.stateFromInfo(
-            auxInfo,
-            new Set([SourceTools.fromParts(id, String(auxInput))]),
-          ),
-        );
-      });
-
-      this.atemState.video.downstreamKeyers?.forEach((dsk, i) => {
-        if (!dsk) return;
-
-        const dskKey = BusTools.fromGroupedParts(id, "DSK", String(i));
-        const dskInfo: SourceBusInfo = {
-          id: dskKey,
-          name: { long: `DSK${i + 1}`, short: `DSK-${i + 1}` },
-          index: 2,
-        };
-        const sources: Set<GlobalSourceKey> =
-          dsk.onAir && dsk.sources
-            ? new Set([
-                SourceTools.fromParts(id, String(dsk.sources.fillSource)),
-                SourceTools.fromParts(id, String(dsk.sources.cutSource)),
-              ])
-            : new Set();
-        newBusMap.set(dskKey, BusTools.stateFromInfo(dskInfo, sources));
-      });
+    if (!this.atemState || this._info.state !== ConnectionState.ONLINE) {
+      this._setBusState(new Map());
+      return;
     }
 
-    this._setBusState(newBusMap);
+    const id = this._config.id;
+    const newGroupMap: BusGroupStateMap = new Map();
+    let nextGroupIndex = 0;
+
+    this.atemState.video.mixEffects.forEach((me, i) => {
+      if (!me) return;
+
+      let pgmInputs: number[] = [];
+      let prvInputs: number[] = [];
+      try {
+        pgmInputs = this.atem.listVisibleInputs("program", i);
+        prvInputs = this.atem.listVisibleInputs("preview", i);
+      } catch (e) {
+        this._logger.error(`Failed to list visible inputs for ME${i + 1}:`, e);
+      }
+
+      const groupId = `ME${i}`;
+      const meLabel = `ME-${i + 1}`;
+      const busses: BusStateMap = new Map();
+
+      const pgmInfo: SourceBusInfo = {
+        id: { producer: id, group: groupId, bus: "PGM" },
+        name: { long: `${meLabel} Program`, short: `${meLabel} PGM` },
+        index: 0,
+      };
+      busses.set(
+        BusTools.busFromParts(id, groupId, "PGM"),
+        BusTools.busStateFromInfo(pgmInfo, new Set(pgmInputs.map((src) => SourceTools.fromParts(id, String(src))))),
+      );
+
+      const prvInfo: SourceBusInfo = {
+        id: { producer: id, group: groupId, bus: "PRV" },
+        name: { long: `${meLabel} Preview`, short: `${meLabel} PRV` },
+        index: 1,
+      };
+      busses.set(
+        BusTools.busFromParts(id, groupId, "PRV"),
+        BusTools.busStateFromInfo(prvInfo, new Set(prvInputs.map((src) => SourceTools.fromParts(id, String(src))))),
+      );
+
+      const meGroup: SourceBusGroup = {
+        id: { producer: id, group: groupId },
+        name: { long: `Mix Effect ${i + 1}`, short: meLabel },
+        index: i,
+      };
+      newGroupMap.set(BusTools.groupFromParts(id, groupId), BusTools.groupStateFromGroup(meGroup, busses));
+      nextGroupIndex = i + 1;
+    });
+
+    const auxBusses: BusStateMap = new Map();
+    this.atemState.video.auxilliaries?.forEach((auxInput, i) => {
+      if (auxInput == null) return;
+      const auxInfo: SourceBusInfo = {
+        id: { producer: id, group: "AUX", bus: String(i) },
+        name: { long: `AUX ${i + 1}`, short: `AUX ${i + 1}` },
+        index: i,
+      };
+      auxBusses.set(
+        BusTools.busFromParts(id, "AUX", String(i)),
+        BusTools.busStateFromInfo(auxInfo, new Set([SourceTools.fromParts(id, String(auxInput))])),
+      );
+    });
+    if (auxBusses.size > 0) {
+      const auxGroup: SourceBusGroup = {
+        id: { producer: id, group: "AUX" },
+        name: { long: "Auxiliaries", short: "AUX" },
+        index: nextGroupIndex++,
+      };
+      newGroupMap.set(BusTools.groupFromParts(id, "AUX"), BusTools.groupStateFromGroup(auxGroup, auxBusses));
+    }
+
+    const dskBusses: BusStateMap = new Map();
+    this.atemState.video.downstreamKeyers?.forEach((dsk, i) => {
+      if (!dsk) return;
+      const sources: SourceSet = dsk.onAir && dsk.sources
+        ? new Set([
+            SourceTools.fromParts(id, String(dsk.sources.fillSource)),
+            SourceTools.fromParts(id, String(dsk.sources.cutSource)),
+          ])
+        : new Set();
+      const dskInfo: SourceBusInfo = {
+        id: { producer: id, group: "DSK", bus: String(i) },
+        name: { long: `Downstream Keyer ${i + 1}`, short: `DSK ${i + 1}` },
+        index: i,
+      };
+      dskBusses.set(
+        BusTools.busFromParts(id, "DSK", String(i)),
+        BusTools.busStateFromInfo(dskInfo, sources),
+      );
+    });
+    if (dskBusses.size > 0) {
+      const dskGroup: SourceBusGroup = {
+        id: { producer: id, group: "DSK" },
+        name: { long: "Downstream Keyers", short: "DSK" },
+        index: nextGroupIndex,
+      };
+      newGroupMap.set(BusTools.groupFromParts(id, "DSK"), BusTools.groupStateFromGroup(dskGroup, dskBusses));
+    }
+
+    this._setBusState(newGroupMap);
   }
 }
