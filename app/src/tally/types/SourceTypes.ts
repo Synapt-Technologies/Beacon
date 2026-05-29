@@ -173,7 +173,8 @@ export abstract class BusTools {
     for (const [key, bus] of a) {
       const otherBus = b.get(key);
       if (!otherBus) return false;
-      if (!this.areSourceBusStatesEqual(bus, otherBus, onlySources)) return false;
+      if (!this.areSourceBusStatesEqual(bus, otherBus, onlySources))
+        return false;
     }
 
     return true;
