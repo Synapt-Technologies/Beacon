@@ -207,7 +207,12 @@ export class AtemNetClientTallyProducer extends AbstractNetClientTallyProducer {
       };
       busses.set(
         BusTools.busFromParts(id, groupId, "PGM"),
-        BusTools.busStateFromInfo(pgmInfo, new Set(pgmInputs.map((src) => SourceTools.fromParts(id, String(src))))),
+        BusTools.busStateFromInfo(
+          pgmInfo,
+          new Set(
+            pgmInputs.map((src) => SourceTools.fromParts(id, String(src))),
+          ),
+        ),
       );
 
       const prvInfo: SourceBusInfo = {
@@ -217,7 +222,12 @@ export class AtemNetClientTallyProducer extends AbstractNetClientTallyProducer {
       };
       busses.set(
         BusTools.busFromParts(id, groupId, "PRV"),
-        BusTools.busStateFromInfo(prvInfo, new Set(prvInputs.map((src) => SourceTools.fromParts(id, String(src))))),
+        BusTools.busStateFromInfo(
+          prvInfo,
+          new Set(
+            prvInputs.map((src) => SourceTools.fromParts(id, String(src))),
+          ),
+        ),
       );
 
       const meGroup: SourceBusGroup = {
@@ -225,7 +235,10 @@ export class AtemNetClientTallyProducer extends AbstractNetClientTallyProducer {
         name: { long: `Mix Effect ${i + 1}`, short: meLabel },
         index: i,
       };
-      newGroupMap.set(BusTools.groupFromParts(id, groupId), BusTools.groupStateFromGroup(meGroup, busses));
+      newGroupMap.set(
+        BusTools.groupFromParts(id, groupId),
+        BusTools.groupStateFromGroup(meGroup, busses),
+      );
       nextGroupIndex = i + 1;
     });
 
@@ -239,7 +252,10 @@ export class AtemNetClientTallyProducer extends AbstractNetClientTallyProducer {
       };
       auxBusses.set(
         BusTools.busFromParts(id, "AUX", String(i)),
-        BusTools.busStateFromInfo(auxInfo, new Set([SourceTools.fromParts(id, String(auxInput))])),
+        BusTools.busStateFromInfo(
+          auxInfo,
+          new Set([SourceTools.fromParts(id, String(auxInput))]),
+        ),
       );
     });
     if (auxBusses.size > 0) {
@@ -248,18 +264,22 @@ export class AtemNetClientTallyProducer extends AbstractNetClientTallyProducer {
         name: { long: "Auxiliaries", short: "AUX" },
         index: nextGroupIndex++,
       };
-      newGroupMap.set(BusTools.groupFromParts(id, "AUX"), BusTools.groupStateFromGroup(auxGroup, auxBusses));
+      newGroupMap.set(
+        BusTools.groupFromParts(id, "AUX"),
+        BusTools.groupStateFromGroup(auxGroup, auxBusses),
+      );
     }
 
     const dskBusses: BusStateMap = new Map();
     this.atemState.video.downstreamKeyers?.forEach((dsk, i) => {
       if (!dsk) return;
-      const sources: SourceSet = dsk.onAir && dsk.sources
-        ? new Set([
-            SourceTools.fromParts(id, String(dsk.sources.fillSource)),
-            SourceTools.fromParts(id, String(dsk.sources.cutSource)),
-          ])
-        : new Set();
+      const sources: SourceSet =
+        dsk.onAir && dsk.sources
+          ? new Set([
+              SourceTools.fromParts(id, String(dsk.sources.fillSource)),
+              SourceTools.fromParts(id, String(dsk.sources.cutSource)),
+            ])
+          : new Set();
       const dskInfo: SourceBusInfo = {
         id: { producer: id, group: "DSK", bus: String(i) },
         name: { long: `Downstream Keyer ${i + 1}`, short: `DSK ${i + 1}` },
@@ -276,7 +296,10 @@ export class AtemNetClientTallyProducer extends AbstractNetClientTallyProducer {
         name: { long: "Downstream Keyers", short: "DSK" },
         index: nextGroupIndex,
       };
-      newGroupMap.set(BusTools.groupFromParts(id, "DSK"), BusTools.groupStateFromGroup(dskGroup, dskBusses));
+      newGroupMap.set(
+        BusTools.groupFromParts(id, "DSK"),
+        BusTools.groupStateFromGroup(dskGroup, dskBusses),
+      );
     }
 
     this._setBusState(newGroupMap);
