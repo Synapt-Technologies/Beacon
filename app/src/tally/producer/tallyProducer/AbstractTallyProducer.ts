@@ -12,10 +12,10 @@ import {
   type WithRequired,
 } from "../../types/CommonTypes";
 import {
-  type BusStateMap,
-  type BusInfoMap,
   type SourceMap,
   BusTools,
+  type BusGroupStateMap,
+  type BusGroupInfoMap,
 } from "../../types/SourceTypes";
 
 // export enum ProducerType { // Move to AbstractProducer once imp, or probably remove.
@@ -27,7 +27,7 @@ import {
 
 export type TallyProducerEvents = {
   info_update: [ProducerInfo];
-  tally_update: [BusStateMap];
+  tally_update: [BusGroupStateMap];
 };
 
 // TODO: Add an AbstractProducer that can be extended by an AbstractAlertProducer
@@ -125,7 +125,7 @@ export abstract class AbstractTallyProducer<
     this._logger.debug(`Info updated.`);
   }
 
-  protected _busState: BusStateMap = new Map();
+  protected _busState: BusGroupStateMap = new Map();
 
   protected _emitTallyUpdate(): void {
     if (this._destroying) return;
@@ -135,20 +135,20 @@ export abstract class AbstractTallyProducer<
     );
   }
 
-  protected _setBusState(busState: BusStateMap): void {
-    if (BusTools.areBusStateMapsEqual(busState, this._busState)) return;
+  protected _setBusState(busState: BusGroupStateMap): void {
+    if (BusTools.areGroupStateMapEqual(busState, this._busState)) return;
 
     this._busState = busState;
     this._emitTallyUpdate();
 
-    const newBusInfo = BusTools.infoMapFromStateMap(busState);
-    if (!BusTools.areBusInfoMapsEqual(newBusInfo, this._info.busses)) {
+    const newBusInfo = BusTools.groupInfoMapFromStateMap(busState);
+    if (!BusTools.areGroupInfoMapEqual(newBusInfo, this._info.busses)) {
       this._info.busses = newBusInfo;
       this._emitInfoUpdate();
     }
   }
 
-  getBusState(): BusStateMap {
+  getBusState(): BusGroupStateMap {
     return this._busState;
   }
 
@@ -156,7 +156,7 @@ export abstract class AbstractTallyProducer<
     return this._info.sources;
   }
 
-  getBusInfo(): BusInfoMap {
+  getBusInfo(): BusGroupInfoMap {
     return this._info.busses;
   }
 
