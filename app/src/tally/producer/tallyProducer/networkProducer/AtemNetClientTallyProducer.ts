@@ -270,6 +270,7 @@ export class AtemNetClientTallyProducer extends AbstractNetClientTallyProducer {
       );
     }
 
+    // TODO: Check if this is needed, as DSK sources also appear in ME busses.
     const dskBusses: BusStateMap = new Map();
     this.atemState.video.downstreamKeyers?.forEach((dsk, i) => {
       if (!dsk) return;
