@@ -1,7 +1,7 @@
 import type { DisplayName } from "./CommonTypes";
 import type { ConsumerId } from "./ConsumerTypes";
 import { LogicFactory, type PatchNode } from "./LogicTypes";
-import type { GlobalSourceAddress } from "./SourceTypes";
+import type { SourceMap } from "./SourceTypes";
 
 export type DeviceId = string;
 export type DeviceKey = `${ConsumerId}:${DeviceId}`;
@@ -136,7 +136,7 @@ export interface BaseDeviceBundle extends BaseTallyDevice {
 
 export interface DeviceStatePackage {
   state: DeviceTallyState;
-  active_sources: GlobalSourceAddress[]; // TODO: Implement or remove. Should it be a per bus map?
+  active_sources: SourceMap[]; // TODO: Implement or remove. Should it be a per bus map?
 }
 
 export interface DeviceStateBundle
