@@ -37,15 +37,16 @@ export interface SourceBusInfo {
   name: DisplayName;
 }
 
-export interface SourceBus extends SourceBusInfo {
+export interface SourceBusState extends SourceBusInfo {
   sources: Set<GlobalSourceKey>;
 }
 
 // ? Bus Maps
-export type ProducerBusMap = Map<GlobalBusKey, SourceBus>;
+export type BusInfoMap = Map<GlobalBusKey, SourceBusInfo>;
+export type BusStateMap = Map<GlobalBusKey, SourceBusState>;
 
 export interface ProducerBusState extends ProducerState {
-  busses: ProducerBusMap;
+  busses: BusStateMap;
 }
 
 export type GlobalProducerMap = Map<ProducerId, ProducerBusState>;
@@ -109,8 +110,8 @@ export abstract class BusTools {
   }
 
   static areSourceBussesEqual(
-    a: SourceBus,
-    b: SourceBus,
+    a: SourceBusState,
+    b: SourceBusState,
     onlySources: boolean = true,
   ): boolean {
     if (!onlySources) {
@@ -126,8 +127,8 @@ export abstract class BusTools {
   }
 
   static areBusMapsEqual(
-    a: ProducerBusMap,
-    b: ProducerBusMap,
+    a: BusMap,
+    b: BusMap,
     onlySources: boolean = true,
   ): boolean {
     if (a.size !== b.size) return false;
