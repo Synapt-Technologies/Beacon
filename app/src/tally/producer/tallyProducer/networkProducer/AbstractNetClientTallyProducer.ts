@@ -15,7 +15,7 @@ export abstract class AbstractNetClientTallyProducer<
   T extends TallyProducerEvents = TallyProducerEvents,
 > extends AbstractTallyProducer<T> {
   declare protected config: NetClientProducerConfig; // Declare to indicate it overwrites the parent's type.
-  protected abstract getDefaultConfig(): Omit<
+  protected abstract _getDefaultConfig(): Omit<
     NetClientProducerConfig,
     "id" | "host"
   >;
@@ -24,8 +24,8 @@ export abstract class AbstractNetClientTallyProducer<
     super(config);
   }
 
-  protected checkConfig(config: NetClientProducerConfig) {
-    super.checkConfig(config);
+  protected _checkConfig(config: NetClientProducerConfig) {
+    super._checkConfig(config);
 
     if (config.host == null || net.isIP(config.host) != 4)
       this.logger.fatal(

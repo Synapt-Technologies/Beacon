@@ -44,7 +44,7 @@ export abstract class AbstractTallyProducer<
   protected store: ProducerStore;
 
   protected config: ProducerConfig;
-  protected abstract getDefaultConfig(): Omit<ProducerConfig, "id">;
+  protected abstract _getDefaultConfig(): Omit<ProducerConfig, "id">;
 
   protected info: ProducerInfo = {
     state: ConnectionState.OFFLINE,
@@ -76,7 +76,7 @@ export abstract class AbstractTallyProducer<
   constructor(config: WithRequired<ProducerConfig, "id">) {
     super();
 
-    this.config = { ...this.getDefaultConfig(), ...config };
+    this.config = { ...this._getDefaultConfig(), ...config };
 
     this.logger = new Logger([
       "Tally",
@@ -85,7 +85,7 @@ export abstract class AbstractTallyProducer<
       this.config.id,
     ]);
 
-    this.checkConfig(this.config);
+    this._checkConfig(this.config);
 
     //? Not in AbstractConnection (Maybe store should)
     this.store = new ProducerStore(this.config.id);
@@ -98,7 +98,7 @@ export abstract class AbstractTallyProducer<
     //? End Not in AbstractConnection
   }
 
-  protected checkConfig(config: ProducerConfig) {
+  protected _checkConfig(config: ProducerConfig) {
     if (!config.id || config.id == "")
       this.logger.fatal(`Invalid ID provided. Submitted config:`, config);
     if (config.name == null || config.name == "")
@@ -118,7 +118,7 @@ export abstract class AbstractTallyProducer<
 
   // TODO: Move above to AbstractConnection
   // TODO emitInfoUpdate also in AbstractConnection? Or as abstract?
-  protected emitInfoUpdate(): void {
+  protected _emitInfoUpdate(): void {
     if (this._destroying) return;
     this.store.saveInfo(this.info);
     (this as EventEmitter<TallyProducerEvents>).emit("info_update", this.info);
@@ -127,7 +127,7 @@ export abstract class AbstractTallyProducer<
 
   protected busState: BusStateMap = new Map();
 
-  protected emitTallyUpdate(): void {
+  protected _emitTallyUpdate(): void {
     if (this._destroying) return;
     (this as EventEmitter<TallyProducerEvents>).emit(
       "tally_update",

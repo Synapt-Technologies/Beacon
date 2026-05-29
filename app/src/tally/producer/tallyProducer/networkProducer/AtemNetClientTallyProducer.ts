@@ -26,7 +26,7 @@ export class AtemNetClientTallyProducer extends AbstractNetClientTallyProducer {
     port: 9910,
   };
 
-  protected getDefaultConfig(): Omit<NetClientProducerConfig, "id" | "host"> {
+  protected _getDefaultConfig(): Omit<NetClientProducerConfig, "id" | "host"> {
     return AtemNetClientTallyProducer.DefaultConfig;
   }
 
@@ -59,7 +59,7 @@ export class AtemNetClientTallyProducer extends AbstractNetClientTallyProducer {
       this.info.sources = this._parseSources();
 
       this.logger.info("Connected to model:", this.getModel());
-      this.emitInfoUpdate();
+      this._emitInfoUpdate();
       this._parseTallystate();
     });
 
@@ -71,7 +71,7 @@ export class AtemNetClientTallyProducer extends AbstractNetClientTallyProducer {
         "Disconnected",
         `target=${this.config.host}:${this.config.port}`,
       );
-      this.emitInfoUpdate();
+      this._emitInfoUpdate();
       this._parseTallystate();
     });
 
@@ -112,7 +112,7 @@ export class AtemNetClientTallyProducer extends AbstractNetClientTallyProducer {
         this.logger.info(`Updated sources:`, this.info.sources);
       }
 
-      if (infoChange) this.emitInfoUpdate();
+      if (infoChange) this._emitInfoUpdate();
     });
   }
 
