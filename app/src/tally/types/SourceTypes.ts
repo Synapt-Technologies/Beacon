@@ -32,6 +32,7 @@ export interface GlobalBusAddress {
   bus: BusId;
 }
 
+// TODO: Add some sort of importance to order in ui. ME -> Aux -> dsk
 export interface SourceBusInfo {
   id: GlobalBusKey;
   name: DisplayName;
