@@ -97,6 +97,22 @@ export abstract class BusTools {
     return { producer: parts[0], bus: parts[1] };
   }
 
+  static infoFromState(state: SourceBusState): SourceBusInfo {
+    return { id: state.id, name: state.name };
+  }
+
+  static stateFromInfo(info: SourceBusInfo, sources: Set<GlobalSourceKey>): SourceBusState {
+    return { ...info, sources };
+  }
+
+  static infoMapFromStateMap(stateMap: BusStateMap): BusInfoMap {
+    const infoMap: BusInfoMap = new Map();
+    for (const [key, state] of stateMap) {
+      infoMap.set(key, this.infoFromState(state));
+    }
+    return infoMap;
+  }
+
   //? Bus Equals
   static areSourceSetsEqual(
     a: Set<GlobalSourceKey>,
