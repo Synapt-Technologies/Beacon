@@ -11,7 +11,7 @@ import {
   type DisplayName,
   type WithRequired,
 } from "../../types/CommonTypes";
-import type { ProducerBusMap, SourceMap } from "../../types/SourceTypes";
+import { type BusStateMap, type BusInfoMap, type SourceMap, BusTools } from "../../types/SourceTypes";
 
 // export enum ProducerType { // Move to AbstractProducer once imp, or probably remove.
 //     UNKNOWN = "UNKNWN",
@@ -22,7 +22,7 @@ import type { ProducerBusMap, SourceMap } from "../../types/SourceTypes";
 
 export type TallyProducerEvents = {
   info_update: [ProducerInfo];
-  tally_update: [ProducerBusMap];
+  tally_update: [BusStateMap];
 };
 
 // TODO: Add an AbstractProducer that can be extended by an AbstractAlertProducer
@@ -48,6 +48,7 @@ export abstract class AbstractTallyProducer<
       short: "UNKNOWN",
     },
     sources: new Map(),
+    busses: new Map(),
   };
 
   getConfig(): ProducerConfig {
@@ -119,7 +120,7 @@ export abstract class AbstractTallyProducer<
     this.logger.debug(`Info updated.`);
   }
 
-  protected busState: ProducerBusMap = new Map();
+  protected busState: BusStateMap = new Map();
 
   protected emitTallyUpdate(): void {
     if (this._destroying) return;
@@ -129,12 +130,16 @@ export abstract class AbstractTallyProducer<
     );
   }
 
-  getBusState(): ProducerBusMap {
+  getBusState(): BusStateMap {
     return this.busState;
   }
 
   getSources(): SourceMap {
     return this.info.sources;
+  }
+
+  getBusInfo(): BusInfoMap {
+    return BusTools.infoMapFromStateMap(this.busState);
   }
 
   getModel(): DisplayName {
