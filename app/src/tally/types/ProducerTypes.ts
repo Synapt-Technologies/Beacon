@@ -1,4 +1,4 @@
-import type { BusInfoMap, SourceMap } from "./SourceTypes";
+import type { BusGroupInfoMap, SourceMap } from "./SourceTypes";
 import type { ConnectionState, DisplayName } from "./CommonTypes";
 
 export type ProducerId = string;
@@ -19,7 +19,7 @@ export interface ProducerState {
 export interface ProducerInfo extends ProducerState {
   model: DisplayName;
   sources: SourceMap;
-  busses: BusInfoMap;
+  busses: BusGroupInfoMap;
 }
 
 //? Producer Bundles
