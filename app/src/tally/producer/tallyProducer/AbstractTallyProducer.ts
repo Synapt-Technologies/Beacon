@@ -135,6 +135,19 @@ export abstract class AbstractTallyProducer<
     );
   }
 
+  protected _setBusState(busState: BusStateMap): void {
+    if (BusTools.areBusStateMapsEqual(busState, this.busState)) return;
+
+    this.busState = busState;
+    this._emitTallyUpdate();
+
+    const newBusInfo = BusTools.infoMapFromStateMap(busState);
+    if (!BusTools.areBusInfoMapsEqual(newBusInfo, this.info.busses)) {
+      this.info.busses = newBusInfo;
+      this._emitInfoUpdate();
+    }
+  }
+
   getBusState(): BusStateMap {
     return this.busState;
   }
@@ -144,7 +157,7 @@ export abstract class AbstractTallyProducer<
   }
 
   getBusInfo(): BusInfoMap {
-    return BusTools.infoMapFromStateMap(this.busState);
+    return this.info.busses;
   }
 
   getModel(): DisplayName {
