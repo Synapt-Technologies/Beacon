@@ -126,9 +126,9 @@ export abstract class BusTools {
     return true;
   }
 
-  static areBusMapsEqual(
-    a: BusMap,
-    b: BusMap,
+  static areBusStateMapsEqual(
+    a: BusStateMap,
+    b: BusStateMap,
     onlySources: boolean = true,
   ): boolean {
     if (a.size !== b.size) return false;
@@ -151,7 +151,7 @@ export abstract class BusTools {
       if (a.state !== b.state) return false;
     }
 
-    return this.areBusMapsEqual(a.busses, b.busses, onlySources);
+    return this.areBusStateMapsEqual(a.busses, b.busses, onlySources);
   }
 
   static areGlobalProducerMapsEqual(
