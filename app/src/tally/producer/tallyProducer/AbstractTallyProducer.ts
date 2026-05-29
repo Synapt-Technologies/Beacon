@@ -39,14 +39,14 @@ export abstract class AbstractTallyProducer<
   public readonly conType: string = "PROD";
   public readonly prodType: string = "SWTCHR";
 
-  protected logger: Logger;
+  protected _logger: Logger;
 
-  protected store: ProducerStore;
+  protected _store: ProducerStore;
 
-  protected config: ProducerConfig;
+  protected _config: ProducerConfig;
   protected abstract _getDefaultConfig(): Omit<ProducerConfig, "id">;
 
-  protected info: ProducerInfo = {
+  protected _info: ProducerInfo = {
     state: ConnectionState.OFFLINE,
     model: {
       long: "Unknown Model",
@@ -57,52 +57,52 @@ export abstract class AbstractTallyProducer<
   };
 
   getConfig(): ProducerConfig {
-    return this.config;
+    return this._config;
   }
   getId(): ProducerId {
-    return this.config.id;
+    return this._config.id;
   }
   setName(name: string): void {
-    this.config.name = name;
+    this._config.name = name;
   }
   getName(): string {
-    return this.config.name;
+    return this._config.name;
   }
 
   getInfo(): ProducerInfo {
-    return this.info;
+    return this._info;
   }
 
   constructor(config: WithRequired<ProducerConfig, "id">) {
     super();
 
-    this.config = { ...this._getDefaultConfig(), ...config };
+    this._config = { ...this._getDefaultConfig(), ...config };
 
-    this.logger = new Logger([
+    this._logger = new Logger([
       "Tally",
       this.conType,
       this.prodType,
-      this.config.id,
+      this._config.id,
     ]);
 
-    this._checkConfig(this.config);
+    this._checkConfig(this._config);
 
     //? Not in AbstractConnection (Maybe store should)
-    this.store = new ProducerStore(this.config.id);
+    this._store = new ProducerStore(this._config.id);
 
-    const storedInfo = this.store.loadInfo();
+    const storedInfo = this._store.loadInfo();
     if (storedInfo) {
-      this.info = storedInfo;
-      this.logger.debug(`Loaded stored info.`);
+      this._info = storedInfo;
+      this._logger.debug(`Loaded stored info.`);
     }
     //? End Not in AbstractConnection
   }
 
   protected _checkConfig(config: ProducerConfig) {
     if (!config.id || config.id == "")
-      this.logger.fatal(`Invalid ID provided. Submitted config:`, config);
+      this._logger.fatal(`Invalid ID provided. Submitted config:`, config);
     if (config.name == null || config.name == "")
-      this.logger.fatal(`Name was not provided. Submitted config:`, config);
+      this._logger.fatal(`Name was not provided. Submitted config:`, config);
   }
 
   private _destroying = false;
@@ -120,47 +120,47 @@ export abstract class AbstractTallyProducer<
   // TODO emitInfoUpdate also in AbstractConnection? Or as abstract?
   protected _emitInfoUpdate(): void {
     if (this._destroying) return;
-    this.store.saveInfo(this.info);
-    (this as EventEmitter<TallyProducerEvents>).emit("info_update", this.info);
-    this.logger.debug(`Info updated.`);
+    this._store.saveInfo(this._info);
+    (this as EventEmitter<TallyProducerEvents>).emit("info_update", this._info);
+    this._logger.debug(`Info updated.`);
   }
 
-  protected busState: BusStateMap = new Map();
+  protected _busState: BusStateMap = new Map();
 
   protected _emitTallyUpdate(): void {
     if (this._destroying) return;
     (this as EventEmitter<TallyProducerEvents>).emit(
       "tally_update",
-      this.busState,
+      this._busState,
     );
   }
 
   protected _setBusState(busState: BusStateMap): void {
-    if (BusTools.areBusStateMapsEqual(busState, this.busState)) return;
+    if (BusTools.areBusStateMapsEqual(busState, this._busState)) return;
 
-    this.busState = busState;
+    this._busState = busState;
     this._emitTallyUpdate();
 
     const newBusInfo = BusTools.infoMapFromStateMap(busState);
-    if (!BusTools.areBusInfoMapsEqual(newBusInfo, this.info.busses)) {
-      this.info.busses = newBusInfo;
+    if (!BusTools.areBusInfoMapsEqual(newBusInfo, this._info.busses)) {
+      this._info.busses = newBusInfo;
       this._emitInfoUpdate();
     }
   }
 
   getBusState(): BusStateMap {
-    return this.busState;
+    return this._busState;
   }
 
   getSources(): SourceMap {
-    return this.info.sources;
+    return this._info.sources;
   }
 
   getBusInfo(): BusInfoMap {
-    return this.info.busses;
+    return this._info.busses;
   }
 
   getModel(): DisplayName {
-    return this.info.model;
+    return this._info.model;
   }
 }

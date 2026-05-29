@@ -37,39 +37,39 @@ export class AtemNetClientTallyProducer extends AbstractNetClientTallyProducer {
     super(config);
 
     this.atem = new Atem({
-      address: this.config.host,
-      port: this.config.port,
+      address: this._config.host,
+      port: this._config.port,
     });
 
     this.atem.on("info", (data) => {
-      this.logger.debug("Info:", data);
+      this._logger.debug("Info:", data);
     });
     this.atem.on("error", (data) => {
-      this.logger.error(
+      this._logger.error(
         "Error:",
         data,
-        `target=${this.config.host}:${this.config.port}`,
+        `target=${this._config.host}:${this._config.port}`,
       );
     });
 
     this.atem.on("connected", () => {
-      this.info.state = ConnectionState.ONLINE;
+      this._info.state = ConnectionState.ONLINE;
       this.atemState = this.atem.state ?? null;
-      this.info.model = this._parseModel();
-      this.info.sources = this._parseSources();
+      this._info.model = this._parseModel();
+      this._info.sources = this._parseSources();
 
-      this.logger.info("Connected to model:", this.getModel());
+      this._logger.info("Connected to model:", this.getModel());
       this._emitInfoUpdate();
       this._parseTallystate();
     });
 
     this.atem.on("disconnected", () => {
-      this.info.state = ConnectionState.OFFLINE;
+      this._info.state = ConnectionState.OFFLINE;
       this.atemState = null;
 
-      this.logger.warn(
+      this._logger.warn(
         "Disconnected",
-        `target=${this.config.host}:${this.config.port}`,
+        `target=${this._config.host}:${this._config.port}`,
       );
       this._emitInfoUpdate();
       this._parseTallystate();
@@ -80,7 +80,7 @@ export class AtemNetClientTallyProducer extends AbstractNetClientTallyProducer {
       this.atemState = state;
       let infoChange: boolean = false;
 
-      this.logger.debug("State Changed. Path:", pathToChange);
+      this._logger.debug("State Changed. Path:", pathToChange);
 
       if (
         pathToChange.some(
@@ -95,21 +95,21 @@ export class AtemNetClientTallyProducer extends AbstractNetClientTallyProducer {
 
       const newModel = this._parseModel();
       if (
-        newModel.long !== this.info.model.long ||
-        newModel.short !== this.info.model.short
+        newModel.long !== this._info.model.long ||
+        newModel.short !== this._info.model.short
       ) {
-        this.info.model = newModel;
+        this._info.model = newModel;
         infoChange = true;
-        this.logger.info(`Updated model:`, this.info.model);
+        this._logger.info(`Updated model:`, this._info.model);
       }
 
       if (
-        this.info.sources.size === 0 ||
+        this._info.sources.size === 0 ||
         pathToChange.some((p) => p.startsWith("inputs"))
       ) {
-        this.info.sources = this._parseSources();
+        this._info.sources = this._parseSources();
         infoChange = true;
-        this.logger.info(`Updated sources:`, this.info.sources);
+        this._logger.info(`Updated sources:`, this._info.sources);
       }
 
       if (infoChange) this._emitInfoUpdate();
@@ -126,15 +126,15 @@ export class AtemNetClientTallyProducer extends AbstractNetClientTallyProducer {
   }
 
   connect(): Promise<void> {
-    return this.atem.connect(this.config.host);
+    return this.atem.connect(this._config.host);
   }
   disconnect(): Promise<void> {
     return this.atem.disconnect();
   }
 
   protected _parseModel(): DisplayName {
-    if (!this.atemState || this.info.state !== ConnectionState.ONLINE) {
-      return this.info.model;
+    if (!this.atemState || this._info.state !== ConnectionState.ONLINE) {
+      return this._info.model;
     }
     return {
       long: this.atemState.info.productIdentifier || "Unknown ATEM Model",
@@ -145,14 +145,14 @@ export class AtemNetClientTallyProducer extends AbstractNetClientTallyProducer {
   protected _parseSources(): SourceMap {
     const sources: SourceMap = new Map();
 
-    if (this.info.state !== ConnectionState.ONLINE || !this.atemState) {
+    if (this._info.state !== ConnectionState.ONLINE || !this.atemState) {
       return sources;
     }
 
     for (const [id, input] of Object.entries(this.atemState.inputs)) {
       if (!input) continue;
 
-      const globalAddress = { producer: this.config.id, source: id };
+      const globalAddress = { producer: this._config.id, source: id };
       const globalKey = SourceTools.fromAddress(globalAddress);
 
       const sourceInfo: SourceInfo = {
@@ -171,21 +171,21 @@ export class AtemNetClientTallyProducer extends AbstractNetClientTallyProducer {
 
   // TODO: Rewrite Below
   protected _parseTallystate(): void {
-    if (this.info.state === ConnectionState.ONLINE) {
+    if (this._info.state === ConnectionState.ONLINE) {
       try {
         rawProgram = this.atem.listVisibleInputs("program");
         rawPreview = this.atem.listVisibleInputs("preview");
       } catch (e) {
-        this.logger.error(`Failed to parse tally state:`, e); // TODO Check if this happens often and there should better be some timeout.
+        this._logger.error(`Failed to parse tally state:`, e); // TODO Check if this happens often and there should better be some timeout.
       }
     }
 
     // TODO Implement multi ME, and maybe even aux handling?
     const newProgramStrings = rawProgram.map((id) =>
-      GlobalSourceTools.create(this.config.id, String(id)),
+      GlobalSourceTools.create(this._config.id, String(id)),
     );
     const newPreviewStrings = rawPreview.map((id) =>
-      GlobalSourceTools.create(this.config.id, String(id)),
+      GlobalSourceTools.create(this._config.id, String(id)),
     );
 
     const newTallyState: TallyState = {
@@ -201,7 +201,7 @@ export class AtemNetClientTallyProducer extends AbstractNetClientTallyProducer {
 
       this.emit("tally_update", this.tallyState);
 
-      this.logger.debug(
+      this._logger.debug(
         "Tally Change:",
         GlobalSourceTools.serialize(this.tallyState),
       );
