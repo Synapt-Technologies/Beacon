@@ -189,7 +189,10 @@ export class AtemNetClientTallyProducer extends AbstractNetClientTallyProducer {
           pgmInputs = this.atem.listVisibleInputs("program", i);
           prevInputs = this.atem.listVisibleInputs("preview", i);
         } catch (e) {
-          this._logger.error(`Failed to list visible inputs for ${meLabel}:`, e);
+          this._logger.error(
+            `Failed to list visible inputs for ${meLabel}:`,
+            e,
+          );
         }
 
         const pgmKey = BusTools.fromGroupedParts(id, meGroup, "PRGM");
@@ -200,7 +203,12 @@ export class AtemNetClientTallyProducer extends AbstractNetClientTallyProducer {
         };
         newBusMap.set(
           pgmKey,
-          BusTools.stateFromInfo(pgmInfo, new Set(pgmInputs.map(src => SourceTools.fromParts(id, String(src))))),
+          BusTools.stateFromInfo(
+            pgmInfo,
+            new Set(
+              pgmInputs.map((src) => SourceTools.fromParts(id, String(src))),
+            ),
+          ),
         );
 
         const prevKey = BusTools.fromGroupedParts(id, meGroup, "PRVW");
@@ -211,7 +219,12 @@ export class AtemNetClientTallyProducer extends AbstractNetClientTallyProducer {
         };
         newBusMap.set(
           prevKey,
-          BusTools.stateFromInfo(prevInfo, new Set(prevInputs.map(src => SourceTools.fromParts(id, String(src))))),
+          BusTools.stateFromInfo(
+            prevInfo,
+            new Set(
+              prevInputs.map((src) => SourceTools.fromParts(id, String(src))),
+            ),
+          ),
         );
       });
 
@@ -226,7 +239,10 @@ export class AtemNetClientTallyProducer extends AbstractNetClientTallyProducer {
         };
         newBusMap.set(
           auxKey,
-          BusTools.stateFromInfo(auxInfo, new Set([SourceTools.fromParts(id, String(auxInput))])),
+          BusTools.stateFromInfo(
+            auxInfo,
+            new Set([SourceTools.fromParts(id, String(auxInput))]),
+          ),
         );
       });
 
@@ -239,12 +255,13 @@ export class AtemNetClientTallyProducer extends AbstractNetClientTallyProducer {
           name: { long: `DSK${i + 1}`, short: `DSK-${i + 1}` },
           index: 2,
         };
-        const sources: Set<GlobalSourceKey> = dsk.onAir && dsk.sources
-          ? new Set([
-              SourceTools.fromParts(id, String(dsk.sources.fillSource)),
-              SourceTools.fromParts(id, String(dsk.sources.cutSource)),
-            ])
-          : new Set();
+        const sources: Set<GlobalSourceKey> =
+          dsk.onAir && dsk.sources
+            ? new Set([
+                SourceTools.fromParts(id, String(dsk.sources.fillSource)),
+                SourceTools.fromParts(id, String(dsk.sources.cutSource)),
+              ])
+            : new Set();
         newBusMap.set(dskKey, BusTools.stateFromInfo(dskInfo, sources));
       });
     }

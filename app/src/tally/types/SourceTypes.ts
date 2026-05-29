@@ -36,11 +36,10 @@ export interface GlobalBusAddress extends GlobalBusGroupAddress {
   bus: BusId;
 }
 
-
 export interface SourceBusInfo {
   id: GlobalBusAddress;
   name: DisplayName;
-  index: number; // For ordering busses in the UI. 
+  index: number; // For ordering busses in the UI.
 }
 
 export interface SourceBusState extends SourceBusInfo {
@@ -53,7 +52,7 @@ export type BusStateMap = Map<GlobalBusKey, SourceBusState>;
 export interface SourceBusGroup {
   id: GlobalBusGroupAddress;
   name: DisplayName;
-  index: number; // For ordering groups in the UI. 
+  index: number; // For ordering groups in the UI.
 }
 
 export interface SourceBusGroupInfo extends SourceBusGroup {
@@ -93,7 +92,10 @@ export abstract class SourceTools {
     return { producer, source: sourceParts.join(":") };
   }
 
-  static areSourceAddressesEqual(a: GlobalSourceAddress, b: GlobalSourceAddress): boolean {
+  static areSourceAddressesEqual(
+    a: GlobalSourceAddress,
+    b: GlobalSourceAddress,
+  ): boolean {
     return a.producer === b.producer && a.source === b.source;
   }
 
@@ -104,10 +106,7 @@ export abstract class SourceTools {
     return true;
   }
 
-  static areSourceSetsEqual(
-    a: SourceSet,
-    b: SourceSet,
-  ): boolean {
+  static areSourceSetsEqual(a: SourceSet, b: SourceSet): boolean {
     if (a.size !== b.size) return false;
     for (const item of a) {
       if (!b.has(item)) return false;
@@ -127,7 +126,10 @@ export abstract class SourceTools {
 }
 export abstract class BusTools {
   //? Source Bus
-  static groupFromParts(producer: ProducerId, group: BusGroupId): GlobalBusGroupKey {
+  static groupFromParts(
+    producer: ProducerId,
+    group: BusGroupId,
+  ): GlobalBusGroupKey {
     return `${producer}:${group}` as GlobalBusGroupKey;
   }
 
@@ -169,7 +171,12 @@ export abstract class BusTools {
   }
 
   static groupInfoFromState(state: SourceBusGroupState): SourceBusGroupInfo {
-    return { id: state.id, name: state.name, index: state.index, busses: this.busInfoMapFromStateMap(state.busses) };
+    return {
+      id: state.id,
+      name: state.name,
+      index: state.index,
+      busses: this.busInfoMapFromStateMap(state.busses),
+    };
   }
 
   static groupStateFromGroup(
@@ -204,7 +211,10 @@ export abstract class BusTools {
 
   //? Bus Equals
 
-  static areBusGroupAddressEqual(a: GlobalBusGroupAddress, b: GlobalBusGroupAddress): boolean {
+  static areBusGroupAddressEqual(
+    a: GlobalBusGroupAddress,
+    b: GlobalBusGroupAddress,
+  ): boolean {
     return a.producer === b.producer && a.group === b.group;
   }
 
@@ -239,17 +249,13 @@ export abstract class BusTools {
     return true;
   }
 
-  static areBusStateMapEqual(
-    a: BusStateMap,
-    b: BusStateMap,
-  ): boolean {
+  static areBusStateMapEqual(a: BusStateMap, b: BusStateMap): boolean {
     if (a.size !== b.size) return false;
 
     for (const [key, bus] of a) {
       const otherBus = b.get(key);
       if (!otherBus) return false;
-      if (!this.areBusStateEqual(bus, otherBus))
-        return false;
+      if (!this.areBusStateEqual(bus, otherBus)) return false;
     }
 
     return true;
@@ -263,20 +269,25 @@ export abstract class BusTools {
     return true;
   }
 
-  static areGroupInfoEqual(a: SourceBusGroupInfo, b: SourceBusGroupInfo): boolean {
+  static areGroupInfoEqual(
+    a: SourceBusGroupInfo,
+    b: SourceBusGroupInfo,
+  ): boolean {
     if (!this.areGroupEqual(a, b)) return false;
     if (!this.areBusInfoMapEqual(a.busses, b.busses)) return false;
 
     return true;
   }
 
-  static areGroupStateEqual(a: SourceBusGroupState, b: SourceBusGroupState): boolean {
+  static areGroupStateEqual(
+    a: SourceBusGroupState,
+    b: SourceBusGroupState,
+  ): boolean {
     if (!this.areGroupEqual(a, b)) return false;
     if (!this.areBusStateMapEqual(a.busses, b.busses)) return false;
 
     return true;
   }
-
 
   static areGroupInfoMapEqual(a: BusGroupInfoMap, b: BusGroupInfoMap): boolean {
     if (a.size !== b.size) return false;
@@ -286,7 +297,7 @@ export abstract class BusTools {
       if (!otherGroupInfo) return false;
       if (!this.areGroupInfoEqual(groupInfo, otherGroupInfo)) return false;
     }
-    
+
     return true;
   }
 
@@ -301,7 +312,7 @@ export abstract class BusTools {
       if (!otherGroupState) return false;
       if (!this.areGroupStateEqual(groupState, otherGroupState)) return false;
     }
-    
+
     return true;
   }
 
@@ -309,9 +320,8 @@ export abstract class BusTools {
     a: ProducerBusState,
     b: ProducerBusState,
   ): boolean {
-    
     if (a.state !== b.state) return false;
-    if(!this.areGroupStateMapEqual(a.busGroups, b.busGroups)) return false;
+    if (!this.areGroupStateMapEqual(a.busGroups, b.busGroups)) return false;
 
     return true;
   }
@@ -324,8 +334,7 @@ export abstract class BusTools {
     for (const [producer, busState] of a) {
       const otherBusState = b.get(producer);
       if (!otherBusState) return false;
-      if (!this.areProducerBusStateEqual(busState, otherBusState))
-        return false;
+      if (!this.areProducerBusStateEqual(busState, otherBusState)) return false;
     }
 
     return true;
