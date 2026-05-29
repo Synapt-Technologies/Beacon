@@ -3,13 +3,13 @@ import { AbstractConsumer } from "./consumer/AbstractConsumer";
 import { isGlobalBroadcastConsumer } from "./consumer/IGlobalBroadcastConsumer";
 import { GlobalSourceTools, type ProducerId, type TallyState } from "./types/ProducerStates";
 import { AbstractTallyProducer, type ProducerInfo, ProducerStatus } from "./producer/tallyProducer/AbstractTallyProducer";
-import { type AlertSlotConfig, DEFAULT_ALERT_SLOTS, DeviceTallyState, type ConsumerId, type TallyDevice } from "./types/ConsumerStates";
+import { type AlertSlotConfig, DEFAULT_ALERT_SLOTS, TallyState, type ConsumerId, type TallyDevice } from "./types/ConsumerStates";
 import { Logger } from "../logging/Logger";
 
 export type { AlertSlotConfig };
 
 export interface OrchestratorConfig {
-    state_on_disconnect?: DeviceTallyState;
+    state_on_disconnect?: TallyState;
     alert_slots?: AlertSlotConfig[];
 }
 
@@ -36,7 +36,7 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
     protected config: Required<OrchestratorConfig>;
 
     public static readonly DefaultConfig: Required<OrchestratorConfig> = {
-        state_on_disconnect: DeviceTallyState.NONE,
+        state_on_disconnect: TallyState.NONE,
         alert_slots: DEFAULT_ALERT_SLOTS,
     };
 
@@ -77,7 +77,7 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
 
 
         if (state_on_disconnect_change) {
-            this.logger.info(`State on disconnect changed to ${DeviceTallyState[this.config.state_on_disconnect]}. Disconnected producers: ${this.disconnectedProducers.size}.`)
+            this.logger.info(`State on disconnect changed to ${TallyState[this.config.state_on_disconnect]}. Disconnected producers: ${this.disconnectedProducers.size}.`)
 
             if (this.disconnectedProducers.size !== 0) {  // TODO Extract to function and use in restart
                 this.logger.info(`Updating consumer base state...`);
@@ -167,7 +167,7 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
             this.disconnectedProducers.delete(producer.getId());
             this._parseGlobalTally();
             for (const consumer of this.consumers.values()) {
-                consumer.setBaseState(DeviceTallyState.NONE);
+                consumer.setBaseState(TallyState.NONE);
             }
             this.emit('producer_connected', producer.getId());
         });
@@ -205,7 +205,7 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
         this.disconnectedProducers.delete(id);
         if (this.disconnectedProducers.size === 0) {
             for (const consumer of this.consumers.values()) {
-                consumer.setBaseState(DeviceTallyState.NONE);
+                consumer.setBaseState(TallyState.NONE);
             }
         }
         this.emit('producer_removed', id);

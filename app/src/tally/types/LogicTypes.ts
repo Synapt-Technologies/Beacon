@@ -1,4 +1,4 @@
-import type { DeviceTallyState } from "./DeviceTypes";
+import type { TallyState } from "./CommonTypes";
 import type { ProducerId } from "./ProducerTypes";
 import type { BusGroupStateMap, GlobalSourceAddress } from "./SourceTypes";
 
@@ -6,7 +6,7 @@ export interface TallyContext {
   newBus: BusGroupStateMap;
   oldBus: BusGroupStateMap;
   disconnectedProducers: Set<ProducerId>;
-  disconnectedState: DeviceTallyState;
+  disconnectedState: TallyState;
 }
 
 export interface SimpleBusNode {

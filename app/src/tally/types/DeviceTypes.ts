@@ -1,4 +1,4 @@
-import type { DisplayName } from "./CommonTypes";
+import type { DisplayName, TallyState } from "./CommonTypes";
 import type { ConsumerId } from "./ConsumerTypes";
 import { LogicFactory, type PatchNode } from "./LogicTypes";
 import type { SourceMap } from "./SourceTypes";
@@ -83,16 +83,6 @@ export enum DeviceAlertTarget {
   TALENT = 2,
 }
 
-// TODO: Move to common or logic types and make TallyState. Or even TallyTypes?
-export enum DeviceTallyState {
-  NONE = 0,
-  DANGER = 4, // Light redish
-  INFO = 8, // bLUE
-  WARNING = 12, // Yellow
-  LIGHT = 14, // White
-  PREVIEW = 16,
-  PROGRAM = 20,
-}
 
 export interface DeviceAlertPackage {
   action: DeviceAlertAction;
@@ -136,7 +126,7 @@ export interface BaseDeviceBundle extends BaseTallyDevice {
 }
 
 export interface DeviceStatePackage {
-  state: DeviceTallyState;
+  state: TallyState;
   active_sources: SourceMap[]; // TODO: Implement or remove. Should it be a per bus map?
 }
 

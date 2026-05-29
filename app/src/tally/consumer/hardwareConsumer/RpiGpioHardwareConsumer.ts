@@ -1,5 +1,5 @@
 import { AbstractConsumer, ConsumerStatus, type ConsumerConfig, type ConsumerInfo } from "../AbstractConsumer";
-import { ConnectionType, DeviceAlertState, DeviceTallyState, GlobalDeviceTools, type DeviceAddress, type DeviceAlertTarget, type DeviceId, type TallyDevice } from "../../types/ConsumerStates";
+import { ConnectionType, DeviceAlertState, TallyState, GlobalDeviceTools, type DeviceAddress, type DeviceAlertTarget, type DeviceId, type TallyDevice } from "../../types/ConsumerStates";
 import { HARDWARE_VERSION_STRING, HardwareVersion } from "../../../types/SystemInfo";
 import type { Gpio } from 'pigpio';
 
@@ -34,7 +34,7 @@ interface DeviceAlertRuntime {
 
 interface AlertPatternConfig {
     speedMs: number,
-    pattern: Array<DeviceTallyState | null>,
+    pattern: Array<TallyState | null>,
 }
 
 
@@ -43,14 +43,14 @@ const ALERT_PATTERNS: Record<DeviceAlertState, AlertPatternConfig | null> = {
     [DeviceAlertState.IDENT]: {
         speedMs: 400,
         pattern: [
-            DeviceTallyState.PREVIEW,
-            DeviceTallyState.PROGRAM,
+            TallyState.PREVIEW,
+            TallyState.PROGRAM,
         ],
     },
     [DeviceAlertState.INFO]: {
         speedMs: 300,
         pattern: [
-            DeviceTallyState.PREVIEW,
+            TallyState.PREVIEW,
             null,
             null,
             null,
@@ -59,15 +59,15 @@ const ALERT_PATTERNS: Record<DeviceAlertState, AlertPatternConfig | null> = {
     [DeviceAlertState.NORMAL]: {
         speedMs: 400,
         pattern: [
-            DeviceTallyState.WARNING,
+            TallyState.WARNING,
             null,
         ],
     },
     [DeviceAlertState.PRIO]: {
         speedMs: 150,
         pattern: [
-            DeviceTallyState.PROGRAM,
-            DeviceTallyState.WARNING,
+            TallyState.PROGRAM,
+            TallyState.WARNING,
         ],
     },
     [DeviceAlertState.CLEAR]: null,
@@ -104,7 +104,7 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
     }
     
     protected gpioMap: Map<DeviceId, GpioTallyOutput> = new Map();
-    protected stateCache: Map<DeviceId, DeviceTallyState> = new Map();
+    protected stateCache: Map<DeviceId, TallyState> = new Map();
     protected activeAlerts: Map<DeviceId, DeviceAlertRuntime> = new Map();
     
     public static readonly DefaultConfig: Required<GpioConsumerConfig> = {
@@ -169,7 +169,7 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
                         },
                         connection: ConnectionType.HARDWARE,
                         patch: [],
-                        state: DeviceTallyState.NONE,
+                        state: TallyState.NONE,
                     }
                     
                     this._addDevice(newDevice)
@@ -247,7 +247,7 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
         
     }
     
-    private _setGpio(address: string, state: DeviceTallyState): boolean {
+    private _setGpio(address: string, state: TallyState): boolean {
         
         const output = this.gpioMap.get(address);
         
@@ -261,18 +261,18 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
         try {
             
             switch(state){
-                case DeviceTallyState.PROGRAM:
+                case TallyState.PROGRAM:
                 output.program.digitalWrite(1);
                 output.preview.digitalWrite(0);
                 break;
-                case DeviceTallyState.PREVIEW:
+                case TallyState.PREVIEW:
                 output.program.digitalWrite(0);
                 output.preview.digitalWrite(1);
                 break;
-                case DeviceTallyState.DANGER: // TODO: Maybe different state? No PWM though, not sure if possible.
-                case DeviceTallyState.WARNING:
-                case DeviceTallyState.INFO:
-                case DeviceTallyState.LIGHT:
+                case TallyState.DANGER: // TODO: Maybe different state? No PWM though, not sure if possible.
+                case TallyState.WARNING:
+                case TallyState.INFO:
+                case TallyState.LIGHT:
                 output.program.digitalWrite(1);
                 output.preview.digitalWrite(1);
                 break;
@@ -329,7 +329,7 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
             }
             
             const patternValue = alertConfig.pattern[stepIndex];
-            const currentDeviceState = this.devices.get(key)?.state ?? DeviceTallyState.NONE;
+            const currentDeviceState = this.devices.get(key)?.state ?? TallyState.NONE;
             const state = patternValue === null ? currentDeviceState : patternValue;
             this._setGpio(key, state);
             stepIndex = (stepIndex + 1) % alertConfig.pattern.length;
@@ -389,8 +389,8 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
                 }
             }
             else {
-                if (this._setGpio(key, DeviceTallyState.NONE)) {
-                    this.stateCache.set(key, DeviceTallyState.NONE);
+                if (this._setGpio(key, TallyState.NONE)) {
+                    this.stateCache.set(key, TallyState.NONE);
                 }
             }
         }
