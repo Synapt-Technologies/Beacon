@@ -8,6 +8,7 @@ export type SourceId = string;
 
 export type GlobalSourceKey = `${ProducerId}:${SourceId}`;
 // TODO: Colon sanitization, some producers might contain colons in their names. Be it due to the source type, or them allowing user defined keys.
+// TODO: Seperate BusGroup from Bus and have a subset of busses per group?
 export type GlobalBusKey =
   | `${ProducerId}:${BusId}`
   | `${ProducerId}:${BusGroupId}:${BusId}`;
@@ -26,16 +27,18 @@ export interface SourceInfo {
 export type SourceMap = Map<GlobalSourceKey, SourceInfo>; // TODO: Should this be a set?
 
 // ? Busses
+// TODO: Seperate BusGroup from Bus and have a subset of busses per group?
 export interface GlobalBusAddress {
   producer: ProducerId;
   group?: BusGroupId;
   bus: BusId;
 }
 
-// TODO: Add some sort of importance to order in ui. ME -> Aux -> dsk
+// TODO: Should index be non-optional?
 export interface SourceBusInfo {
   id: GlobalBusKey;
   name: DisplayName;
+  index?: number; // For ordering busses in the UI. 
 }
 
 export interface SourceBusState extends SourceBusInfo {
