@@ -1,4 +1,4 @@
-import type { DisplayName } from "./CommonTypes";
+import { CommonTools, type DisplayName } from "./CommonTypes";
 import type { ProducerId, ProducerState } from "./ProducerTypes";
 
 export type BusId = string;
@@ -23,6 +23,7 @@ export interface SourceInfo {
   name: DisplayName;
 }
 
+export type SourceSet = Set<GlobalSourceKey>;
 export type SourceMap = Map<GlobalSourceKey, SourceInfo>; // Not a set, because it wont work on the SourceInfo object.
 
 // ? Busses
@@ -43,18 +44,24 @@ export interface SourceBusInfo {
 }
 
 export interface SourceBusState extends SourceBusInfo {
-  sources: Set<GlobalSourceKey>;
+  sources: SourceSet;
 }
+export type BusInfoMap = Map<GlobalBusKey, SourceBusInfo>;
+export type BusStateMap = Map<GlobalBusKey, SourceBusState>;
 
 // ? Bus Groups
-export interface SourceBusGroupInfo {
+export interface SourceBusGroup {
   id: GlobalBusGroupAddress;
   name: DisplayName;
   index: number; // For ordering groups in the UI. 
 }
 
-export interface SourceBusGroupState extends SourceBusGroupInfo {
-  busses: Map<GlobalBusKey, SourceBusState>;
+export interface SourceBusGroupInfo extends SourceBusGroup {
+  busses: BusInfoMap;
+}
+
+export interface SourceBusGroupState extends SourceBusGroup {
+  busses: BusStateMap;
 }
 
 // TODO: Maybe add a map type with only the nested bus state map, without the info?
@@ -64,7 +71,7 @@ export type BusGroupInfoMap = Map<GlobalBusGroupKey, SourceBusGroupInfo>;
 export type BusGroupStateMap = Map<GlobalBusGroupKey, SourceBusGroupState>;
 
 export interface ProducerBusState extends ProducerState {
-  busses: BusGroupStateMap;
+  busGroups: BusGroupStateMap;
 }
 
 export type GlobalProducerMap = Map<ProducerId, ProducerBusState>;
@@ -78,75 +85,28 @@ export abstract class SourceTools {
   }
 
   static fromAddress(key: GlobalSourceAddress): GlobalSourceKey {
-    return SourceTools.fromParts(key.producer, key.source);
+    return this.fromParts(key.producer, key.source);
   }
 
   static toAddress(key: GlobalSourceKey): GlobalSourceAddress {
     const [producer, ...sourceParts] = key.split(":");
     return { producer, source: sourceParts.join(":") };
   }
-}
-export abstract class BusTools {
-  //? Source Bus
-  static fromParts(producer: ProducerId, bus: BusId): GlobalBusKey {
-    return `${producer}:${bus}` as GlobalBusKey;
+
+  static areSourceAddressesEqual(a: GlobalSourceAddress, b: GlobalSourceAddress): boolean {
+    return a.producer === b.producer && a.source === b.source;
   }
 
-  static fromGroupedParts(
-    producer: ProducerId,
-    group: BusGroupId,
-    bus: BusId,
-  ): GlobalBusKey {
-    return `${producer}:${group}:${bus}` as GlobalBusKey;
-  }
-
-  static fromAddress(key: GlobalBusAddress): GlobalBusKey {
-    if (key.group != null) {
-      return BusTools.fromGroupedParts(key.producer, key.group, key.bus);
-    }
-    return BusTools.fromParts(key.producer, key.bus);
-  }
-
-  static toAddress(key: GlobalBusKey): GlobalBusAddress {
-    const parts = key.split(":");
-    if (parts.length === 3) {
-      return { producer: parts[0], group: parts[1], bus: parts[2] };
-    }
-    return { producer: parts[0], bus: parts[1] };
-  }
-
-  static infoFromState(state: SourceBusState): SourceBusInfo {
-    return { id: state.id, name: state.name };
-  }
-
-  static stateFromInfo(
-    info: SourceBusInfo,
-    sources: Set<GlobalSourceKey>,
-  ): SourceBusState {
-    return { ...info, sources };
-  }
-
-  static infoMapFromStateMap(stateMap: BusStateMap): BusInfoMap {
-    const infoMap: BusInfoMap = new Map();
-    for (const [key, state] of stateMap) {
-      infoMap.set(key, this.infoFromState(state));
-    }
-    return infoMap;
-  }
-
-  //? Bus Equals
-  static areBusInfoEqual(a: SourceBusInfo, b: SourceBusInfo): boolean {
-    if (a.name.long !== b.name.long) return false;
-    if (a.name.short !== b.name.short) return false;
-
-    if (a.id !== b.id) return false;
+  static areSourceInfoEqual(a: SourceInfo, b: SourceInfo): boolean {
+    if (!this.areSourceAddressesEqual(a.id, b.id)) return false;
+    if (!CommonTools.areDisplayNamesEqual(a.name, b.name)) return false;
 
     return true;
   }
 
   static areSourceSetsEqual(
-    a: Set<GlobalSourceKey>,
-    b: Set<GlobalSourceKey>,
+    a: SourceSet,
+    b: SourceSet,
   ): boolean {
     if (a.size !== b.size) return false;
     for (const item of a) {
@@ -155,21 +115,119 @@ export abstract class BusTools {
     return true;
   }
 
-  static areSourceBusStatesEqual(
-    a: SourceBusState,
-    b: SourceBusState,
-    onlySources: boolean = true,
-  ): boolean {
-    if (!onlySources) {
-      if (!this.areBusInfoEqual(a, b)) return false;
+  static areSourceMapsEqual(a: SourceMap, b: SourceMap): boolean {
+    if (a.size !== b.size) return false;
+    for (const [key, sourceInfo] of a) {
+      const otherSourceInfo = b.get(key);
+      if (!otherSourceInfo) return false;
+      if (!this.areSourceInfoEqual(sourceInfo, otherSourceInfo)) return false;
     }
+    return true;
+  }
+}
+export abstract class BusTools {
+  //? Source Bus
+  static groupFromParts(producer: ProducerId, group: BusGroupId): GlobalBusGroupKey {
+    return `${producer}:${group}` as GlobalBusGroupKey;
+  }
 
-    if (!this.areSourceSetsEqual(a.sources, b.sources)) return false;
+  static busFromParts(
+    producer: ProducerId,
+    group: BusGroupId,
+    bus: BusId,
+  ): GlobalBusKey {
+    return `${this.groupFromParts(producer, group)}:${bus}` as GlobalBusKey;
+  }
+
+  static groupFromAddress(key: GlobalBusGroupAddress): GlobalBusGroupKey {
+    return this.groupFromParts(key.producer, key.group);
+  }
+
+  static busFromAddress(key: GlobalBusAddress): GlobalBusKey {
+    return this.busFromParts(key.producer, key.group, key.bus);
+  }
+
+  static groupToAddress(key: GlobalBusGroupKey): GlobalBusGroupAddress {
+    const [producer, group] = key.split(":");
+    return { producer, group };
+  }
+
+  static busToAddress(key: GlobalBusKey): GlobalBusAddress {
+    const parts = key.split(":");
+    return { producer: parts[0], group: parts[1], bus: parts[2] };
+  }
+
+  static busInfoFromState(state: SourceBusState): SourceBusInfo {
+    return { id: state.id, name: state.name, index: state.index };
+  }
+
+  static busStateFromInfo(
+    info: SourceBusInfo,
+    sources: SourceSet,
+  ): SourceBusState {
+    return { ...info, sources };
+  }
+
+  static groupInfoFromState(state: SourceBusGroupState): SourceBusGroupInfo {
+    return { id: state.id, name: state.name, index: state.index, busses: this.busInfoMapFromStateMap(state.busses) };
+  }
+
+  static groupStateFromGroup(
+    group: SourceBusGroup,
+    busses: BusStateMap,
+  ): SourceBusGroupState {
+    return { ...group, busses };
+  }
+
+  static groupInfoFromGroup(
+    group: SourceBusGroup,
+    busses: BusInfoMap,
+  ): SourceBusGroupInfo {
+    return { ...group, busses };
+  }
+
+  static busInfoMapFromStateMap(stateMap: BusStateMap): BusInfoMap {
+    const infoMap: BusInfoMap = new Map();
+    for (const [key, state] of stateMap) {
+      infoMap.set(key, this.busInfoFromState(state));
+    }
+    return infoMap;
+  }
+
+  static groupInfoMapFromStateMap(stateMap: BusGroupStateMap): BusGroupInfoMap {
+    const infoMap: BusGroupInfoMap = new Map();
+    for (const [key, state] of stateMap) {
+      infoMap.set(key, this.groupInfoFromState(state));
+    }
+    return infoMap;
+  }
+
+  //? Bus Equals
+
+  static areBusGroupAddressEqual(a: GlobalBusGroupAddress, b: GlobalBusGroupAddress): boolean {
+    return a.producer === b.producer && a.group === b.group;
+  }
+
+  static areBusAddressEqual(a: GlobalBusAddress, b: GlobalBusAddress): boolean {
+    return this.areBusGroupAddressEqual(a, b) && a.bus === b.bus;
+  }
+
+  static areBusInfoEqual(a: SourceBusInfo, b: SourceBusInfo): boolean {
+    if (!this.areBusAddressEqual(a.id, b.id)) return false;
+    if (!CommonTools.areDisplayNamesEqual(a.name, b.name)) return false;
+    if (a.index !== b.index) return false;
 
     return true;
   }
 
-  static areBusInfoMapsEqual(a: BusInfoMap, b: BusInfoMap): boolean {
+  static areBusStateEqual(a: SourceBusState, b: SourceBusState): boolean {
+    if (!this.areBusInfoEqual(a, b)) return false;
+    if (!SourceTools.areSourceSetsEqual(a.sources, b.sources)) return false;
+
+    return true;
+  }
+
+  static areBusInfoMapEqual(a: BusInfoMap, b: BusInfoMap): boolean {
     if (a.size !== b.size) return false;
 
     for (const [key, busInfo] of a) {
@@ -181,45 +239,92 @@ export abstract class BusTools {
     return true;
   }
 
-  static areBusStateMapsEqual(
+  static areBusStateMapEqual(
     a: BusStateMap,
     b: BusStateMap,
-    onlySources: boolean = true,
   ): boolean {
     if (a.size !== b.size) return false;
 
     for (const [key, bus] of a) {
       const otherBus = b.get(key);
       if (!otherBus) return false;
-      if (!this.areSourceBusStatesEqual(bus, otherBus, onlySources))
+      if (!this.areBusStateEqual(bus, otherBus))
         return false;
     }
 
     return true;
   }
 
-  static areProducerBusStatesEqual(
-    a: ProducerBusState,
-    b: ProducerBusState,
-    onlySources: boolean = true,
-  ): boolean {
-    if (!onlySources) {
-      if (a.state !== b.state) return false;
-    }
+  static areGroupEqual(a: SourceBusGroup, b: SourceBusGroup): boolean {
+    if (!this.areBusGroupAddressEqual(a.id, b.id)) return false;
+    if (!CommonTools.areDisplayNamesEqual(a.name, b.name)) return false;
+    if (a.index !== b.index) return false;
 
-    return this.areBusStateMapsEqual(a.busses, b.busses, onlySources);
+    return true;
   }
 
-  static areGlobalProducerMapsEqual(
+  static areGroupInfoEqual(a: SourceBusGroupInfo, b: SourceBusGroupInfo): boolean {
+    if (!this.areGroupEqual(a, b)) return false;
+    if (!this.areBusInfoMapEqual(a.busses, b.busses)) return false;
+
+    return true;
+  }
+
+  static areGroupStateEqual(a: SourceBusGroupState, b: SourceBusGroupState): boolean {
+    if (!this.areGroupEqual(a, b)) return false;
+    if (!this.areBusStateMapEqual(a.busses, b.busses)) return false;
+
+    return true;
+  }
+
+
+  static areGroupInfoMapEqual(a: BusGroupInfoMap, b: BusGroupInfoMap): boolean {
+    if (a.size !== b.size) return false;
+
+    for (const [key, groupInfo] of a) {
+      const otherGroupInfo = b.get(key);
+      if (!otherGroupInfo) return false;
+      if (!this.areGroupInfoEqual(groupInfo, otherGroupInfo)) return false;
+    }
+    
+    return true;
+  }
+
+  static areGroupStateMapEqual(
+    a: BusGroupStateMap,
+    b: BusGroupStateMap,
+  ): boolean {
+    if (a.size !== b.size) return false;
+
+    for (const [key, groupState] of a) {
+      const otherGroupState = b.get(key);
+      if (!otherGroupState) return false;
+      if (!this.areGroupStateEqual(groupState, otherGroupState)) return false;
+    }
+    
+    return true;
+  }
+
+  static areProducerBusStateEqual(
+    a: ProducerBusState,
+    b: ProducerBusState,
+  ): boolean {
+    
+    if (a.state !== b.state) return false;
+    if(!this.areGroupStateMapEqual(a.busGroups, b.busGroups)) return false;
+
+    return true;
+  }
+
+  static areGlobalProducerMapEqual(
     a: GlobalProducerMap,
     b: GlobalProducerMap,
-    onlySources: boolean = true,
   ): boolean {
     if (a.size !== b.size) return false;
     for (const [producer, busState] of a) {
       const otherBusState = b.get(producer);
       if (!otherBusState) return false;
-      if (!this.areProducerBusStatesEqual(busState, otherBusState, onlySources))
+      if (!this.areProducerBusStateEqual(busState, otherBusState))
         return false;
     }
 
