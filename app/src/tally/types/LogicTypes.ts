@@ -1,10 +1,10 @@
 import type { DeviceTallyState } from "./DeviceTypes";
 import type { ProducerId } from "./ProducerTypes";
-import type { SourceBus, GlobalSourceAddress } from "./SourceTypes";
+import type { BusGroupStateMap, GlobalSourceAddress } from "./SourceTypes";
 
 export interface TallyContext {
-  newBus: SourceBus;
-  oldBus: SourceBus;
+  newBus: BusGroupStateMap;
+  oldBus: BusGroupStateMap;
   disconnectedProducers: Set<ProducerId>;
   disconnectedState: DeviceTallyState;
 }
