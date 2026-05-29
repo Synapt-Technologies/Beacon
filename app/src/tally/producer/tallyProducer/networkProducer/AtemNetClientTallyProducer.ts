@@ -75,7 +75,6 @@ export class AtemNetClientTallyProducer extends AbstractNetClientTallyProducer {
       this._parseTallystate();
     });
 
-    // TODO Rewrite VV
     // TODO. p.includes is changed to p.startsWith. Check if valid.
     this.atem.on("stateChanged", (state, pathToChange) => {
       this.atemState = state;
@@ -110,7 +109,6 @@ export class AtemNetClientTallyProducer extends AbstractNetClientTallyProducer {
       if (infoChange) this.emitInfoUpdate();
     });
   }
-  // TODO END Rewrite
 
   async init(): Promise<void> {
     await this.connect();
