@@ -16,6 +16,7 @@ import {
   BusTools,
   type BusGroupStateMap,
   type BusGroupInfoMap,
+  type BusDefaultTallyStateMap,
 } from "../../types/SourceTypes";
 
 // export enum ProducerType { // Move to AbstractProducer once imp, or probably remove.
@@ -53,7 +54,7 @@ export abstract class AbstractTallyProducer<
       short: "UNKNOWN",
     },
     sources: new Map(),
-    busGroups: new Map(),
+    busses: new Map(),
   };
 
   getConfig(): ProducerConfig {
@@ -142,8 +143,8 @@ export abstract class AbstractTallyProducer<
     this._emitTallyUpdate();
 
     const newBusInfo = BusTools.groupInfoMapFromStateMap(busState);
-    if (!BusTools.areGroupInfoMapEqual(newBusInfo, this._info.busGroups)) {
-      this._info.busGroups = newBusInfo;
+    if (!BusTools.areGroupInfoMapEqual(newBusInfo, this._info.busses)) {
+      this._info.busses = newBusInfo;
       this._emitInfoUpdate();
     }
   }
@@ -157,7 +158,12 @@ export abstract class AbstractTallyProducer<
   }
 
   getBusInfo(): BusGroupInfoMap {
-    return this._info.busGroups;
+    return this._info.busses;
+  }
+
+  // TODO: Check if needed. All logic will probably use the defaultState on the SourceBusInfo.
+  getDefaultBusState(): BusDefaultTallyStateMap {
+    return BusTools.busDefaultStateMapFromGroupMap(this._info.busses);
   }
 
   getModel(): DisplayName {

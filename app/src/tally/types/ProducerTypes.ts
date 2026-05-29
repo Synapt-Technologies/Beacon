@@ -19,7 +19,7 @@ export interface ProducerState {
 export interface ProducerInfo extends ProducerState {
   model: DisplayName;
   sources: SourceMap;
-  busGroups: BusGroupInfoMap;
+  busses: BusGroupInfoMap;
 }
 
 //? Producer Bundles

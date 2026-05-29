@@ -1,4 +1,4 @@
-import { CommonTools, type DisplayName } from "./CommonTypes";
+import { CommonTools, TallyState, type DisplayName } from "./CommonTypes";
 import type { ProducerId, ProducerState } from "./ProducerTypes";
 
 export type BusId = string;
@@ -40,6 +40,7 @@ export interface SourceBusInfo {
   id: GlobalBusAddress;
   name: DisplayName;
   index: number; // For ordering busses in the UI.
+  defaultState?: TallyState; // Optional default state for the bus, if the producer provides it.
 }
 
 export interface SourceBusState extends SourceBusInfo {
@@ -47,6 +48,7 @@ export interface SourceBusState extends SourceBusInfo {
 }
 export type BusInfoMap = Map<GlobalBusKey, SourceBusInfo>;
 export type BusStateMap = Map<GlobalBusKey, SourceBusState>;
+export type BusDefaultTallyStateMap = Map<GlobalBusKey, TallyState>;
 
 // ? Bus Groups
 export interface SourceBusGroup {
@@ -160,7 +162,7 @@ export abstract class BusTools {
   }
 
   static busInfoFromState(state: SourceBusState): SourceBusInfo {
-    return { id: state.id, name: state.name, index: state.index };
+    return { id: state.id, name: state.name, index: state.index, defaultState: state.defaultState };
   }
 
   static busStateFromInfo(
@@ -168,6 +170,10 @@ export abstract class BusTools {
     sources: SourceSet,
   ): SourceBusState {
     return { ...info, sources };
+  }
+
+  static busDefaultState(info: SourceBusInfo): TallyState {
+    return info.defaultState ?? TallyState.NONE;
   }
 
   static groupInfoFromState(state: SourceBusGroupState): SourceBusGroupInfo {
@@ -201,6 +207,14 @@ export abstract class BusTools {
     return infoMap;
   }
 
+  static busDefaultStateMapFromBusMap(map: BusInfoMap | BusStateMap): BusDefaultTallyStateMap {
+    const defaultStateMap: BusDefaultTallyStateMap = new Map();
+    for (const [key, info] of map) {
+      defaultStateMap.set(key, this.busDefaultState(info));
+    }
+    return defaultStateMap;
+  }
+
   static groupInfoMapFromStateMap(stateMap: BusGroupStateMap): BusGroupInfoMap {
     const infoMap: BusGroupInfoMap = new Map();
     for (const [key, state] of stateMap) {
@@ -209,8 +223,17 @@ export abstract class BusTools {
     return infoMap;
   }
 
-  //? Bus Equals
+  static busDefaultStateMapFromGroupMap(map: BusGroupInfoMap | BusGroupStateMap): BusDefaultTallyStateMap {
+    const defaultStateMap: BusDefaultTallyStateMap = new Map();
+    for (const [_key, group] of map) {
+      for (const [busKey, defaultState] of this.busDefaultStateMapFromBusMap(group.busses)) {
+        defaultStateMap.set(busKey, defaultState);
+      }
+    }
+    return defaultStateMap;
+  }
 
+  //? Bus Equals
   static areBusGroupAddressEqual(
     a: GlobalBusGroupAddress,
     b: GlobalBusGroupAddress,
@@ -226,6 +249,7 @@ export abstract class BusTools {
     if (!this.areBusAddressEqual(a.id, b.id)) return false;
     if (!CommonTools.areDisplayNamesEqual(a.name, b.name)) return false;
     if (a.index !== b.index) return false;
+    if (a.defaultState !== b.defaultState) return false;
 
     return true;
   }
