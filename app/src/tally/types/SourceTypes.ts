@@ -2,16 +2,15 @@ import type { DisplayName } from "./CommonTypes";
 import type { ProducerId, ProducerState } from "./ProducerTypes";
 
 export type BusId = string;
-export type BusGroupId = string;
 // TODO: Colon sanitization, some producers might contain colons in their names. Be it due to the source type, or them allowing user defined keys.
+export type BusGroupId = string;
 export type SourceId = string;
 
 export type GlobalSourceKey = `${ProducerId}:${SourceId}`;
+
 // TODO: Colon sanitization, some producers might contain colons in their names. Be it due to the source type, or them allowing user defined keys.
-// TODO: Seperate BusGroup from Bus and have a subset of busses per group? Then have a per group and per bus index for display?
-export type GlobalBusKey =
-  | `${ProducerId}:${BusId}`
-  | `${ProducerId}:${BusGroupId}:${BusId}`;
+export type GlobalBusGroupKey = `${ProducerId}:${BusGroupId}`;
+export type GlobalBusKey = `${GlobalBusGroupKey}:${BusId}`;
 
 // ? Sources
 export interface GlobalSourceAddress {
@@ -24,33 +23,48 @@ export interface SourceInfo {
   name: DisplayName;
 }
 
-export type SourceMap = Map<GlobalSourceKey, SourceInfo>; // TODO: Should this be a set?
+export type SourceMap = Map<GlobalSourceKey, SourceInfo>; // Not a set, because it wont work on the SourceInfo object.
 
 // ? Busses
-// TODO: Seperate BusGroup from Bus and have a subset of busses per group? Then have a per group and per bus index for display?
-export interface GlobalBusAddress {
+export interface GlobalBusGroupAddress {
   producer: ProducerId;
-  group?: BusGroupId;
+  group: BusGroupId;
+}
+
+export interface GlobalBusAddress extends GlobalBusGroupAddress {
   bus: BusId;
 }
 
-// TODO: Should index be non-optional?
+
 export interface SourceBusInfo {
-  id: GlobalBusKey;
+  id: GlobalBusAddress;
   name: DisplayName;
-  index?: number; // For ordering busses in the UI. 
+  index: number; // For ordering busses in the UI. 
 }
 
 export interface SourceBusState extends SourceBusInfo {
   sources: Set<GlobalSourceKey>;
 }
 
+// ? Bus Groups
+export interface SourceBusGroupInfo {
+  id: GlobalBusGroupAddress;
+  name: DisplayName;
+  index: number; // For ordering groups in the UI. 
+}
+
+export interface SourceBusGroupState extends SourceBusGroupInfo {
+  busses: Map<GlobalBusKey, SourceBusState>;
+}
+
+// TODO: Maybe add a map type with only the nested bus state map, without the info?
+
 // ? Bus Maps
-export type BusInfoMap = Map<GlobalBusKey, SourceBusInfo>;
-export type BusStateMap = Map<GlobalBusKey, SourceBusState>;
+export type BusGroupInfoMap = Map<GlobalBusGroupKey, SourceBusGroupInfo>;
+export type BusGroupStateMap = Map<GlobalBusGroupKey, SourceBusGroupState>;
 
 export interface ProducerBusState extends ProducerState {
-  busses: BusStateMap;
+  busses: BusGroupStateMap;
 }
 
 export type GlobalProducerMap = Map<ProducerId, ProducerBusState>;
