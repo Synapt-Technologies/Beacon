@@ -42,6 +42,7 @@ export abstract class AbstractConsumer<
   // TODO: In AbstractConnection make some sort of array to support flexible lable count.
   protected readonly conType: string = "CONS";
 
+  //TODO: Make all private or protected fields and functions have an underscore prefix for clarity.
   protected logger: Logger;
 
   protected store: ConsumerStore;
