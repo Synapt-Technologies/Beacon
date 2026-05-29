@@ -8,14 +8,14 @@ If you are compiling the image on windows, you must use WSL.
 
 ## TODO
 - [ ] CLASS REBUILD:
-  - [ ] Rework buss structure to support more than only program preview.
+  - [x] Rework buss structure to support more than only program preview.
   - [ ] Add AbstractConnection that is implemented by AbstractTallyProducer and AbstractConsumer that contains the base fields like config(id name), its getters setters and validation.
 
 
 - [ ] Dev/prod mode for ui logging
 - [ ] Easier way to page through devices. Some sort of arrow keys in the navbar?
 - [x] Implement mqtt ws tally for devices
-  - [ ] Add alerts
+  - [ ] Add alerts on UI
 - [ ] Add "F11" fullscreen button
 - [ ] Show more source info, pimarily consumer:sourceid at the device source list.
 - [ ] Add Virtual tally
@@ -39,22 +39,25 @@ If you are compiling the image on windows, you must use WSL.
 - [ ] Add pagewide haptics ( Currently in context and alert buttons. )
   - [ ] Context the right place?
 - [ ] **REFACTOR ORCHESTRATION**
-  - [ ] Consumers don't own the tally process
-  - [ ] Consumer exports tally devices. 
-  - [ ] The orchestrator sets the tallystate 
-  - [ ] The Consumer exposes sendDeviceTally (or similar)
-  - [ ] No ConsumeTally
-  - [ ] The orchestrator decides which devices to send
-  - [ ] GlobalConsumer gets all, non global only the devices mapped to their consumerId
-  - [ ] Aedes devices on the aedes topic -> Discovery:
-    - [ ] Device requests descivery on global topic: tally/discovery
-    - [ ] Aedes is the active consumer on that mqtt -> It assigns its ConsumerId + a DeviceId (mac based?)
-    - [ ] The device saves that and connects to the topic.
-  - [ ] The Orchestrator sends the relevant devices to the right consumers.
-  - [ ] Implement clear split between config, tally and alert.
-  - [ ] Add text alert type.
-  - [ ] Rename orchestrator and lifecycle. Logic and orchestrator, or coordinator?
-  - [ ] Move consumer responsibilities to orchestrator.
+  - [x] Types
+  - [x] Producer Rewrite
+  - [ ] Old TODO (still relevant)
+    - [ ] Consumers don't own the tally process
+    - [ ] Consumer exports tally devices. 
+    - [ ] The orchestrator sets the tallystate 
+    - [ ] The Consumer exposes sendDeviceTally (or similar)
+    - [ ] No ConsumeTally
+    - [ ] The orchestrator decides which devices to send
+    - [ ] GlobalConsumer gets all, non global only the devices mapped to their consumerId
+    - [ ] Aedes devices on the aedes topic -> Discovery:
+      - [ ] Device requests descivery on global topic: tally/discovery
+      - [ ] Aedes is the active consumer on that mqtt -> It assigns its ConsumerId + a DeviceId (mac based?)
+      - [ ] The device saves that and connects to the topic.
+    - [ ] The Orchestrator sends the relevant devices to the right consumers.
+    - [ ] Implement clear split between config, tally and alert.
+    - [ ] Add text alert type.
+    - [ ] Rename orchestrator and lifecycle. Logic and orchestrator, or coordinator?
+    - [ ] Move consumer responsibilities to orchestrator.
 - [ ] Add multi output devices!
 - [ ] Duplicate producer ID is just skipped on add.
 - [ ] Unify UI structure:
