@@ -83,6 +83,7 @@ export enum DeviceAlertTarget {
   TALENT = 2,
 }
 
+// TODO: Move to common or logic types and make TallyState. Or even TallyTypes?
 export enum DeviceTallyState {
   NONE = 0,
   DANGER = 4, // Light redish
