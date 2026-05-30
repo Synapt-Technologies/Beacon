@@ -30,10 +30,10 @@ export type ConsumerEvents = {
   device_removed: [address: DeviceAddress];
 };
 /*
-- New device discovery       -> _addDevice             -> *device_discovery*  -> send discovery reply
-- Existing device discovery  -> _addDevice             -> *device_update*     -> send discovery reply
-- Received device telemetry  -> processDeviceTelemetry -> *device_telemetry*
-- Device removed             -> deleteDevice           -> *device_removed*
+- New device discovery       -> _addDevice              -> *device_discovery*   -> send discovery reply
+- Existing device discovery  -> _addDevice              -> *device_update*      -> send discovery reply
+- Received device telemetry  -> _processDeviceTelemetry -> *device_telemetry*
+- Device removed             -> deleteDevice            -> _deleteDevice        -> *device_removed*
 */
 
 // TODO: Maybe IConnection to force getId and get and setName and other shared ops like db?
@@ -268,13 +268,21 @@ T extends ConsumerEvents & Record<string, unknown[]> = ConsumerEvents,
       return;
     }
     
-    device.runtime = runtime;
-    try {
-      this._store.saveDevice(device);
-    } catch (error) {
-      this._logger.error(`Error saving runtime config for device ${key}:`, error);
+    if (device.runtime !== runtime) {
+      this._logger.debug(
+        `Runtime config for device ${key} changed:`,
+        device.runtime,
+        `->`,
+        runtime
+      );
+      device.runtime = runtime;
+      try {
+        this._store.saveDevice(device);
+      } catch (error) {
+        this._logger.error(`Error saving runtime config for device ${key}:`, error);
+      }
     }
-    
+
     try {
       this._sendDeviceRuntimeConfig(address, device.toRuntimeConfigBundle());
     } catch (error) {
