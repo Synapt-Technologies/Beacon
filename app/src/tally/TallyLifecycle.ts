@@ -73,7 +73,7 @@ export class TallyLifecycle {
 
     private db = CoreDatabase.getInstance();
     private orchestrator!: TallyOrchestrator;
-    private logger = new Logger(["Tally", "Lifecycle"]);
+    private logger = new Logger(["TALLY", "Lifecycle"]);
     private _restarting = new Set<ConsumerId>();
 
     public info: LifeCycleInfo = {

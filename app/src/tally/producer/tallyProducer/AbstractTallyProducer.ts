@@ -36,9 +36,10 @@ export abstract class AbstractTallyProducer<
   T extends TallyProducerEvents & Record<string, unknown[]> =
     TallyProducerEvents,
 > extends EventEmitter<T> {
-  // TODO: In AbstractConnection make some sort of array to support flexible lable count.
+  // TODO: Con and prod types probably not in AbstractConnection. Check if needed at all. Might be usefull when adding other non-tally producer types.
   protected readonly conType: string = "PROD";
   protected readonly prodType: string = "SWTCHR";
+  protected readonly logLabels: readonly string[] = [this.conType, this.prodType];
 
   protected _logger: Logger;
 
@@ -80,9 +81,8 @@ export abstract class AbstractTallyProducer<
     this._config = { ...this._getDefaultConfig(), ...config };
 
     this._logger = new Logger([
-      "Tally",
-      this.conType,
-      this.prodType,
+      "TALLY",
+      ...this.logLabels,
       this._config.id,
     ]);
 

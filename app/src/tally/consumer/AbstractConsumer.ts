@@ -42,8 +42,9 @@ export type ConsumerEvents = {
 export abstract class AbstractConsumer<
 T extends ConsumerEvents & Record<string, unknown[]> = ConsumerEvents,
 > extends EventEmitter<T> {
-  // TODO: In AbstractConnection make some sort of array to support flexible lable count.
+  // TODO: Con and prod types probably not in AbstractConnection. Check if needed at all. Might be usefull when adding other non-tally producer types.
   protected readonly conType: string = "CONS";
+  protected readonly logLabels: readonly string[] = [this.conType];
   
   protected _logger: Logger;
   
@@ -79,7 +80,7 @@ T extends ConsumerEvents & Record<string, unknown[]> = ConsumerEvents,
     
     this._config = { ...this._getDefaultConfig(), ...config };
     
-    this._logger = new Logger(["Tally", this.conType, this._config.id]);
+    this._logger = new Logger(["TALLY", ...this.logLabels, this._config.id]);
     
     this._checkConfig(this._config);
     
