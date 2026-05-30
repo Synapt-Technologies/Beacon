@@ -289,4 +289,20 @@ export abstract class DeviceTools {
     const [consumer, ...deviceParts] = key.split(":");
     return { consumer, device: deviceParts.join(":") };
   }
+
+  static buildDeviceStateBundle(address: DeviceAddress, state: DeviceStatePackage): DeviceStateBundle {
+    return {
+      id: address,
+      moment: Date.now(),
+      data: state,
+    };
+  }
+
+  static buildDeviceAlertBundle(address: DeviceAddress, alert: DeviceAlertPackage): DeviceAlertBundle {
+    return {
+      id: address,
+      moment: Date.now(),
+      data: alert,
+    };
+  }
 }
