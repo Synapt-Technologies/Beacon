@@ -200,7 +200,7 @@ export class AtemNetClientTallyProducer extends AbstractNetClientTallyProducer {
         id: { producer: id, group: groupId, bus: "PGM" },
         name: { long: `${meLabel} Program`, short: `${meLabel} PGM` },
         index: 0,
-        defaultState: i === 0 ? TallyState.PROGRAM : undefined,
+        logicDefaults: i === 0 ? { enabled: true, state: TallyState.PROGRAM } : { enabled: false, state: TallyState.PROGRAM },
       };
       busses.set(
         BusTools.busFromParts(id, groupId, "PGM"),
@@ -216,7 +216,7 @@ export class AtemNetClientTallyProducer extends AbstractNetClientTallyProducer {
         id: { producer: id, group: groupId, bus: "PRV" },
         name: { long: `${meLabel} Preview`, short: `${meLabel} PRV` },
         index: 1,
-        defaultState: i === 0 ? TallyState.PREVIEW : undefined,
+        logicDefaults: i === 0 ? { enabled: true, state: TallyState.PREVIEW } : { enabled: false, state: TallyState.PREVIEW },
       };
       busses.set(
         BusTools.busFromParts(id, groupId, "PRV"),

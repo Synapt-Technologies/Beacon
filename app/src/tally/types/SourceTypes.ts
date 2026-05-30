@@ -39,11 +39,16 @@ export interface GlobalBusAddress extends GlobalBusGroupAddress {
   bus: BusId;
 }
 
+export interface BusLogicConfig {
+  state: TallyState;
+  enabled: boolean;
+}
+
 export interface SourceBusInfo {
   id: GlobalBusAddress;
   name: DisplayName;
   index: number; // For ordering busses in the UI.
-  defaultState?: TallyState; // Optional default state for the bus, if the producer provides it.
+  logicDefaults?: BusLogicConfig; // Optional default logic config for sources on this bus. Is overridden by user config.
 }
 
 export interface SourceBusState extends SourceBusInfo {
@@ -51,7 +56,7 @@ export interface SourceBusState extends SourceBusInfo {
 }
 export type BusInfoMap = Map<GlobalBusKey, SourceBusInfo>;
 export type BusStateMap = Map<GlobalBusKey, SourceBusState>;
-export type BusDefaultTallyStateMap = Map<GlobalBusKey, TallyState>;
+export type BusDefaultLogicMap = Map<GlobalBusKey, BusLogicConfig>;
 
 // ? Bus Groups
 export interface SourceBusGroup {
@@ -169,7 +174,7 @@ export abstract class BusTools {
       id: state.id,
       name: state.name,
       index: state.index,
-      defaultState: state.defaultState,
+      logicDefaults: state.logicDefaults,
     };
   }
 
@@ -180,8 +185,13 @@ export abstract class BusTools {
     return { ...info, sources };
   }
 
-  static busDefaultState(info: SourceBusInfo): TallyState {
-    return info.defaultState ?? TallyState.NONE;
+  static busDefaultLogic(info: SourceBusInfo): BusLogicConfig {
+
+    return {
+      state: TallyState.NONE,
+      enabled: false,
+      ...info.logicDefaults,
+    }
   }
 
   static groupInfoFromState(state: SourceBusGroupState): SourceBusGroupInfo {
@@ -215,14 +225,14 @@ export abstract class BusTools {
     return infoMap;
   }
 
-  static busDefaultStateMapFromBusMap(
+  static busDefaultLogicMapFromBusMap(
     map: BusInfoMap | BusStateMap,
-  ): BusDefaultTallyStateMap {
-    const defaultStateMap: BusDefaultTallyStateMap = new Map();
+  ): BusDefaultLogicMap {
+    const defaultLogicMap: BusDefaultLogicMap = new Map();
     for (const [key, info] of map) {
-      defaultStateMap.set(key, this.busDefaultState(info));
+      defaultLogicMap.set(key, this.busDefaultLogic(info));
     }
-    return defaultStateMap;
+    return defaultLogicMap;
   }
 
   static groupInfoMapFromStateMap(stateMap: BusGroupStateMap): BusGroupInfoMap {
@@ -233,18 +243,18 @@ export abstract class BusTools {
     return infoMap;
   }
 
-  static busDefaultStateMapFromGroupMap(
+  static busDefaultLogicMapFromGroupMap(
     map: BusGroupInfoMap | BusGroupStateMap,
-  ): BusDefaultTallyStateMap {
-    const defaultStateMap: BusDefaultTallyStateMap = new Map();
+  ): BusDefaultLogicMap {
+    const defaultLogicMap: BusDefaultLogicMap = new Map();
     for (const [_key, group] of map) {
-      for (const [busKey, defaultState] of this.busDefaultStateMapFromBusMap(
+      for (const [busKey, defaultState] of this.busDefaultLogicMapFromBusMap(
         group.busses,
       )) {
-        defaultStateMap.set(busKey, defaultState);
+        defaultLogicMap.set(busKey, defaultState);
       }
     }
-    return defaultStateMap;
+    return defaultLogicMap;
   }
 
   //? Bus Equals
@@ -263,7 +273,8 @@ export abstract class BusTools {
     if (!this.areBusAddressEqual(a.id, b.id)) return false;
     if (!CommonTools.areDisplayNamesEqual(a.name, b.name)) return false;
     if (a.index !== b.index) return false;
-    if (a.defaultState !== b.defaultState) return false;
+    if (a.logicDefaults?.state !== b.logicDefaults?.state) return false;
+    if (a.logicDefaults?.enabled !== b.logicDefaults?.enabled) return false;
 
     return true;
   }

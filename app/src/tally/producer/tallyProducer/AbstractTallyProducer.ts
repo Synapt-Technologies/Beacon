@@ -16,7 +16,7 @@ import {
   BusTools,
   type BusGroupStateMap,
   type BusGroupInfoMap,
-  type BusDefaultTallyStateMap,
+  type BusDefaultLogicMap,
 } from "../../types/SourceTypes";
 
 // export enum ProducerType { // Move to AbstractProducer once imp, or probably remove.
@@ -170,8 +170,8 @@ export abstract class AbstractTallyProducer<
   }
 
   // TODO: Check if needed. All logic will probably use the defaultState on the SourceBusInfo.
-  getDefaultBusState(): BusDefaultTallyStateMap {
-    return BusTools.busDefaultStateMapFromGroupMap(this._info.busses);
+  getDefaultBusLogic(): BusDefaultLogicMap {
+    return BusTools.busDefaultLogicMapFromGroupMap(this._info.busses);
   }
 
   getModel(): DisplayName {
