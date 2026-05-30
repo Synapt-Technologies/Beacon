@@ -345,13 +345,32 @@ export class AedesNetServerConsumer extends AbstractNetServerConsumer implements
         this._info.client_count = 0;
     }
 
-    
-    protected _sendDeviceState(bundle: DeviceStateBundle): void {
+    private _deviceTopic(id: DeviceAddress, subtopic: string): string {
+        return `device/${id.consumer}/${id.device}/${subtopic}`;
+    }
+
+    private _publish(address: DeviceAddress, subtopic: string, payload: DeviceMqttPayload, qos: 0|1|2, retain: boolean): void {
         if (!this._aedes) {
-            this._logger.warn("Attempting to send before initialization. Discarding.");
+            this._logger.warn("Attempting to publish before initialization. Discarding.");
             return;
         }
-        
+        try {
+            this._aedes.publish({
+                cmd: 'publish', 
+                qos, 
+                dup: false, 
+                topic: this._deviceTopic(address, subtopic),
+                payload: Buffer.from(JSON.stringify(payload)),
+                retain
+            }, () => {});
+            this._logger.debug(`Published to ${this._deviceTopic(address, subtopic)}:`, payload);
+        } catch (err) {
+            this._logger.error(`Error publishing to MQTT topic ${this._deviceTopic(address, subtopic)}:`, err);
+        }
+    }
+    
+    protected _sendDeviceState(bundle: DeviceStateBundle): void {
+
         const payload: DeviceStateMqttPayload = {
             state: { 
                 name: TallyState[bundle.data.state], 
@@ -360,59 +379,21 @@ export class AedesNetServerConsumer extends AbstractNetServerConsumer implements
             active_sources: Object.fromEntries(bundle.data.active_sources),
             moment: bundle.moment,
         };
-        
-        try {
-            this._aedes!.publish({
-                cmd: 'publish',
-                qos: 1,
-                dup: false, 
-                topic: `device/${bundle.id.consumer}/${bundle.id.device}/tally`,
-                payload: Buffer.from(JSON.stringify(payload)),
-                retain: true
-            }, () => {});
-            
-            this._logger.debug(`Sent payload to device:`, payload);
-            
-        } catch (err) {
-            this._logger.error(`Error publishing payload to MQTT for ${bundle.id.device}:`, err);
-        }
+
+        this._publish(bundle.id, "tally", payload, 1, true);
     }
 
     protected _sendDeviceAlert(bundle: DeviceAlertBundle): void {
-        if (!this._aedes) {
-            this._logger.warn("Attempting to send before initialization. Discarding.");
-            return;
-        }
-        
+
         const payload: DeviceAlertMqttPayload = {
             moment: bundle.moment,
             ...bundle.data.alert
         };
 
-
-        try {
-            this._aedes!.publish({
-                cmd: 'publish',
-                qos: 2, // Arive exactly once.
-                dup: false, 
-                topic: `device/${bundle.id.consumer}/${bundle.id.device}/alert`,
-                payload: Buffer.from(JSON.stringify(payload)),
-                retain: false
-            }, () => {});
-            
-            this._logger.debug(`Sent payload to device:`, payload);
-            
-        } catch (err) {
-            this._logger.error(`Error publishing payload to MQTT for ${bundle.id.device}:`, err);
-        }
-        
+        this._publish(bundle.id, "alert", payload, 2, false);        
     }
 
     protected _sendDeviceRuntimeConfig(bundle: DeviceRuntimeConfigBundle): void {
-        if (!this._aedes) {
-            this._logger.warn("Attempting to send before initialization. Discarding.");
-            return;
-        }
         
         const payload: DeviceRuntimeConfigMqttPayload = {
             moment: bundle.moment,
@@ -420,23 +401,7 @@ export class AedesNetServerConsumer extends AbstractNetServerConsumer implements
             ...bundle.data.global,
         };
 
-
-        try {
-            this._aedes!.publish({
-                cmd: 'publish',
-                qos: 2, // Arive exactly once
-                dup: false, 
-                topic: `device/${bundle.id.consumer}/${bundle.id.device}/config/runtime`, // TODO Check topic. Should leave room for a deviceConfig, for more low level settings that might need a reboot.
-                payload: Buffer.from(JSON.stringify(payload)),
-                retain: true
-            }, () => {});
-            
-            this._logger.debug(`Sent payload to device:`, payload);
-            
-        } catch (err) {
-            this._logger.error(`Error publishing payload to MQTT for ${bundle.id.device}:`, err);
-        }
-                
+        this._publish(bundle.id, "config/runtime", payload, 2, true);                        
     }
 
     // TODO: Rewrite below VV
