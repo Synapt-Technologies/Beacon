@@ -120,6 +120,7 @@ export abstract class AbstractTallyProducer<
   protected _init(): void | Promise<void> {}
   
   async destroy(): Promise<void> {
+    this._logger.debug('Destroying...');
     this.markDestroying();
     await this._destroy();
   }

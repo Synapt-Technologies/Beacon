@@ -119,6 +119,8 @@ T extends ConsumerEvents & Record<string, unknown[]> = ConsumerEvents,
   protected _init(): void | Promise<void> {}
   
   async destroy(): Promise<void> {
+    this._logger.debug('Destroying...');
+    this._logger.debug('Destroying...');
     this.markDestroying();
     await this._destroy();
   }
