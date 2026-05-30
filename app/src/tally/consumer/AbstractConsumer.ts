@@ -222,22 +222,14 @@ export abstract class AbstractConsumer<
     }
   }
 
-  // TODO: Make this possible to send to unkown devices.
   sendDeviceState(address: DeviceAddress, pckg: DeviceStatePackage): void {
     const key = DeviceTools.toKey(address);
     this._logger.debug(`Sending state for device ${key}:`, pckg);
 
-    const device = this._devices.get(key);
-    if (!device) {
-      this._logger.warn(
-        `Attempted to send state to unknown device at address:`,
-        address,
-      );
-      return;
-    }
+    const bundle = DeviceTools.buildDeviceStateBundle(address, pckg);
 
     try {
-      this._sendDeviceState(device.toBundle(pckg));
+      this._sendDeviceState(bundle);
     } catch (error) {
       this._logger.error(`Error sending state for device ${key}:`, error);
     }
@@ -245,6 +237,7 @@ export abstract class AbstractConsumer<
 
   protected abstract _sendDeviceState(bundle: DeviceStateBundle): void;
 
+  // Rename to apply. Not stateless.
   sendDeviceRuntimeConfig(
     address: DeviceAddress,
     runtime: DeviceRuntimeConfig,
@@ -293,22 +286,14 @@ export abstract class AbstractConsumer<
     bundle: DeviceRuntimeConfigBundle
   ): void;
 
-  // TODO: Make this possible to send to unkown devices.
   sendDeviceAlert(address: DeviceAddress, alert: DeviceAlertPackage): void {
     const key = DeviceTools.toKey(address);
     this._logger.debug(`Sending alert for device ${key}:`, alert);
 
-    const device = this._devices.get(key);
-    if (!device) {
-      this._logger.warn(
-        `Attempted to send alert to unknown device at address:`,
-        address,
-      );
-      return;
-    }
+    const bundle = DeviceTools.buildDeviceAlertBundle(address, alert);
 
     try {
-      this._sendDeviceAlert(device.toBundle(alert));
+      this._sendDeviceAlert(bundle);
     } catch (error) {
       this._logger.error(`Error sending alert for device ${key}:`, error);
     }
