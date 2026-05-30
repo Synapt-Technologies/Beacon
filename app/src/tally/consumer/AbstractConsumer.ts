@@ -209,7 +209,7 @@ export abstract class AbstractConsumer<
 
     this._saveDevice(newDevice);
 
-    this.sendDeviceRuntimeConfig(newDevice.id, newDevice.runtime);
+    this.applyDeviceRuntimeConfig(newDevice.id, newDevice.runtime);
 
     if (existing) {
       (this as EventEmitter<ConsumerEvents>).emit("device_update", newDevice);
@@ -237,8 +237,23 @@ export abstract class AbstractConsumer<
 
   protected abstract _sendDeviceState(bundle: DeviceStateBundle): void;
 
+  sendDeviceAlert(address: DeviceAddress, alert: DeviceAlertPackage): void {
+    const key = DeviceTools.toKey(address);
+    this._logger.debug(`Sending alert for device ${key}:`, alert);
+
+    const bundle = DeviceTools.buildDeviceAlertBundle(address, alert);
+
+    try {
+      this._sendDeviceAlert(bundle);
+    } catch (error) {
+      this._logger.error(`Error sending alert for device ${key}:`, error);
+    }
+  }
+
+  protected abstract _sendDeviceAlert(bundle: DeviceAlertBundle): void;
+
   // Rename to apply. Not stateless.
-  sendDeviceRuntimeConfig(
+  applyDeviceRuntimeConfig(
     address: DeviceAddress,
     runtime: DeviceRuntimeConfig,
   ): void {
@@ -285,21 +300,6 @@ export abstract class AbstractConsumer<
   protected abstract _sendDeviceRuntimeConfig(
     bundle: DeviceRuntimeConfigBundle
   ): void;
-
-  sendDeviceAlert(address: DeviceAddress, alert: DeviceAlertPackage): void {
-    const key = DeviceTools.toKey(address);
-    this._logger.debug(`Sending alert for device ${key}:`, alert);
-
-    const bundle = DeviceTools.buildDeviceAlertBundle(address, alert);
-
-    try {
-      this._sendDeviceAlert(bundle);
-    } catch (error) {
-      this._logger.error(`Error sending alert for device ${key}:`, error);
-    }
-  }
-
-  protected abstract _sendDeviceAlert(bundle: DeviceAlertBundle): void;
 
   protected _processDeviceDiscovery(message: DeviceDiscoveryMessage): void {
     this._logger.debug(`Processing discovered device ${message.id}:`, message);
