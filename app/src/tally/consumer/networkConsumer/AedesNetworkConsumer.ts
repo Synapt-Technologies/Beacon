@@ -24,27 +24,25 @@ export interface AedesConsumerInfo extends ConsumerInfo {
     client_count: number;
 }
 
-// TODO: Add time synchronisation to Devices.
-// Timestamp in system/info doesn't take into account network delay.
-// -> SNTP-style request/response over MQTT
-//
-// - Time sync handler in init().
-// - A device that needs time subscribes to system/time/response/{device_id}
-// - Then it publishes a request to system/time/request/{device_id} with their local timestamp (t1)
-// - The broker replies immediately with { t1, t2: Date.now() } to system/time/response/{device_id}
-// - The device receives at local time t3 and calculates:
-//   offset = t2 - (t1 + t3) / 2
-// - For more accurate results a device can repeat this a few times and use the average to set the time.
+// ? payloads:
+// TODO: Make this based on the device packages somehow?
+interface DeviceStateMqttPayload {
+    state: { 
+        name: string; 
+        num: TallyState 
+    };
+    active_sources: Record<string, SourceInfo>;
+    moment: number;
+}
 
+interface DeviceRuntimeConfigMqttPayload {
+    name: DisplayName;
+    brightness: number;
+    state_on_disconnect: TallyState;
+    flip_sides: boolean | number;
+    moment: number;
+}
 
-// this.aedes.subscribe('system/time/request', (packet, callback) => {
-//     const { t1 } = JSON.parse(packet.payload.toString());
-//     this.aedes.publish({
-//         cmd: 'publish', qos: 0, dup: false, retain: false,
-//         topic: 'system/time/response',
-//         payload: Buffer.from(JSON.stringify({ t1, t2: Date.now() }))
-//     }, callback);
-// });
 
 export class AedesNetServerConsumer extends AbstractNetServerConsumer implements IBroadcastConsumer {
     
