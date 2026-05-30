@@ -48,7 +48,7 @@ export interface SourceBusInfo {
   id: GlobalBusAddress;
   name: DisplayName;
   index: number; // For ordering busses in the UI.
-  logicDefaults?: BusLogicConfig; // Optional default logic config for sources on this bus. Is overridden by user config.
+  defaultLogic?: BusLogicConfig; // Optional default logic config for sources on this bus. Is overridden by user config.
 }
 
 export interface SourceBusState extends SourceBusInfo {
@@ -174,7 +174,7 @@ export abstract class BusTools {
       id: state.id,
       name: state.name,
       index: state.index,
-      logicDefaults: state.logicDefaults,
+      defaultLogic: state.defaultLogic,
     };
   }
 
@@ -190,7 +190,7 @@ export abstract class BusTools {
     return {
       state: TallyState.NONE,
       enabled: false,
-      ...info.logicDefaults,
+      ...info.defaultLogic,
     }
   }
 
@@ -273,8 +273,8 @@ export abstract class BusTools {
     if (!this.areBusAddressEqual(a.id, b.id)) return false;
     if (!CommonTools.areDisplayNamesEqual(a.name, b.name)) return false;
     if (a.index !== b.index) return false;
-    if (a.logicDefaults?.state !== b.logicDefaults?.state) return false;
-    if (a.logicDefaults?.enabled !== b.logicDefaults?.enabled) return false;
+    if (a.defaultLogic?.state !== b.defaultLogic?.state) return false;
+    if (a.defaultLogic?.enabled !== b.defaultLogic?.enabled) return false;
 
     return true;
   }
