@@ -211,6 +211,46 @@ T extends ConsumerEvents & Record<string, unknown[]> = ConsumerEvents,
   }
 
   protected abstract _sendDeviceState(bundle: DeviceStateBundle): void;
+
+  sendDeviceRuntimeConfig(
+    address: DeviceAddress,
+    runtime: DeviceRuntimeConfig,
+  ): void {
+    const key = DeviceTools.toKey(address);
+    this._logger.debug(`Sending runtime config for device ${key}:`, runtime);
+
+    const device = this._devices.get(key);
+    if (!device) {
+      this._logger.warn(
+        `Attempted to set runtime config for unknown device at address:`,
+        address,
+      );
+      return;
+    }
+    
+    if (device.runtime !== runtime) {
+      this._logger.debug(
+        `Storing new config for device ${key}. change:`,
+        device.runtime,
+        `->`,
+        runtime
+      );
+      device.runtime = runtime;
+      try {
+        this._store.saveDevice(device);
+      } catch (error) {
+        this._logger.error(`Error saving runtime config for device ${key}:`, error);
+      }
+    }
+
+    try {
+      this._sendDeviceRuntimeConfig(device.toRuntimeConfigBundle());
+    } catch (error) {
+      this._logger.error(`Error sending runtime config for device ${key}:`, error);
+    }
+  }
+  
+  protected abstract _sendDeviceRuntimeConfig(bundle: DeviceRuntimeConfigBundle): void;
   
   sendDeviceAlert(address: DeviceAddress, alert: DeviceAlertPackage): void {
     const key = DeviceTools.toKey(address);
@@ -247,46 +287,6 @@ T extends ConsumerEvents & Record<string, unknown[]> = ConsumerEvents,
   protected abstract _sendDiscoveryReply(
     message: DeviceDiscoveryReplyMessage,
   ): void;
-  
-  sendDeviceRuntimeConfig(
-    address: DeviceAddress,
-    runtime: DeviceRuntimeConfig,
-  ): void {
-    const key = DeviceTools.toKey(address);
-    this._logger.debug(`Setting runtime config for device ${key}:`, runtime);
-
-    const device = this._devices.get(key);
-    if (!device) {
-      this._logger.warn(
-        `Attempted to set runtime config for unknown device at address:`,
-        address,
-      );
-      return;
-    }
-    
-    if (device.runtime !== runtime) {
-      this._logger.debug(
-        `Runtime config for device ${key} changed:`,
-        device.runtime,
-        `->`,
-        runtime
-      );
-      device.runtime = runtime;
-      try {
-        this._store.saveDevice(device);
-      } catch (error) {
-        this._logger.error(`Error saving runtime config for device ${key}:`, error);
-      }
-    }
-
-    try {
-      this._sendDeviceRuntimeConfig(device.toRuntimeConfigBundle());
-    } catch (error) {
-      this._logger.error(`Error sending runtime config for device ${key}:`, error);
-    }
-  }
-  
-  protected abstract _sendDeviceRuntimeConfig(bundle: DeviceRuntimeConfigBundle): void;
   
   protected _processDeviceTelemetry(bundle: DeviceTelemetryBundle): void {
     this._logger.debug(
