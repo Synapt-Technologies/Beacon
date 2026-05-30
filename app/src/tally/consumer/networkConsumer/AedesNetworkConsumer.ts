@@ -8,7 +8,7 @@ import { AbstractNetServerConsumer, type NetServerConsumerConfig } from "./Abstr
 import type { IBroadcastConsumer } from "../IBroadcastConsumer";
 import { ConnectionState, TallyState, type DisplayName } from "../../types/CommonTypes";
 import type { ConsumerInfo } from "../../types/ConsumerTypes";
-import type { DeviceAddress, DeviceAlertBundle, DeviceAlertData, DeviceDiscoveryMessage, DeviceRuntimeConfig, DeviceRuntimeConfigBundle, DeviceStateBundle, GlobalDeviceRuntimeConfig } from "../../types/DeviceTypes";
+import type { DeviceAddress, DeviceAlertBundle, DeviceAlertData, DeviceDiscoveryMessage, DeviceDiscoveryReplyMessage, DeviceId, DeviceRuntimeConfig, DeviceRuntimeConfigBundle, DeviceStateBundle, GlobalDeviceRuntimeConfig } from "../../types/DeviceTypes";
 import type { SourceInfo } from "../../types/SourceTypes";
 
 
@@ -26,11 +26,13 @@ export interface AedesConsumerInfo extends ConsumerInfo {
 }
 
 // ? payloads:
-interface DeviceMqttPayload {
+interface MqttPayload {
     moment: number;
 }
+interface KeepAliveMqttPayload extends MqttPayload { /* empty */ }
+
 // TODO: make this extend exiting interfaces?
-interface DeviceStateMqttPayload extends DeviceMqttPayload {
+interface DeviceStateMqttPayload extends MqttPayload {
     state: { 
         name: string; 
         num: TallyState 
@@ -39,11 +41,12 @@ interface DeviceStateMqttPayload extends DeviceMqttPayload {
     moment: number;
 }
 
-// TODO: Check these payloads.
-interface DeviceAlertMqttPayload extends DeviceMqttPayload, DeviceAlertData{ /* empty */ }
+// TODO: Check these payloads. It might be possible to use existing interfaces.
+interface DeviceAlertMqttPayload extends MqttPayload, DeviceAlertData{ /* empty */ }
 
-interface DeviceRuntimeConfigMqttPayload extends DeviceMqttPayload, DeviceRuntimeConfig, GlobalDeviceRuntimeConfig  { /* empty */ }
+interface DeviceRuntimeConfigMqttPayload extends MqttPayload, DeviceRuntimeConfig, GlobalDeviceRuntimeConfig  { /* empty */ }
 
+interface DeviceDiscoveryReplyMqttPayload extends MqttPayload, DeviceDiscoveryReplyMessage { /* empty */ }
 
 export class AedesNetServerConsumer extends AbstractNetServerConsumer implements IBroadcastConsumer {
     
@@ -345,27 +348,38 @@ export class AedesNetServerConsumer extends AbstractNetServerConsumer implements
         this._info.client_count = 0;
     }
 
-    private _publish(address: DeviceAddress, subtopic: string, payload: DeviceMqttPayload, qos: 0|1|2, retain: boolean): void {
+    private _publishDevice(address: DeviceAddress, subtopic: string, payload: MqttPayload | null, qos: 0|1|2, retain: boolean): void {
+        const topic = `device/${address.consumer}/${address.device}/${subtopic}`;
+        this._publish(topic, payload, qos, retain);
+    }
+    private _publish(topic: string, payload: MqttPayload | null, qos: 0|1|2, retain: boolean): void {
         if (!this._aedes) {
             this._logger.warn("Attempting to publish before initialization. Discarding.");
             return;
         }
 
-        const topic = `device/${address.consumer}/${address.device}/${subtopic}`;
-
-        try {
+        const buf = payload === null ? Buffer.alloc(0) : Buffer.from(JSON.stringify(payload));
+        
+                try {
             this._aedes.publish({
                 cmd: 'publish', 
                 qos, 
                 dup: false, 
                 topic: topic,
-                payload: Buffer.from(JSON.stringify(payload)),
+                payload: buf,
                 retain
             }, () => {});
             this._logger.debug(`Published to ${topic}:`, payload);
         } catch (err) {
             this._logger.error(`Error publishing to MQTT topic ${topic}:`, err);
         }
+    }
+
+    private _clearDeviceRetained(address: DeviceAddress, subtopic: string): void {
+        this._publishDevice(address, subtopic, null, 1, true);
+    }
+    private _clearRetained(topic: string): void {
+        this._publish(topic, null, 1, true);
     }
     
     protected _sendDeviceState(bundle: DeviceStateBundle): void {
@@ -379,7 +393,7 @@ export class AedesNetServerConsumer extends AbstractNetServerConsumer implements
             moment: bundle.moment,
         };
 
-        this._publish(bundle.id, "tally", payload, 1, true);
+        this._publishDevice(bundle.id, "tally", payload, 1, true);
     }
 
     protected _sendDeviceAlert(bundle: DeviceAlertBundle): void {
@@ -389,7 +403,7 @@ export class AedesNetServerConsumer extends AbstractNetServerConsumer implements
             ...bundle.data.alert
         };
 
-        this._publish(bundle.id, "alert", payload, 2, false);        
+        this._publishDevice(bundle.id, "alert", payload, 2, false);        
     }
 
     protected _sendDeviceRuntimeConfig(bundle: DeviceRuntimeConfigBundle): void {
@@ -400,217 +414,35 @@ export class AedesNetServerConsumer extends AbstractNetServerConsumer implements
             ...bundle.data.global,
         };
 
-        this._publish(bundle.id, "config/runtime", payload, 2, true);                        
+        this._publishDevice(bundle.id, "config/runtime", payload, 2, true);                        
     }
 
-    // TODO: Rewrite below VV
-    protected onDeviceDiscovered(packet: DeviceDiscoveryPacket): void {
-        this.logger.info(`Device discovered via MQTT: ${packet.name} (${packet.id})`);
-        
-        const device: TallyDevice = GlobalDeviceTools.defaultDevice({
-            id: { consumer: this.config.id, device: packet.id },
-            name: { 
-                long: packet.name ?? packet.model ?? packet.id 
-            },
-            model: packet.model,
-            connection: packet.connection ?? ConnectionType.NETWORK, // Discovered, but not yet patched
-        });
-        
-        this._addDevice(device);
-    }
-    
-    public publishDeviceTally(device: TallyDevice): void {
-        this.sendDeviceTally(device);
-    }
-    
-    broadcastTally(): void {
-        if (!this.aedes) {
-            this.logger.warn("Discarding Tally: Attempted to send before initialization.");
-            return;
-        }
-        
-        const payload = JSON.stringify({
-            program: Array.from(this.tallyState.program),
-            preview: Array.from(this.tallyState.preview),
-            moment: Date.now()
-        });
-        
-        this.aedes.publish({
-            cmd: 'publish',
-            qos: 1, // At least once, or more
-            dup: false,
-            topic: 'tally/global', 
-            payload: Buffer.from(payload),
-            retain: true
-        }, () => {});
-    }
-    
-    broadcastKeepAlive(): void {
-        if (!this.aedes) {
-            this.logger.warn("Discarding Keep-Alive: Attempted to send before initialization.");
-            return;
-        }
-        
-        const payload = JSON.stringify({
+    protected  _sendDiscoveryReply(id: DeviceId, message: DeviceDiscoveryReplyMessage): void {
+        const payload: DeviceDiscoveryReplyMqttPayload = {
             moment: Date.now(),
-            system: this.config.system_info
-        });
-        
-        this.aedes.publish({
-            cmd: 'publish',
-            qos: 1, // At least once, or more
-            dup: false,
-            topic: 'system/info',
-            payload: Buffer.from(payload),
-            retain: false
-        }, () => {});
-        
+            ...message,
+        };
+
+        this._publish(`device/discovery/reply/${id}`, payload, 1, true);
     }
-    
-    deleteDevice(address: DeviceAddress): void {
-        super.deleteDevice(address);
-        
-        
+
+    protected _deleteDevice(address: DeviceAddress): void {
         //Remove retained messages.
-        if (!this.aedes) {
-            this.logger.warn("Discarding Device Deletion: Attempted to send before initialization.");
-            return;
-        }
-        
-        this.aedes.publish({
-            cmd: 'publish',
-            qos: 1,
-            dup: false,
-            topic: `tally/device/${address.consumer}/${address.device}`,
-            payload: Buffer.alloc(0), // Empty payload to clear retained message
-            retain: true
-        }, () => {});
-        
-        this.aedes.publish({
-            cmd: 'publish',
-            qos: 1,
-            dup: false,
-            topic: `tally/device/${address.consumer}/${address.device}/config`,
-            payload: Buffer.alloc(0), // Empty payload to clear retained message
-            retain: true
-        }, () => {});
-        
-        this.aedes.publish({
-            cmd: 'publish',
-            qos: 1,
-            dup: false,            
-            topic: `tally/device/${address.consumer}/${address.device}/fields`,
-            payload: Buffer.alloc(0), // Empty payload to clear retained message
-            retain: true
-        }, () => {});
+        this._clearDeviceRetained(address, "tally")
+        this._clearDeviceRetained(address, "alert")
+        this._clearDeviceRetained(address, "config/runtime")
+        this._clearRetained(`device/discovery/reply/${address.device}`);
     }
-    
-    
-    protected sendDeviceTally(device: TallyDevice): void {
-        if (!this.aedes) {
-            this.logger.warn("Discarding Tally: Attempted to send before initialization.");
-            return;
-        }
-        
-        const payload = JSON.stringify({
-            state:  TallyState[device.state],
-            ss:     device.state,
-            moment: this.tallyState.moment
+
+    protected _broadcastKeepAlive(): void {
+                
+        const payload: KeepAliveMqttPayload = ({
+            moment: Date.now(),
+            // system: this.config.system_info // TODO: Add a way to get systemInfo.
         });
         
-        this.logger.debug(`Attempting to publish to MQTT for ${device.id.device}...`);
-        
-        this.aedes.publish(
-            {
-                cmd: 'publish',
-                qos: 1,
-                dup: false, // TODO: topic becomes /device/x/x/tally?
-                topic: `tally/device/${device.id.consumer}/${device.id.device}`, // TODO: Add /tally?
-                payload: Buffer.from(payload),
-                retain: true
-            }, () => {});
-            
-            this.logger.debug(`Sent payload to device:`, payload);
-            
-        }
-        
-        // TODO Implement configurable/variable fields.
-        protected sendDeviceFields(device: TallyDevice): void {
-            if (!this.aedes) {
-                this.logger.warn("Discarding FIELDS: Attempted to send before initialization.");
-                return;
-            }
-            
-            const payload = JSON.stringify({
-                "1": device.name,
-            });
-            
-            this.logger.debug(`Attempting to publish to MQTT for ${device.id.device}...`);
-            
-            this.aedes.publish(
-                {
-                    cmd: 'publish',
-                    qos: 1,
-                    dup: false,  // TODO: topic becomes /device/x/x/fields?
-                    topic: `tally/device/${device.id.consumer}/${device.id.device}/fields`,
-                    payload: Buffer.from(payload),
-                    retain: true
-                }, () => {});
-                
-                this.logger.debug(`Sent payload to device:`, payload);
-                
-            }
-            
-            protected sendDeviceConfig(device: TallyDevice): void {
-                if (!this.aedes) {
-                    this.logger.warn("Discarding CONFIG: Attempted to send before initialization.");
-                    return;
-                }
-                
-                //TODO Maybe use defaultDevice helper?
-                
-                // TODO: Make flips sides boolean?
-                const payload = JSON.stringify({
-                    brightness: device.brightness !== undefined ? (device.brightness * 255 / 100) : 255,
-                    // brightness: 10,
-                    name: device.name,
-                    state_on_disconnect: this.disconnectState,
-                    flip_sides: device.flip ? 1 : 0,
-                    // flip_sides: true ? 1 : 0,
-                    moment: Date.now()
-                });
-                
-                this.logger.debug(`Attempting to publish CONFIG over MQTT for ${device.id.device}...`);
-                
-                this.aedes.publish(
-                    {
-                        cmd: 'publish',
-                        qos: 1,
-                        dup: false, // TODO: topic becomes /device/x/x/config?
-                        topic: `tally/device/${device.id.consumer}/${device.id.device}/config`,
-                        payload: Buffer.from(payload),
-                        retain: true
-                    }, () => {});
-                    
-                    this.logger.debug(`Sent payload to device:`, payload);
-                    
-                }
-                
-                setDeviceAlert(address: DeviceAddress, type: DeviceAlertState, target: DeviceAlertTarget, time: number): void {
-                    if (!this.aedes) {
-                        this.logger.warn("Discarding Tally: Attempted to send before initialization.");
-                        return;
-                    }
-                    
-                    this.aedes.publish({
-                        cmd: 'publish',
-                        qos: 2, // High priority for alerts
-                        dup: false,  // TODO: topic becomes /device/x/x/alert?
-                        topic: `tally/device/${address.consumer}/${address.device}/alert`,
-                        payload: Buffer.from(JSON.stringify({ type, target, time })),
-                        retain: false // Alerts are momentary, no retain
-                    }, () => {});
-                }
-                
-            }
+        this._publish('system/info', payload, 1, false);
+    }
+}
+
             
