@@ -39,8 +39,8 @@ export interface DeviceInfo {
   model?: string; // Todo: DisplayName with long and short?
   firmware?: {
     type: string; // Support for non beacon-device firmware. e.g. app?
-    version: string; // version as string. Preference for semantic.
-  };
+    version?: string; // version as string. Preference for semantic.
+  }; // TODO: add bigger text field with device details?
   connection: ConnectionType;
   output_count?: number;
 }
