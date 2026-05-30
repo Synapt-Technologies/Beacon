@@ -1,4 +1,4 @@
-import type { DisplayName, TallyState } from "./CommonTypes";
+import { TallyState, type DisplayName } from "./CommonTypes";
 import type { ConsumerId } from "./ConsumerTypes";
 import { LogicFactory, type PatchNode } from "./LogicTypes";
 import type { SourceMap } from "./SourceTypes";
@@ -27,6 +27,11 @@ export interface DeviceRuntimeConfig {
   brightness: number; // 0-100
   flip: boolean;
 }
+//? Device config globally applied. Not stored in a device, but it is sent in a package/bundle.
+export interface GlobalDeviceRuntimeConfig {
+  state_on_disconnect: TallyState;
+}
+
 
 //? Info about the device (and its capabilities). Doesn't change a lot.
 export interface DeviceInfo {
@@ -144,6 +149,7 @@ export interface DeviceAlertPackage extends BaseDevicePackage {
 
 export interface DeviceRuntimeConfigPackage extends BaseDevicePackage {
   runtime: DeviceRuntimeConfig;
+  global: GlobalDeviceRuntimeConfig;
 }
 
 export interface DeviceTelemetryPackage extends BaseDevicePackage {
@@ -151,8 +157,7 @@ export interface DeviceTelemetryPackage extends BaseDevicePackage {
 }
 export type DeviceStateBundle = DeviceBundle<DeviceStatePackage>;
 export type DeviceAlertBundle = DeviceBundle<DeviceAlertPackage>;
-export type DeviceRuntimeConfigBundle =
-  DeviceBundle<DeviceRuntimeConfigPackage>;
+export type DeviceRuntimeConfigBundle = DeviceBundle<DeviceRuntimeConfigPackage>;
 export type DeviceTelemetryBundle = DeviceBundle<DeviceTelemetryPackage>;
 
 //? Device Messages are for duplex communication, directly aimed at devices. E.g. discovery (topic negotiation). Before a device has a ConsumerId.
@@ -167,6 +172,10 @@ export interface DeviceDiscoveryReplyMessage {
 }
 
 //? Device tools and DTOs
+export const defaultGlobalDeviceRuntimeConfig = (): GlobalDeviceRuntimeConfig => ({
+  state_on_disconnect: TallyState.WARNING,
+});
+
 const defaultTallyDevice = (): Omit<TallyDevice, "id"> => ({
   info: {
     connection: ConnectionType.VIRTUAL,
@@ -259,9 +268,10 @@ export class TallyDeviceDto implements TallyDevice {
     };
   }
 
-  toRuntimeConfigBundle(): DeviceRuntimeConfigBundle {
+  toRuntimeConfigBundle(global: GlobalDeviceRuntimeConfig): DeviceRuntimeConfigBundle {
     return this.toBundle({
       runtime: this.runtime,
+      global: global,
     });
   }
 }
