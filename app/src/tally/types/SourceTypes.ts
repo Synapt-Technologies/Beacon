@@ -164,7 +164,12 @@ export abstract class BusTools {
   }
 
   static busInfoFromState(state: SourceBusState): SourceBusInfo {
-    return { id: state.id, name: state.name, index: state.index, defaultState: state.defaultState };
+    return {
+      id: state.id,
+      name: state.name,
+      index: state.index,
+      defaultState: state.defaultState,
+    };
   }
 
   static busStateFromInfo(
@@ -209,7 +214,9 @@ export abstract class BusTools {
     return infoMap;
   }
 
-  static busDefaultStateMapFromBusMap(map: BusInfoMap | BusStateMap): BusDefaultTallyStateMap {
+  static busDefaultStateMapFromBusMap(
+    map: BusInfoMap | BusStateMap,
+  ): BusDefaultTallyStateMap {
     const defaultStateMap: BusDefaultTallyStateMap = new Map();
     for (const [key, info] of map) {
       defaultStateMap.set(key, this.busDefaultState(info));
@@ -225,10 +232,14 @@ export abstract class BusTools {
     return infoMap;
   }
 
-  static busDefaultStateMapFromGroupMap(map: BusGroupInfoMap | BusGroupStateMap): BusDefaultTallyStateMap {
+  static busDefaultStateMapFromGroupMap(
+    map: BusGroupInfoMap | BusGroupStateMap,
+  ): BusDefaultTallyStateMap {
     const defaultStateMap: BusDefaultTallyStateMap = new Map();
     for (const [_key, group] of map) {
-      for (const [busKey, defaultState] of this.busDefaultStateMapFromBusMap(group.busses)) {
+      for (const [busKey, defaultState] of this.busDefaultStateMapFromBusMap(
+        group.busses,
+      )) {
         defaultStateMap.set(busKey, defaultState);
       }
     }

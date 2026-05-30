@@ -40,7 +40,7 @@ export abstract class AbstractNetClientTallyProducer<
     await super.init();
     await this.connect();
   }
-  
+
   async destroy(): Promise<void> {
     this.markDestroying();
     await this.disconnect();

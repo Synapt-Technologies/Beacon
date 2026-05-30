@@ -67,9 +67,8 @@ export interface TallyDevice extends StoredTallyDevice {
   telemetry?: DeviceTelemetry;
 }
 
-export type TallyDeviceMap    = Map<DeviceKey, TallyDevice>;
+export type TallyDeviceMap = Map<DeviceKey, TallyDevice>;
 export type TallyDeviceDtoMap = Map<DeviceKey, TallyDeviceDto>;
-
 
 // ? ALERTS
 // TODO More types?
@@ -86,7 +85,6 @@ export enum DeviceAlertTarget {
   OPERATOR = 1,
   TALENT = 2,
 }
-
 
 export interface DeviceAlertData {
   action: DeviceAlertAction;
@@ -151,11 +149,11 @@ export interface DeviceRuntimeConfigPackage extends BaseDevicePackage {
 export interface DeviceTelemetryPackage extends BaseDevicePackage {
   telemetry: DeviceTelemetry;
 }
-export type DeviceStateBundle         = DeviceBundle<DeviceStatePackage>;
-export type DeviceAlertBundle         = DeviceBundle<DeviceAlertPackage>;
-export type DeviceRuntimeConfigBundle = DeviceBundle<DeviceRuntimeConfigPackage>;
-export type DeviceTelemetryBundle     = DeviceBundle<DeviceTelemetryPackage>;
-
+export type DeviceStateBundle = DeviceBundle<DeviceStatePackage>;
+export type DeviceAlertBundle = DeviceBundle<DeviceAlertPackage>;
+export type DeviceRuntimeConfigBundle =
+  DeviceBundle<DeviceRuntimeConfigPackage>;
+export type DeviceTelemetryBundle = DeviceBundle<DeviceTelemetryPackage>;
 
 //? Device Messages are for duplex communication, directly aimed at devices. E.g. discovery (topic negotiation). Before a device has a ConsumerId.
 export interface DeviceDiscoveryMessage {
@@ -266,7 +264,6 @@ export class TallyDeviceDto implements TallyDevice {
       runtime: this.runtime,
     });
   }
-
 }
 
 export abstract class DeviceTools {

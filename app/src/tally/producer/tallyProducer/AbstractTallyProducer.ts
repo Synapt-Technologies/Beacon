@@ -39,7 +39,10 @@ export abstract class AbstractTallyProducer<
   // TODO: Con and prod types probably not in AbstractConnection. Check if needed at all. Might be usefull when adding other non-tally producer types.
   protected readonly conType: string = "PROD";
   protected readonly prodType: string = "SWTCHR";
-  protected readonly logLabels: readonly string[] = [this.conType, this.prodType];
+  protected readonly logLabels: readonly string[] = [
+    this.conType,
+    this.prodType,
+  ];
 
   protected _logger: Logger;
 
@@ -80,11 +83,7 @@ export abstract class AbstractTallyProducer<
 
     this._config = { ...this._getDefaultConfig(), ...config };
 
-    this._logger = new Logger([
-      "TALLY",
-      ...this.logLabels,
-      this._config.id,
-    ]);
+    this._logger = new Logger(["TALLY", ...this.logLabels, this._config.id]);
 
     this._checkConfig(this._config);
 
@@ -118,9 +117,9 @@ export abstract class AbstractTallyProducer<
     await this._init();
   }
   protected _init(): void | Promise<void> {}
-  
+
   async destroy(): Promise<void> {
-    this._logger.debug('Destroying...');
+    this._logger.debug("Destroying...");
     this.markDestroying();
     await this._destroy();
   }
