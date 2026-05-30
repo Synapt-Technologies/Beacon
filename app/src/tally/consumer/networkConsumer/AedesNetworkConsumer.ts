@@ -1,4 +1,4 @@
-import { AbstractNetworkConsumer, type NetworkConsumerConfig, type NetworkConsumerInfo } from "./AbstractNetworkConsumer";
+import { AbstractNetworkConsumer, type NetworkConsumerConfig, type NetworkConsumerInfo } from "./AbstractNetServerConsumer";
 import { ConsumerStatus } from "../AbstractConsumer";
 import { type IGlobalBroadcastConsumer } from "../IGlobalBroadcastConsumer";
 

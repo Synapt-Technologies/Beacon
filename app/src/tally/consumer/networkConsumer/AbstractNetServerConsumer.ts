@@ -3,24 +3,24 @@ import type { ConsumerConfig } from "../../types/ConsumerTypes";
 import { AbstractConsumer, type ConsumerEvents } from "../AbstractConsumer";
 
 
-export interface NetworkConsumerConfig extends ConsumerConfig {
+export interface NetServerConsumerConfig extends ConsumerConfig {
     port: number;
     keep_alive: boolean;
     keep_alive_ms: number;
 } 
 
 
-export abstract class AbstractNetworkConsumer<T extends ConsumerEvents = ConsumerEvents> extends AbstractConsumer<T> {
+export abstract class AbstractNetServerConsumer<T extends ConsumerEvents = ConsumerEvents> extends AbstractConsumer<T> {
     
-    protected declare _config: NetworkConsumerConfig; // Declare to indicate it overwrites the parent's type.
-    protected abstract _getDefaultConfig(): Omit<NetworkConsumerConfig, "id" >;
+    protected declare _config: NetServerConsumerConfig; // Declare to indicate it overwrites the parent's type.
+    protected abstract _getDefaultConfig(): Omit<NetServerConsumerConfig, "id" >;
 
 
-    constructor(config: WithRequired<NetworkConsumerConfig, "id">) {
+    constructor(config: WithRequired<NetServerConsumerConfig, "id">) {
         super(config);
     }
         
-    protected _checkConfig(config: NetworkConsumerConfig) {
+    protected _checkConfig(config: NetServerConsumerConfig) {
         super._checkConfig(config);
         
         if (config.port == null || config.port < 0 || config.port > 65535)
