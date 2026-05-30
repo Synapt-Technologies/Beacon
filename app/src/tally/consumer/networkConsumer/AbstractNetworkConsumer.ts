@@ -1,17 +1,11 @@
-import { AbstractConsumer, ConsumerStatus, type ConsumerConfig, type ConsumerEvents, type ConsumerInfo } from "../AbstractConsumer";
-import type { TallyState } from "../../types/ProducerStates";
+import type { ConsumerConfig } from "../../types/ConsumerTypes";
+import { AbstractConsumer, type ConsumerEvents } from "../AbstractConsumer";
 
-
-export interface NetworkConsumerInfo extends ConsumerInfo {
-    port: number;
-    client_count: number;
-}
 
 export interface NetworkConsumerConfig extends ConsumerConfig {
     port?: number;
     keep_alive?: boolean;
     keep_alive_ms?: number;
-    broadcast_all?: boolean; // Broadcast all tally states to the /tally topic.
 } 
 
 export type NetworkConsumerEvents = ConsumerEvents & {
@@ -21,25 +15,9 @@ export type NetworkConsumerEvents = ConsumerEvents & {
 
 export abstract class AbstractNetworkConsumer<T extends NetworkConsumerEvents = NetworkConsumerEvents> extends AbstractConsumer<T> {
     
-    protected declare config: Required<NetworkConsumerConfig>; // Declare to indicate it overwrites the parent's type.
-    protected info: NetworkConsumerInfo = { 
-        status: ConsumerStatus.OFFLINE, 
-        device_count: 0, 
-        port: -1, 
-        client_count: 0 
-    };
-    
-    public static readonly DefaultConfig: Required<NetworkConsumerConfig> = {
-        ...AbstractConsumer.DefaultConfig,
-        port: -1,
-        keep_alive: true,
-        keep_alive_ms: 500,
-        broadcast_all: true,
-    };
+    protected declare _config: Required<NetworkConsumerConfig>; // Declare to indicate it overwrites the parent's type.
+    protected abstract _getDefaultConfig(): Omit<NetworkConsumerConfig, "id" | "port">;
 
-    protected abstract getDefaultConfig(): Required<NetworkConsumerConfig>;
-    
-    private timer?: NodeJS.Timeout;
 
     constructor(config: NetworkConsumerConfig) {
         super(config);
@@ -66,7 +44,8 @@ export abstract class AbstractNetworkConsumer<T extends NetworkConsumerEvents = 
     // TODO: Move to some sort of NetworkConsumer class or interface? Not all consumers need to broadcast keep alive.
     abstract broadcastKeepAlive(): void;
 
-    init(): void | Promise<void> {
+    init(): Promise<void> {
+        super.init();
 
         this.info.port = this.config.port;
 
@@ -80,12 +59,17 @@ export abstract class AbstractNetworkConsumer<T extends NetworkConsumerEvents = 
         this.info.status = ConsumerStatus.ONLINE;
     }
 
-    destroy(): void | Promise<void> {
+    destroy(): Promise<void> {
         this.logger.debug('Destroying...');
+
+        super.destroy();
 
         if (this.timer)
             clearInterval(this.timer);
 
         this.info.status = ConsumerStatus.OFFLINE;
     }
+
+    private timer?: NodeJS.Timeout;
+
 }
