@@ -114,8 +114,16 @@ export abstract class AbstractTallyProducer<
     return this._destroying;
   }
 
-  abstract init(): void | Promise<void>;
-  abstract destroy(): void | Promise<void>;
+  async init(): Promise<void> {
+    await this._init();
+  }
+  protected _init(): void | Promise<void> {}
+  
+  async destroy(): Promise<void> {
+    this.markDestroying();
+    await this._destroy();
+  }
+  protected _destroy(): void | Promise<void> {}
 
   // TODO: Move above to AbstractConnection
   // TODO emitInfoUpdate also in AbstractConnection? Or as abstract?

@@ -36,6 +36,17 @@ export abstract class AbstractNetClientTallyProducer<
       this._logger.fatal(`Valid Port is required. Submitted config:`, config);
   }
 
+  async init(): Promise<void> {
+    await super.init();
+    await this.connect();
+  }
+  
+  async destroy(): Promise<void> {
+    this.markDestroying();
+    await this.disconnect();
+    await super.destroy();
+  }
+
   abstract connect(): void | Promise<void>;
   abstract disconnect(): void | Promise<void>;
 }

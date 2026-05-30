@@ -113,14 +113,16 @@ T extends ConsumerEvents & Record<string, unknown[]> = ConsumerEvents,
     return this._destroying;
   }
   
-  init(): Promise<void> {
-    return Promise.resolve(this._init());
+  async init(): Promise<void> {
+    await this._init();
   }
-  protected abstract _init(): void | Promise<void>;
-  destroy(): Promise<void> {
-    return Promise.resolve(this._destroy());
+  protected _init(): void | Promise<void> {}
+  
+  async destroy(): Promise<void> {
+    this.markDestroying();
+    await this._destroy();
   }
-  protected abstract _destroy(): void | Promise<void>;
+  protected _destroy(): void | Promise<void> {}
   
   // TODO: Move above to AbstractConnection
   // TODO emitInfoUpdate also in AbstractConnection? Or as abstract?
