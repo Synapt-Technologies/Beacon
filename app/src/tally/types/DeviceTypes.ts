@@ -67,7 +67,8 @@ export interface TallyDevice extends StoredTallyDevice {
   telemetry?: DeviceTelemetry;
 }
 
-export type TallyDeviceMap = Map<DeviceKey, TallyDevice>;
+export type TallyDeviceMap    = Map<DeviceKey, TallyDevice>;
+export type TallyDeviceDtoMap = Map<DeviceKey, TallyDeviceDto>;
 
 
 // ? ALERTS
@@ -139,7 +140,7 @@ export interface DeviceStatePackage extends BaseDevicePackage {
   active_sources: SourceMap; // TODO: Implement or remove. Should it be a per bus map?
 }
 
-export interface DeviceAlertPackage extends BaseDevicePackage  {
+export interface DeviceAlertPackage extends BaseDevicePackage {
   alert: DeviceAlertData;
 }
 
@@ -252,7 +253,7 @@ export class TallyDeviceDto implements TallyDevice {
     };
   }
 
-  // Use for bundles that overwrite the device states or are not included in it. E.g. Alert, State.
+  // Use for bundles which have data not in TallyDevice already. e.g. runtime config has its own bundle function.
   toBundle<T extends BaseDevicePackage>(data: T): DeviceBundle<T> {
     return {
       ...this.toBaseBundle(),
