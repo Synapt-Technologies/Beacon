@@ -15,6 +15,8 @@ import {
   type DeviceDiscoveryReplyMessage,
   type DeviceRuntimeConfig,
   type TallyDeviceDtoMap,
+  type GlobalDeviceRuntimeConfig,
+  defaultGlobalDeviceRuntimeConfig,
 } from "../types/DeviceTypes";
 import { ConsumerStore } from "../../database/ConsumerStore";
 import type {
@@ -22,7 +24,7 @@ import type {
   ConsumerId,
   ConsumerInfo,
 } from "../types/ConsumerTypes";
-import { ConnectionState, type WithRequired } from "../types/CommonTypes";
+import { ConnectionState, TallyState, type WithRequired } from "../types/CommonTypes";
 
 export type ConsumerEvents = {
   info_update: [ConsumerInfo];
@@ -133,6 +135,28 @@ export abstract class AbstractConsumer<
     this._logger.debug(`Info updated.`);
   }
 
+  protected _globalDeviceRuntimeConfig: GlobalDeviceRuntimeConfig = defaultGlobalDeviceRuntimeConfig();
+
+  getGlobalDeviceRuntimeConfig(): GlobalDeviceRuntimeConfig {
+    return this._globalDeviceRuntimeConfig;
+  }
+
+  // TODO: Check if this should be done here. Maybe in NetServerConsumer?
+  setGlobalDeviceRuntimeConfig(config: GlobalDeviceRuntimeConfig): void {
+    this._globalDeviceRuntimeConfig = config;
+    this._logger.debug(`Global device runtime config updated:`, this._globalDeviceRuntimeConfig);
+    for (const device of this._devices.values()) {
+      try {
+        this._sendDeviceRuntimeConfig(device.toRuntimeConfigBundle(this._globalDeviceRuntimeConfig));
+      } catch (error) {
+        this._logger.error(
+          `Error sending runtime config for device ${device.toKey()}:`,
+          error,
+        );
+      }
+    }
+  }
+
   protected _devices: TallyDeviceDtoMap = new Map();
 
   getAvailableDevices(): Array<TallyDevice> {
@@ -198,6 +222,7 @@ export abstract class AbstractConsumer<
     }
   }
 
+  // TODO: Make this possible to send to unkown devices.
   sendDeviceState(address: DeviceAddress, pckg: DeviceStatePackage): void {
     const key = DeviceTools.toKey(address);
     this._logger.debug(`Sending state for device ${key}:`, pckg);
@@ -255,7 +280,7 @@ export abstract class AbstractConsumer<
     }
 
     try {
-      this._sendDeviceRuntimeConfig(device.toRuntimeConfigBundle());
+      this._sendDeviceRuntimeConfig(device.toRuntimeConfigBundle(this._globalDeviceRuntimeConfig));
     } catch (error) {
       this._logger.error(
         `Error sending runtime config for device ${key}:`,
@@ -268,6 +293,7 @@ export abstract class AbstractConsumer<
     bundle: DeviceRuntimeConfigBundle
   ): void;
 
+  // TODO: Make this possible to send to unkown devices.
   sendDeviceAlert(address: DeviceAddress, alert: DeviceAlertPackage): void {
     const key = DeviceTools.toKey(address);
     this._logger.debug(`Sending alert for device ${key}:`, alert);
