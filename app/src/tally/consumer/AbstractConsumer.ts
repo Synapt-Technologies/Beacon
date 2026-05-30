@@ -152,6 +152,7 @@ export abstract class AbstractConsumer<
     }
   }
 
+  // TODO: Add a public addDevice? (or manuallyAddDevice?) A debugmode where it is possible to add devices to a consumer manually would be nice.
   protected _addDevice(device: TallyDeviceDto, override: boolean = false) {
     const newDevice = new TallyDeviceDto({
       ...device,
