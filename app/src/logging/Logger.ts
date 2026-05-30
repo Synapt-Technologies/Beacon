@@ -1,6 +1,7 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 
+// TODO: Add a loglevel unde DEBUG? ALL? 
 export enum LogLevel {
     DEBUG = 0,
     INFO = 1,
