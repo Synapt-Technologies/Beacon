@@ -345,27 +345,26 @@ export class AedesNetServerConsumer extends AbstractNetServerConsumer implements
         this._info.client_count = 0;
     }
 
-    private _deviceTopic(id: DeviceAddress, subtopic: string): string {
-        return `device/${id.consumer}/${id.device}/${subtopic}`;
-    }
-
     private _publish(address: DeviceAddress, subtopic: string, payload: DeviceMqttPayload, qos: 0|1|2, retain: boolean): void {
         if (!this._aedes) {
             this._logger.warn("Attempting to publish before initialization. Discarding.");
             return;
         }
+
+        const topic = `device/${address.consumer}/${address.device}/${subtopic}`;
+
         try {
             this._aedes.publish({
                 cmd: 'publish', 
                 qos, 
                 dup: false, 
-                topic: this._deviceTopic(address, subtopic),
+                topic: topic,
                 payload: Buffer.from(JSON.stringify(payload)),
                 retain
             }, () => {});
-            this._logger.debug(`Published to ${this._deviceTopic(address, subtopic)}:`, payload);
+            this._logger.debug(`Published to ${topic}:`, payload);
         } catch (err) {
-            this._logger.error(`Error publishing to MQTT topic ${this._deviceTopic(address, subtopic)}:`, err);
+            this._logger.error(`Error publishing to MQTT topic ${topic}:`, err);
         }
     }
     
