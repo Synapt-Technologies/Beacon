@@ -25,7 +25,7 @@ import type {
   ConsumerId,
   ConsumerInfo,
 } from "../types/ConsumerTypes";
-import { ConnectionState, TallyState, type WithRequired } from "../types/CommonTypes";
+import { ConnectionState } from "../types/CommonTypes";
 
 export type ConsumerEvents = {
   info_update: [ConsumerInfo];
