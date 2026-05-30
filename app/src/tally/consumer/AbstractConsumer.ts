@@ -75,7 +75,7 @@ export abstract class AbstractConsumer<
     return this._info;
   }
 
-  constructor(config: WithRequired<ConsumerConfig, "id">) {
+  constructor(config: Partial<ConsumerConfig>) {
     super();
 
     this._config = { ...this._getDefaultConfig(), ...config };

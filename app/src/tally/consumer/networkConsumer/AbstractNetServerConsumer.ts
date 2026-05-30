@@ -16,7 +16,7 @@ export abstract class AbstractNetServerConsumer<T extends ConsumerEvents = Consu
     protected abstract _getDefaultConfig(): NetServerConsumerConfig;
 
 
-    constructor(config: WithRequired<NetServerConsumerConfig, "id">) {
+    constructor(config: NetServerConsumerConfig) {
         super(config);
     }
         
