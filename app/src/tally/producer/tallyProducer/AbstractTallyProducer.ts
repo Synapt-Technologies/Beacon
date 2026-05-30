@@ -100,9 +100,9 @@ export abstract class AbstractTallyProducer<
   }
 
   protected _checkConfig(config: ProducerConfig) {
-    if (!config.id || config.id == "")
+    if (!config.id)
       this._logger.fatal(`Invalid ID provided. Submitted config:`, config);
-    if (config.name == null || config.name == "")
+    if (!config.name)
       this._logger.fatal(`Name was not provided. Submitted config:`, config);
   }
 
