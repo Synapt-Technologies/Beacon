@@ -1,75 +1,59 @@
+import { type WithRequired } from "../../types/CommonTypes";
 import type { ConsumerConfig } from "../../types/ConsumerTypes";
 import { AbstractConsumer, type ConsumerEvents } from "../AbstractConsumer";
 
 
 export interface NetworkConsumerConfig extends ConsumerConfig {
-    port?: number;
-    keep_alive?: boolean;
-    keep_alive_ms?: number;
+    port: number;
+    keep_alive: boolean;
+    keep_alive_ms: number;
 } 
 
-export type NetworkConsumerEvents = ConsumerEvents & {
-    connection: []; // When A client loads, subscribes or whatever.
-    disconnection: []; // When A client loads, subscribes or whatever.
-}
 
-export abstract class AbstractNetworkConsumer<T extends NetworkConsumerEvents = NetworkConsumerEvents> extends AbstractConsumer<T> {
+export abstract class AbstractNetworkConsumer<T extends ConsumerEvents = ConsumerEvents> extends AbstractConsumer<T> {
     
-    protected declare _config: Required<NetworkConsumerConfig>; // Declare to indicate it overwrites the parent's type.
-    protected abstract _getDefaultConfig(): Omit<NetworkConsumerConfig, "id" | "port">;
+    protected declare _config: NetworkConsumerConfig; // Declare to indicate it overwrites the parent's type.
+    protected abstract _getDefaultConfig(): Omit<NetworkConsumerConfig, "id" >;
 
 
-    constructor(config: NetworkConsumerConfig) {
+    constructor(config: WithRequired<NetworkConsumerConfig, "id">) {
         super(config);
     }
         
-    protected checkConfig(config: NetworkConsumerConfig) {
-        super.checkConfig(config);
+    protected _checkConfig(config: NetworkConsumerConfig) {
+        super._checkConfig(config);
         
         if (config.port == null || config.port < 0 || config.port > 65535)
-            this.logger.fatal(`Valid Port is required. Submitted config:`, config);
+            this._logger.fatal(`Valid Port is required. Submitted config:`, config);
+
+        if (config.keep_alive && (config.keep_alive_ms == null || config.keep_alive_ms < 100))
+            this._logger.fatal(`When keep_alive is enabled, keep_alive_ms must be set to at least 100ms. Submitted config:`, config);
     }
-    
-    consumeTally(state: TallyState): void {
-        super.consumeTally(state);
-        
-        if (this.config.broadcast_all) {
-            this.broadcastTally();
+
+    protected abstract _broadcastKeepAlive(): void;
+
+    async init(): Promise<void> {
+        await super.init();
+
+        if (this._config.keep_alive) {
+            this._keepAliveTimer = setInterval(() => {
+                this._broadcastKeepAlive();
+            }, this._config.keep_alive_ms);
+            this._logger.debug("Started keep alive at ms:", this._config.keep_alive_ms);
         }
     }
 
-    // TODO: Move to globalBroadcastConsumer? Or change that to GlobalDeviceBroadcastConsumer and create a GlobalBroadcastConsumer interface? Not all consumers need to broadcast all tally.
-    abstract broadcastTally(): void; // Global Tally broadcast, not device specific.
+    async destroy(): Promise<void> {
+        this.markDestroying();
 
-    // TODO: Move to some sort of NetworkConsumer class or interface? Not all consumers need to broadcast keep alive.
-    abstract broadcastKeepAlive(): void;
-
-    init(): Promise<void> {
-        super.init();
-
-        this.info.port = this.config.port;
-
-        if (this.config.keep_alive) { // TODO add keepalive with server info instead
-            this.timer = setInterval(() => {
-                this.broadcastKeepAlive();
-            }, this.config.keep_alive_ms);
-            this.logger.debug("Started keep alive at ms:", this.config.keep_alive_ms);
+        if (this._keepAliveTimer) {
+            clearInterval(this._keepAliveTimer);
+            this._logger.debug("Stopped keep alive.");
         }
 
-        this.info.status = ConsumerStatus.ONLINE;
+        await super.destroy();
     }
 
-    destroy(): Promise<void> {
-        this.logger.debug('Destroying...');
-
-        super.destroy();
-
-        if (this.timer)
-            clearInterval(this.timer);
-
-        this.info.status = ConsumerStatus.OFFLINE;
-    }
-
-    private timer?: NodeJS.Timeout;
+    private _keepAliveTimer?: NodeJS.Timeout;
 
 }
