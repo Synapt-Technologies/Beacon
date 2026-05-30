@@ -150,7 +150,6 @@ export abstract class AbstractConsumer<
     return this._globalDeviceRuntimeConfig;
   }
 
-  // TODO: Check if this should be done here. Maybe in NetServerConsumer?
   setGlobalDeviceRuntimeConfig(config: GlobalDeviceRuntimeConfig): void {
     this._globalDeviceRuntimeConfig = config;
     this._logger.debug(`Global device runtime config updated:`, this._globalDeviceRuntimeConfig);
