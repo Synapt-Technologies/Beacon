@@ -265,7 +265,7 @@ export abstract class AbstractConsumer<
   }
 
   protected abstract _sendDeviceRuntimeConfig(
-    bundle: DeviceRuntimeConfigBundle,
+    bundle: DeviceRuntimeConfigBundle
   ): void;
 
   sendDeviceAlert(address: DeviceAddress, alert: DeviceAlertPackage): void {
