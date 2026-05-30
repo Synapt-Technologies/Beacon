@@ -40,6 +40,14 @@ export type ConsumerEvents = {
 - Device removed             -> deleteDevice            -> _deleteDevice        -> *device_removed*
 */
 
+/*
+  sendDeviceState: stateless. Not stored
+  sendDeviceAlert: stateless. Not stored.
+  applyDeviceRuntimeConfig: stateful. Stored and processed in the consumer.
+*/
+
+// TODO: Add a way to send global/per-device custom fields once they are implemented. Should be stateless on the consumer.
+
 // TODO: Maybe IConnection to force getId and get and setName and other shared ops like db?
 export abstract class AbstractConsumer<
   T extends ConsumerEvents & Record<string, unknown[]> = ConsumerEvents,
@@ -252,7 +260,6 @@ export abstract class AbstractConsumer<
 
   protected abstract _sendDeviceAlert(bundle: DeviceAlertBundle): void;
 
-  // Rename to apply. Not stateless.
   applyDeviceRuntimeConfig(
     address: DeviceAddress,
     runtime: DeviceRuntimeConfig,
