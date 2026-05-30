@@ -6,9 +6,10 @@ import { createServer as createHttpServer, type Server as HttpServer } from "nod
 import { WebSocketServer, createWebSocketStream } from "ws";
 import { AbstractNetServerConsumer, type NetServerConsumerConfig } from "./AbstractNetServerConsumer";
 import type { IBroadcastConsumer } from "../IBroadcastConsumer";
-import { ConnectionState } from "../../types/CommonTypes";
+import { ConnectionState, TallyState, type DisplayName } from "../../types/CommonTypes";
 import type { ConsumerInfo } from "../../types/ConsumerTypes";
-import type { DeviceDiscoveryMessage } from "../../types/DeviceTypes";
+import type { DeviceAddress, DeviceAlertBundle, DeviceAlertData, DeviceDiscoveryMessage, DeviceRuntimeConfig, DeviceRuntimeConfigBundle, DeviceStateBundle, GlobalDeviceRuntimeConfig } from "../../types/DeviceTypes";
+import type { SourceInfo } from "../../types/SourceTypes";
 
 
 export interface AedesConsumerConfig extends NetServerConsumerConfig {
@@ -25,8 +26,11 @@ export interface AedesConsumerInfo extends ConsumerInfo {
 }
 
 // ? payloads:
-// TODO: Make this based on the device packages somehow?
-interface DeviceStateMqttPayload {
+interface DeviceMqttPayload {
+    moment: number;
+}
+// TODO: make this extend exiting interfaces?
+interface DeviceStateMqttPayload extends DeviceMqttPayload {
     state: { 
         name: string; 
         num: TallyState 
@@ -35,13 +39,10 @@ interface DeviceStateMqttPayload {
     moment: number;
 }
 
-interface DeviceRuntimeConfigMqttPayload {
-    name: DisplayName;
-    brightness: number;
-    state_on_disconnect: TallyState;
-    flip_sides: boolean | number;
-    moment: number;
-}
+// TODO: Check these payloads.
+interface DeviceAlertMqttPayload extends DeviceMqttPayload, DeviceAlertData{ /* empty */ }
+
+interface DeviceRuntimeConfigMqttPayload extends DeviceMqttPayload, DeviceRuntimeConfig, GlobalDeviceRuntimeConfig  { /* empty */ }
 
 
 export class AedesNetServerConsumer extends AbstractNetServerConsumer implements IBroadcastConsumer {
@@ -343,7 +344,101 @@ export class AedesNetServerConsumer extends AbstractNetServerConsumer implements
         this._info.ws_active = false;
         this._info.client_count = 0;
     }
+
     
+    protected _sendDeviceState(bundle: DeviceStateBundle): void {
+        if (!this._aedes) {
+            this._logger.warn("Attempting to send before initialization. Discarding.");
+            return;
+        }
+        
+        const payload: DeviceStateMqttPayload = {
+            state: { 
+                name: TallyState[bundle.data.state], 
+                num: bundle.data.state 
+            },
+            active_sources: Object.fromEntries(bundle.data.active_sources),
+            moment: bundle.moment,
+        };
+        
+        try {
+            this._aedes!.publish({
+                cmd: 'publish',
+                qos: 1,
+                dup: false, 
+                topic: `device/${bundle.id.consumer}/${bundle.id.device}/tally`,
+                payload: Buffer.from(JSON.stringify(payload)),
+                retain: true
+            }, () => {});
+            
+            this._logger.debug(`Sent payload to device:`, payload);
+            
+        } catch (err) {
+            this._logger.error(`Error publishing payload to MQTT for ${bundle.id.device}:`, err);
+        }
+    }
+
+    protected _sendDeviceAlert(bundle: DeviceAlertBundle): void {
+        if (!this._aedes) {
+            this._logger.warn("Attempting to send before initialization. Discarding.");
+            return;
+        }
+        
+        const payload: DeviceAlertMqttPayload = {
+            moment: bundle.moment,
+            ...bundle.data.alert
+        };
+
+
+        try {
+            this._aedes!.publish({
+                cmd: 'publish',
+                qos: 2, // Arive exactly once.
+                dup: false, 
+                topic: `device/${bundle.id.consumer}/${bundle.id.device}/alert`,
+                payload: Buffer.from(JSON.stringify(payload)),
+                retain: false
+            }, () => {});
+            
+            this._logger.debug(`Sent payload to device:`, payload);
+            
+        } catch (err) {
+            this._logger.error(`Error publishing payload to MQTT for ${bundle.id.device}:`, err);
+        }
+        
+    }
+
+    protected _sendDeviceRuntimeConfig(bundle: DeviceRuntimeConfigBundle): void {
+        if (!this._aedes) {
+            this._logger.warn("Attempting to send before initialization. Discarding.");
+            return;
+        }
+        
+        const payload: DeviceRuntimeConfigMqttPayload = {
+            moment: bundle.moment,
+            ...bundle.data.runtime,
+            ...bundle.data.global,
+        };
+
+
+        try {
+            this._aedes!.publish({
+                cmd: 'publish',
+                qos: 2, // Arive exactly once
+                dup: false, 
+                topic: `device/${bundle.id.consumer}/${bundle.id.device}/config/runtime`, // TODO Check topic. Should leave room for a deviceConfig, for more low level settings that might need a reboot.
+                payload: Buffer.from(JSON.stringify(payload)),
+                retain: true
+            }, () => {});
+            
+            this._logger.debug(`Sent payload to device:`, payload);
+            
+        } catch (err) {
+            this._logger.error(`Error publishing payload to MQTT for ${bundle.id.device}:`, err);
+        }
+                
+    }
+
     // TODO: Rewrite below VV
     protected onDeviceDiscovered(packet: DeviceDiscoveryPacket): void {
         this.logger.info(`Device discovered via MQTT: ${packet.name} (${packet.id})`);
