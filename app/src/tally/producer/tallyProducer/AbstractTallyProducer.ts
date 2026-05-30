@@ -37,8 +37,8 @@ export abstract class AbstractTallyProducer<
     TallyProducerEvents,
 > extends EventEmitter<T> {
   // TODO: In AbstractConnection make some sort of array to support flexible lable count.
-  public readonly conType: string = "PROD";
-  public readonly prodType: string = "SWTCHR";
+  protected readonly conType: string = "PROD";
+  protected readonly prodType: string = "SWTCHR";
 
   protected _logger: Logger;
 
