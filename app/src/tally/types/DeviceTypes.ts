@@ -31,7 +31,7 @@ export interface DeviceRuntimeConfig {
 //? Info about the device (and its capabilities). Doesn't change a lot.
 export interface DeviceInfo {
   label?: string; // Name defined in the device, used to differentiate.
-  model?: string;
+  model?: string; // Todo: DisplayName with long and short?
   firmware?: {
     type: string; // Support for non beacon-device firmware. e.g. app?
     version: string; // version as string. Preference for semantic.
@@ -67,6 +67,9 @@ export interface TallyDevice extends StoredTallyDevice {
   telemetry?: DeviceTelemetry;
 }
 
+export type TallyDeviceMap = Map<DeviceKey, TallyDevice>;
+
+
 // ? ALERTS
 // TODO More types?
 export enum DeviceAlertAction {
@@ -84,14 +87,14 @@ export enum DeviceAlertTarget {
 }
 
 
-export interface DeviceAlertPackage {
+export interface DeviceAlertData {
   action: DeviceAlertAction;
   target: DeviceAlertTarget | null;
   timeout: number | null;
 }
 
 export interface AlertSlotConfig {
-  alert: DeviceAlertPackage;
+  alert: DeviceAlertData;
 }
 
 export const DEFAULT_ALERT_SLOTS: AlertSlotConfig[] = [
@@ -125,44 +128,42 @@ export interface BaseDeviceBundle extends BaseTallyDevice {
   moment: number;
 }
 
-export interface DeviceStatePackage {
+export interface DeviceBundle<T> extends BaseDeviceBundle {
+  data: T;
+}
+
+export interface BaseDevicePackage {}
+
+export interface DeviceStatePackage extends BaseDevicePackage {
   state: TallyState;
-  active_sources: SourceMap[]; // TODO: Implement or remove. Should it be a per bus map?
+  active_sources: SourceMap; // TODO: Implement or remove. Should it be a per bus map?
 }
 
-export interface DeviceStateBundle
-  extends DeviceStatePackage, BaseDeviceBundle {
-  /* empty */
+export interface DeviceAlertPackage extends BaseDevicePackage  {
+  alert: DeviceAlertData;
 }
 
-export interface DeviceAlertBundle
-  extends DeviceAlertPackage, BaseDeviceBundle {
-  /* empty */
+export interface DeviceRuntimeConfigPackage extends BaseDevicePackage {
+  runtime: DeviceRuntimeConfig;
 }
 
-export interface DeviceRuntimeConfigBundle
-  extends DeviceRuntimeConfig, BaseDeviceBundle {
-  /* empty */
+export interface DeviceTelemetryPackage extends BaseDevicePackage {
+  telemetry: DeviceTelemetry;
 }
+export type DeviceStateBundle         = DeviceBundle<DeviceStatePackage>;
+export type DeviceAlertBundle         = DeviceBundle<DeviceAlertPackage>;
+export type DeviceRuntimeConfigBundle = DeviceBundle<DeviceRuntimeConfigPackage>;
+export type DeviceTelemetryBundle     = DeviceBundle<DeviceTelemetryPackage>;
 
-export interface DeviceDiscoveryBundle {
+
+//? Device Messages are for duplex communication, directly aimed at devices. E.g. discovery (topic negotiation). Before a device has a ConsumerId.
+export interface DeviceDiscoveryMessage {
   id: DeviceId;
   info: DeviceInfo;
   telemetry?: DeviceTelemetry;
 }
 
-export interface DeviceTelemetryPackage {
-  telemetry: DeviceTelemetry;
-}
-
-export interface DeviceTelemetryBundle
-  extends DeviceTelemetryPackage, BaseTallyDevice {
-  /* empty */
-}
-
-export type TallyDeviceMap = Map<DeviceKey, TallyDevice>;
-
-export interface DeviceDiscoveryReplyBundle {
+export interface DeviceDiscoveryReplyMessage {
   topic: DeviceAddress;
 }
 
@@ -195,8 +196,17 @@ export class TallyDeviceDto implements TallyDevice {
     this.telemetry = newDevice.telemetry;
   }
 
-  static fromDiscoveryBundle(
-    bundle: DeviceDiscoveryBundle,
+  toKey(): DeviceKey {
+    return DeviceTools.createKey(this.id.consumer, this.id.device);
+  }
+
+  toString(): string {
+    return `dev:${this.toKey()}`;
+  }
+
+  //? Discovery
+  static fromDiscoveryMessage(
+    bundle: DeviceDiscoveryMessage,
     consumer: ConsumerId,
   ): TallyDeviceDto {
     return new TallyDeviceDto({
@@ -209,46 +219,10 @@ export class TallyDeviceDto implements TallyDevice {
     });
   }
 
-  toKey(): DeviceKey {
-    return DeviceTools.createKey(this.id.consumer, this.id.device);
-  }
-
-  toString(): string {
-    return `dev:${this.toKey()}`;
-  }
-
-  toBaseBundle(): BaseDeviceBundle {
+  toDiscoveryReplyMessage(): DeviceDiscoveryReplyMessage {
     return {
-      id: this.id,
-      moment: Date.now(),
-    };
-  }
-
-  //? Bundles
-  toStateBundle(pckg: DeviceStatePackage): DeviceStateBundle {
-    return {
-      ...pckg,
-      ...this.toBaseBundle(),
-    };
-  }
-
-  toAlertBundle(pckg: DeviceAlertPackage): DeviceAlertBundle {
-    return {
-      ...pckg,
-      ...this.toBaseBundle(),
-    };
-  }
-
-  toDiscoveryReplyBundle(): DeviceDiscoveryReplyBundle {
-    return {
+      id: this.id.device,
       topic: this.id,
-    };
-  }
-
-  toRuntimeConfigBundle(): DeviceRuntimeConfigBundle {
-    return {
-      ...this.runtime,
-      ...this.toBaseBundle(),
     };
   }
 
@@ -270,6 +244,22 @@ export class TallyDeviceDto implements TallyDevice {
   serialiseForStorage(): string {
     return JSON.stringify(this.toStored());
   }
+
+  //? Bundles
+  toBaseBundle(): BaseDeviceBundle {
+    return {
+      id: this.id,
+      moment: Date.now(),
+    };
+  }
+
+  toBundle<T extends BaseDevicePackage>(data: T): DeviceBundle<T> {
+    return {
+      ...this.toBaseBundle(),
+      data: data,
+    };
+  }
+
 }
 
 export abstract class DeviceTools {
@@ -278,7 +268,7 @@ export abstract class DeviceTools {
   }
 
   static toKey(address: DeviceAddress): DeviceKey {
-    return `${address.consumer}:${address.device}` as DeviceKey;
+    return this.createKey(address.consumer, address.device);
   }
 
   static parseKey(key: DeviceKey): DeviceAddress {
