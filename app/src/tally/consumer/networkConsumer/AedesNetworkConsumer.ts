@@ -41,14 +41,14 @@ export interface DeviceDiscoveryPacket {
 // - For more accurate results a device can repeat this a few times and use the average to set the time.
 
 
-this.aedes.subscribe('system/time/request', (packet, callback) => {
-    const { t1 } = JSON.parse(packet.payload.toString());
-    this.aedes.publish({
-        cmd: 'publish', qos: 0, dup: false, retain: false,
-        topic: 'system/time/response',
-        payload: Buffer.from(JSON.stringify({ t1, t2: Date.now() }))
-    }, callback);
-});
+// this.aedes.subscribe('system/time/request', (packet, callback) => {
+//     const { t1 } = JSON.parse(packet.payload.toString());
+//     this.aedes.publish({
+//         cmd: 'publish', qos: 0, dup: false, retain: false,
+//         topic: 'system/time/response',
+//         payload: Buffer.from(JSON.stringify({ t1, t2: Date.now() }))
+//     }, callback);
+// });
 
 export class AedesNetworkConsumer extends AbstractNetworkConsumer implements IGlobalBroadcastConsumer {
 
