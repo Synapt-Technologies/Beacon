@@ -12,6 +12,8 @@ If you are compiling the image on windows, you must use WSL.
   - [ ] Add AbstractConnection that is implemented by AbstractTallyProducer and AbstractConsumer that contains the base fields like config(id name), its getters setters and validation.
 
 
+- [ ] Device non-runtime config.
+- [ ] Device Capabilities: Some way to differ config and deviceconfig based on capabilities.
 - [ ] Dev/prod mode for ui
   - [ ] For seperate logging
 - [ ] Dev switch in ui for dev options
