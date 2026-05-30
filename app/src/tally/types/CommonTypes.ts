@@ -9,6 +9,7 @@ export enum ConnectionState {
   OFFLINE = "Offline",
   ONLINE = "Online",
   ERROR = "Error",
+  FAILED = "Failed",
 }
 
 export type WithRequired<T, K extends keyof T> = Partial<T> &
