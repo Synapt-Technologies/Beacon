@@ -127,7 +127,7 @@ T extends ConsumerEvents & Record<string, unknown[]> = ConsumerEvents,
     return Array.from(this._devices.values());
   }
   getDevice(address: DeviceAddress): TallyDevice | null {
-    return this._devices.get(DeviceTools.toKey(address)) || null;
+    return this._devices.get(DeviceTools.toKey(address)) ?? null;
   }
   
   protected _saveDevice(device: TallyDeviceDto): void {
@@ -192,8 +192,9 @@ T extends ConsumerEvents & Record<string, unknown[]> = ConsumerEvents,
   }
   
   sendDeviceState(address: DeviceAddress, pckg: DeviceStatePackage): void {
+    const key = DeviceTools.toKey(address);
     this._logger.debug(
-      `Sending state for device ${DeviceTools.toKey(address)}:`,
+      `Sending state for device ${key}:`,
       pckg,
     );
     
@@ -201,7 +202,7 @@ T extends ConsumerEvents & Record<string, unknown[]> = ConsumerEvents,
       this._sendDeviceState(address, pckg);
     } catch (error) {
       this._logger.error(
-        `Error sending state for device ${DeviceTools.toKey(address)}:`,
+        `Error sending state for device ${key}:`,
         error,
       );
     }
@@ -213,8 +214,9 @@ T extends ConsumerEvents & Record<string, unknown[]> = ConsumerEvents,
   ): void;
   
   sendDeviceAlert(address: DeviceAddress, alert: DeviceAlertPackage): void {
+    const key = DeviceTools.toKey(address);
     this._logger.debug(
-      `Sending alert for device ${DeviceTools.toKey(address)}:`,
+      `Sending alert for device ${key}:`,
       alert,
     );
     
@@ -222,7 +224,7 @@ T extends ConsumerEvents & Record<string, unknown[]> = ConsumerEvents,
       this._sendDeviceAlert(address, alert);
     } catch (error) {
       this._logger.error(
-        `Error sending alert for device ${DeviceTools.toKey(address)}:`,
+        `Error sending alert for device ${key}:`,
         error,
       );
     }
@@ -273,7 +275,6 @@ T extends ConsumerEvents & Record<string, unknown[]> = ConsumerEvents,
       this._logger.error(`Error saving runtime config for device ${key}:`, error);
     }
     
-
     try {
       this._sendDeviceRuntimeConfig(address, device.toRuntimeConfigBundle());
     } catch (error) {
@@ -313,7 +314,7 @@ T extends ConsumerEvents & Record<string, unknown[]> = ConsumerEvents,
     if (!this._devices.has(key)) {
       this._logger.warn(
         `Attempted to delete unknown device at address:`,
-        address,
+        key,
       );
       return;
     }
@@ -327,7 +328,7 @@ T extends ConsumerEvents & Record<string, unknown[]> = ConsumerEvents,
       this._store.deleteDevice(address);
     } catch (error) {
       this._logger.error(
-        `Error deleting device ${address}:`,
+        `Error deleting device ${key}:`,
         error,
       );
     }
