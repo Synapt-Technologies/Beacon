@@ -6,7 +6,9 @@ import {
   DeviceTools,
   TallyDeviceDto,
   type DeviceStatePackage,
+  type DeviceStateBundle,
   type DeviceAlertPackage,
+  type DeviceAlertBundle,
   type DeviceRuntimeConfigBundle,
   type DeviceTelemetryBundle,
   type DeviceDiscoveryMessage,
@@ -193,47 +195,41 @@ T extends ConsumerEvents & Record<string, unknown[]> = ConsumerEvents,
   
   sendDeviceState(address: DeviceAddress, pckg: DeviceStatePackage): void {
     const key = DeviceTools.toKey(address);
-    this._logger.debug(
-      `Sending state for device ${key}:`,
-      pckg,
-    );
-    
+    this._logger.debug(`Sending state for device ${key}:`, pckg);
+
+    const device = this._devices.get(key);
+    if (!device) {
+      this._logger.warn(`Attempted to send state to unknown device at address:`, address);
+      return;
+    }
+
     try {
-      this._sendDeviceState(address, pckg);
+      this._sendDeviceState(device.toBundle(pckg));
     } catch (error) {
-      this._logger.error(
-        `Error sending state for device ${key}:`,
-        error,
-      );
+      this._logger.error(`Error sending state for device ${key}:`, error);
     }
   }
-  
-  protected abstract _sendDeviceState(
-    address: DeviceAddress,
-    pckg: DeviceStatePackage,
-  ): void;
+
+  protected abstract _sendDeviceState(bundle: DeviceStateBundle): void;
   
   sendDeviceAlert(address: DeviceAddress, alert: DeviceAlertPackage): void {
     const key = DeviceTools.toKey(address);
-    this._logger.debug(
-      `Sending alert for device ${key}:`,
-      alert,
-    );
-    
+    this._logger.debug(`Sending alert for device ${key}:`, alert);
+
+    const device = this._devices.get(key);
+    if (!device) {
+      this._logger.warn(`Attempted to send alert to unknown device at address:`, address);
+      return;
+    }
+
     try {
-      this._sendDeviceAlert(address, alert);
+      this._sendDeviceAlert(device.toBundle(alert));
     } catch (error) {
-      this._logger.error(
-        `Error sending alert for device ${key}:`,
-        error,
-      );
+      this._logger.error(`Error sending alert for device ${key}:`, error);
     }
   }
-  
-  protected abstract _sendDeviceAlert(
-    address: DeviceAddress,
-    alert: DeviceAlertPackage,
-  ): void;
+
+  protected abstract _sendDeviceAlert(bundle: DeviceAlertBundle): void;
   
   protected _processDeviceDiscovery(bundle: DeviceDiscoveryMessage): void {
     this._logger.debug(`Processing discovered device ${bundle.id}:`, bundle);
@@ -284,16 +280,13 @@ T extends ConsumerEvents & Record<string, unknown[]> = ConsumerEvents,
     }
 
     try {
-      this._sendDeviceRuntimeConfig(address, device.toRuntimeConfigBundle());
+      this._sendDeviceRuntimeConfig(device.toRuntimeConfigBundle());
     } catch (error) {
       this._logger.error(`Error sending runtime config for device ${key}:`, error);
     }
   }
   
-  protected abstract _sendDeviceRuntimeConfig(
-    address: DeviceAddress,
-    bundle: DeviceRuntimeConfigBundle,
-  ): void;
+  protected abstract _sendDeviceRuntimeConfig(bundle: DeviceRuntimeConfigBundle): void;
   
   protected _processDeviceTelemetry(bundle: DeviceTelemetryBundle): void {
     this._logger.debug(
