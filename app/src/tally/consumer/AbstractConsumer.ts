@@ -289,11 +289,11 @@ export abstract class AbstractConsumer<
 
   protected abstract _sendDeviceAlert(bundle: DeviceAlertBundle): void;
 
-  protected _processDeviceDiscovery(bundle: DeviceDiscoveryMessage): void {
-    this._logger.debug(`Processing discovered device ${bundle.id}:`, bundle);
+  protected _processDeviceDiscovery(message: DeviceDiscoveryMessage): void {
+    this._logger.debug(`Processing discovered device ${message.id}:`, message);
 
     const newDevice: TallyDeviceDto = TallyDeviceDto.fromDiscoveryMessage(
-      bundle,
+      message,
       this._config.id,
     );
 
