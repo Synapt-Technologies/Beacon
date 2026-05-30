@@ -205,15 +205,15 @@ export class TallyDeviceDto implements TallyDevice {
 
   //? Discovery
   static fromDiscoveryMessage(
-    bundle: DeviceDiscoveryMessage,
+    message: DeviceDiscoveryMessage,
     consumer: ConsumerId,
   ): TallyDeviceDto {
     return new TallyDeviceDto({
-      info: bundle.info,
-      telemetry: bundle.telemetry,
+      info: message.info,
+      telemetry: message.telemetry,
       id: {
         consumer,
-        device: bundle.id,
+        device: message.id,
       },
     });
   }
