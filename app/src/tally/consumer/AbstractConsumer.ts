@@ -8,10 +8,11 @@ import {
   TallyDeviceDto,
   type DeviceStatePackage,
   type DeviceAlertPackage,
-  type DeviceDiscoveryBundle,
-  type DeviceDiscoveryReplyBundle,
   type DeviceRuntimeConfigBundle,
   type DeviceTelemetryBundle,
+  type DeviceDiscoveryMessage,
+  type DeviceDiscoveryReplyMessage,
+  type DeviceRuntimeConfig,
 } from "../types/DeviceTypes";
 import { ConsumerStore } from "../../database/ConsumerStore";
 import type {
@@ -174,7 +175,7 @@ T extends ConsumerEvents & Record<string, unknown[]> = ConsumerEvents,
     
     this.sendDeviceRuntimeConfig(
       newDevice.id,
-      newDevice.toRuntimeConfigBundle(),
+      newDevice.runtime,
     );
     
     if (existing) {
@@ -230,41 +231,51 @@ T extends ConsumerEvents & Record<string, unknown[]> = ConsumerEvents,
     alert: DeviceAlertPackage,
   ): void;
   
-  protected _processDeviceDiscovery(bundle: DeviceDiscoveryBundle): void {
+  protected _processDeviceDiscovery(bundle: DeviceDiscoveryMessage): void {
     this._logger.debug(`Processing discovered device ${bundle.id}:`, bundle);
     
-    const newDevice: TallyDeviceDto = TallyDeviceDto.fromDiscoveryBundle(
+    const newDevice: TallyDeviceDto = TallyDeviceDto.fromDiscoveryMessage(
       bundle,
       this._config.id,
     );
     
     this._addDevice(newDevice);
     
-    this._sendDiscoveryReply(newDevice.toDiscoveryReplyBundle());
+    this._sendDiscoveryReply(newDevice.toDiscoveryReplyMessage());
   }
   
   protected abstract _sendDiscoveryReply(
-    bundle: DeviceDiscoveryReplyBundle,
+    message: DeviceDiscoveryReplyMessage,
   ): void;
   
   sendDeviceRuntimeConfig(
     address: DeviceAddress,
-    bundle: DeviceRuntimeConfigBundle,
+    runtime: DeviceRuntimeConfig,
   ): void {
-    this._logger.debug(
-      `Setting runtime config for device ${DeviceTools.toKey(address)}:`,
-      bundle,
-    );
-    
-    // TODO: Runtime should be saved. How?
-    
-    try {
-      this._sendDeviceRuntimeConfig(address, bundle);
-    } catch (error) {
-      this._logger.error(
-        `Error setting runtime config for device ${DeviceTools.toKey(address)}:`,
-        error,
+    const key = DeviceTools.toKey(address);
+    this._logger.debug(`Setting runtime config for device ${key}:`, runtime);
+
+    const device = this._devices.get(key);
+    if (!device) {
+      this._logger.warn(
+        `Attempted to set runtime config for unknown device at address:`,
+        address,
       );
+      return;
+    }
+    
+    device.runtime = runtime;
+    try {
+      this._store.saveDevice(device);
+    } catch (error) {
+      this._logger.error(`Error saving runtime config for device ${key}:`, error);
+    }
+    
+
+    try {
+      this._sendDeviceRuntimeConfig(address, new TallyDeviceDto(device).toRuntimeConfigBundle());
+    } catch (error) {
+      this._logger.error(`Error sending runtime config for device ${key}:`, error);
     }
   }
   
@@ -289,7 +300,7 @@ T extends ConsumerEvents & Record<string, unknown[]> = ConsumerEvents,
       return;
     }
     
-    device.telemetry = bundle.telemetry;
+    device.telemetry = bundle.data.telemetry;
     
     (this as EventEmitter<ConsumerEvents>).emit("device_telemetry", device);
   }
