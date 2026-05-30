@@ -89,7 +89,7 @@ T extends ConsumerEvents & Record<string, unknown[]> = ConsumerEvents,
       for (const [key, device] of storedDevices) {
         this._devices.set(key, new TallyDeviceDto(device));
       }
-      this._info.device_count = storedDevices.size;
+      this._info.device_count = this._devices.size;
       this._logger.debug(`Loaded ${storedDevices.size} stored device(s).`);
     }
     //? End Not in AbstractConnection
