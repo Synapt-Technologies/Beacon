@@ -51,7 +51,7 @@ export abstract class AbstractConsumer<
   protected _store: ConsumerStore;
 
   protected _config: ConsumerConfig;
-  protected abstract _getDefaultConfig(): Omit<ConsumerConfig, "id">;
+  protected abstract _getDefaultConfig(): ConsumerConfig;
 
   protected _info: ConsumerInfo = {
     state: ConnectionState.OFFLINE,

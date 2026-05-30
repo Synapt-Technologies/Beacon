@@ -13,7 +13,7 @@ export interface NetServerConsumerConfig extends ConsumerConfig {
 export abstract class AbstractNetServerConsumer<T extends ConsumerEvents = ConsumerEvents> extends AbstractConsumer<T> {
     
     protected declare _config: NetServerConsumerConfig; // Declare to indicate it overwrites the parent's type.
-    protected abstract _getDefaultConfig(): Omit<NetServerConsumerConfig, "id" >;
+    protected abstract _getDefaultConfig(): NetServerConsumerConfig;
 
 
     constructor(config: WithRequired<NetServerConsumerConfig, "id">) {
