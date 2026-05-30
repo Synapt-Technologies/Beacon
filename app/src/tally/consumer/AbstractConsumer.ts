@@ -43,61 +43,61 @@ export abstract class AbstractConsumer<
   protected readonly conType: string = "CONS";
 
   //TODO: Make all private or protected fields and functions have an underscore prefix for clarity.
-  protected logger: Logger;
+  protected _logger: Logger;
 
-  protected store: ConsumerStore;
+  protected _store: ConsumerStore;
 
-  protected config: ConsumerConfig;
-  protected abstract getDefaultConfig(): Omit<ConsumerConfig, "id">;
+  protected _config: ConsumerConfig;
+  protected abstract _getDefaultConfig(): Omit<ConsumerConfig, "id">;
 
-  protected info: ConsumerInfo = {
+  protected _info: ConsumerInfo = {
     state: ConnectionState.OFFLINE,
     device_count: 0,
   };
 
   getConfig(): ConsumerConfig {
-    return this.config;
+    return this._config;
   }
   getId(): ConsumerId {
-    return this.config.id;
+    return this._config.id;
   }
   setName(name: string): void {
-    this.config.name = name;
+    this._config.name = name;
   }
   getName(): string {
-    return this.config.name;
+    return this._config.name;
   }
 
   getInfo(): ConsumerInfo {
-    return this.info;
+    return this._info;
   }
 
   constructor(config: WithRequired<ConsumerConfig, "id">) {
     super();
 
-    this.config = { ...this.getDefaultConfig(), ...config };
+    this._config = { ...this._getDefaultConfig(), ...config };
 
-    this.logger = new Logger(["Tally", this.conType, this.config.id]);
+    this._logger = new Logger(["Tally", this.conType, this._config.id]);
 
-    this.checkConfig(this.config);
+    this._checkConfig(this._config);
 
     //? Not in AbstractConnection (Maybe store should)
-    this.store = new ConsumerStore(this.config.id);
+    this._store = new ConsumerStore(this._config.id);
 
-    const storedDevices = this.store.loadDevices();
+    const storedDevices = this._store.loadDevices();
     if (storedDevices.size > 0) {
-      this.devices = storedDevices;
-      this.info.device_count = storedDevices.size;
-      this.logger.debug(`Loaded ${storedDevices.size} stored device(s).`);
+      this._devices = storedDevices;
+      this._info.device_count = storedDevices.size;
+      this._logger.debug(`Loaded ${storedDevices.size} stored device(s).`);
     }
     //? End Not in AbstractConnection
   }
 
-  protected checkConfig(config: ConsumerConfig) {
+  protected _checkConfig(config: ConsumerConfig) {
     if (!config.id || config.id == "")
-      this.logger.fatal(`Invalid ID provided. Submitted config:`, config);
+      this._logger.fatal(`Invalid ID provided. Submitted config:`, config);
     if (config.name == null || config.name == "")
-      this.logger.fatal(`Name was not provided. Submitted config:`, config);
+      this._logger.fatal(`Name was not provided. Submitted config:`, config);
   }
 
   private _destroying = false;
@@ -111,30 +111,30 @@ export abstract class AbstractConsumer<
   abstract init(): void | Promise<void>;
   abstract destroy(): void | Promise<void>;
 
-  protected emitInfoUpdate(): void {
+  // TODO: Move above to AbstractConnection
+  // TODO emitInfoUpdate also in AbstractConnection? Or as abstract?
+  protected _emitInfoUpdate(): void {
     if (this._destroying) return;
-    (this as EventEmitter<ConsumerEvents>).emit("info_update", this.info);
-    this.logger.debug(`Info updated.`);
+    (this as EventEmitter<ConsumerEvents>).emit("info_update", this._info);
+    this._logger.debug(`Info updated.`);
   }
 
-  // TODO: Move above to AbstractConnection
-
-  protected devices: TallyDeviceMap = new Map();
+  protected _devices: TallyDeviceMap = new Map();
 
   getAvailableDevices(): Array<TallyDevice> {
-    return Array.from(this.devices.values());
+    return Array.from(this._devices.values());
   }
   getDevice(address: DeviceAddress): TallyDevice | null {
-    return this.devices.get(DeviceTools.toKey(address)) || null;
+    return this._devices.get(DeviceTools.toKey(address)) || null;
   }
 
   protected _addDevice(device: TallyDeviceDto, override: boolean = false) {
     const newDevice = new TallyDeviceDto({
       ...device,
-      id: { ...device.id, consumer: this.config.id },
+      id: { ...device.id, consumer: this._config.id },
     });
     const key = newDevice.toKey();
-    const existing = this.devices.get(key);
+    const existing = this._devices.get(key);
 
     if (existing) {
       newDevice.telemetry ??= existing.telemetry;
@@ -142,14 +142,14 @@ export abstract class AbstractConsumer<
       if (!override) {
         newDevice.logic = existing.logic;
         newDevice.runtime = existing.runtime;
-        this.logger.debug(
+        this._logger.debug(
           `Device at address ${key} already exists. Merging with existing device:`,
           existing,
           `->`,
           newDevice,
         );
       } else {
-        this.logger.debug(
+        this._logger.debug(
           `Device at address ${key} already exists. Overriding with new device:`,
           existing,
           `->`,
@@ -158,10 +158,10 @@ export abstract class AbstractConsumer<
       }
     }
 
-    this.devices.set(key, newDevice);
-    this.info.device_count = this.devices.size;
+    this._devices.set(key, newDevice);
+    this._info.device_count = this._devices.size;
     // TODO: Try catch needed?
-    this.store.saveDevice(newDevice);
+    this._store.saveDevice(newDevice);
 
     if (existing) {
       (this as EventEmitter<ConsumerEvents>).emit("device_update", newDevice);
@@ -180,7 +180,7 @@ export abstract class AbstractConsumer<
   }
 
   sendDeviceState(address: DeviceAddress, pckg: DeviceStatePackage): void {
-    this.logger.debug(
+    this._logger.debug(
       `Sending state for device ${DeviceTools.toKey(address)}:`,
       pckg,
     );
@@ -188,7 +188,7 @@ export abstract class AbstractConsumer<
     try {
       this._sendDeviceState(address, pckg);
     } catch (error) {
-      this.logger.error(
+      this._logger.error(
         `Error sending state for device ${DeviceTools.toKey(address)}:`,
         error,
       );
@@ -201,7 +201,7 @@ export abstract class AbstractConsumer<
   ): void;
 
   sendDeviceAlert(address: DeviceAddress, alert: DeviceAlertPackage): void {
-    this.logger.debug(
+    this._logger.debug(
       `Sending alert for device ${DeviceTools.toKey(address)}:`,
       alert,
     );
@@ -209,7 +209,7 @@ export abstract class AbstractConsumer<
     try {
       this._sendDeviceAlert(address, alert);
     } catch (error) {
-      this.logger.error(
+      this._logger.error(
         `Error sending alert for device ${DeviceTools.toKey(address)}:`,
         error,
       );
@@ -222,11 +222,11 @@ export abstract class AbstractConsumer<
   ): void;
 
   protected _processDeviceDiscovery(bundle: DeviceDiscoveryBundle): void {
-    this.logger.debug(`Processing discovered device ${bundle.id}:`, bundle);
+    this._logger.debug(`Processing discovered device ${bundle.id}:`, bundle);
 
     const newDevice: TallyDeviceDto = TallyDeviceDto.fromDiscoveryBundle(
       bundle,
-      this.config.id,
+      this._config.id,
     );
 
     this._addDevice(newDevice);
@@ -242,7 +242,7 @@ export abstract class AbstractConsumer<
     address: DeviceAddress,
     bundle: DeviceRuntimeConfigBundle,
   ): void {
-    this.logger.debug(
+    this._logger.debug(
       `Setting runtime config for device ${DeviceTools.toKey(address)}:`,
       bundle,
     );
@@ -250,7 +250,7 @@ export abstract class AbstractConsumer<
     try {
       this._sendDeviceRuntimeConfig(address, bundle);
     } catch (error) {
-      this.logger.error(
+      this._logger.error(
         `Error setting runtime config for device ${DeviceTools.toKey(address)}:`,
         error,
       );
@@ -263,15 +263,15 @@ export abstract class AbstractConsumer<
   ): void;
 
   protected _processDeviceTelemetry(bundle: DeviceTelemetryBundle): void {
-    this.logger.debug(
+    this._logger.debug(
       `Processing telemetry for device ${DeviceTools.toKey(bundle.id)}:`,
       bundle,
     );
 
     const key = DeviceTools.toKey(bundle.id);
-    const device = this.devices.get(key);
+    const device = this._devices.get(key);
     if (!device) {
-      this.logger.warn(
+      this._logger.warn(
         `Received telemetry for unknown device at address:`,
         bundle.id,
       );
@@ -279,7 +279,7 @@ export abstract class AbstractConsumer<
     }
 
     device.telemetry = bundle.telemetry;
-    this.store.saveDevice(device);
+    this._store.saveDevice(device);
 
     (this as EventEmitter<ConsumerEvents>).emit("device_telemetry", device);
   }
@@ -287,18 +287,21 @@ export abstract class AbstractConsumer<
   deleteDevice(address: DeviceAddress): void {
     const key = DeviceTools.toKey(address);
 
-    if (!this.devices.has(key)) {
-      this.logger.warn(
+    if (!this._devices.has(key)) {
+      this._logger.warn(
         `Attempted to delete unknown device at address:`,
         address,
       );
       return;
     }
 
-    this.devices.delete(key);
-    this.info.device_count = this.devices.size;
-    this.store.deleteDevice(address);
+    this._devices.delete(key);
+    this._info.device_count = this._devices.size;
+    this._store.deleteDevice(address);
     (this as EventEmitter<ConsumerEvents>).emit("device_removed", address);
-    this.logger.debug(`Device ${key} deleted.`);
+    this._logger.debug(`Device ${key} deleted.`);
   }
+
+  // TODO: Needed? If not remove.
+  protected _deleteDevice(address: DeviceAddress): void {};
 }
