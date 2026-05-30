@@ -29,32 +29,31 @@ export type ConsumerEvents = {
   device_removed: [address: DeviceAddress];
 };
 /*
- - New device discovery       -> _addDevice             -> *device_discovery*  -> send discovery reply
- - Existing device discovery  -> _addDevice             -> *device_update*     -> send discovery reply
- - Received device telemetry  -> processDeviceTelemetry -> *device_telemetry*
- - Device removed             -> deleteDevice           -> *device_removed*
+- New device discovery       -> _addDevice             -> *device_discovery*  -> send discovery reply
+- Existing device discovery  -> _addDevice             -> *device_update*     -> send discovery reply
+- Received device telemetry  -> processDeviceTelemetry -> *device_telemetry*
+- Device removed             -> deleteDevice           -> *device_removed*
 */
 
 // TODO: Maybe IConnection to force getId and get and setName and other shared ops like db?
 export abstract class AbstractConsumer<
-  T extends ConsumerEvents & Record<string, unknown[]> = ConsumerEvents,
+T extends ConsumerEvents & Record<string, unknown[]> = ConsumerEvents,
 > extends EventEmitter<T> {
   // TODO: In AbstractConnection make some sort of array to support flexible lable count.
   protected readonly conType: string = "CONS";
-
-  //TODO: Make all private or protected fields and functions have an underscore prefix for clarity.
+  
   protected _logger: Logger;
-
+  
   protected _store: ConsumerStore;
-
+  
   protected _config: ConsumerConfig;
   protected abstract _getDefaultConfig(): Omit<ConsumerConfig, "id">;
-
+  
   protected _info: ConsumerInfo = {
     state: ConnectionState.OFFLINE,
     device_count: 0,
   };
-
+  
   getConfig(): ConsumerConfig {
     return this._config;
   }
@@ -67,23 +66,23 @@ export abstract class AbstractConsumer<
   getName(): string {
     return this._config.name;
   }
-
+  
   getInfo(): ConsumerInfo {
     return this._info;
   }
-
+  
   constructor(config: WithRequired<ConsumerConfig, "id">) {
     super();
-
+    
     this._config = { ...this._getDefaultConfig(), ...config };
-
+    
     this._logger = new Logger(["Tally", this.conType, this._config.id]);
-
+    
     this._checkConfig(this._config);
-
+    
     //? Not in AbstractConnection (Maybe store should)
     this._store = new ConsumerStore(this._config.id);
-
+    
     const storedDevices = this._store.loadDevices();
     if (storedDevices.size > 0) {
       this._devices = storedDevices;
@@ -92,14 +91,14 @@ export abstract class AbstractConsumer<
     }
     //? End Not in AbstractConnection
   }
-
+  
   protected _checkConfig(config: ConsumerConfig) {
-    if (!config.id || config.id == "")
+    if (!config.id)
       this._logger.fatal(`Invalid ID provided. Submitted config:`, config);
-    if (config.name == null || config.name == "")
+    if (!config.name)
       this._logger.fatal(`Name was not provided. Submitted config:`, config);
   }
-
+  
   private _destroying = false;
   markDestroying(): void {
     this._destroying = true;
@@ -107,10 +106,10 @@ export abstract class AbstractConsumer<
   isDestroying(): boolean {
     return this._destroying;
   }
-
+  
   abstract init(): void | Promise<void>;
   abstract destroy(): void | Promise<void>;
-
+  
   // TODO: Move above to AbstractConnection
   // TODO emitInfoUpdate also in AbstractConnection? Or as abstract?
   protected _emitInfoUpdate(): void {
@@ -118,16 +117,29 @@ export abstract class AbstractConsumer<
     (this as EventEmitter<ConsumerEvents>).emit("info_update", this._info);
     this._logger.debug(`Info updated.`);
   }
-
+  
   protected _devices: TallyDeviceMap = new Map();
-
+  
   getAvailableDevices(): Array<TallyDevice> {
     return Array.from(this._devices.values());
   }
   getDevice(address: DeviceAddress): TallyDevice | null {
     return this._devices.get(DeviceTools.toKey(address)) || null;
   }
-
+  
+  protected _saveDevice(device: TallyDeviceDto): void {
+    this._devices.set(device.toKey(), device);
+    this._info.device_count = this._devices.size;
+    try {
+      this._store.saveDevice(device);
+    } catch (error) {
+      this._logger.error(
+        `Error saving device ${device}:`,
+        error,
+      );
+    }
+  }
+  
   protected _addDevice(device: TallyDeviceDto, override: boolean = false) {
     const newDevice = new TallyDeviceDto({
       ...device,
@@ -135,10 +147,10 @@ export abstract class AbstractConsumer<
     });
     const key = newDevice.toKey();
     const existing = this._devices.get(key);
-
+    
     if (existing) {
       newDevice.telemetry ??= existing.telemetry;
-
+      
       if (!override) {
         newDevice.logic = existing.logic;
         newDevice.runtime = existing.runtime;
@@ -157,12 +169,14 @@ export abstract class AbstractConsumer<
         );
       }
     }
-
-    this._devices.set(key, newDevice);
-    this._info.device_count = this._devices.size;
-    // TODO: Try catch needed?
-    this._store.saveDevice(newDevice);
-
+    
+    this._saveDevice(newDevice);
+    
+    this.sendDeviceRuntimeConfig(
+      newDevice.id,
+      newDevice.toRuntimeConfigBundle(),
+    );
+    
     if (existing) {
       (this as EventEmitter<ConsumerEvents>).emit("device_update", newDevice);
     } else {
@@ -170,21 +184,16 @@ export abstract class AbstractConsumer<
         "device_discovery",
         newDevice,
       );
+      this._emitInfoUpdate();
     }
-
-    // TODO: Check if this is needed.
-    this.sendDeviceRuntimeConfig(
-      newDevice.id,
-      newDevice.toRuntimeConfigBundle(),
-    );
   }
-
+  
   sendDeviceState(address: DeviceAddress, pckg: DeviceStatePackage): void {
     this._logger.debug(
       `Sending state for device ${DeviceTools.toKey(address)}:`,
       pckg,
     );
-
+    
     try {
       this._sendDeviceState(address, pckg);
     } catch (error) {
@@ -194,18 +203,18 @@ export abstract class AbstractConsumer<
       );
     }
   }
-
+  
   protected abstract _sendDeviceState(
     address: DeviceAddress,
     pckg: DeviceStatePackage,
   ): void;
-
+  
   sendDeviceAlert(address: DeviceAddress, alert: DeviceAlertPackage): void {
     this._logger.debug(
       `Sending alert for device ${DeviceTools.toKey(address)}:`,
       alert,
     );
-
+    
     try {
       this._sendDeviceAlert(address, alert);
     } catch (error) {
@@ -215,29 +224,29 @@ export abstract class AbstractConsumer<
       );
     }
   }
-
+  
   protected abstract _sendDeviceAlert(
     address: DeviceAddress,
     alert: DeviceAlertPackage,
   ): void;
-
+  
   protected _processDeviceDiscovery(bundle: DeviceDiscoveryBundle): void {
     this._logger.debug(`Processing discovered device ${bundle.id}:`, bundle);
-
+    
     const newDevice: TallyDeviceDto = TallyDeviceDto.fromDiscoveryBundle(
       bundle,
       this._config.id,
     );
-
+    
     this._addDevice(newDevice);
-
+    
     this._sendDiscoveryReply(newDevice.toDiscoveryReplyBundle());
   }
-
+  
   protected abstract _sendDiscoveryReply(
     bundle: DeviceDiscoveryReplyBundle,
   ): void;
-
+  
   sendDeviceRuntimeConfig(
     address: DeviceAddress,
     bundle: DeviceRuntimeConfigBundle,
@@ -246,7 +255,9 @@ export abstract class AbstractConsumer<
       `Setting runtime config for device ${DeviceTools.toKey(address)}:`,
       bundle,
     );
-
+    
+    // TODO: Runtime should be saved. How?
+    
     try {
       this._sendDeviceRuntimeConfig(address, bundle);
     } catch (error) {
@@ -256,18 +267,18 @@ export abstract class AbstractConsumer<
       );
     }
   }
-
+  
   protected abstract _sendDeviceRuntimeConfig(
     address: DeviceAddress,
     bundle: DeviceRuntimeConfigBundle,
   ): void;
-
+  
   protected _processDeviceTelemetry(bundle: DeviceTelemetryBundle): void {
     this._logger.debug(
       `Processing telemetry for device ${DeviceTools.toKey(bundle.id)}:`,
       bundle,
     );
-
+    
     const key = DeviceTools.toKey(bundle.id);
     const device = this._devices.get(key);
     if (!device) {
@@ -277,16 +288,15 @@ export abstract class AbstractConsumer<
       );
       return;
     }
-
+    
     device.telemetry = bundle.telemetry;
-    this._store.saveDevice(device);
-
+    
     (this as EventEmitter<ConsumerEvents>).emit("device_telemetry", device);
   }
-
+  
   deleteDevice(address: DeviceAddress): void {
     const key = DeviceTools.toKey(address);
-
+    
     if (!this._devices.has(key)) {
       this._logger.warn(
         `Attempted to delete unknown device at address:`,
@@ -294,14 +304,26 @@ export abstract class AbstractConsumer<
       );
       return;
     }
+    
+    this._deleteDevice(address);
 
     this._devices.delete(key);
     this._info.device_count = this._devices.size;
-    this._store.deleteDevice(address);
+    
+    try {
+      this._store.deleteDevice(address);
+    } catch (error) {
+      this._logger.error(
+        `Error deleting device ${address}:`,
+        error,
+      );
+    }
     (this as EventEmitter<ConsumerEvents>).emit("device_removed", address);
     this._logger.debug(`Device ${key} deleted.`);
+    
+    this._emitInfoUpdate();
   }
-
-  // TODO: Needed? If not remove.
-  protected _deleteDevice(address: DeviceAddress): void {};
+  
+  // No-op to enable optional cleanup override.
+  protected _deleteDevice(address: DeviceAddress): void {/* empty */}
 }
