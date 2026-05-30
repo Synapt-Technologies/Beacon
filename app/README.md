@@ -12,7 +12,10 @@ If you are compiling the image on windows, you must use WSL.
   - [ ] Add AbstractConnection that is implemented by AbstractTallyProducer and AbstractConsumer that contains the base fields like config(id name), its getters setters and validation.
 
 
-- [ ] Dev/prod mode for ui logging
+- [ ] Dev/prod mode for ui
+  - [ ] For seperate logging
+- [ ] Dev switch in ui for dev options
+  - [ ] Add virtual device menu (still todo) allows to add a device for whichever consumer. (that allows it).
 - [ ] Easier way to page through devices. Some sort of arrow keys in the navbar?
 - [x] Implement mqtt ws tally for devices
   - [ ] Add alerts on UI
