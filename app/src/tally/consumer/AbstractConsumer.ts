@@ -17,6 +17,7 @@ import {
   type TallyDeviceDtoMap,
   type GlobalDeviceRuntimeConfig,
   defaultGlobalDeviceRuntimeConfig,
+  type DeviceId,
 } from "../types/DeviceTypes";
 import { ConsumerStore } from "../../database/ConsumerStore";
 import type {
@@ -260,6 +261,8 @@ export abstract class AbstractConsumer<
 
   protected abstract _sendDeviceAlert(bundle: DeviceAlertBundle): void;
 
+  // TODO: SendDeviceFields once implemented on device?
+
   applyDeviceRuntimeConfig(
     address: DeviceAddress,
     runtime: DeviceRuntimeConfig,
@@ -318,10 +321,11 @@ export abstract class AbstractConsumer<
 
     this._addDevice(newDevice);
 
-    this._sendDiscoveryReply(newDevice.toDiscoveryReplyMessage());
+    this._sendDiscoveryReply(newDevice.id.device, newDevice.toDiscoveryReplyMessage());
   }
 
   protected abstract _sendDiscoveryReply(
+    id: DeviceId,
     message: DeviceDiscoveryReplyMessage
   ): void;
 
