@@ -322,7 +322,7 @@ export abstract class AbstractConsumer<
   }
 
   protected abstract _sendDiscoveryReply(
-    message: DeviceDiscoveryReplyMessage,
+    message: DeviceDiscoveryReplyMessage
   ): void;
 
   protected _processDeviceTelemetry(bundle: DeviceTelemetryBundle): void {
