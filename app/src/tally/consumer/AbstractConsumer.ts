@@ -1,7 +1,6 @@
 import { EventEmitter } from "node:events";
 import { Logger } from "../../logging/Logger";
 import {
-  type TallyDeviceMap,
   type TallyDevice,
   type DeviceAddress,
   DeviceTools,
@@ -13,6 +12,7 @@ import {
   type DeviceDiscoveryMessage,
   type DeviceDiscoveryReplyMessage,
   type DeviceRuntimeConfig,
+  type TallyDeviceDtoMap,
 } from "../types/DeviceTypes";
 import { ConsumerStore } from "../../database/ConsumerStore";
 import type {
@@ -86,7 +86,9 @@ T extends ConsumerEvents & Record<string, unknown[]> = ConsumerEvents,
     
     const storedDevices = this._store.loadDevices();
     if (storedDevices.size > 0) {
-      this._devices = storedDevices;
+      for (const [key, device] of storedDevices) {
+        this._devices.set(key, new TallyDeviceDto(device));
+      }
       this._info.device_count = storedDevices.size;
       this._logger.debug(`Loaded ${storedDevices.size} stored device(s).`);
     }
@@ -119,7 +121,7 @@ T extends ConsumerEvents & Record<string, unknown[]> = ConsumerEvents,
     this._logger.debug(`Info updated.`);
   }
   
-  protected _devices: TallyDeviceMap = new Map();
+  protected _devices: TallyDeviceDtoMap = new Map();
   
   getAvailableDevices(): Array<TallyDevice> {
     return Array.from(this._devices.values());
@@ -273,7 +275,7 @@ T extends ConsumerEvents & Record<string, unknown[]> = ConsumerEvents,
     
 
     try {
-      this._sendDeviceRuntimeConfig(address, new TallyDeviceDto(device).toRuntimeConfigBundle());
+      this._sendDeviceRuntimeConfig(address, device.toRuntimeConfigBundle());
     } catch (error) {
       this._logger.error(`Error sending runtime config for device ${key}:`, error);
     }
