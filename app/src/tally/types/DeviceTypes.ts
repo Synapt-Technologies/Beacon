@@ -221,7 +221,6 @@ export class TallyDeviceDto implements TallyDevice {
 
   toDiscoveryReplyMessage(): DeviceDiscoveryReplyMessage {
     return {
-      id: this.id.device,
       topic: this.id,
     };
   }
@@ -253,11 +252,18 @@ export class TallyDeviceDto implements TallyDevice {
     };
   }
 
+  // Use for bundles that overwrite the device states or are not included in it. E.g. Alert, State.
   toBundle<T extends BaseDevicePackage>(data: T): DeviceBundle<T> {
     return {
       ...this.toBaseBundle(),
       data: data,
     };
+  }
+
+  toRuntimeConfigBundle(): DeviceRuntimeConfigBundle {
+    return this.toBundle({
+      runtime: this.runtime,
+    });
   }
 
 }
