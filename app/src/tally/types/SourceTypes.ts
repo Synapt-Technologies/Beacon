@@ -27,6 +27,7 @@ export type SourceSet = Set<GlobalSourceKey>;
 export type SourceMap = Map<GlobalSourceKey, SourceInfo>; // Not a set, because it wont work on the SourceInfo object.
 
 export type SourceStateMap = Map<GlobalSourceKey, TallyState>; // Used to broadcast state with IBroadcastConsumer for quick lookup.
+export type SourceStateBusGroupMap = Map<GlobalBusGroupKey, SourceStateMap>; // TODO: Use in IBroadcastConsumer to enable the user to select which busses to display somehow?
 
 // ? Busses
 export interface GlobalBusGroupAddress {
