@@ -9,7 +9,7 @@ import type { IBroadcastConsumer } from "../IBroadcastConsumer";
 import { ConnectionState, TallyState, type DisplayName } from "../../types/CommonTypes";
 import type { ConsumerInfo } from "../../types/ConsumerTypes";
 import type { DeviceAddress, DeviceAlertBundle, DeviceAlertData, DeviceDiscoveryMessage, DeviceDiscoveryReplyMessage, DeviceId, DeviceRuntimeConfig, DeviceRuntimeConfigBundle, DeviceStateBundle, GlobalDeviceRuntimeConfig } from "../../types/DeviceTypes";
-import type { SourceInfo } from "../../types/SourceTypes";
+import type { SourceInfo, SourceStateMap } from "../../types/SourceTypes";
 
 
 export interface AedesConsumerConfig extends NetServerConsumerConfig {
@@ -25,18 +25,24 @@ export interface AedesConsumerInfo extends ConsumerInfo {
     client_count: number;
 }
 
+interface TallyStatePackage {
+    name: string; 
+    num: TallyState 
+}
+
 // ? payloads:
 interface MqttPayload {
     moment: number;
 }
 interface KeepAliveMqttPayload extends MqttPayload { /* empty */ }
 
+interface TallyBroadcastMqttPayload extends MqttPayload {
+    source_states: Record<string, TallyStatePackage>;
+}
+
 // TODO: make this extend exiting interfaces?
 interface DeviceStateMqttPayload extends MqttPayload {
-    state: { 
-        name: string; 
-        num: TallyState 
-    };
+    state: TallyStatePackage;
     active_sources: Record<string, SourceInfo>;
     moment: number;
 }
@@ -359,8 +365,8 @@ export class AedesNetServerConsumer extends AbstractNetServerConsumer implements
         }
 
         const buf = payload === null ? Buffer.alloc(0) : Buffer.from(JSON.stringify(payload));
-        
-                try {
+
+        try {
             this._aedes.publish({
                 cmd: 'publish', 
                 qos, 
@@ -442,6 +448,22 @@ export class AedesNetServerConsumer extends AbstractNetServerConsumer implements
         });
         
         this._publish('system/info', payload, 1, false);
+    }
+
+    public publishTally(state: SourceStateMap) {
+
+        const map = Object.fromEntries(
+            Array.from(state.entries()).map(([key, state]) => [key, { name: TallyState[state], num: state }])
+        );
+
+        const payload: TallyBroadcastMqttPayload = {
+            moment: Date.now(),
+            source_states: Object.fromEntries(
+                Array.from(state.entries()).map(([key, state]) => [key, { name: TallyState[state], num: state }])
+            ),
+        };
+
+        this._publish('tally/global', payload, 1, false);
     }
 }
 
