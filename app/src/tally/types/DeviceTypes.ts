@@ -135,7 +135,10 @@ export interface DeviceBundle<T> extends BaseDeviceBundle {
   data: T;
 }
 
-export interface BaseDevicePackage {}
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export interface BaseDevicePackage {
+  /* empty */
+}
 
 export interface DeviceStatePackage extends BaseDevicePackage {
   state: TallyState;

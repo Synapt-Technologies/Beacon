@@ -10,11 +10,7 @@ import {
   type NetServerConsumerConfig,
 } from "./AbstractNetServerConsumer";
 import type { IBroadcastConsumer } from "../IBroadcastConsumer";
-import {
-  ConnectionState,
-  TallyState,
-  type DisplayName,
-} from "../../types/CommonTypes";
+import { ConnectionState, TallyState } from "../../types/CommonTypes";
 import type { ConsumerInfo } from "../../types/ConsumerTypes";
 import type {
   DeviceAddress,
@@ -52,6 +48,7 @@ interface TallyStatePackage {
 interface MqttPayload {
   moment: number;
 }
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 interface KeepAliveMqttPayload extends MqttPayload {
   /* empty */
 }
@@ -568,12 +565,7 @@ export class AedesNetServerConsumer
 
     const payload: TallyBroadcastMqttPayload = {
       moment: Date.now(),
-      source_states: Object.fromEntries(
-        Array.from(state.entries()).map(([key, state]) => [
-          key,
-          { name: TallyState[state], num: state },
-        ]),
-      ),
+      source_states: map,
     };
 
     this._publish("tally/global", payload, 1, false);

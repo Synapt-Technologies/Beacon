@@ -242,7 +242,7 @@ export abstract class AbstractConsumer<
   }
 
   // TODO: Check function fields.
-  protected _initDevice(newDevice: TallyDeviceDto) {}
+  protected _initDevice(_device: TallyDeviceDto) {}
 
   sendDeviceState(address: DeviceAddress, pckg: DeviceStatePackage): void {
     const key = DeviceTools.toKey(address);
@@ -324,7 +324,9 @@ export abstract class AbstractConsumer<
 
   // NO-OP, not all consumers support discovery.
   // TODO: Move to an interface? NetServerConsumer? Abstract?
-  protected _sendDeviceRuntimeConfig(bundle: DeviceRuntimeConfigBundle): void {}
+  protected _sendDeviceRuntimeConfig(
+    _bundle: DeviceRuntimeConfigBundle,
+  ): void {}
 
   // TODO: Not all consumers have discovery. Add the bottom two functions to an interface?
   protected _processDeviceDiscovery(message: DeviceDiscoveryMessage): void {
@@ -346,8 +348,8 @@ export abstract class AbstractConsumer<
   // NO-OP, not all consumers support discovery.
   // TODO: Move to an interface? NetServerConsumer? Abstract?
   protected _sendDiscoveryReply(
-    id: DeviceId,
-    message: DeviceDiscoveryReplyMessage,
+    _id: DeviceId,
+    _message: DeviceDiscoveryReplyMessage,
   ) {}
 
   protected _processDeviceTelemetry(bundle: DeviceTelemetryBundle): void {
@@ -396,7 +398,7 @@ export abstract class AbstractConsumer<
   }
 
   // No-op to enable optional cleanup override.
-  protected _deleteDevice(address: DeviceAddress): void {
+  protected _deleteDevice(_address: DeviceAddress): void {
     /* empty */
   }
 }

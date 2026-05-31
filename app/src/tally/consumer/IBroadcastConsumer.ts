@@ -10,6 +10,7 @@ export function isBroadcastConsumer(
 ): consumer is AbstractConsumer & IBroadcastConsumer {
   return (
     "publishTally" in consumer &&
-    typeof (consumer as any).publishTally === "function"
+    typeof (consumer as AbstractConsumer & IBroadcastConsumer).publishTally ===
+      "function"
   );
 }

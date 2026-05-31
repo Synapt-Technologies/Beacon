@@ -1,4 +1,3 @@
-import { type WithRequired } from "../../types/CommonTypes";
 import type { ConsumerConfig } from "../../types/ConsumerTypes";
 import { AbstractConsumer, type ConsumerEvents } from "../AbstractConsumer";
 

@@ -20,14 +20,14 @@ import {
 
 // TODO: Populate this. Pinouts?
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface RpiGpioConsumerConfig extends ConsumerConfig {
   // Pin mappings TBD
   hw_version: HardwareVersion; // TODO: Auto detect?
 }
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface RpiGpioConsumerInfo extends ConsumerInfo {
-  // version: HardwareVersion;
+  /* empty */
 }
 
 export interface GpioTallyPins {
