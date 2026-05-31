@@ -35,8 +35,8 @@ export type ConsumerEvents = {
   device_removed: [address: DeviceAddress];
 };
 /*
-- New device discovery       -> _addDevice              -> *device_discovery*   -> send discovery reply
-- Existing device discovery  -> _addDevice              -> *device_update*      -> send discovery reply
+- New device discovery       -> addDevice               -> _addDevice           -> *device_discovery*   -> send discovery reply
+- Existing device discovery  -> addDevice               -> _addDevice           -> *device_update*      -> send discovery reply
 - Received device telemetry  -> _processDeviceTelemetry -> *device_telemetry*
 - Device removed             -> deleteDevice            -> _deleteDevice        -> *device_removed*
 */
@@ -190,8 +190,8 @@ export abstract class AbstractConsumer<
     }
   }
 
-  // TODO: Add a public addDevice? (or manuallyAddDevice?) A debugmode where it is possible to add devices to a consumer manually would be nice.
-  protected _addDevice(device: TallyDeviceDto, override: boolean = false) {
+  // ? Internal use and debug. Adds a device as if discovered. Should not be used to broadcast another consumer's device.
+  public addDevice(device: TallyDeviceDto, override: boolean = false) {
     const newDevice = new TallyDeviceDto({
       ...device,
       id: { ...device.id, consumer: this._config.id },
@@ -222,6 +222,7 @@ export abstract class AbstractConsumer<
     }
 
     this._saveDevice(newDevice);
+    this._addDevice(newDevice, override);
 
     this.applyDeviceRuntimeConfig(newDevice.id, newDevice.runtime);
 
@@ -235,6 +236,9 @@ export abstract class AbstractConsumer<
       this._emitInfoUpdate();
     }
   }
+
+  // TODO: Check function fields.
+  protected _addDevice(newDevice: TallyDeviceDto, override: boolean = false) {}
 
   sendDeviceState(address: DeviceAddress, pckg: DeviceStatePackage): void {
     const key = DeviceTools.toKey(address);
@@ -327,7 +331,7 @@ export abstract class AbstractConsumer<
       this._config.id,
     );
 
-    this._addDevice(newDevice);
+    this.addDevice(newDevice);
 
     this._sendDiscoveryReply(
       newDevice.id.device,
