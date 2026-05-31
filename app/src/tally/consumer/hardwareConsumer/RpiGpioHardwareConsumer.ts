@@ -1,10 +1,6 @@
-import {
-  HARDWARE_VERSION_STRING,
-  HardwareVersion,
-} from "../../../types/SystemInfo";
+import { HardwareVersion } from "../../../types/SystemInfo";
 import type { Gpio } from "pigpio";
 import type { ConsumerConfig, ConsumerInfo } from "../../types/ConsumerTypes";
-import { DeviceAlertState } from "../../types/ConsumerStates";
 import {
   ConnectionState,
   TallyState,
@@ -18,7 +14,6 @@ import {
   TallyDeviceDto,
   type DeviceAddress,
   type DeviceAlertBundle,
-  type DeviceId,
   type DeviceKey,
   type DeviceStateBundle,
 } from "../../types/DeviceTypes";
@@ -58,24 +53,24 @@ interface AlertPatternConfig {
 }
 
 // TODO: Move to class, make it user configurable and broadcast it to devices (via consumer) to sync patterns.
-const ALERT_PATTERNS: Record<DeviceAlertState, AlertPatternConfig | null> = {
-  [DeviceAlertState.IDENT]: {
+const ALERT_PATTERNS: Record<DeviceAlertAction, AlertPatternConfig | null> = {
+  [DeviceAlertAction.IDENT]: {
     speedMs: 400,
     pattern: [TallyState.PREVIEW, TallyState.PROGRAM],
   },
-  [DeviceAlertState.INFO]: {
+  [DeviceAlertAction.INFO]: {
     speedMs: 300,
     pattern: [TallyState.PREVIEW, null, null, null],
   },
-  [DeviceAlertState.NORMAL]: {
+  [DeviceAlertAction.NORMAL]: {
     speedMs: 400,
     pattern: [TallyState.WARNING, null],
   },
-  [DeviceAlertState.PRIO]: {
+  [DeviceAlertAction.PRIO]: {
     speedMs: 150,
     pattern: [TallyState.PROGRAM, TallyState.WARNING],
   },
-  [DeviceAlertState.CLEAR]: null,
+  [DeviceAlertAction.CLEAR]: null,
 };
 
 const DEFAULT_PINOUT: Record<
@@ -83,7 +78,7 @@ const DEFAULT_PINOUT: Record<
   Array<GpioTallyPins>
 > = {
   [HardwareVersion.V2]: [
-    // Board pin numbers:
+    // Board BCM numbers, pin numbers in comments:
     { program: 2, preview: 22 }, // 3,  15
     { program: 3, preview: 23 }, // 5,  16
     { program: 4, preview: 24 }, // 7,  18
@@ -143,6 +138,7 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
   protected _activeAlerts: Map<DeviceKey, DeviceAlertRuntime> = new Map();
 
   async _init(): Promise<void> {
+    // TODO: This check is double, as it is also in _checkConfig. Decide if this, or the one in _checkConfig should be removed.
     if (
       this._config.hw_version == null ||
       this._config.hw_version !== HardwareVersion.V2
@@ -181,7 +177,7 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
           const newDevice: TallyDeviceDto = new TallyDeviceDto({
             id: address,
             info: {
-              label: `GPIO Pins #1@${pins.program}/${pins.preview}`,
+              label: `GPIO Pins ${i + 1}@${pins.program}/${pins.preview}`,
               model: `Raspi-GPIO`,
               connection: ConnectionType.LOCAL,
               firmware: {
@@ -202,14 +198,18 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
 
       this._info.state = ConnectionState.ONLINE;
       this._emitInfoUpdate();
-      this._destroy();
       this._logger.info(
         "Initialised GPIO running on version:",
         this._config.hw_version,
       );
     } catch (e) {
       this._info.state = ConnectionState.FAILED;
-      this._logger.error("Failed initialising GPIO. Error:", e);
+      this._emitInfoUpdate();
+      this._logger.error(
+        "Failed initialising GPIO. Entering FAILED state. Error:",
+        e,
+      );
+      await this._destroy();
     }
   }
 
@@ -227,14 +227,13 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
       output.program.digitalWrite(0);
       output.preview.digitalWrite(0);
     });
-
+    this._logger.info("Cleared GPIO outputs.");
     try {
       const pigpio = await import("pigpio");
 
       if (pigpio.default && pigpio.default.terminate) {
         pigpio.default.terminate();
-        this._info.state = ConnectionState.OFFLINE;
-        this._logger.info("GPIO Consumer destroyed and pins reset.");
+        this._logger.info("GPIO Consumer destroyed.");
       } else {
         this._logger.warn("Could not destroy PIGPIO");
       }
@@ -316,6 +315,7 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
     }
 
     const key = DeviceTools.toKey(bundle.id);
+    this._deviceCache.set(key, bundle.data.state);
 
     if (this._activeAlerts.has(key)) {
       this._logger.debug(
