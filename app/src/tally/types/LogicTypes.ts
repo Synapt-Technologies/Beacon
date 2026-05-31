@@ -14,7 +14,18 @@ export interface SimpleBusNode {
   sources: GlobalSourceAddress[];
 }
 
-export type PatchNode = SimpleBusNode;
+
+export interface OrNode {
+  readonly type: "OrNode";
+  nodes: PatchNode[];
+}
+
+export interface AndNode {
+  readonly type: "AndNode";
+  nodes: PatchNode[];
+}
+
+export type PatchNode = SimpleBusNode | OrNode | AndNode;
 
 export abstract class LogicFactory {
   static createSimpleBusNode(
@@ -23,6 +34,24 @@ export abstract class LogicFactory {
     return {
       type: "SimpleBusNode",
       sources: sources,
+    };
+  }
+
+  static createOrNode(
+    nodes: PatchNode[] = [],
+  ): OrNode {
+    return {
+      type: "OrNode",
+      nodes: nodes,
+    };
+  }
+
+  static createAndNode(
+    nodes: PatchNode[] = [],
+  ): AndNode {
+    return {
+      type: "AndNode",
+      nodes: nodes,
     };
   }
 }
