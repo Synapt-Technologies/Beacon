@@ -105,11 +105,11 @@ export abstract class AbstractTallyProducer<
       this._logger.fatal(`Name was not provided. Submitted config:`, config);
   }
 
-  private _destroying = false;
-  markDestroying(): void {
+  protected _destroying = false;
+  protected markDestroying(): void {
     this._destroying = true;
   }
-  isDestroying(): boolean {
+  protected isDestroying(): boolean {
     return this._destroying;
   }
 
