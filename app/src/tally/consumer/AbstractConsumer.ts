@@ -318,6 +318,7 @@ export abstract class AbstractConsumer<
     bundle: DeviceRuntimeConfigBundle,
   ): void;
 
+  // TODO: Not all consumers have discovery. Add the bottom two functions to an interface?
   protected _processDeviceDiscovery(message: DeviceDiscoveryMessage): void {
     this._logger.debug(`Processing discovered device ${message.id}:`, message);
 
