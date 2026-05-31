@@ -371,8 +371,7 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
       }
 
       const patternValue = alertConfig.pattern[stepIndex];
-      const currentDeviceState =
-        this._devices.get(key)?.state ?? TallyState.NONE; // TODO Add map tracking state.
+      const currentDeviceState = this._getCachedDeviceState(key);
       const state = patternValue === null ? currentDeviceState : patternValue;
       this._setGpio(key, state);
       stepIndex = (stepIndex + 1) % alertConfig.pattern.length;
@@ -409,98 +408,21 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
   }
 
   // TODO: Rewrite below VV
-
-  setDeviceAlert(
-    address: DeviceAddress,
-    type: DeviceAlertState,
-    target: DeviceAlertTarget,
-    time: number,
-  ): void {
-    const key = GlobalDeviceTools.create(address.consumer, address.device);
-    const device = this.devices.get(key);
-
-    if (!device) {
-      this.logger.warn(`Attempted to set alert for unknown device:`, address);
-      return;
-    }
-
-    // GPIO alerts are device-level and do not differentiate operator/talent hardware lanes.
-    void target;
-
-    if (type === DeviceAlertState.CLEAR) {
-      this.clearDeviceAlert(key, true);
-      this.logger.debug(`Cleared alert for device:`, address);
-      return;
-    }
-
-    const alertConfig = ALERT_PATTERNS[type];
-
-    if (!alertConfig) {
-      this.logger.warn(`Unsupported alert type for GPIO: ${type}`);
-      return;
-    }
-
-    this.clearDeviceAlert(key, false);
-
-    const alertToken = Symbol("gpio-alert");
-    let stepIndex = 0;
-    const tick = () => {
-      const runtime = this.activeAlerts.get(key);
-
-      // Ignore stale timer callbacks from a previous alert lifecycle.
-      if (!runtime || runtime.token !== alertToken) {
-        return;
-      }
-
-      const patternValue = alertConfig.pattern[stepIndex];
-      const currentDeviceState =
-        this.devices.get(key)?.state ?? TallyState.NONE;
-      const state = patternValue === null ? currentDeviceState : patternValue;
-      this._setGpio(key, state);
-      stepIndex = (stepIndex + 1) % alertConfig.pattern.length;
-    };
-
-    const intervalHandle = setInterval(tick, alertConfig.speedMs);
-    const timeoutHandle =
-      time > 0
-        ? setTimeout(() => {
-            const runtime = this.activeAlerts.get(key);
-            if (!runtime || runtime.token !== alertToken) {
-              return;
-            }
-            this.clearDeviceAlert(key, true);
-            this.logger.debug(`Alert timeout reached for device:`, address);
-          }, time)
-        : null;
-
-    this.activeAlerts.set(key, {
-      type,
-      token: alertToken,
-      intervalHandle,
-      timeoutHandle,
-    });
-
-    tick();
-
-    this.logger.debug(
-      `Set alert ${DeviceAlertState[type]} for device:`,
-      address,
-      `timeout(s):`,
-      time,
-    );
+  private _getCachedDeviceState(key: DeviceKey): TallyState {
+    return this._deviceCache.get(key) ?? TallyState.NONE;
   }
 
-  private clearDeviceAlert(key: DeviceId, restoreTally: boolean): void {
-    const runtime = this.activeAlerts.get(key);
+  private _setGpioToCachedDeviceState(key: DeviceKey): void {
+    const state = this._getCachedDeviceState(key);
+    this._setGpio(key, state);
+  }
+
+  private _clearDeviceAlert(key: DeviceKey, restoreTally: boolean): void {
+    const runtime = this._activeAlerts.get(key);
 
     if (!runtime) {
       if (restoreTally) {
-        const device = this.devices.get(key);
-        if (device) {
-          if (this._setGpio(key, device.state)) {
-            this.stateCache.set(key, device.state);
-          }
-        }
+        this._setGpioToCachedDeviceState(key);
       }
       return;
     }
@@ -510,20 +432,11 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
       clearTimeout(runtime.timeoutHandle);
     }
 
-    this.activeAlerts.delete(key);
+    this._activeAlerts.delete(key);
 
     if (restoreTally) {
-      const device = this.devices.get(key);
-      if (device) {
-        if (this._setGpio(key, device.state)) {
-          this.stateCache.set(key, device.state);
-        }
-      } else {
-        if (this._setGpio(key, TallyState.NONE)) {
-          this.stateCache.set(key, TallyState.NONE);
-        }
-      }
+      this._setGpioToCachedDeviceState(key);
     }
-    this._logger.debug(`Cleared alert for device:`, bundle.id);
+    this._logger.debug(`Cleared alert for device:`, key);
   }
 }
