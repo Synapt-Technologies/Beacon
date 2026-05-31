@@ -1,40 +1,43 @@
-import { AbstractConsumer, ConsumerStatus, type ConsumerConfig, type ConsumerInfo } from "../AbstractConsumer";
-import { ConnectionType, DeviceAlertState, TallyState, GlobalDeviceTools, type DeviceAddress, type DeviceAlertTarget, type DeviceId, type TallyDevice } from "../../types/ConsumerStates";
 import { HARDWARE_VERSION_STRING, HardwareVersion } from "../../../types/SystemInfo";
 import type { Gpio } from 'pigpio';
+import type { ConsumerConfig, ConsumerInfo } from "../../types/ConsumerTypes";
+import { DeviceAlertState } from "../../types/ConsumerStates";
+import { ConnectionState, TallyState, type WithRequired } from "../../types/CommonTypes";
+import { AbstractConsumer } from "../AbstractConsumer";
+import { ConnectionType, DeviceAlertAction, DeviceTools, TallyDeviceDto, type DeviceAddress, type DeviceAlertBundle, type DeviceId, type DeviceKey, type DeviceStateBundle } from "../../types/DeviceTypes";
 
 // TODO: Populate this. Pinouts?
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface GpioConsumerConfig extends ConsumerConfig {
+export interface RpiGpioConsumerConfig extends ConsumerConfig {
     // Pin mappings TBD
-    // TODO move hw discovery to another class.
+    hw_version: HardwareVersion; // TODO: Auto detect?
 }
 
-export interface GpioConsumerInfo extends ConsumerInfo {
-    version: HardwareVersion;
+export interface RpiGpioConsumerInfo extends ConsumerInfo {
+    // version: HardwareVersion;
 }
 
 export interface GpioTallyPins {
-    program: number,
-    preview: number,
+    program: number;
+    preview: number;
 }
 
 interface GpioTallyOutput {
-    program: Gpio,
-    preview: Gpio,
+    program: Gpio;
+    preview: Gpio;
 }
 
 interface DeviceAlertRuntime {
-    type: DeviceAlertState,
-    token: symbol,
-    intervalHandle: NodeJS.Timeout,
-    timeoutHandle: NodeJS.Timeout | null,
+    action: DeviceAlertAction;
+    token: symbol;
+    intervalHandle: NodeJS.Timeout;
+    timeoutHandle: NodeJS.Timeout | null;
 }
 
 interface AlertPatternConfig {
-    speedMs: number,
-    pattern: Array<TallyState | null>,
+    speedMs: number;
+    pattern: Array<TallyState | null>;
 }
 
 
@@ -93,60 +96,60 @@ const DEFAULT_PINOUT: Record<Exclude<HardwareVersion, HardwareVersion.UNKNOWN | 
 
 // TODO MOVE ACTUAL HARDWARE CODE TO ANOTHER LIB? OR SOME SORT OF FACTORY TO PARSE HW VERSION?
 // TODO: HardwareBus.ts? or HardwareConsumer that uses a factory to get the right outputs?
+
+// TODO: Add intermediary AbstractLocalConsumer that handles the alert pattern timers etc.
 export class RpiGpioHardwareConsumer extends AbstractConsumer {
     
-    protected readonly conType = "GPIO";
+    protected declare _config: RpiGpioConsumerConfig; // Declare to indicate it overwrites the parent's type.
     
-    protected info: GpioConsumerInfo = {
-        status: ConsumerStatus.OFFLINE,
-        device_count: 0,
-        version: HardwareVersion.UNKNOWN,
-    }
-    
-    protected gpioMap: Map<DeviceId, GpioTallyOutput> = new Map();
-    protected stateCache: Map<DeviceId, TallyState> = new Map();
-    protected activeAlerts: Map<DeviceId, DeviceAlertRuntime> = new Map();
-    
-    public static readonly DefaultConfig: Required<GpioConsumerConfig> = {
-        ...AbstractConsumer.DefaultConfig,
-        id: "gpio",
+    public static readonly DefaultConfig: Omit<RpiGpioConsumerConfig, "hw_version"> = {
+        id: "rpigpio",
         name: "Hardware Consumer",
     };
-    
-    protected getDefaultConfig(): Required<GpioConsumerConfig> {
+        
+    protected _getDefaultConfig(): Omit<RpiGpioConsumerConfig, "hw_version"> {
         return RpiGpioHardwareConsumer.DefaultConfig;
     }
     
-    constructor(config: GpioConsumerConfig) {
-        super(config);
-    }
+    protected declare _info: RpiGpioConsumerInfo;
     
-    async init(): Promise<void> {
-        this.info.version = this.getHardwareVersion();
-        
-        if (this.info.version == HardwareVersion.UNKNOWN) {
-            this.info.status = ConsumerStatus.ERROR;
-            return this.logger.fatal(`Failed to initialize GPIO. UNKOWN hardware!`);
+    constructor(config: WithRequired<RpiGpioConsumerConfig, "hw_version">) {
+        super(config);
+        this._info = {
+            ...this._info,
+            // version: this.getHardwareVersion(),
         }
+    }
+
+    protected _checkConfig(config: RpiGpioConsumerConfig) {
+        super._checkConfig(config);
         
-        
-        if (this.info.version !== HardwareVersion.V2) {
-            this.logger.fatal(`Unsupported hardware version for GPIO Consumer: ${HARDWARE_VERSION_STRING[this.info.version]}. Only Beacon v2 is supported at this time.`);
+        if (config.hw_version == null || config.hw_version !== HardwareVersion.V2) {
+            this._logger.fatal(`Invalid hardware version. Only Beacon v2 is supported.`);
+        }
+    }
+
+    protected _gpioMap: Map<DeviceId, GpioTallyOutput> = new Map();
+    protected _stateCache: Map<DeviceId, TallyState> = new Map();
+    protected _activeAlerts: Map<DeviceId, DeviceAlertRuntime> = new Map();
+
+    async _init(): Promise<void> {
+
+        if (this._config.hw_version == null || this._config.hw_version !== HardwareVersion.V2) {
+            return this._logger.fatal(`Invalid hardware version. Only Beacon v2 is supported.`);
         }
 
-        const pinMap = DEFAULT_PINOUT[this.info.version];
+        const pinMap = DEFAULT_PINOUT[this._config.hw_version];
         
-        // TODO add pinmap check!
+        // TODO add check if pinmap is valid?
         try {
             const pigpio = await import('pigpio');
             const Gpio = pigpio.default.Gpio;
             
             for (let i = 0; i < pinMap.length; i++) {
                 
-                const devIndx: DeviceAddress = {
-                    consumer: this.config.id,
-                    device: String(i)
-                };
+                const address: DeviceAddress = { consumer: this._config.id, device: String(i) };
+                const key = DeviceTools.toKey(address);
                 
                 const pins = pinMap[i];
                 
@@ -155,22 +158,24 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
                     preview: new Gpio(pins.preview, { mode: Gpio.OUTPUT }),
                 };
                 
-                this.gpioMap.set(GlobalDeviceTools.create(devIndx.consumer, devIndx.device), gpioPins);
+                this._gpioMap.set(key, gpioPins);
                 
-                const storedDevice = this.devices.get(GlobalDeviceTools.create(devIndx.consumer, devIndx.device));
+                const storedDevice = this.getDevice(address);
                 
                 if(!storedDevice){
                     
-                    const newDevice: TallyDevice = {
-                        id: devIndx,
-                        name: {
-                            short: `OUT ${i+1}`,
-                            long: `Local ${i+1}`
+                    const newDevice: TallyDeviceDto = new TallyDeviceDto({
+                        id: address,
+                        info: {
+                            label: `GPIO Pins #1@${pins.program}/${pins.preview}`,
+                            model: `Raspi-GPIO`,
+                            connection: ConnectionType.LOCAL,
+                            firmware: {
+                                type: "Beacon-Base",
+                                // TODO: Add beacon version.
+                            }
                         },
-                        connection: ConnectionType.HARDWARE,
-                        patch: [],
-                        state: TallyState.NONE,
-                    }
+                    });
                     
                     this._addDevice(newDevice)
                 }
@@ -179,22 +184,23 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
             
             //TODO: Delete other devices?
 
-            this.info.status = ConsumerStatus.ONLINE;
-            this.logger.info('Initialised GPIO running on version:', this.info.version);
+            this._info.state = ConnectionState.ONLINE;
+            this._emitInfoUpdate();
+            this._destroy();
+            this._logger.info('Initialised GPIO running on version:', this._config.hw_version);
 
         } catch (e) {
-            this.info.status = ConsumerStatus.ERROR;
-            this.logger.error("Failed initialising GPIO. Error:", e);
-            // this.info.status = HardwareStatus.ERROR; // TODO
+            this._info.state = ConnectionState.FAILED;
+            this._logger.error("Failed initialising GPIO. Error:", e);
         }
     }
     
-    async destroy(): Promise<void> {
-        this.activeAlerts.forEach((_runtime, key) => {
+    async _destroy(): Promise<void> {
+        this._activeAlerts.forEach((_runtime, key) => {
             this.clearDeviceAlert(key, false);
         });
         
-        this.gpioMap.forEach((output) => {
+        this._gpioMap.forEach((output) => {
             output.program.digitalWrite(0);
             output.preview.digitalWrite(0);
         });
@@ -204,56 +210,31 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
             
             if (pigpio.default && pigpio.default.terminate) {
                 pigpio.default.terminate();
-                this.info.status = ConsumerStatus.OFFLINE;
-                this.logger.info("GPIO Consumer destroyed and pins reset.");
+                this._info.state = ConnectionState.OFFLINE;
+                this._logger.info("GPIO Consumer destroyed and pins reset.");
             }
             else {
-                this.logger.warn("Could not destroy PIGPIO");
+                this._logger.warn("Could not destroy PIGPIO");
             }
             
         } catch (e) {
-            this.logger.error("Failed to terminate pigpio:", e);
+            this._logger.error("Failed to terminate pigpio:", e);
         }
         
     }
     
-    protected getHardwareVersion(): HardwareVersion {
-        return HardwareVersion.V2;
-    }
-    
-    
-    protected sendDeviceTally(device: TallyDevice): void {
+    private _setGpio(key: string, state: TallyState): boolean {
         
-        if (this.gpioMap.size <= 0){
-            this.logger.warn("Discarding Tally: Attempted to send with an empty GPIO map. Probably not initialised.");
-            return;
-        }
-        
-        const devAddr = GlobalDeviceTools.create(device.id.consumer, device.id.device);
-        
-        if (this.activeAlerts.has(devAddr)) {
-            this.logger.debug(`Skipping GPIO tally write for alerting device:`, device.id);
-            return;
-        }
-        
-        if (this.stateCache.get(devAddr) === device.state) {
-            this.logger.debug(`Skipping GPIO write for device (state unchanged):`, device);
-            return;
-        }
-        
-        if (this._setGpio(devAddr, device.state)) {
-            this.stateCache.set(devAddr, device.state); // TODO: Move statecache to setGpio
-        }
-        
-    }
-    
-    private _setGpio(address: string, state: TallyState): boolean {
-        
-        const output = this.gpioMap.get(address);
+        const output = this._gpioMap.get(key);
         
         if (!output){
-            this.logger.error("Attempted to send tally to device with an unknown or invalid GPIO! Device:", address);
+            this._logger.error("Attempted to send tally to device with an unknown or invalid GPIO! Device:", key, "State:", state);
             return false;
+        }
+        
+        if (this._stateCache.get(key) === state) {
+            this._logger.debug(`Skipping GPIO write for device (state unchanged):`, key, "State:", state);
+            return true;
         }
         
         // output.program.pwmWrite(128); // TODO
@@ -282,14 +263,103 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
             }
         }
         catch (e){
-            this.logger.error("Failed to write GPIO state for device:", address, "State:", state, "Error:", e);
+            this._logger.error("Failed to write GPIO state for device:", key, "State:", state, "Error:", e);
             return false;
         }
         
-        this.logger.debug(`Set GPIO for state ${state}:`, output);
+        this._stateCache.set(key, state);
+        this._logger.debug(`Set GPIO for state ${state}:`, output);
         return true;
     }
+
+    protected _sendDeviceState(bundle: DeviceStateBundle): void {
+        if (this._gpioMap.size <= 0){
+            this._logger.warn("Discarding Tally: Attempted to send with an empty GPIO map. Probably not initialised.");
+            return;
+        }
+
+        const key = DeviceTools.toKey(bundle.id);
+
+        if (this._activeAlerts.has(key)) {
+            this._logger.debug(`Skipping GPIO tally write for alerting device:`, bundle.id);
+            return;
+        }
+        
+        this._setGpio(key, bundle.data.state);
+    }
+
+    // TODO SEMI-REWRITE BELOW vvv
+
+    protected _sendDeviceAlert(bundle: DeviceAlertBundle): void {
+        const key = DeviceTools.toKey(bundle.id);
+        const device = this._devices.get(key);
+
+        if (!device) {
+            this._logger.debug(`Attempted to set alert for unknown device, skipping:`, bundle.id);
+            return;
+        }
+
+        const action = bundle.data.alert.action;
+        const timeout = bundle.data.alert.timeout ?? 0;
+
+        if (bundle.data.alert.action === DeviceAlertAction.CLEAR) {
+            this._clearDeviceAlert(key, true);
+            return;
+        }
+
+        const alertConfig = ALERT_PATTERNS[action];
+
+        if (!alertConfig) {
+            this._logger.warn(`Unsupported alert type for GPIO: ${bundle.data.alert.action}`); // TODO: Make an option to flatten states, mapping impossible states onto other states.
+            return;
+        }
+        
+        this._clearDeviceAlert(key, false);
+        
+        const alertToken = Symbol("gpio-alert");
+        let stepIndex = 0;
+        const tick = () => {
+            const runtime = this._activeAlerts.get(key);
+            
+            // Ignore stale timer callbacks from a previous alert lifecycle.
+            if (!runtime || runtime.token !== alertToken) {
+                return;
+            }
+            
+            const patternValue = alertConfig.pattern[stepIndex];
+            const currentDeviceState = this._devices.get(key)?.state ?? TallyState.NONE; // TODO Add map tracking state.
+            const state = patternValue === null ? currentDeviceState : patternValue;
+            this._setGpio(key, state);
+            stepIndex = (stepIndex + 1) % alertConfig.pattern.length;
+        };
+        
+        const intervalHandle = setInterval(tick, alertConfig.speedMs);
+        const timeoutHandle = timeout > 0
+        ? setTimeout(() => {
+            const runtime = this._activeAlerts.get(key);
+            if (!runtime || runtime.token !== alertToken) {
+                return;
+            }
+            this._clearDeviceAlert(key, true);
+            this._logger.debug(`Alert timeout reached for device:`, key);
+        }, timeout)
+        : null;
+        
+        this._activeAlerts.set(key, {
+            action,
+            token: alertToken,
+            intervalHandle,
+            timeoutHandle,
+        });
+        
+        tick();
+        
+        this._logger.debug(`Set alert ${DeviceAlertAction[action]} for device:`, key, `timeout:`, timeout);
+
+    }
     
+    // TODO: Rewrite below VV
+
     setDeviceAlert(address: DeviceAddress, type: DeviceAlertState, target: DeviceAlertTarget, time: number): void {
         
         const key = GlobalDeviceTools.create(address.consumer, address.device);
@@ -395,4 +465,5 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
             }
         }
     }
+    this._logger.debug(`Cleared alert for device:`, bundle.id);
 }
