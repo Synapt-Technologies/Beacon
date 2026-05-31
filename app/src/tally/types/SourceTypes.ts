@@ -186,12 +186,11 @@ export abstract class BusTools {
   }
 
   static busDefaultLogic(info: SourceBusInfo): BusLogicConfig {
-
     return {
       state: TallyState.NONE,
       enabled: false,
       ...info.defaultLogic,
-    }
+    };
   }
 
   static groupInfoFromState(state: SourceBusGroupState): SourceBusGroupInfo {

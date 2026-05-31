@@ -27,7 +27,6 @@ src/admin/
 src/database/
 src/logging/
 src/system/
-src/tally/consumer/networkConsumer/
 src/tally/consumer/hardwareConsumer/
 src/tally/TallyFactory.ts
 src/tally/TallyLifecycle.ts

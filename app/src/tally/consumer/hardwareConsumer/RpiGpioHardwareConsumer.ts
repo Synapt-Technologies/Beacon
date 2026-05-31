@@ -464,6 +464,6 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
                 }
             }
         }
+        this._logger.debug(`Cleared alert for device:`, bundle.id);
     }
-    this._logger.debug(`Cleared alert for device:`, bundle.id);
 }

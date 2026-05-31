@@ -144,7 +144,8 @@ export abstract class AbstractConsumer<
     this._logger.debug(`Info updated.`);
   }
 
-  protected _globalDeviceRuntimeConfig: GlobalDeviceRuntimeConfig = defaultGlobalDeviceRuntimeConfig();
+  protected _globalDeviceRuntimeConfig: GlobalDeviceRuntimeConfig =
+    defaultGlobalDeviceRuntimeConfig();
 
   getGlobalDeviceRuntimeConfig(): GlobalDeviceRuntimeConfig {
     return this._globalDeviceRuntimeConfig;
@@ -152,10 +153,15 @@ export abstract class AbstractConsumer<
 
   setGlobalDeviceRuntimeConfig(config: GlobalDeviceRuntimeConfig): void {
     this._globalDeviceRuntimeConfig = config;
-    this._logger.debug(`Global device runtime config updated:`, this._globalDeviceRuntimeConfig);
+    this._logger.debug(
+      `Global device runtime config updated:`,
+      this._globalDeviceRuntimeConfig,
+    );
     for (const device of this._devices.values()) {
       try {
-        this._sendDeviceRuntimeConfig(device.toRuntimeConfigBundle(this._globalDeviceRuntimeConfig));
+        this._sendDeviceRuntimeConfig(
+          device.toRuntimeConfigBundle(this._globalDeviceRuntimeConfig),
+        );
       } catch (error) {
         this._logger.error(
           `Error sending runtime config for device ${device.toKey()}:`,
@@ -297,7 +303,9 @@ export abstract class AbstractConsumer<
     }
 
     try {
-      this._sendDeviceRuntimeConfig(device.toRuntimeConfigBundle(this._globalDeviceRuntimeConfig));
+      this._sendDeviceRuntimeConfig(
+        device.toRuntimeConfigBundle(this._globalDeviceRuntimeConfig),
+      );
     } catch (error) {
       this._logger.error(
         `Error sending runtime config for device ${key}:`,
@@ -307,7 +315,7 @@ export abstract class AbstractConsumer<
   }
 
   protected abstract _sendDeviceRuntimeConfig(
-    bundle: DeviceRuntimeConfigBundle
+    bundle: DeviceRuntimeConfigBundle,
   ): void;
 
   protected _processDeviceDiscovery(message: DeviceDiscoveryMessage): void {
@@ -320,12 +328,15 @@ export abstract class AbstractConsumer<
 
     this._addDevice(newDevice);
 
-    this._sendDiscoveryReply(newDevice.id.device, newDevice.toDiscoveryReplyMessage());
+    this._sendDiscoveryReply(
+      newDevice.id.device,
+      newDevice.toDiscoveryReplyMessage(),
+    );
   }
 
   protected abstract _sendDiscoveryReply(
     id: DeviceId,
-    message: DeviceDiscoveryReplyMessage
+    message: DeviceDiscoveryReplyMessage,
   ): void;
 
   protected _processDeviceTelemetry(bundle: DeviceTelemetryBundle): void {

@@ -32,7 +32,6 @@ export interface GlobalDeviceRuntimeConfig {
   state_on_disconnect: TallyState;
 }
 
-
 //? Info about the device (and its capabilities). Doesn't change a lot.
 export interface DeviceInfo {
   label?: string; // Name defined in the device, used to differentiate.
@@ -157,7 +156,8 @@ export interface DeviceTelemetryPackage extends BaseDevicePackage {
 }
 export type DeviceStateBundle = DeviceBundle<DeviceStatePackage>;
 export type DeviceAlertBundle = DeviceBundle<DeviceAlertPackage>;
-export type DeviceRuntimeConfigBundle = DeviceBundle<DeviceRuntimeConfigPackage>;
+export type DeviceRuntimeConfigBundle =
+  DeviceBundle<DeviceRuntimeConfigPackage>;
 export type DeviceTelemetryBundle = DeviceBundle<DeviceTelemetryPackage>;
 
 //? Device Messages are for duplex communication, directly aimed at devices. E.g. discovery (topic negotiation). Before a device has a ConsumerId.
@@ -172,9 +172,10 @@ export interface DeviceDiscoveryReplyMessage {
 }
 
 //? Device tools and DTOs
-export const defaultGlobalDeviceRuntimeConfig = (): GlobalDeviceRuntimeConfig => ({
-  state_on_disconnect: TallyState.WARNING,
-});
+export const defaultGlobalDeviceRuntimeConfig =
+  (): GlobalDeviceRuntimeConfig => ({
+    state_on_disconnect: TallyState.WARNING,
+  });
 
 const defaultTallyDevice = (): Omit<TallyDevice, "id"> => ({
   info: {
@@ -268,7 +269,9 @@ export class TallyDeviceDto implements TallyDevice {
     };
   }
 
-  toRuntimeConfigBundle(global: GlobalDeviceRuntimeConfig): DeviceRuntimeConfigBundle {
+  toRuntimeConfigBundle(
+    global: GlobalDeviceRuntimeConfig,
+  ): DeviceRuntimeConfigBundle {
     return this.toBundle({
       runtime: this.runtime,
       global: global,
@@ -290,7 +293,10 @@ export abstract class DeviceTools {
     return { consumer, device: deviceParts.join(":") };
   }
 
-  static buildDeviceStateBundle(address: DeviceAddress, state: DeviceStatePackage): DeviceStateBundle {
+  static buildDeviceStateBundle(
+    address: DeviceAddress,
+    state: DeviceStatePackage,
+  ): DeviceStateBundle {
     return {
       id: address,
       moment: Date.now(),
@@ -298,7 +304,10 @@ export abstract class DeviceTools {
     };
   }
 
-  static buildDeviceAlertBundle(address: DeviceAddress, alert: DeviceAlertPackage): DeviceAlertBundle {
+  static buildDeviceAlertBundle(
+    address: DeviceAddress,
+    alert: DeviceAlertPackage,
+  ): DeviceAlertBundle {
     return {
       id: address,
       moment: Date.now(),
