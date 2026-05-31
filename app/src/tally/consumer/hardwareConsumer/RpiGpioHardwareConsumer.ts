@@ -137,10 +137,10 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
     }
   }
 
-  protected _gpioMap: Map<DeviceId, GpioTallyOutput> = new Map();
-  protected _gpioCache: Map<DeviceId, TallyState> = new Map();
-  protected _deviceCache: Map<DeviceId, TallyState> = new Map();
-  protected _activeAlerts: Map<DeviceId, DeviceAlertRuntime> = new Map();
+  protected _gpioMap: Map<DeviceKey, GpioTallyOutput> = new Map();
+  protected _gpioCache: Map<DeviceKey, TallyState> = new Map();
+  protected _deviceCache: Map<DeviceKey, TallyState> = new Map();
+  protected _activeAlerts: Map<DeviceKey, DeviceAlertRuntime> = new Map();
 
   async _init(): Promise<void> {
     if (
@@ -220,7 +220,7 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
 
   async _destroy(): Promise<void> {
     this._activeAlerts.forEach((_runtime, key) => {
-      this.clearDeviceAlert(key, false);
+      this._clearDeviceAlert(key, false);
     });
 
     this._gpioMap.forEach((output) => {
@@ -243,7 +243,7 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
     }
   }
 
-  private _setGpio(key: string, state: TallyState): boolean {
+  private _setGpio(key: DeviceKey, state: TallyState): boolean {
     const output = this._gpioMap.get(key);
 
     if (!output) {
@@ -268,6 +268,7 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
 
     // output.program.pwmWrite(128); // TODO
 
+    // TODO: Make an option to flatten states, mapping impossible states onto other states.
     try {
       switch (state) {
         case TallyState.PROGRAM:
@@ -327,8 +328,6 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
     this._setGpio(key, bundle.data.state);
   }
 
-  // TODO SEMI-REWRITE BELOW vvv
-
   protected _sendDeviceAlert(bundle: DeviceAlertBundle): void {
     const key = DeviceTools.toKey(bundle.id);
     const device = this._devices.get(key);
@@ -354,7 +353,7 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
     if (!alertConfig) {
       this._logger.warn(
         `Unsupported alert type for GPIO: ${bundle.data.alert.action}`,
-      ); // TODO: Make an option to flatten states, mapping impossible states onto other states.
+      );
       return;
     }
 
@@ -407,7 +406,6 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
     );
   }
 
-  // TODO: Rewrite below VV
   private _getCachedDeviceState(key: DeviceKey): TallyState {
     return this._deviceCache.get(key) ?? TallyState.NONE;
   }
