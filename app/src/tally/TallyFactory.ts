@@ -1,8 +1,11 @@
-import { AtemNetClientTallyProducer } from "./producer/networkProducer/AtemNetClientTallyProducer";
-import { AedesNetworkConsumer } from "./consumer/networkConsumer/AedesNetworkConsumer";
+import type { AbstractConsumer } from "./consumer/AbstractConsumer";
 import { RpiGpioHardwareConsumer } from "./consumer/hardwareConsumer/RpiGpioHardwareConsumer";
-import type { AbstractTallyProducer, ProducerConfig } from "./producer/tallyProducer/AbstractTallyProducer";
-import type { AbstractConsumer, ConsumerConfig } from "./consumer/AbstractConsumer";
+import { AedesNetServerConsumer } from "./consumer/networkConsumer/AedesNetworkConsumer";
+import type { AbstractTallyProducer } from "./producer/tallyProducer/AbstractTallyProducer";
+import { AtemNetClientTallyProducer } from "./producer/tallyProducer/networkProducer/AtemNetClientTallyProducer";
+import type { ConsumerConfig } from "./types/ConsumerTypes";
+import type { ProducerConfig } from "./types/ProducerTypes";
+
 
 export class TallyFactory {
 
@@ -17,8 +20,8 @@ export class TallyFactory {
 
     public static createConsumer(className: string, config: ConsumerConfig): AbstractConsumer {
         switch (className) {
-            case 'AedesNetworkConsumer':
-                return new AedesNetworkConsumer(config);
+            case 'AedesNetServerConsumer':
+                return new AedesNetServerConsumer(config);
             case 'RpiGpioHardwareConsumer':
                 return new RpiGpioHardwareConsumer(config);
             default:

@@ -84,7 +84,7 @@ export class TallyLifecycle {
         orchestrator: {} as Partial<OrchestratorConfig>,
         consumers: {
             aedes: {
-                factory: (config: AedesConsumerConfig) => TallyFactory.createConsumer('AedesNetworkConsumer', config),
+                factory: (config: AedesConsumerConfig) => TallyFactory.createConsumer('AedesNetServerConsumer', config),
                 isAvailable: () => true,
                 isDisableable: () => false,
                 enabled: true,
