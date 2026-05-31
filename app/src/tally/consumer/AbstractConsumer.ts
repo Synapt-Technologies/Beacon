@@ -320,9 +320,7 @@ export abstract class AbstractConsumer<
 
   // NO-OP, not all consumers support discovery.
   // TODO: Move to an interface? NetServerConsumer? Abstract?
-  protected _sendDeviceRuntimeConfig(
-    bundle: DeviceRuntimeConfigBundle,
-  ): void {}
+  protected _sendDeviceRuntimeConfig(bundle: DeviceRuntimeConfigBundle): void {}
 
   // TODO: Not all consumers have discovery. Add the bottom two functions to an interface?
   protected _processDeviceDiscovery(message: DeviceDiscoveryMessage): void {
@@ -346,7 +344,7 @@ export abstract class AbstractConsumer<
   protected _sendDiscoveryReply(
     id: DeviceId,
     message: DeviceDiscoveryReplyMessage,
-  ) {};
+  ) {}
 
   protected _processDeviceTelemetry(bundle: DeviceTelemetryBundle): void {
     this._logger.debug(
