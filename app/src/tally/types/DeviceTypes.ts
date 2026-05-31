@@ -314,4 +314,16 @@ export abstract class DeviceTools {
       data: alert,
     };
   }
+
+  static areRuntimeConfigsEqual(
+    a: DeviceRuntimeConfig,
+    b: DeviceRuntimeConfig,
+  ): boolean {
+    return (
+      a.name.long === b.name.long &&
+      a.name.short === b.name.short &&
+      a.brightness === b.brightness &&
+      a.flip === b.flip
+    );
+  }
 }
