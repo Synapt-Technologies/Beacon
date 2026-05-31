@@ -35,8 +35,8 @@ export type ConsumerEvents = {
   device_removed: [address: DeviceAddress];
 };
 /*
-- New device discovery       -> addDevice               -> _addDevice           -> *device_discovery*   -> send discovery reply
-- Existing device discovery  -> addDevice               -> _addDevice           -> *device_update*      -> send discovery reply
+- New device discovery       -> addDevice               -> _addDevice           -> _initDevice          -> *device_discovery*   -> send discovery reply
+- Existing device discovery  -> addDevice               -> _addDevice           -> _initDevice          -> *device_update*      -> send discovery reply
 - Received device telemetry  -> _processDeviceTelemetry -> *device_telemetry*
 - Device removed             -> deleteDevice            -> _deleteDevice        -> *device_removed*
 */
@@ -100,8 +100,8 @@ export abstract class AbstractConsumer<
 
     const storedDevices = this._store.loadDevices();
     if (storedDevices.size > 0) {
-      for (const [key, device] of storedDevices) {
-        this._devices.set(key, new TallyDeviceDto(device));
+      for (const [_key, device] of storedDevices) {
+        this._addDevice(new TallyDeviceDto(device));
       }
       this._info.device_count = this._devices.size;
       this._logger.debug(`Loaded ${storedDevices.size} stored device(s).`);
@@ -221,10 +221,7 @@ export abstract class AbstractConsumer<
       }
     }
 
-    this._saveDevice(newDevice);
-    this._addDevice(newDevice, override);
-
-    this.applyDeviceRuntimeConfig(newDevice.id, newDevice.runtime);
+    this._addDevice(newDevice);
 
     if (existing) {
       (this as EventEmitter<ConsumerEvents>).emit("device_update", newDevice);
@@ -237,8 +234,15 @@ export abstract class AbstractConsumer<
     }
   }
 
+  protected _addDevice(device: TallyDeviceDto): void {
+    this._saveDevice(device);
+    this._initDevice(device);
+
+    this.applyDeviceRuntimeConfig(device.id, device.runtime);
+  }
+
   // TODO: Check function fields.
-  protected _addDevice(newDevice: TallyDeviceDto, override: boolean = false) {}
+  protected _initDevice(newDevice: TallyDeviceDto) {}
 
   sendDeviceState(address: DeviceAddress, pckg: DeviceStatePackage): void {
     const key = DeviceTools.toKey(address);
@@ -288,7 +292,7 @@ export abstract class AbstractConsumer<
       return;
     }
 
-    if (device.runtime !== runtime) {
+    if (!DeviceTools.areRuntimeConfigsEqual(device.runtime, runtime)) {
       this._logger.debug(
         `Storing new config for device ${key}. change:`,
         device.runtime,

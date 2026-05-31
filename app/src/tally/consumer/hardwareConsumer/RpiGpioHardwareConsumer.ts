@@ -213,7 +213,7 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
     }
   }
 
-  protected _addDevice(newDevice: TallyDeviceDto, override?: boolean): void {
+  protected _initDevice(newDevice: TallyDeviceDto): void {
     const key = newDevice.toKey();
     this._deviceCache.set(key, TallyState.NONE);
   }
