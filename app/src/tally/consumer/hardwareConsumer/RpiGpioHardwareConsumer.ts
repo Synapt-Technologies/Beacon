@@ -130,7 +130,8 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
     }
 
     protected _gpioMap: Map<DeviceId, GpioTallyOutput> = new Map();
-    protected _stateCache: Map<DeviceId, TallyState> = new Map();
+    protected _gpioCache: Map<DeviceId, TallyState> = new Map();
+    protected _deviceCache: Map<DeviceId, TallyState> = new Map();
     protected _activeAlerts: Map<DeviceId, DeviceAlertRuntime> = new Map();
 
     async _init(): Promise<void> {
@@ -177,7 +178,8 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
                         },
                     });
                     
-                    this._addDevice(newDevice)
+                    this.addDevice(newDevice)
+                    this._logger.info(`Added new GPIO device with address ${key} and pins PRGM:${pins.program} / PRVW:${pins.preview}`);
                 }
                 
             }
@@ -193,6 +195,11 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
             this._info.state = ConnectionState.FAILED;
             this._logger.error("Failed initialising GPIO. Error:", e);
         }
+    }
+
+    protected _addDevice(newDevice: TallyDeviceDto, override?: boolean): void {
+        const key = newDevice.toKey();
+        this._deviceCache.set(key, TallyState.NONE);
     }
     
     async _destroy(): Promise<void> {
@@ -232,7 +239,7 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
             return false;
         }
         
-        if (this._stateCache.get(key) === state) {
+        if (this._gpioCache.get(key) === state) {
             this._logger.debug(`Skipping GPIO write for device (state unchanged):`, key, "State:", state);
             return true;
         }
@@ -267,7 +274,7 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
             return false;
         }
         
-        this._stateCache.set(key, state);
+        this._gpioCache.set(key, state);
         this._logger.debug(`Set GPIO for state ${state}:`, output);
         return true;
     }
