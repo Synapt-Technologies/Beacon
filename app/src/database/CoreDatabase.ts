@@ -41,6 +41,7 @@ type SettingType<K extends string, T = SettingMap> =
 
         
 // TODO add more try catch.
+// TODO: Add type validation like with Zod.
 export class CoreDatabase {
     private static instance: CoreDatabase | undefined;
     private db: Database.Database;

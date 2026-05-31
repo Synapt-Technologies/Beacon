@@ -8,6 +8,8 @@ If you are compiling the image on windows, you must use WSL.
 
 ## TODO
 - [ ] CLASS REBUILD:
+  - [ ] Add type validation like Zod. Use it for API and DB Validation.
+    - [ ] Maybe do Drizzle ORM for db validation and Zod for API with the drizzle-zod package?
   - [x] Rework buss structure to support more than only program preview.
   - [ ] Add AbstractConnection that is implemented by AbstractTallyProducer and AbstractConsumer that contains the base fields like config(id name), its getters setters and validation.
 

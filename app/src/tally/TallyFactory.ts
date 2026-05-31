@@ -38,6 +38,7 @@ export class TallyFactory {
         return new (consumerRegistry[className] as new (c: ConsumerConfigMap[K]) => AbstractConsumer)(config);
     }
 
+    // TODO: Add type validation like Zod and remove this.
     public static createConsumerFromString(
         className: string,
         config: Record<string, unknown>,
@@ -55,6 +56,7 @@ export class TallyFactory {
         return new (producerRegistry[className] as new (c: ProducerConfigMap[K]) => AbstractTallyProducer)(config);
     }
 
+    // TODO: Add type validation like Zod and remove this.
     public static createProducerFromString(
         className: string,
         config: Record<string, unknown>,

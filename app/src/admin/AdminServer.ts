@@ -35,6 +35,7 @@ export interface AdminMutationHandlers {
     importConfig:       (config: LifecycleConfig) => Promise<void>
 }
 
+// TODO: Add type validation like with Zod.
 export class AdminServer {
 
     private app = express();
