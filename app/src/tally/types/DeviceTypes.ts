@@ -1,6 +1,6 @@
 import { TallyState, type DisplayName } from "./CommonTypes";
 import type { ConsumerId } from "./ConsumerTypes";
-import { LogicFactory, type PatchNode } from "./LogicTypes";
+import { LogicFactory, type LogicNode } from "./LogicTypes";
 import type { SourceMap } from "./SourceTypes";
 
 export type DeviceId = string;
@@ -62,7 +62,7 @@ export interface MinimalTallyDevice extends BaseTallyDevice {
 }
 
 export interface StoredTallyDevice extends MinimalTallyDevice {
-  logic: PatchNode;
+  logic: LogicNode;
   runtime: DeviceRuntimeConfig;
 }
 
@@ -195,7 +195,7 @@ const defaultTallyDevice = (): Omit<TallyDevice, "id"> => ({
 export class TallyDeviceDto implements TallyDevice {
   id: DeviceAddress;
   info: DeviceInfo;
-  logic: PatchNode;
+  logic: LogicNode;
   runtime: DeviceRuntimeConfig;
   telemetry?: DeviceTelemetry;
 

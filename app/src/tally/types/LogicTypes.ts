@@ -24,7 +24,7 @@ export interface AndNode {
   nodes: PatchNode[];
 }
 
-export type PatchNode = SimpleBusNode | OrNode | AndNode;
+export type LogicNode = SimpleBusNode | OrNode | AndNode | NotNode | XorNode | BooleanNode | SourceListContainsNode;
 
 export abstract class LogicFactory {
   static createSimpleBusNode(
