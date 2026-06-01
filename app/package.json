@@ -29,6 +29,7 @@
     "@types/react-dom": "^19.2.3",
     "@types/ws": "^8.5.14",
     "@vitejs/plugin-react": "^6.0.1",
+    "drizzle-kit": "^0.31.10",
     "eslint": "^10.4.0",
     "eslint-plugin-react-hooks": "^7.1.1",
     "prettier": "^3.8.3",
@@ -40,9 +41,11 @@
     "vite": "^8.0.7"
   },
   "dependencies": {
+    "@libsql/client": "^0.17.3",
     "aedes": "^1.0.1",
     "atem-connection": "^3.9.0",
     "better-sqlite3": "^12.10.0",
+    "drizzle-orm": "^0.45.2",
     "express": "^5.2.1",
     "less": "^4.6.4",
     "mqtt": "^5.10.4",
@@ -54,7 +57,8 @@
     "tsx": "^4.21.0",
     "vite-express": "^0.22.1",
     "web-haptics": "^0.0.6",
-    "ws": "^8.18.3"
+    "ws": "^8.18.3",
+    "zod": "^4.4.3"
   },
   "optionalDependencies": {
     "pigpio": "^3.3.1"
