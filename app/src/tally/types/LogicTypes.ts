@@ -42,8 +42,8 @@ export type ComparisonOperator = ">" | "<" | ">=" | "<=" | "==" | "!=";
 export interface NumericComparisonNode {
   readonly type: "NumericComparisonNode";
   readonly operator: ComparisonOperator;
-  readonly left: NumericLogicNodes;
-  readonly right: NumericLogicNodes;
+  readonly left: NumericLogicNodes | null;
+  readonly right: NumericLogicNodes | null;
 }
 
 export type ContainsAction = "any" | "all";
@@ -66,8 +66,8 @@ export type NumericSelectorAction = "max" | "min" | "avg" | "sum";
 
 export interface NumericSelectorNode {
   readonly type: "NumericSelectorNode";
-  readonly nodes: NumericLogicNodes[];
   readonly operator: NumericSelectorAction;
+  readonly nodes: NumericLogicNodes[];
 }
 
 export type NumericComputationAction = "+" | "-" | "*" | "/" | "%" | "^";
@@ -75,8 +75,8 @@ export type NumericComputationAction = "+" | "-" | "*" | "/" | "%" | "^";
 export interface NumericComputationNode {
   readonly type: "NumericComputationNode";
   readonly operator: NumericComputationAction;
-  readonly left: NumericLogicNodes;
-  readonly right: NumericLogicNodes;
+  readonly left: NumericLogicNodes | null;
+  readonly right: NumericLogicNodes | null;
 }
 
 //? List nodes
@@ -134,124 +134,29 @@ export namespace LogicFactory {
     };
   }
 
-  export function createBooleanLogicNode(
-    operator: ListPropositionOperator,
-    nodes: BooleanLogicNodes[] = []
-  ): BooleanLogicNode {
-    return {
-      type: "BooleanLogicNode",
-      operator,
-      nodes,
-    };
-  }
-
-  export function createBooleanValueNode(state: boolean = false): BooleanValueNode {
-    return {
-      type: "BooleanValueNode",
-      state: state,
-    };
-  }
-
-  export function createNumericComparisonNode(
-    operator: ComparisonOperator = "==",
-    left: NumericLogicNodes,
-    right: NumericLogicNodes,
-  ): NumericComparisonNode {
-    return {
-      type: "NumericComparisonNode",
-      operator,
-      left,
-      right,
-    };
-  }
-
-  export function createListContainsNode(
-    mode: ContainsAction = "any",
-    haystack: ListItem[] = [],
-    needles: ListItem[] = [],
-  ): ListContainsNode {
-    return {
-      type: "ListContainsNode",
-      mode,
-      haystack,
-      needles,
-    };
-  }
-
-  export function createNumericValueNode(value: number = 0): NumericValueNode {
-    return {
-      type: "NumericValueNode",
-      value: value,
-    };
-  }
-
-  export function createNumericSelectorNode(
-    nodes: NumericLogicNodes[] = [],
-    operator: NumericSelectorAction = "max",
-  ): NumericSelectorNode {
-    return {
-      type: "NumericSelectorNode",
-      nodes,
-      operator,
-    };
-  }
-
-  export function createNumericComputationNode(
-    operator: NumericComputationAction = "+",
-    left: NumericLogicNodes,
-    right: NumericLogicNodes,
-  ): NumericComputationNode {
-    return {
-      type: "NumericComputationNode",
-      operator,
-      left,
-      right,
-    };
-  }
-
-  export function createTallyStateMapNode(
-    options: { state: TallyState; condition: BooleanLogicNodes }[] = [],
-  ): TallyStateMapNode {
-    return {
-      type: "TallyStateMapNode",
-      options,
-    };
-  }
-
   const DEFAULT_TALLY_STATE_ORDER: TallyState[] = Object.values(TallyState)
   .filter((v): v is TallyState => typeof v === "number")
   .sort((a, b) => b - a);
 
-  export function createTallyStatePriorityNode(
-    priority: TallyState[] = DEFAULT_TALLY_STATE_ORDER,
-    nodes: TallyStateLogicNodes[],
-  ): TallyStatePriorityNode {
-    return {
-      type: "TallyStatePriorityNode",
-      priority,
-      nodes,
-    };
+  type NodeProps<K extends LogicNode["type"]> = Omit<Extract<LogicNode, { type: K }>, "type">;
+  
+  const NODE_DEFAULTS: { [K in LogicNode["type"]]: NodeProps<K> } = {
+    SimpleBusNode:           { sources: [] },
+    BooleanLogicNode:        { operator: "and", nodes: [] },
+    BooleanValueNode:        { state: false },
+    NumericComparisonNode:   { operator: "==", left: null, right: null },
+    ListContainsNode:        { mode: "any", haystack: [], needles: [] },
+    NumericValueNode:        { value: 0 },
+    NumericSelectorNode:     { operator: "max", nodes: [] },
+    NumericComputationNode:  { operator: "+", left: null, right: null },
+    TallyStateMapNode:       { options: [] },
+    TallyStatePriorityNode:  { priority: DEFAULT_TALLY_STATE_ORDER, nodes: [] },
+  };
+
+  export function create<K extends LogicNode["type"]>(
+    type: K,
+    props: Partial<NodeProps<K>> = {},
+  ): Extract<LogicNode, { type: K }> {
+    return { ...structuredClone(NODE_DEFAULTS[type]), ...props, type } as unknown as Extract<LogicNode, { type: K }>;
   }
 }
-
-
-// TODO: Check if the following code is better:
-// type NodeProps<K extends LogicNode["type"]> = Omit<Extract<LogicNode, { type: K }>, "type">;
-
-// const NODE_DEFAULTS: { [K in LogicNode["type"]]?: Partial<NodeProps<K>> } = {
-//   OrNode:                  { nodes: [] },
-//   AndNode:                 { nodes: [] },
-//   XorNode:                 { nodes: [] },
-//   SimpleBusNode:           { sources: [] },
-//   BooleanNode:             { state: false },
-//   SourceListContainsNode:  { sources: [], targets: [], mode: "any" },
-// };
-
-// export namespace LogicFactory {
-//   export function create<K extends LogicNode["type"]>(
-//     type: K,
-//     props: Partial<NodeProps<K>> = {},
-//   ): Extract<LogicNode, { type: K }> {
-//     return { ...(NODE_DEFAULTS[type] ?? {}), ...props, type } as Extract<LogicNode, { type: K }>;
-//   }
-// }
