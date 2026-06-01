@@ -27,7 +27,7 @@ export type ListPropositionOperator = "or" | "and" | "xor" | "nor" | "nand" | "x
 export interface BooleanLogicNode {
   readonly type: "BooleanLogicNode";
   readonly operator: ListPropositionOperator;
-  readonly nodes: LogicNode[];
+  readonly nodes: BooleanLogicNodes[];
 }
 
 
@@ -42,17 +42,17 @@ export type ComparisonOperator = ">" | "<" | ">=" | "<=" | "==" | "!=";
 export interface NumericComparisonNode {
   readonly type: "NumericComparisonNode";
   readonly operator: ComparisonOperator;
-  readonly left: LogicNode;
-  readonly right: LogicNode;
+  readonly left: NumericLogicNodes;
+  readonly right: NumericLogicNodes;
 }
 
 export type ContainsAction = "any" | "all";
 
-export interface SourceListContainsNode {
-  readonly type: "SourceListContainsNode";
+export interface ListContainsNode {
+  readonly type: "ListContainsNode";
   readonly mode: ContainsAction;
-  readonly sources: GlobalSourceAddress[];
-  readonly targets: GlobalSourceAddress[];
+  readonly haystack: ListItem[];
+  readonly needles: ListItem[];
 }
 
 //? Numeric nodes
@@ -66,7 +66,7 @@ export type NumericSelectorAction = "max" | "min" | "avg" | "sum";
 
 export interface NumericSelectorNode {
   readonly type: "NumericSelectorNode";
-  readonly nodes: LogicNode[];
+  readonly nodes: NumericLogicNodes[];
   readonly operator: NumericSelectorAction;
 }
 
@@ -75,8 +75,8 @@ export type NumericComputationAction = "+" | "-" | "*" | "/" | "%" | "^";
 export interface NumericComputationNode {
   readonly type: "NumericComputationNode";
   readonly operator: NumericComputationAction;
-  readonly left: LogicNode;
-  readonly right: LogicNode;
+  readonly left: NumericLogicNodes;
+  readonly right: NumericLogicNodes;
 }
 
 //? List nodes
@@ -85,14 +85,14 @@ export interface NumericComputationNode {
 
 //? TallyState nodes
 export interface TallyStateMapNode {
-  readonly type: "TallyStateSelectorNode";
-  readonly options : { state: TallyState; condition: LogicNode }[];
+  readonly type: "TallyStateMapNode";
+  readonly options : { state: TallyState; condition: BooleanLogicNodes }[];
 }
 
 export interface TallyStatePriorityNode {
   readonly type: "TallyStatePriorityNode";
   readonly priority: TallyState[]; // High to low priority. First matching state is output.
-  readonly nodes: LogicNode[];
+  readonly nodes: TallyStateLogicNodes[];
 }
 
 
@@ -115,11 +115,11 @@ export interface TallyStatePriorityNode {
 export type ListItem = GlobalSourceAddress | string | number;
 
 
-export type BooleanLogicNodes = BooleanLogicNode | BooleanValueNode | NumericComparisonNode | SourceListContainsNode;
+export type BooleanLogicNodes = BooleanLogicNode | BooleanValueNode | NumericComparisonNode | ListContainsNode;
 export type NumericLogicNodes =  NumericValueNode | NumericSelectorNode | NumericComputationNode;
 // export type StringLogicNode = StringListNode;
 // export type ListLogicNode;
-export type TallyStateLogicNodes = SimpleBusNode;
+export type TallyStateLogicNodes = SimpleBusNode | TallyStateMapNode | TallyStatePriorityNode;
 export type LogicNode = TallyStateLogicNodes | BooleanLogicNodes | NumericLogicNodes;
 
 // TODO: Generic constructor create function?
@@ -136,7 +136,7 @@ export namespace LogicFactory {
 
   export function createBooleanLogicNode(
     operator: ListPropositionOperator,
-    nodes: LogicNode[] = []
+    nodes: BooleanLogicNodes[] = []
   ): BooleanLogicNode {
     return {
       type: "BooleanLogicNode",
@@ -154,8 +154,8 @@ export namespace LogicFactory {
 
   export function createNumericComparisonNode(
     operator: ComparisonOperator = "==",
-    left: LogicNode,
-    right: LogicNode,
+    left: NumericLogicNodes,
+    right: NumericLogicNodes,
   ): NumericComparisonNode {
     return {
       type: "NumericComparisonNode",
@@ -165,16 +165,16 @@ export namespace LogicFactory {
     };
   }
 
-  export function createSourceListContainsNode(
+  export function createListContainsNode(
     mode: ContainsAction = "any",
-    sources: GlobalSourceAddress[] = [],
-    targets: GlobalSourceAddress[] = [],
-  ): SourceListContainsNode {
+    haystack: ListItem[] = [],
+    needles: ListItem[] = [],
+  ): ListContainsNode {
     return {
-      type: "SourceListContainsNode",
+      type: "ListContainsNode",
       mode,
-      sources,
-      targets,
+      haystack,
+      needles,
     };
   }
 
@@ -186,7 +186,7 @@ export namespace LogicFactory {
   }
 
   export function createNumericSelectorNode(
-    nodes: LogicNode[] = [],
+    nodes: NumericLogicNodes[] = [],
     operator: NumericSelectorAction = "max",
   ): NumericSelectorNode {
     return {
@@ -198,8 +198,8 @@ export namespace LogicFactory {
 
   export function createNumericComputationNode(
     operator: NumericComputationAction = "+",
-    left: LogicNode,
-    right: LogicNode,
+    left: NumericLogicNodes,
+    right: NumericLogicNodes,
   ): NumericComputationNode {
     return {
       type: "NumericComputationNode",
@@ -210,10 +210,10 @@ export namespace LogicFactory {
   }
 
   export function createTallyStateMapNode(
-    options: { state: TallyState; condition: LogicNode }[] = [],
+    options: { state: TallyState; condition: BooleanLogicNodes }[] = [],
   ): TallyStateMapNode {
     return {
-      type: "TallyStateSelectorNode",
+      type: "TallyStateMapNode",
       options,
     };
   }
@@ -224,7 +224,7 @@ export namespace LogicFactory {
 
   export function createTallyStatePriorityNode(
     priority: TallyState[] = DEFAULT_TALLY_STATE_ORDER,
-    nodes: LogicNode[],
+    nodes: TallyStateLogicNodes[],
   ): TallyStatePriorityNode {
     return {
       type: "TallyStatePriorityNode",
