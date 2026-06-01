@@ -170,7 +170,6 @@ export type LogicNode =
   | NumericLogicNodes;
 
 // TODO: Generic constructor create function?
-// TODO: Convert all helper abstract class to namespaces with functions.
 export namespace LogicFactory {
   export function createSimpleBusNode(
     sources: GlobalSourceAddress[] = [],

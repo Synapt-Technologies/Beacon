@@ -12,9 +12,20 @@ If you are compiling the image on windows, you must use WSL.
     - [ ] Maybe do Drizzle ORM for db validation and Zod for API with the drizzle-zod package?
     - [ ] Add some sort of migration manager between beacon/db versions?
     - [ ] Add a failed devices (or whatever) output to the db/store to display in the ui?
+    - [ ] add ts-to-zod?
+      - [ ] Add github actions script to check if ts-to-zod succeded.
+    - [ ] Convert ui logic types with [zod-to-json-schema](https://www.npmjs.com/package/zod-to-json-schema) for auto logic builder type blocks gen?
+  - [ ] Add OpenApi
+    - [ ] Add [zod to openapi](https://www.npmjs.com/package/@asteasolutions/zod-to-openapi)?
   - [x] Rework buss structure to support more than only program preview.
   - [ ] Add AbstractConnection that is implemented by AbstractTallyProducer and AbstractConsumer that contains the base fields like config(id name), its getters setters and validation.
-  - [ ] Switch from abstract class to namespace for static helper function classes
+  - [ ] Switch from abstract class to export const for static helper function classes:
+        ```ts
+        export const LogicFactory = {
+          createSimpleBusNode(...) { ... },
+          create(...) { ... },
+        } as const;
+        ```
 
 
 - [ ] Device non-runtime config.
