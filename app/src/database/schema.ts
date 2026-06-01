@@ -1,11 +1,14 @@
 import { sqliteTable, text, integer, primaryKey } from 'drizzle-orm/sqlite-core';
+import type { ProducerConfig } from '../tally/types/ProducerTypes';
 
 export const producers = sqliteTable('producers', {
   id:      text('producer_id').primaryKey(),
   type:    text('type').notNull(),
-  config:  text('config').notNull(),   // JSON blob
+  config:  text('config').$type<ProducerConfig>().notNull(),  // JSON blob
   enabled: integer('enabled').notNull().default(1),
 });
+
+// TODO: config:  jsonColumn(ProducerConfigSchema)('config').notNull(), // validated on read
 
 export const producerInfo = sqliteTable('producer_info', {
   id:   text('producer_id').primaryKey(),
