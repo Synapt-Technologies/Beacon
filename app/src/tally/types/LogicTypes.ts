@@ -9,6 +9,8 @@ export interface TallyContext {
   disconnectedState: TallyState;
 }
 
+// TODO: Add Desugared Nodes?
+// TODO: Add a TallyDevice type that is the desugared/interpetted version of the tallydevice, that includes desugared logic nodes and for example a relevant sources (per bus) for quicker logic.
 
 //? Producing Nodes
 // TODO: Add a type with this? Or a field?
@@ -20,25 +22,14 @@ export interface SimpleBusNode { // TallyState Output
 
 
 // ? Boolean nodes
-export interface OrNode {
-  readonly type: "OrNode";
+export type ListPropositionOperator = "or" | "and" | "xor" | "nor" | "nand" | "xnor";
+
+export interface BooleanLogicNode {
+  readonly type: "BooleanLogicNode";
+  readonly operator: ListPropositionOperator;
   readonly nodes: LogicNode[];
 }
 
-export interface AndNode {
-  readonly type: "AndNode";
-  readonly nodes: LogicNode[];
-}
-
-export interface XorNode {
-  readonly type: "XorNode";
-  readonly nodes: LogicNode[];
-}
-
-export interface NotNode {
-  readonly type: "NotNode";
-  readonly node: LogicNode;
-}
 
 // User toggleable node for manually setting a state.
 export interface BooleanValueNode {
@@ -46,11 +37,11 @@ export interface BooleanValueNode {
   readonly state: boolean;
 }
 
-export type ComparisonAction = ">" | "<" | ">=" | "<=" | "==" | "!=";
+export type ComparisonOperator = ">" | "<" | ">=" | "<=" | "==" | "!=";
 
 export interface NumericComparisonNode {
   readonly type: "NumericComparisonNode";
-  readonly operator: ComparisonAction;
+  readonly operator: ComparisonOperator;
   readonly left: LogicNode;
   readonly right: LogicNode;
 }
@@ -110,12 +101,12 @@ export interface TallyStatePriorityNode {
 export type ListItem = GlobalSourceAddress | string | number;
 
 
-export type BooleanLogicNode = OrNode | AndNode | XorNode | NotNode | BooleanValueNode | NumericComparisonNode | SourceListContainsNode;
-export type NumericLogicNode =  NumericValueNode | NumericSelectorNode | NumericComputationNode;
+export type BooleanLogicNodes = BooleanLogicNode | BooleanValueNode | NumericComparisonNode | SourceListContainsNode;
+export type NumericLogicNodes =  NumericValueNode | NumericSelectorNode | NumericComputationNode;
 // export type StringLogicNode = StringListNode;
 // export type ListLogicNode;
-export type TallyStateLogicNode = SimpleBusNode;
-export type LogicNode = TallyStateLogicNode | BooleanLogicNode | NumericLogicNode;
+export type TallyStateLogicNodes = SimpleBusNode;
+export type LogicNode = TallyStateLogicNodes | BooleanLogicNodes | NumericLogicNodes;
 
 // TODO: Generic constructor create function?
 // TODO: Convert all helper abstract class to namespaces with functions.
@@ -129,31 +120,14 @@ export namespace LogicFactory {
     };
   }
 
-  export function createOrNode(nodes: LogicNode[] = []): OrNode {
+  export function createBooleanLogicNode(
+    operator: ListPropositionOperator,
+    nodes: LogicNode[] = []
+  ): BooleanLogicNode {
     return {
-      type: "OrNode",
-      nodes: nodes,
-    };
-  }
-
-  export function createAndNode(nodes: LogicNode[] = []): AndNode {
-    return {
-      type: "AndNode",
-      nodes: nodes,
-    };
-  }
-
-  export function createXorNode(nodes: LogicNode[] = []): XorNode {
-    return {
-      type: "XorNode",
-      nodes: nodes,
-    };
-  }
-
-  export function createNotNode(node: LogicNode): NotNode {
-    return {
-      type: "NotNode",
-      node: node,
+      type: "BooleanLogicNode",
+      operator,
+      nodes,
     };
   }
 
@@ -165,7 +139,7 @@ export namespace LogicFactory {
   }
 
   export function createNumericComparisonNode(
-    operator: ComparisonAction = "==",
+    operator: ComparisonOperator = "==",
     left: LogicNode,
     right: LogicNode,
   ): NumericComparisonNode {
