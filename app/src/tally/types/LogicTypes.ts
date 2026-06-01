@@ -15,21 +15,26 @@ export interface TallyContext {
 //? Producing Nodes
 // TODO: Add a type with this? Or a field?
 // Default. Uses the bus map.
-export interface SimpleBusNode { // TallyState Output
+export interface SimpleBusNode {
+  // TallyState Output
   readonly type: "SimpleBusNode";
   readonly sources: GlobalSourceAddress[];
 }
 
-
 // ? Boolean nodes
-export type ListPropositionOperator = "or" | "and" | "xor" | "nor" | "nand" | "xnor";
+export type ListPropositionOperator =
+  | "or"
+  | "and"
+  | "xor"
+  | "nor"
+  | "nand"
+  | "xnor";
 
 export interface BooleanLogicNode {
   readonly type: "BooleanLogicNode";
   readonly operator: ListPropositionOperator;
   readonly nodes: BooleanLogicNodes[];
 }
-
 
 // User toggleable node for manually setting a state.
 export interface BooleanValueNode {
@@ -89,7 +94,7 @@ export type ListItem = GlobalSourceAddress | string | number;
 //? TallyState nodes
 export interface TallyStateMapNode {
   readonly type: "TallyStateMapNode";
-  readonly options : { state: TallyState; condition: BooleanLogicNodes }[];
+  readonly options: { state: TallyState; condition: BooleanLogicNodes }[];
 }
 
 export interface TallyStatePriorityNode {
@@ -107,7 +112,6 @@ export interface TallyStatePriorityNode {
 // interface DeviceOutputSchema {
 //   readonly ports: ReadonlyArray<OutputPort>;
 // }
-
 
 //? Program nodes
 export interface LogicProgram {
@@ -151,14 +155,25 @@ export interface GetListReferenceNode {
   readonly id: ReferenceNodeId;
 }
 
-
-
-export type BooleanLogicNodes = BooleanLogicNode | BooleanValueNode | NumericComparisonNode | ListContainsNode;
-export type NumericLogicNodes =  NumericValueNode | NumericSelectorNode | NumericComputationNode;
+export type BooleanLogicNodes =
+  | BooleanLogicNode
+  | BooleanValueNode
+  | NumericComparisonNode
+  | ListContainsNode;
+export type NumericLogicNodes =
+  | NumericValueNode
+  | NumericSelectorNode
+  | NumericComputationNode;
 // export type StringLogicNode = StringListNode;
 // export type ListLogicNode;
-export type TallyStateLogicNodes = SimpleBusNode | TallyStateMapNode | TallyStatePriorityNode;
-export type LogicNode = TallyStateLogicNodes | BooleanLogicNodes | NumericLogicNodes;
+export type TallyStateLogicNodes =
+  | SimpleBusNode
+  | TallyStateMapNode
+  | TallyStatePriorityNode;
+export type LogicNode =
+  | TallyStateLogicNodes
+  | BooleanLogicNodes
+  | NumericLogicNodes;
 
 // TODO: Generic constructor create function?
 // TODO: Convert all helper abstract class to namespaces with functions.
@@ -173,28 +188,35 @@ export namespace LogicFactory {
   }
 
   const DEFAULT_TALLY_STATE_ORDER: TallyState[] = Object.values(TallyState)
-  .filter((v): v is TallyState => typeof v === "number")
-  .sort((a, b) => b - a);
+    .filter((v): v is TallyState => typeof v === "number")
+    .sort((a, b) => b - a);
 
-  type NodeProps<K extends LogicNode["type"]> = Omit<Extract<LogicNode, { type: K }>, "type">;
-  
+  type NodeProps<K extends LogicNode["type"]> = Omit<
+    Extract<LogicNode, { type: K }>,
+    "type"
+  >;
+
   const NODE_DEFAULTS: { [K in LogicNode["type"]]: NodeProps<K> } = {
-    SimpleBusNode:           { sources: [] },
-    BooleanLogicNode:        { operator: "and", nodes: [] },
-    BooleanValueNode:        { state: false },
-    NumericComparisonNode:   { operator: "==", left: null, right: null },
-    ListContainsNode:        { mode: "any", haystack: [], needles: [] },
-    NumericValueNode:        { value: 0 },
-    NumericSelectorNode:     { operator: "max", nodes: [] },
-    NumericComputationNode:  { operator: "+", left: null, right: null },
-    TallyStateMapNode:       { options: [] },
-    TallyStatePriorityNode:  { priority: DEFAULT_TALLY_STATE_ORDER, nodes: [] },
+    SimpleBusNode: { sources: [] },
+    BooleanLogicNode: { operator: "and", nodes: [] },
+    BooleanValueNode: { state: false },
+    NumericComparisonNode: { operator: "==", left: null, right: null },
+    ListContainsNode: { mode: "any", haystack: [], needles: [] },
+    NumericValueNode: { value: 0 },
+    NumericSelectorNode: { operator: "max", nodes: [] },
+    NumericComputationNode: { operator: "+", left: null, right: null },
+    TallyStateMapNode: { options: [] },
+    TallyStatePriorityNode: { priority: DEFAULT_TALLY_STATE_ORDER, nodes: [] },
   };
 
   export function create<K extends LogicNode["type"]>(
     type: K,
     props: Partial<NodeProps<K>> = {},
   ): Extract<LogicNode, { type: K }> {
-    return { ...structuredClone(NODE_DEFAULTS[type]), ...props, type } as unknown as Extract<LogicNode, { type: K }>;
+    return {
+      ...structuredClone(NODE_DEFAULTS[type]),
+      ...props,
+      type,
+    } as unknown as Extract<LogicNode, { type: K }>;
   }
 }
