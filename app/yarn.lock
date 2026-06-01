@@ -1992,6 +1992,7 @@ __metadata:
     better-sqlite3: "npm:^12.10.0"
     drizzle-kit: "npm:^0.31.10"
     drizzle-orm: "npm:^0.45.2"
+    drizzle-zod: "npm:^0.8.3"
     eslint: "npm:^10.4.0"
     eslint-plugin-react-hooks: "npm:^7.1.1"
     express: "npm:^5.2.1"
@@ -2628,6 +2629,16 @@ __metadata:
     sqlite3:
       optional: true
   checksum: 10c0/deb4a0230a79b1ff8c61365808bdb06a78e9e32171625f1c61d791dec445fad5cd9bc4ce2e6175b0ff1be7fb913310b2fd07b94a2cbe8027581b7d99469b8060
+  languageName: node
+  linkType: hard
+
+"drizzle-zod@npm:^0.8.3":
+  version: 0.8.3
+  resolution: "drizzle-zod@npm:0.8.3"
+  peerDependencies:
+    drizzle-orm: ">=0.36.0"
+    zod: ^3.25.0 || ^4.0.0
+  checksum: 10c0/653e5c59d73e32dba5fafb24691101c88ff9071a1dd85e0f96374764afb25d0b381dd9410e8dd39ece7ab81477e58e991f998d48cf44b41cc7380cfd361fc15d
   languageName: node
   linkType: hard
 

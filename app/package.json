@@ -46,6 +46,7 @@
     "atem-connection": "^3.9.0",
     "better-sqlite3": "^12.10.0",
     "drizzle-orm": "^0.45.2",
+    "drizzle-zod": "^0.8.3",
     "express": "^5.2.1",
     "less": "^4.6.4",
     "mqtt": "^5.10.4",
