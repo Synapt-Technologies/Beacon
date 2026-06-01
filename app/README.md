@@ -12,6 +12,7 @@ If you are compiling the image on windows, you must use WSL.
     - [ ] Maybe do Drizzle ORM for db validation and Zod for API with the drizzle-zod package?
   - [x] Rework buss structure to support more than only program preview.
   - [ ] Add AbstractConnection that is implemented by AbstractTallyProducer and AbstractConsumer that contains the base fields like config(id name), its getters setters and validation.
+  - [ ] Switch from abstract class to namespace for static helper function classes
 
 
 - [ ] Device non-runtime config.
