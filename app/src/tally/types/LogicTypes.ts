@@ -96,6 +96,20 @@ export interface TallyStatePriorityNode {
 }
 
 
+// TODO
+//? Reference nodes
+// TODO: Add interpreted node type, and use it in the TallyContext->Environment. Also add a thunk type for lazy evaluation?
+// export interface SetReferenceNode {
+//   readonly type: "SetBoxNode";
+//   readonly id: string;
+//   readonly node: LogicNode;
+// }
+
+// export interface GetReferenceNode {
+//   readonly type: "GetBoxNode";
+//   readonly id: string;
+// }
+
 
 // TODO: addresses or keys?
 export type ListItem = GlobalSourceAddress | string | number;
