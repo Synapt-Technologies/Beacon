@@ -23,10 +23,14 @@ export interface ProducerInfo extends ProducerState {
 }
 
 //? Producer Bundles
-export interface StoreProducerBundle {
-  type: string;
+
+export interface ConfigProducerBundle {
   enabled: boolean;
   config: ProducerConfig;
+}
+
+export interface StoreProducerBundle extends ConfigProducerBundle {
+  type: string;
 }
 
 export interface ProducerBundle extends StoreProducerBundle {
