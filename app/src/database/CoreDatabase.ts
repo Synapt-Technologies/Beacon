@@ -1,7 +1,13 @@
 import Database from 'better-sqlite3';
+import { drizzle, BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
+import * as schema from './schema';
+
 import fs from 'node:fs';
 import path from 'path';
+
 import { Logger } from '../logging/Logger';
+
+
 import type { LifeCycleConsumerConfig } from '../tally/TallyLifecycle';
 import type { OrchestratorConfig } from '../tally/TallyOrchestrator';
 import { DeviceTools, TallyDeviceDto, type DeviceAddress, type DeviceKey, type StoredTallyDevice, type TallyDeviceMap } from '../tally/types/DeviceTypes';
@@ -43,73 +49,48 @@ type SettingType<K extends string, T = SettingMap> =
 // TODO add more try catch.
 // TODO: Add type validation like with Zod.
 export class CoreDatabase {
-    private static instance: CoreDatabase | undefined;
-    private db: Database.Database;
+    private static _instance: CoreDatabase | undefined;
+    private _db: BetterSQLite3Database<typeof schema>;
 
-    private logger: Logger;
+    private _logger: Logger;
 
     private constructor() {
+        this._logger = new Logger([
+            "DB"
+        ]);
+
         const dbPath = path.join(process.cwd(), '/db/beacon.db');
         const dbDir = path.dirname(dbPath);
         if (!fs.existsSync(dbDir)) {
             fs.mkdirSync(dbDir, { recursive: true });
         }
-        this.db = new Database(dbPath);
-        this.db.pragma('journal_mode = WAL'); // High-performance mode
-        this.init();
-        this.logger = new Logger([
-            "DB"
-        ]);
-        this.logger.info(`Database initialized at:`, dbPath);
+        
+        const sqlite = new Database(dbPath);
+        // TODO: Check if WAL is needed. File cleanup/closure doesn't always complete on shutdown.
+        sqlite.pragma('journal_mode = WAL'); // High-performance mode
+
+        this._db = drizzle(sqlite, { schema });
+
+        this._migrateData();
+        this._logger.info(`Database initialized at:`, dbPath);
     }
     
     public static getInstance(): CoreDatabase {
-        if (!CoreDatabase.instance) {
-            CoreDatabase.instance = new CoreDatabase();
+        if (!CoreDatabase._instance) {
+            CoreDatabase._instance = new CoreDatabase();
         }
-        return CoreDatabase.instance;
+        return CoreDatabase._instance;
     }
 
-    private init() {
-        // Create tables
-        this.db.exec(`
-            CREATE TABLE IF NOT EXISTS producers (
-                id TEXT PRIMARY KEY,
-                type TEXT NOT NULL,
-                config TEXT NOT NULL,
-                enabled INTEGER NOT NULL DEFAULT 1
-            );`);
-        this.db.exec(`
-            CREATE TABLE IF NOT EXISTS producer_info (
-                id TEXT PRIMARY KEY,
-                info TEXT NOT NULL,
-                FOREIGN KEY(id) REFERENCES producers(id) ON DELETE CASCADE
-            );
-
-            
-            CREATE TABLE IF NOT EXISTS consumer_devices (
-                id TEXT PRIMARY KEY,
-                consumer_id TEXT NOT NULL,
-                data TEXT NOT NULL
-            );
-
-            CREATE TABLE IF NOT EXISTS settings (
-                key TEXT PRIMARY KEY,
-                value TEXT NOT NULL
-            )
-            
-        `);
-    }
+    // TODO: Check beacon/db version and auto migrate between them.
+    private _migrateData() { /* empty */ }
 
 
     // ? Producer Methods
     public saveProducer(entry: StoreProducerBundle): void {
-        const stmt = this.db.prepare(`
-            INSERT INTO producers (id, type, config, enabled)
-            VALUES (?, ?, ?, ?)
-            ON CONFLICT(id) DO UPDATE SET config=excluded.config, enabled=excluded.enabled
-        `);
-        stmt.run(entry.config.id, entry.type, JSON.stringify(entry.config), entry.enabled ? 1 : 0);
+        this._db.insert(entry).values({ id, type, config, enabled })
+            .onConflictDoUpdate({ target: producers.id, set: { config, enabled } })
+            .run();
     }
 
     // public getProducers(): Required<Omit<ProducerBundle, "info">>[] { // TODO: Removed Omit. Check if desired.
