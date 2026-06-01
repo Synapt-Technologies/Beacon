@@ -115,7 +115,7 @@ export interface TallyStatePriorityNode {
 
 //? Program nodes
 export interface LogicProgram {
-  readonly env: ReadonlyMap<string, LogicNode>;
+  readonly env: ReadonlyMap<ReferenceNodeId, LogicNode>;
   readonly outputs: ReadonlyMap<string, LogicNode>;
 }
 // Possible Syntax:
@@ -129,12 +129,6 @@ export interface LogicProgram {
 //? Reference nodes
 // TODO: Add some sort of thunk type for lazy evaluation?
 export type ReferenceNodeId = string;
-
-export interface SetReferenceNode {
-  readonly type: "SetRefNode";
-  readonly id: ReferenceNodeId;
-  readonly node: LogicNode;
-}
 
 export interface GetBooleanReferenceNode {
   readonly type: "GetBooleanReferenceNode";
