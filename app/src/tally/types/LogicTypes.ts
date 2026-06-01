@@ -83,6 +83,9 @@ export interface NumericComputationNode {
 // Map node? Takes numeric list and applies NumericLogicNode / Node that can take a numeric input?
 // Should check how to set the correct node field there.
 
+// TODO: addresses or keys, references or nodes?
+export type ListItem = GlobalSourceAddress | string | number;
+
 //? TallyState nodes
 export interface TallyStateMapNode {
   readonly type: "TallyStateMapNode";
@@ -95,24 +98,59 @@ export interface TallyStatePriorityNode {
   readonly nodes: TallyStateLogicNodes[];
 }
 
+// TODO: Add a way to see what outputs are assignable to a device. For example:
+// interface OutputPort {
+//   readonly name: string;
+//   readonly expectedType: "boolean" | "numeric" | "tallyState" | "string";
+// }
+
+// interface DeviceOutputSchema {
+//   readonly ports: ReadonlyArray<OutputPort>;
+// }
+
+
+//? Program nodes
+export interface LogicProgram {
+  readonly env: ReadonlyMap<string, LogicNode>;
+  readonly outputs: ReadonlyMap<string, LogicNode>;
+}
+// Possible Syntax:
+// let cam1 = SimpleBus([...]);
+// let cam2 = SimpleBus([...]);
+
+// output state = TallyStatePriority([cam1, cam2]);
+// output text = "Studio";
 
 // TODO
 //? Reference nodes
-// TODO: Add interpreted node type, and use it in the TallyContext->Environment. Also add a thunk type for lazy evaluation?
-// export interface SetReferenceNode {
-//   readonly type: "SetBoxNode";
-//   readonly id: string;
-//   readonly node: LogicNode;
-// }
+// TODO: Add some sort of thunk type for lazy evaluation?
+export type ReferenceNodeId = string;
 
-// export interface GetReferenceNode {
-//   readonly type: "GetBoxNode";
-//   readonly id: string;
-// }
+export interface SetReferenceNode {
+  readonly type: "SetRefNode";
+  readonly id: ReferenceNodeId;
+  readonly node: LogicNode;
+}
 
+export interface GetBooleanReferenceNode {
+  readonly type: "GetBooleanReferenceNode";
+  readonly id: ReferenceNodeId;
+}
+export interface GetNumericReferenceNode {
+  readonly type: "GetNumericReferenceNode";
+  readonly id: ReferenceNodeId;
+}
 
-// TODO: addresses or keys?
-export type ListItem = GlobalSourceAddress | string | number;
+export interface GetTallyStateReferenceNode {
+  readonly type: "GetTallyStateReferenceNode";
+  readonly id: ReferenceNodeId;
+}
+
+export interface GetListReferenceNode {
+  readonly type: "GetListReferenceNode";
+  readonly id: ReferenceNodeId;
+}
+
 
 
 export type BooleanLogicNodes = BooleanLogicNode | BooleanValueNode | NumericComparisonNode | ListContainsNode;
