@@ -18,6 +18,7 @@ export interface GlobalSourceAddress {
   source: SourceId;
 }
 
+// TODO: Add Source availability? Which busses can display this source?
 export interface SourceInfo {
   id: GlobalSourceAddress;
   name: DisplayName;
