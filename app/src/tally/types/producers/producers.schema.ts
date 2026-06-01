@@ -1,9 +1,15 @@
 import * as z from "zod";
-import { AtemProducerBundleSchema } from "./implementations/atem.schema";
+import { AtemConfigProducerBundleSchema, AtemStoreProducerBundleSchema } from "./implementations/atem.schema";
 
 export * from "./producers.base.schema";
 
-export const StoreProducerBundleSchema = z.discriminatedUnion("type", [
-  AtemProducerBundleSchema,
+export const ConfigProducerBundleSchema = z.discriminatedUnion("type", [
+  AtemConfigProducerBundleSchema,
 ]);
-export type ValidatedStoreBundle = z.infer<typeof StoreProducerBundleSchema>;
+export type ConfigProducerBundle = z.infer<typeof ConfigProducerBundleSchema>; // TODO: Add validated to name?
+
+export const StoreProducerBundleSchema = z.discriminatedUnion("type", [
+  AtemStoreProducerBundleSchema,
+]);
+export type StoreProducerBundle = z.infer<typeof StoreProducerBundleSchema>; // TODO: Add validated to name?
+

@@ -1,12 +1,10 @@
 import type { ConnectionState, DisplayName } from "../common/common.domain";
 import type { BaseProducerConfig } from "./producers.base.schema";
 
-export interface ProducerState {
-  state: ConnectionState;
-}
 
-// TODO: Split Info and State?
-export interface ProducerInfo extends ProducerState {
+// TODO: Add moment if needed.
+export interface ProducerInfo {
+  state: ConnectionState;
   model: DisplayName;
   sources: SourceMap;
   busses: BusGroupInfoMap;

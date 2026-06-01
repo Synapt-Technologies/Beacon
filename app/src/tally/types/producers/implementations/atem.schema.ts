@@ -1,8 +1,8 @@
 import * as z from "zod";
 import {
   NetClientProducerConfigSchema,
-  createConfigBundleSchema,
-  createProducerBundleSchema,
+  createConfigProducerBundleSchema,
+  createInfoProducerBundleSchema,
 } from "../producers.base.schema";
 import type { InfoProducerBundle } from "../producers.domain";
 
@@ -11,10 +11,10 @@ export const AtemProducerConfigSchema = NetClientProducerConfigSchema.extend({
 });
 export type AtemProducerConfig = z.infer<typeof AtemProducerConfigSchema>;
 
-export const AtemConfigBundleSchema = createConfigBundleSchema(AtemProducerConfigSchema);
-export type AtemConfigProducerBundle = z.infer<typeof AtemConfigBundleSchema>;
+export const AtemConfigProducerBundleSchema = createConfigProducerBundleSchema(AtemProducerConfigSchema);
+export type AtemConfigProducerBundle = z.infer<typeof AtemConfigProducerBundleSchema>;
 
-export const AtemProducerBundleSchema = createProducerBundleSchema("atem", AtemConfigBundleSchema);
-export type AtemStoreProducerBundle = z.infer<typeof AtemProducerBundleSchema>;
+export const AtemStoreProducerBundleSchema = createInfoProducerBundleSchema("atem", AtemConfigProducerBundleSchema);
+export type AtemStoreProducerBundle = z.infer<typeof AtemStoreProducerBundleSchema>;
 
 export type AtemInfoProducerBundle = InfoProducerBundle<"atem", AtemProducerConfig>;
