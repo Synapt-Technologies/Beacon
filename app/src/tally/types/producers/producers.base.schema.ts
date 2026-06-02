@@ -4,7 +4,7 @@ import { baseIdSchema, portSchema } from "../common/common.schema";
 export const ProducerIdSchema = baseIdSchema.brand("ProducerId");
 export type ProducerId = z.infer<typeof ProducerIdSchema>;
 
-// ? Config
+// ? Base configs
 export const BaseProducerConfigSchema = z.object({
   id: ProducerIdSchema,
   name: z.string().min(1).max(10),
@@ -17,17 +17,12 @@ export const NetClientProducerConfigSchema = BaseProducerConfigSchema.extend({
 });
 export type NetClientProducerConfig = z.infer<typeof NetClientProducerConfigSchema>;
 
-// ? Bundles
-const BaseBundleSchema = z.object({
-  enabled: z.boolean().default(true),
-});
-
-// TODO: Check if there is a better way to keep in sync with the domain types.
-export const createConfigProducerBundleSchema = <TConfig extends z.ZodType<BaseProducerConfig>>(
+// ? Bundle factory functions
+export const createConfigBundleSchema = <TConfig extends z.ZodType<BaseProducerConfig>>(
   config: TConfig,
-) => BaseBundleSchema.extend({ config });
+) => z.object({ enabled: z.boolean().default(true), config });
 
-export const createInfoProducerBundleSchema = <TType extends string, TShape extends z.ZodRawShape>(
+export const createStoreBundleSchema = <TType extends string, TConfig extends z.ZodType<BaseProducerConfig>>(
   type: TType,
-  configBundleSchema: z.ZodObject<TShape> & z.ZodType<{ enabled: boolean; config: BaseProducerConfig }>,
-) => configBundleSchema.extend({ type: z.literal(type) });
+  config: TConfig,
+) => z.object({ type: z.literal(type), enabled: z.boolean().default(true), config });

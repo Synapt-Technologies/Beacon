@@ -3,13 +3,15 @@ import { AtemConfigProducerBundleSchema, AtemStoreProducerBundleSchema } from ".
 
 export * from "./producers.base.schema";
 
-export const ConfigProducerBundleSchema = z.discriminatedUnion("type", [
-  AtemConfigProducerBundleSchema,
-]);
-export type ConfigProducerBundle = z.infer<typeof ConfigProducerBundleSchema>; // TODO: Add validated to name?
+// ? Union exports (populated as implementations are added)
 
-export const StoreProducerBundleSchema = z.discriminatedUnion("type", [
-  AtemStoreProducerBundleSchema,
-]);
-export type StoreProducerBundle = z.infer<typeof StoreProducerBundleSchema>; // TODO: Add validated to name?
+// API config request: type is known from route, use configBundleSchemaByType for exact validation
+export const configBundleSchemaByType = {
+  atem: AtemConfigProducerBundleSchema,
+} as const;
+export const ConfigProducerBundleSchema = z.union([AtemConfigProducerBundleSchema]);
+export type ConfigProducerBundle = z.infer<typeof ConfigProducerBundleSchema>;
 
+// DB storage: type is stored, discriminated union used for reads
+export const StoreProducerBundleSchema = z.discriminatedUnion("type", [AtemStoreProducerBundleSchema]);
+export type StoreProducerBundle = z.infer<typeof StoreProducerBundleSchema>;
