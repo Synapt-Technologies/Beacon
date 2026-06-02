@@ -9,6 +9,15 @@ export interface TallyContext {
   disconnectedState: TallyState;
 }
 
+// TODO: Add a value type
+// TODO: Store id maybe should not be a ReferenceNodeId, so a sateful node can store multiple values?
+export interface TallyEnvironment {
+  context: TallyContext;
+  store: ReadonlyMap<ReferenceNodeId, any>; // For storing values of statful nodes.
+  cache: ReadonlyMap<ReferenceNodeId, any>; // For caching values of nodes during evaluation. The given program environment is loaded in as thunks and computed to a value and restored when used.
+
+} 
+
 // TODO: Add Desugared Nodes?
 // TODO: Add a TallyDevice type that is the desugared/interpetted version of the tallydevice, that includes desugared logic nodes and for example a relevant sources (per bus) for quicker logic.
 
