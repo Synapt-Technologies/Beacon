@@ -1,7 +1,7 @@
 import * as z from "zod";
-import { baseIdSchema, portSchema } from "../common/common.schema";
+import { ConsumerIdSchema, portSchema } from "../common/common.schema";
 
-export const ConsumerIdSchema = baseIdSchema.brand("ConsumerId");
+export { ConsumerIdSchema };
 export type ConsumerId = z.infer<typeof ConsumerIdSchema>;
 
 // ? Config

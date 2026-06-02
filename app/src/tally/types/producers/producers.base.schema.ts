@@ -1,8 +1,7 @@
 import * as z from "zod";
 import { baseIdSchema, portSchema } from "../common/common.schema";
 
-export const ProducerIdSchema = baseIdSchema.brand("ProducerId");
-export type ProducerId = z.infer<typeof ProducerIdSchema>;
+export { ProducerIdSchema };
 
 // ? Base configs
 export const BaseProducerConfigSchema = z.object({
