@@ -3,7 +3,14 @@ import { ConnectionState, TallyState } from "./common.domain";
 
 export const portSchema = z.number().int().min(0).max(65535);
 
-export const baseIdSchema = z.string().min(1).regex(/^[^:]+$/, "ID cannot contain ':'");
+export const baseIdSchema = z.string().min(1).regex(/^[^:]+$/, "ID cannot contain ':'").brand("ID");
+
+export const ProducerIdSchema = baseIdSchema.brand("Producer");
+export type ProducerId = z.infer<typeof ProducerIdSchema>;
+
+export const ConsumerIdSchema = baseIdSchema.brand("Consumer");
+export type ConsumerId = z.infer<typeof ConsumerIdSchema>;
+
 export const idSchema = baseIdSchema
   .trim()
   .normalize()
