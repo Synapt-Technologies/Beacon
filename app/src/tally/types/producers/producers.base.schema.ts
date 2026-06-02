@@ -1,5 +1,6 @@
 import * as z from "zod";
-import { baseIdSchema, portSchema } from "../common/common.schema";
+import { ProducerIdSchema, portSchema } from "../common/common.schema";
+import type { BaseProducerConfig, NetClientProducerConfig } from "./producers.types";
 
 export { ProducerIdSchema };
 
@@ -7,14 +8,12 @@ export { ProducerIdSchema };
 export const BaseProducerConfigSchema = z.object({
   id: ProducerIdSchema,
   name: z.string().min(1).max(10),
-});
-export type BaseProducerConfig = z.infer<typeof BaseProducerConfigSchema>;
+}) satisfies z.ZodType<BaseProducerConfig>;
 
 export const NetClientProducerConfigSchema = BaseProducerConfigSchema.extend({
   host: z.ipv4(),
   port: portSchema,
-});
-export type NetClientProducerConfig = z.infer<typeof NetClientProducerConfigSchema>;
+}) satisfies z.ZodType<NetClientProducerConfig>;
 
 // ? Bundle factory functions
 export const createConfigBundleSchema = <TConfig extends z.ZodType<BaseProducerConfig>>(

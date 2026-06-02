@@ -1,6 +1,28 @@
+import type { ProducerId } from "../common/common.schema";
 import type { ConnectionState, DisplayName } from "../common/common.domain";
 import type { BusGroupInfoMap, SourceMap } from "../SourceTypes";
-import type { BaseProducerConfig } from "./producers.schema";
+
+export interface BaseProducerConfig {
+  id: ProducerId;
+  name: string;
+}
+
+export interface NetClientProducerConfig extends BaseProducerConfig {
+  host: string;
+  port: number;
+}
+
+export interface ConfigProducerBundle<TConfig extends BaseProducerConfig = BaseProducerConfig> {
+  enabled: boolean;
+  config: TConfig;
+}
+
+export interface StoreProducerBundle<
+  TType extends string = string,
+  TConfig extends BaseProducerConfig = BaseProducerConfig,
+> extends ConfigProducerBundle<TConfig> {
+  type: TType;
+}
 
 export interface ProducerInfo {
   state: ConnectionState;
@@ -12,9 +34,4 @@ export interface ProducerInfo {
 export type InfoProducerBundle<
   TType extends string = string,
   TConfig extends BaseProducerConfig = BaseProducerConfig,
-> = {
-  type: TType;
-  enabled: boolean;
-  config: TConfig;
-  info: ProducerInfo;
-};
+> = StoreProducerBundle<TType, TConfig> & { info: ProducerInfo };

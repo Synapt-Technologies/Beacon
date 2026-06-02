@@ -2,6 +2,7 @@ import * as z from "zod";
 import { AtemConfigProducerBundleSchema, AtemStoreProducerBundleSchema } from "./implementations/atem.schema";
 
 export * from "./producers.base.schema";
+export * from "./producers.types";
 
 // ? Union exports (populated as implementations are added)
 
