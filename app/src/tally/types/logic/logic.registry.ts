@@ -17,12 +17,14 @@ export interface OpDefinition {
   name: string;
   inputs: OpInput[];
   output: string;     // registered type name
-  category?: string   // editor grouping hint (TODO)
+  category?: string   // editor grouping hint
 }
 
 export interface InputDefinition {
   name: string;
   type: string;       // registered type name
+  trigger?: boolean   // discrete event - value resets to default after firing
+  default?: unknown   // value when inactive
 }
 
 export interface OutputDefinition {
