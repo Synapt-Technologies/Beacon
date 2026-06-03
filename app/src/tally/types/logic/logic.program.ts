@@ -10,17 +10,23 @@ export interface ParsedProgram {
   /** Named program outputs: return tally: s1 */
   outputs: Map<string, ASTNode>
  
-  /** Bindings reachable from any output - computed at parse time */
+  /** Bindings reachable from any output - computed at parse time *
+   * Used to skip unused bindings during eval.
+   */
   usedBindings: Set<string>
  
   /**
-   * Topological sort of usedBindings.
-   * Eval walks this in order - each node's inputs are always resolved first.
+   * The order in which the bindings should be evauluated.
+   * Computed with topological sort on parse.
+   * This way every nodes's inputs are evaluated before the node itself.
    */
   evalOrder: string[]
  
   /**
    * Reverse dependency map.
+   * For each binding/input name a set of bindings that use it as input. 
+   * If the input is changed, all bindings that use it need to be re-evaluated.
+   * 
    * dependents.get('s1') = Set of binding names that read s1 as input.
    * Input node names ('sourceBusNew') are also valid keys here.
    */
