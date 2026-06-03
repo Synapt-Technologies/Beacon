@@ -24,14 +24,22 @@ export interface OpDefinition {
 export interface InputDefinition {
   name: string;
   type: string;       // registered type name
-  trigger?: boolean   // discrete event - value resets to default after firing
-  default?: unknown   // value when inactive
+  trigger?: boolean;   // discrete event - value resets to default after firing
+  default?: unknown;   // value when inactive
 }
+
+/**
+ * Output requirement mode:
+ * 'optional'  — fine either way, no warning if absent
+ * 'desired'   — AnalysisWarning (missing_desired_output) if program doesn't declare it
+ * 'required'  — AnalysisError (missing_required_output) if program doesn't declare it
+ */
+export type OutputMode = 'optional' | 'desired' | 'required'
 
 export interface OutputDefinition {
   name: string;
   type: string;       // registered type name
-  required?: boolean;
+  required?: OutputMode;   // defaults to 'optional'
 }
 
 export interface EvaluatorDefinition {
