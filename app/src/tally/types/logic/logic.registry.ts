@@ -43,33 +43,32 @@ export interface EvaluatorDefinition {
   evaluate: (inputs: Record<string, unknown>, hostContext?: unknown) => unknown;
 }
 
-// TODO
-// /**
-//  * Higher-order evaluator — for ops that need to evaluate sub-expressions
-//  * in a new environment (Filter, Map, Find, Reduce, etc.).
-//  *
-//  * Receives pre-resolved inputs (same as EvaluatorDefinition) plus a
-//  * pre-built apply() function. apply() handles environment extension and
-//  * body interpretation. Evaluators never see interpreter internals.
-//  *
-//  */
-// export interface HigherOrderEvaluatorDefinition {
-//   op: string
-//   evaluate: (
-//     inputs: Record<string, unknown>,
-//     apply: (...args: unknown[]) => unknown,
-//     hostContext?: unknown,
-//   ) => unknown
-// }
+/**
+ * Higher-order evaluator — for ops that need to evaluate sub-expressions
+ * in a new environment (Filter, Map, Find, Reduce, etc.).
+ *
+ * Receives pre-resolved inputs (same as EvaluatorDefinition) plus a
+ * pre-built apply() function. apply() handles environment extension and
+ * body interpretation. Evaluators never see interpreter internals.
+ *
+ */
+export interface HigherOrderEvaluatorDefinition {
+  op: string
+  evaluate: (
+    inputs: Record<string, unknown>,
+    apply: (...args: unknown[]) => unknown,
+    hostContext?: unknown,
+  ) => unknown
+}
 
 //? Language descriptor - Single source of truth for the language shape. 
 export interface LanguageDescriptor {
-  types: Map<string, TypeDefinition>
-  ops: Map<string, OpDefinition>
-  inputs: Map<string, InputDefinition>
-  outputs: Map<string, OutputDefinition>
-  evaluators: Map<string, EvaluatorDefinition>
-  // higherOrderEvaluators: Map<string, HigherOrderEvaluatorDefinition> // TODO
+  types: Map<string, TypeDefinition>;
+  ops: Map<string, OpDefinition>;
+  inputs: Map<string, InputDefinition>;
+  outputs: Map<string, OutputDefinition>;
+  evaluators: Map<string, EvaluatorDefinition>;
+  higherOrderEvaluators: Map<string, HigherOrderEvaluatorDefinition>;
 }
 
 
@@ -81,7 +80,7 @@ export interface Language {
   registerInput(def: InputDefinition): void;
   registerOutput(def: OutputDefinition): void;
   registerEvaluator(def: EvaluatorDefinition): void;
-  // registerHigherOrder(def: HigherOrderEvaluatorDefinition): void; // TODO
+  registerHigherOrder(def: HigherOrderEvaluatorDefinition): void;
 }
 
  
@@ -92,7 +91,7 @@ function createDescriptor(): LanguageDescriptor {
     inputs: new Map(),
     outputs: new Map(),
     evaluators: new Map(),
-    // higherOrderEvaluators: new Map(), // TODO
+    higherOrderEvaluators: new Map(),
   }
 }
 
@@ -110,8 +109,8 @@ export function createLanguage(): Language {
       descriptor.outputs.set(def.name, def),
     registerEvaluator: (def) =>
       descriptor.evaluators.set(def.op, def),
-    // registerHigherOrder: (def) => // TODO
-    //   descriptor.higherOrderEvaluators.set(def.op, def),
+    registerHigherOrder: (def) =>
+      descriptor.higherOrderEvaluators.set(def.op, def),
   }
 }
 
@@ -121,13 +120,13 @@ export function createLanguage(): Language {
  * New registrations on child do not affect parent.
  */
 export function extendLanguage(parent: Language): Language {
-  const child = createLanguage()
-  const d = parent.descriptor
-  d.types.forEach((v, k) => child.descriptor.types.set(k, v))
-  d.ops.forEach((v, k) => child.descriptor.ops.set(k, v))
-  d.inputs.forEach((v, k) => child.descriptor.inputs.set(k, v))
-  d.outputs.forEach((v, k) => child.descriptor.outputs.set(k, v))
-  d.evaluators.forEach((v, k) => child.descriptor.evaluators.set(k, v))
-  // d.higherOrderEvaluators.forEach((v, k) => child.descriptor.higherOrderEvaluators.set(k, v)) // TODO
-  return child
+  const child = createLanguage();
+  const d = parent.descriptor;
+  d.types.forEach((v, k) => child.descriptor.types.set(k, v));
+  d.ops.forEach((v, k) => child.descriptor.ops.set(k, v));
+  d.inputs.forEach((v, k) => child.descriptor.inputs.set(k, v));
+  d.outputs.forEach((v, k) => child.descriptor.outputs.set(k, v));
+  d.evaluators.forEach((v, k) => child.descriptor.evaluators.set(k, v));
+  d.higherOrderEvaluators.forEach((v, k) => child.descriptor.higherOrderEvaluators.set(k, v));
+  return child;
 }
