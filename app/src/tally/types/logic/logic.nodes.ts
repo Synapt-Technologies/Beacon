@@ -26,11 +26,11 @@ export interface LiteralNode {
   loc?: SourceLocation;
 }
 
-// Array of nodeds
+// Array of ASTNodes
 export interface ArrayNode {
   kind: 'array';
   items: ASTNode[];
-  type: string        // inferred at parse time from item types
+  type: string;
   loc?: SourceLocation;
 }
 
