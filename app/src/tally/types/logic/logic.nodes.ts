@@ -1,10 +1,8 @@
 
-//? Source location — carried by nodes for editor/LSP diagnostics
-export interface SourceLocation {
-  line: number
-  column: number
-  length: number
-}
+//? Source location — carried by nodes for editor/LSP/Node-editor diagnostics
+export type SourceRef =
+  | { kind: 'code'; line: number; column: number; length: number }
+  | { kind: 'rete'; nodeId: string }
 
 //? Node types
 // LiteralValue - Used for primitives only for now.
@@ -23,7 +21,7 @@ export interface LiteralNode {
   kind: 'literal';
   type: string;       // registered output type name - Validated against Zod schema at analysis time.
   value: LiteralValue;
-  loc?: SourceLocation;
+  loc?: SourceRef;
 }
 
 // Array of ASTNodes
@@ -31,7 +29,7 @@ export interface ArrayNode {
   kind: 'array';
   items: ASTNode[];
   type: string;        // inferred at analyse time from item types
-  loc?: SourceLocation;
+  loc?: SourceRef;
 }
 
 // A named value loaded from context before eval: sourceBusNew, fallbackState
@@ -39,7 +37,7 @@ export interface InputNode {
   kind: 'input';
   name: string;       // must match a registered InputDefinition
   type: string;
-  loc?: SourceLocation;
+  loc?: SourceRef;
 }
 
 // A reference to a named binding: Set x = ...; use x elsewhere
@@ -47,7 +45,7 @@ export interface RefNode {
   kind: 'ref';
   name: string;       // binding name in RawProgram.bindings
   type: string;       // output type of the referenced binding
-  loc?: SourceLocation;
+  loc?: SourceRef;
 }
 
 
@@ -59,7 +57,7 @@ export interface OperationNode {
   op: string;                           // must match a registered OpDefinition
   inputs: Record<string, OpInputType>;  // keyed by input name from OpDefinition
   output: string;                       // type name - resolved at parse time
-  loc?: SourceLocation;
+  loc?: SourceRef;
 }
 
 // Field access on a struct-typed node: bus.program
@@ -69,7 +67,7 @@ export interface FieldAccessNode {
   source: ASTNode;
   field: string;
   type: string;  // resolved at parse time from the struct type definition
-  loc?: SourceLocation;
+  loc?: SourceRef;
 }
 
 
@@ -87,12 +85,12 @@ export interface FieldAccessNode {
  * Evaluators never see interpreter internals.
  */
 export interface HigherOrderNode {
-  kind: 'higher_order'
-  op: string                            // must match a registered HigherOrderEvaluatorDefinition
-  inputs: Record<string, OpInputType>   // regular inputs — pre-resolved before evaluator call
-  bindings: string[]                    // scoped variable names — one per apply() argument
-  body: ASTNode                         // evaluated in new environment per apply() call
-  loc?: SourceLocation
+  kind: 'higher_order';
+  op: string;                            // must match a registered HigherOrderEvaluatorDefinition
+  inputs: Record<string, OpInputType>;   // regular inputs — pre-resolved before evaluator call
+  bindings: string[];                    // scoped variable names — one per apply() argument
+  body: ASTNode;                         // evaluated in new environment per apply() call
+  loc?: SourceRef;
 }
  
 export type ASTNode =
