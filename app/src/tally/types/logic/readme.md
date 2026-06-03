@@ -4,7 +4,7 @@ Source / Graph
 RawProgram
     ↓  analyse        → AnalysisResult<CoreProgram>
 CoreProgram
-    ↓  interpretProgram  (calls interp per dirty node)
+    ↓  evaluateProgram  (calls evaluate per dirty node)
 Value Map
 ```
 
@@ -19,8 +19,8 @@ updateInput('sourceBusNew', value, state, program)
         → markDirty('combined')
           → markDirty('result')
 
-interpretProgram(program, state, ...)
+evaluateProgram(program, state, ...)
   → walks evalOrder: ['sourcelist', 's2', 's3', 'combined', 'result']
     → skips clean nodes                 // uses dirty set
-    → calls interp only on dirty ones
+    → calls evaluate only on dirty ones
 ```
