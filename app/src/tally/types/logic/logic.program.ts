@@ -275,7 +275,7 @@ export function evaluate( // TODO Should be named evaluateNode? To work well wit
  
     case 'higher_order': {
       const evaluator = descriptor.higherOrderEvaluators.get(node.op)
-      if (!evaluator) throw new EvalError(`No higher-order evaluator for op: ${node.op}`)
+      if (!evaluator) throw new EvalError('evaluator_not_found', `No higher-order evaluator for op: ${node.op}`)
  
       const resolved: Record<string, unknown> = {}
       for (const [key, input] of Object.entries(node.inputs)) {
@@ -297,7 +297,7 @@ export function evaluate( // TODO Should be named evaluateNode? To work well wit
  
     case 'operation': {
       const evaluator = descriptor.evaluators.get(node.op)
-      if (!evaluator) throw new EvalError(`No evaluator for op: ${node.op}`)
+      if (!evaluator) throw new EvalError('evaluator_not_found', `No evaluator for op: ${node.op}`)
  
       const resolved: Record<string, unknown> = {}
       for (const [key, input] of Object.entries(node.inputs)) {
