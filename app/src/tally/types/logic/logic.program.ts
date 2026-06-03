@@ -167,7 +167,7 @@ export function evaluateNode(
     case 'literal':
       return node.value
  
-    case 'array_literal':
+    case 'array':
       return node.items.map(item => evaluateNode(item, state, descriptor, hostContext))
  
     case 'input':

@@ -27,10 +27,10 @@ export interface LiteralNode {
 }
 
 // Primitive array of same primitive type.
-export interface ArrayLiteralNode {
-  kind: 'array_literal';
-  type: string;       // registered output type name - Validated against Zod schema at parse.
-  value: LiteralValue[];
+export interface ArrayNode {
+  kind: 'array';
+  items: ASTNode[];
+  type: string        // inferred at parse time from item types
   loc?: SourceLocation;
 }
 
@@ -75,7 +75,7 @@ export interface FieldAccessNode {
 
 export type ASTNode =
   | LiteralNode
-  | ArrayLiteralNode
+  | ArrayNode
   | RefNode
   | InputNode
   | OperationNode
