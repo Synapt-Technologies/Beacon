@@ -26,7 +26,7 @@ export interface LiteralNode {
   loc?: SourceLocation;
 }
 
-// Primitive array of same primitive type.
+// Array of nodeds
 export interface ArrayNode {
   kind: 'array';
   items: ASTNode[];
