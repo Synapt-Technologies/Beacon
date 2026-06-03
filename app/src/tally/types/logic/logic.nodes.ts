@@ -73,36 +73,7 @@ export interface FieldAccessNode {
 }
 
 
-// TODO: FilterNode, MapNode and HigherOrderNode.
-
-/**
- * Filter a list by a condition evaluated per item.
- * itemBinding names the current item — accessible via RefNode in condition.
- *
- * Analogous to CPL's lambda/closure — creates a new scope for the body.
- * Cannot be expressed as OperationNode because the condition must be
- * evaluated per-item inside a new environment, not pre-resolved to a value.
- */
-export interface FilterNode {
-  kind: 'filter'
-  list: ASTNode
-  itemBinding: string
-  condition: ASTNode  // boolean-producing, references itemBinding via RefNode
-  loc?: SourceLocation
-}
- 
-/**
- * Transform each item in a list.
- * Same scoping mechanism as FilterNode.
- */
-export interface MapNode {
-  kind: 'map'
-  list: ASTNode
-  itemBinding: string
-  transform: ASTNode
-  loc?: SourceLocation
-}
- 
+// TODO: HigherOrderNode.
 /**
  * General higher-order operation — the generalisation of FilterNode/MapNode.
  * Registered ops (Filter, Map, Find, Reduce) use this node type.
