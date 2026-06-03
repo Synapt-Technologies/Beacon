@@ -125,6 +125,7 @@ export interface EvalState {
 }
 
 //? Parse Results
+// TODO: Duplicate bind? Or warning and ignore?
 export type ParseErrorKind =
   | 'syntax_error'
   | 'unexpected_token'
@@ -162,10 +163,12 @@ export type ParseResult = ParseSuccess | ParseFailure
  
 //? Analysis Results
 export type AnalysisErrorKind =
-  | 'unknown_op'           // Op not registered → hard error
-  | 'unknown_input'        // Input node not registered → hard error
-  | 'unknown_type'         // Type reference not registered → hard error
-  | 'cycle'                // Cycle in DAG → hard error
+  | 'unknown_op'              // Op not registered → hard error
+  | 'unknown_input'           // Input node not registered → hard error
+  | 'unknown_type'            // Type reference not registered → hard error
+  | 'undefined_reference'     // Reference to undefined binding → hard error
+  | 'input_type_mismatch'     // op input receives wrong type
+  | 'cycle'                   // Cycle in DAG → hard error
   | 'missing_required_output' // Registered required output not returned → hard error
 
 export interface AnalysisError {
@@ -201,7 +204,6 @@ export interface AnalysisFailure {
 }
  
 export type AnalysisResult = AnalysisSuccess | AnalysisFailure
-
 
 
 //? Evalstate Management
@@ -343,12 +345,22 @@ function withBinding(state: EvalState, name: string, value: unknown): EvalState 
   inner.set(name, value)
   return { environment: inner, dirty: state.dirty }
 }
- 
+
+
+//? Eval Errors
+export type EvalErrorKind =
+  | 'evaluator_not_found'   // safety net — analyser bug or descriptor mismatch
+  | 'input_not_set'         // input node has no value in environment
+  | 'invalid_field_access'  // field doesn't exist on struct value
+  | 'host_error'            // host evaluator threw
+
 // TODO: Also add parse and analyse errors?
-export class EvalError extends Error { 
-  constructor(message: string) {
+export class EvalError extends Error {
+  constructor(
+    public readonly kind: EvalErrorKind,
+    message: string,
+  ) {
     super(message)
     this.name = 'EvalError'
   }
 }
- 
