@@ -1,5 +1,5 @@
 
-//? Source location — carried by nodes for editor/LSP/Node-editor diagnostics
+//? Source location - carried by nodes for editor/LSP/Node-editor diagnostics
 export type SourceRef =
   | { kind: 'code'; line: number; column: number; length: number }
   | { kind: 'rete'; nodeId: string }
@@ -73,12 +73,12 @@ export interface FieldAccessNode {
 
 // TODO: HigherOrderNode.
 /**
- * General higher-order operation — the generalisation of FilterNode/MapNode.
+ * General higher-order operation - the generalisation of FilterNode/MapNode.
  * Registered ops (Filter, Map, Find, Reduce) use this node type.
  *
- * inputs   — pre-resolved before calling the evaluator (like OperationNode)
- * bindings — scoped variable names, one per argument to apply()
- * body     — evaluated in a new environment per apply() call
+ * inputs   - pre-resolved before calling the evaluator (like OperationNode)
+ * bindings - scoped variable names, one per argument to apply()
+ * body     - evaluated in a new environment per apply() call
  *
  * The evaluator receives pre-resolved inputs and a pre-built apply() function.
  * apply() handles environment extension and body evaluation internally.
@@ -87,8 +87,8 @@ export interface FieldAccessNode {
 export interface HigherOrderNode {
   kind: 'higher_order';
   op: string;                            // must match a registered HigherOrderEvaluatorDefinition
-  inputs: Record<string, OpInputType>;   // regular inputs — pre-resolved before evaluator call
-  bindings: string[];                    // scoped variable names — one per apply() argument
+  inputs: Record<string, OpInputType>;   // regular inputs - pre-resolved before evaluator call
+  bindings: string[];                    // scoped variable names - one per apply() argument
   body: ASTNode;                         // evaluated in new environment per apply() call
   loc?: SourceRef;
 }

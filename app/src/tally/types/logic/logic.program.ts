@@ -22,7 +22,7 @@ export interface CoreProgram {
  
   /**
    * Topological sort of usedBindings.
-   * interp walks this in order — dependencies always before dependents.
+   * interp walks this in order - dependencies always before dependents.
    * Computed at analyse time. Cycles produce an AnalysisError.
    */
   evalOrder: string[];
@@ -349,7 +349,7 @@ function withBinding(state: EvalState, name: string, value: unknown): EvalState 
 
 //? Eval Errors
 export type EvalErrorKind =
-  | 'evaluator_not_found'   // safety net — analyser bug or descriptor mismatch
+  | 'evaluator_not_found'   // safety net - analyser bug or descriptor mismatch
   | 'input_not_set'         // input node has no value in environment
   | 'invalid_field_access'  // field doesn't exist on struct value
   | 'host_error'            // host evaluator threw

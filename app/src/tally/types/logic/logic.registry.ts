@@ -30,9 +30,9 @@ export interface InputDefinition {
 
 /**
  * Output requirement mode:
- * 'optional'  — fine either way, no warning if absent
- * 'desired'   — AnalysisWarning (missing_desired_output) if program doesn't declare it
- * 'required'  — AnalysisError (missing_required_output) if program doesn't declare it
+ * 'optional'  - fine either way, no warning if absent
+ * 'desired'   - AnalysisWarning (missing_desired_output) if program doesn't declare it
+ * 'required'  - AnalysisError (missing_required_output) if program doesn't declare it
  */
 export type OutputMode = 'optional' | 'desired' | 'required'
 
@@ -52,7 +52,7 @@ export interface EvaluatorDefinition {
 }
 
 /**
- * Higher-order evaluator — for ops that need to evaluate sub-expressions
+ * Higher-order evaluator - for ops that need to evaluate sub-expressions
  * in a new environment (Filter, Map, Find, Reduce, etc.).
  *
  * Receives pre-resolved inputs (same as EvaluatorDefinition) plus a
