@@ -6,6 +6,7 @@ export interface TypeDefinition {
   schema: ZodType<unknown>;
 }
 
+//? Definition types - the shape of what gets registered
 export interface OpInput {
   name: string;
   type: string;       // registered type name
@@ -42,6 +43,24 @@ export interface EvaluatorDefinition {
   evaluate: (inputs: Record<string, unknown>, hostContext?: unknown) => unknown;
 }
 
+// TODO
+// /**
+//  * Higher-order evaluator — for ops that need to evaluate sub-expressions
+//  * in a new environment (Filter, Map, Find, Reduce, etc.).
+//  *
+//  * Receives pre-resolved inputs (same as EvaluatorDefinition) plus a
+//  * pre-built apply() function. apply() handles environment extension and
+//  * body interpretation. Evaluators never see interpreter internals.
+//  *
+//  */
+// export interface HigherOrderEvaluatorDefinition {
+//   op: string
+//   evaluate: (
+//     inputs: Record<string, unknown>,
+//     apply: (...args: unknown[]) => unknown,
+//     hostContext?: unknown,
+//   ) => unknown
+// }
 
 //? Language descriptor - Single source of truth for the language shape. 
 export interface LanguageDescriptor {
@@ -50,6 +69,7 @@ export interface LanguageDescriptor {
   inputs: Map<string, InputDefinition>
   outputs: Map<string, OutputDefinition>
   evaluators: Map<string, EvaluatorDefinition>
+  // higherOrderEvaluators: Map<string, HigherOrderEvaluatorDefinition> // TODO
 }
 
 
@@ -61,6 +81,7 @@ export interface Language {
   registerInput(def: InputDefinition): void;
   registerOutput(def: OutputDefinition): void;
   registerEvaluator(def: EvaluatorDefinition): void;
+  // registerHigherOrder(def: HigherOrderEvaluatorDefinition): void; // TODO
 }
 
  
@@ -71,7 +92,8 @@ function createDescriptor(): LanguageDescriptor {
     inputs: new Map(),
     outputs: new Map(),
     evaluators: new Map(),
-  };
+    // higherOrderEvaluators: new Map(), // TODO
+  }
 }
 
 export function createLanguage(): Language {
@@ -88,6 +110,8 @@ export function createLanguage(): Language {
       descriptor.outputs.set(def.name, def),
     registerEvaluator: (def) =>
       descriptor.evaluators.set(def.op, def),
+    // registerHigherOrder: (def) => // TODO
+    //   descriptor.higherOrderEvaluators.set(def.op, def),
   }
 }
 
@@ -104,5 +128,6 @@ export function extendLanguage(parent: Language): Language {
   d.inputs.forEach((v, k) => child.descriptor.inputs.set(k, v))
   d.outputs.forEach((v, k) => child.descriptor.outputs.set(k, v))
   d.evaluators.forEach((v, k) => child.descriptor.evaluators.set(k, v))
+  // d.higherOrderEvaluators.forEach((v, k) => child.descriptor.higherOrderEvaluators.set(k, v)) // TODO
   return child
 }
