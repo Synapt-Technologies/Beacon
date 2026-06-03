@@ -1,47 +1,147 @@
 import { type ASTNode } from './logic.nodes'
 import { type LanguageDescriptor } from './logic.registry'
 
+//? Raw EXT Program - Parser output without validation.
+export interface RawProgram {
+  bindings: Map<string, ASTNode>
+  outputs: Map<string, ASTNode>
+}
 
-// ? Parsed Program - Parser output
-export interface ParsedProgram {
+// ? Core C Program - output of analyse, input to interpreter.
+export interface CoreProgram {
   /** All named bindings: Set x = ... */
   bindings: Map<string, ASTNode>
  
   /** Named program outputs: return tally: s1 */
   outputs: Map<string, ASTNode>
  
-  /** Bindings reachable from any output - computed at parse time *
+  /** Bindings reachable from any output - computed at parse time
    * Used to skip unused bindings during eval.
    */
   usedBindings: Set<string>
  
   /**
-   * The order in which the bindings should be evauluated.
-   * Computed with topological sort on parse.
-   * This way every nodes's inputs are evaluated before the node itself.
+   * Topological sort of usedBindings.
+   * interp walks this in order — dependencies always before dependents.
+   * Computed at analyse time. Cycles produce an AnalysisError.
    */
   evalOrder: string[]
  
   /**
-   * Reverse dependency map.
-   * For each binding/input name a set of bindings that use it as input. 
-   * If the input is changed, all bindings that use it need to be re-evaluated.
-   * 
-   * dependents.get('s1') = Set of binding names that read s1 as input.
-   * Input node names ('sourceBusNew') are also valid keys here.
+   * Forward dependency map - used for dirty propagation during interp.
+   * name -> bindings that directly depend on it.
+   * Input node names are valid keys.
    */
   dependents: Map<string, Set<string>>
+ 
+  /**
+   * Per-output contributing inputs
+   * outputName -> Set of input node names that transitively contribute to it.
+   * e.g. 'tally' → Set(['sourceBusNew', 'sourceBusOld'])
+   */
+  // TODO: Needed?
+  outputDependencies: Map<string, Set<string>>
 }
 
+//? Compure ouput dependencies - used during analysis.
+export function computeOutputDependencies(
+  raw: RawProgram,
+): Map<string, Set<string>> {
+  const result = new Map<string, Set<string>>()
+  for (const [outputName, outputNode] of raw.outputs) {
+    const inputs = new Set<string>()
+    collectContributingInputs(outputNode, raw.bindings, inputs, new Set())
+    result.set(outputName, inputs)
+  }
+  return result
+}
 
-//? Parse Result
+function collectContributingInputs(
+  node: ASTNode,
+  bindings: Map<string, ASTNode>,
+  inputs: Set<string>,
+  visited: Set<string>,
+): void {
+  switch (node.kind) {
+    case 'literal':
+      return  // no inputs
+ 
+    case 'array':
+      node.items.forEach(n => collectContributingInputs(n, bindings, inputs, visited))
+      return
+ 
+    case 'input':
+      inputs.add(node.name)
+      return
+ 
+    case 'ref': {
+      if (visited.has(node.name)) return  // cycle guard (caught by analyser but safe)
+      visited.add(node.name)
+      const binding = bindings.get(node.name)
+      if (binding) collectContributingInputs(binding, bindings, inputs, visited)
+      return
+    }
+ 
+    case 'field':
+      collectContributingInputs(node.source, bindings, inputs, visited)
+      return
+ 
+    case 'operation':
+      for (const input of Object.values(node.inputs)) {
+        if (Array.isArray(input)) {
+          input.forEach(n => collectContributingInputs(n, bindings, inputs, visited))
+        } else {
+          collectContributingInputs(input, bindings, inputs, visited)
+        }
+      }
+      return
+ 
+    //TODO:
+    // case 'higher_order':
+    //   for (const input of Object.values(node.inputs)) {
+    //     if (Array.isArray(input)) {
+    //       input.forEach(n => collectContributingInputs(n, bindings, inputs, visited))
+    //     } else {
+    //       collectContributingInputs(input, bindings, inputs, visited)
+    //     }
+    //   }
+    //   collectContributingInputs(node.body, bindings, inputs, visited)
+    //   return
+ 
+    // case 'filter':
+    //   collectContributingInputs(node.list, bindings, inputs, visited)
+    //   collectContributingInputs(node.condition, bindings, inputs, visited)
+    //   return
+ 
+    // case 'map':
+    //   collectContributingInputs(node.list, bindings, inputs, visited)
+    //   collectContributingInputs(node.transform, bindings, inputs, visited)
+    //   return
+  }
+}
+
+//? EvalState - persistent across events, one instance per program
+ 
+export interface EvalState {
+  /**
+   * Resolved values for both bindings and input nodes.
+   * Maps names to values.
+   * Persists between events - clean nodes retain their values here.
+   */
+  environment: Map<string, unknown>
+ 
+  /** Bindings needing recomputation on next interpretProgram call */
+  dirty: Set<string>
+}
+
+//? Parse and Analysis Result
 export type ParseWarningKind =
   | 'unknown_output'       // return foo: x - 'foo' not registered → warning, dropped
   | 'output_type_mismatch' // return tally: s1 but s1 is not TallyState → warning, dropped
   | 'unused_binding'       // Set x = ... but x never referenced → warning, kept
   | 'missing_required_output' // registered required output not returned → warning
  
-export type ParseErrorKind =
+export type AnalysisErrorKind =
   | 'unknown_op'           // Op not registered → hard error
   | 'unknown_input'        // Input node not registered → hard error
   | 'unknown_type'         // Type reference not registered → hard error
@@ -55,28 +155,44 @@ export interface ParseWarning {
   loc?: { line: number; column: number }
 }
  
-export interface ParseError {
-  kind: ParseErrorKind
+export interface AnalysisError {
+  kind: AnalysisErrorKind
   name: string
   message: string
   loc?: { line: number; column: number }
 }
-
+ 
 export interface ParseSuccess {
   ok: true
-  program: ParsedProgram
+  program: RawProgram
   warnings: ParseWarning[]
 }
-
+ 
 export interface ParseFailure {
   ok: false
-  errors: ParseError[]
-  warnings: ParseWarning[]  // warnings can still occur before a hard error
+  errors: ParseWarning[]  // syntax-level errors
+  warnings: ParseWarning[]
 }
-
+ 
 export type ParseResult = ParseSuccess | ParseFailure
+ 
+export interface AnalysisSuccess {
+  ok: true
+  program: CoreProgram
+  warnings: ParseWarning[]
+}
+ 
+export interface AnalysisFailure {
+  ok: false
+  errors: AnalysisError[]
+  warnings: ParseWarning[]
+}
+ 
+export type AnalysisResult = AnalysisSuccess | AnalysisFailure
 
-//? Evalstate
+
+
+//? Evalstate Management
 // State persisted accross input events. Should map which nodes depend on which inputs differently. TODO
 export interface EvalState {
   /** Resolved values for both bindings and input nodes */
