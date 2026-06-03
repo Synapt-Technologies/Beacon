@@ -102,6 +102,4 @@ export type ASTNode =
   | RefNode
   | OperationNode
   | FieldAccessNode
-  | FilterNode
-  | MapNode
   | HigherOrderNode
