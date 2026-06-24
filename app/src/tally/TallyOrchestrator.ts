@@ -1,12 +1,14 @@
 import { EventEmitter } from "events";
 import { AbstractConsumer } from "./consumer/AbstractConsumer";
-import { isGlobalBroadcastConsumer } from "./consumer/IGlobalBroadcastConsumer";
-import { GlobalSourceTools, TallyState, type ProducerId } from "./types/ProducerStates";
-import { AbstractTallyProducer, type ProducerInfo, ProducerStatus } from "./producer/tallyProducer/AbstractTallyProducer";
-import { type AlertSlotConfig, DEFAULT_ALERT_SLOTS, TallyState, type ConsumerId, type TallyDevice } from "./types/ConsumerStates";
+import { isBroadcastConsumer } from "./consumer/IBroadcastConsumer";
+import { AbstractTallyProducer } from "./producer/tallyProducer/AbstractTallyProducer";
 import { Logger } from "../logging/Logger";
+import type { ProducerId, ProducerInfo } from "./types/ProducerTypes";
+import type { ConsumerId } from "./types/ConsumerTypes";
+import { DEFAULT_ALERT_SLOTS, type TallyDevice } from "./types/DeviceTypes";
+import { TallyState } from "./types/CommonTypes";
+import type { SourceStateBusGroupMap } from "./types/SourceTypes";
 
-export type { AlertSlotConfig };
 
 export interface OrchestratorConfig {
     state_on_disconnect?: TallyState;
@@ -46,15 +48,11 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
     private producers: Map<ProducerId, AbstractTallyProducer> = new Map();
     private consumers: Map<ConsumerId, AbstractConsumer> = new Map();
 
-    private producerTallyStates: Map<ProducerId, TallyState> = new Map();
+    private activeStateMap: SourceStateBusGroupMap = new Map();
     
     private disconnectedProducers: Set<ProducerId> = new Set();
     private _connectGraceTimers: Map<ProducerId, ReturnType<typeof setTimeout>> = new Map();
     
-    private globalTallyState: TallyState = {
-        preview: new Set(),
-        program: new Set()
-    }
 
 
     constructor(config: OrchestratorConfig) {
