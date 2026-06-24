@@ -1,8 +1,8 @@
 import type { AbstractConsumer } from "./AbstractConsumer";
-import type { SourceStateMap } from "../types/SourceTypes";
+import type { SourceStateBusGroupMap } from "../types/SourceTypes";
 
 export interface IBroadcastConsumer {
-  publishTally(state: SourceStateMap): void;
+  publishTally(state: SourceStateBusGroupMap): void;
 }
 
 export function isBroadcastConsumer(

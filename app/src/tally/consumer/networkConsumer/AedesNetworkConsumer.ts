@@ -24,7 +24,7 @@ import type {
   DeviceStateBundle,
   GlobalDeviceRuntimeConfig,
 } from "../../types/DeviceTypes";
-import type { SourceInfo, SourceStateMap } from "../../types/SourceTypes";
+import type { SourceInfo, SourceStateBusGroupMap, SourceStateMap } from "../../types/SourceTypes";
 
 export interface AedesConsumerConfig extends NetServerConsumerConfig {
   serve_tcp: boolean;
@@ -54,7 +54,7 @@ interface KeepAliveMqttPayload extends MqttPayload {
 }
 
 interface TallyBroadcastMqttPayload extends MqttPayload {
-  source_states: Record<string, TallyStatePackage>;
+  source_states: Record<string, Record<string, TallyStatePackage>>;
 }
 
 // TODO: make this extend exiting interfaces?
@@ -555,11 +555,16 @@ export class AedesNetServerConsumer
     this._publish("system/info", payload, 1, false);
   }
 
-  public publishTally(state: SourceStateMap) {
+  public publishTally(state: SourceStateBusGroupMap) {
     const map = Object.fromEntries(
-      Array.from(state.entries()).map(([key, state]) => [
-        key,
-        { name: TallyState[state], num: state },
+      Array.from(state.entries()).map(([busGroupKey, sourceStateMap]) => [
+        busGroupKey,
+        Object.fromEntries(
+          Array.from(sourceStateMap.entries()).map(([sourceKey, tallyState]) => [
+            sourceKey,
+            { name: TallyState[tallyState], num: tallyState },
+          ]),
+        ),
       ]),
     );
 
