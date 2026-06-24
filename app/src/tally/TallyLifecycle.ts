@@ -8,7 +8,8 @@ import { Logger } from "../logging/Logger";
 import type { AedesConsumerConfig } from "./consumer/networkConsumer/AedesNetworkConsumer";
 import type { GpioConsumerConfig } from "./consumer/hardwareConsumer/RpiGpioHardwareConsumer";
 import type { AbstractConsumer, ConsumerConfig, ConsumerInfo } from "./consumer/AbstractConsumer";
-import type { ConsumerId, DeviceAddress, DeviceAlertState, DeviceAlertTarget, DeviceName, TallyDevice } from "./types/ConsumerStates";
+import type { ConsumerId, DeviceAddress, DeviceAlertState, DeviceAlertTarget, TallyDevice } from "./types/ConsumerStates";
+import type { DeviceRuntimeConfig } from "./types/DeviceTypes";
 import type { GlobalTallySource } from "./types/ProducerStates";
 import { HardwareVersion, type SystemInfo } from "../types/SystemInfo";
 import SystemInfoUtil from "../system/SystemInfoUtil";
@@ -31,12 +32,12 @@ type ConsumerConfigMap = { // TODO Add consumer info
 
 type RegisteredConsumerId = keyof ConsumerConfigMap;
 
-type ConsumerMap<Extra extends object = {}> = {
+type ConsumerMap<Extra extends object = object> = {
     [K in keyof ConsumerConfigMap]: LifeCycleConsumerConfig<ConsumerConfigMap[K]> & Extra;
 };
 
 type ConsumerRuntime = {
-    factory: (config: any) => AbstractConsumer;
+    factory: (config: ConsumerConfig) => AbstractConsumer;
     isAvailable: () => boolean;
     isDisableable: () => boolean;
 };
@@ -336,10 +337,10 @@ export class TallyLifecycle {
         consumer.setDevicePatch(address, patch);
     }
 
-    public renameDevice(address: DeviceAddress, name: DeviceName): void {
+    public updateDeviceRuntimeConfig(address: DeviceAddress, config: Partial<DeviceRuntimeConfig>): void {
         const consumer = this.orchestrator.getConsumer(address.consumer);
-        if (!consumer) { this.logger.warn(`renameDevice: no consumer for`, address.consumer); return; }
-        consumer.setDeviceName(address, name);
+        if (!consumer) { this.logger.warn(`updateDeviceRuntimeConfig: no consumer for`, address.consumer); return; }
+        consumer.setDeviceRuntimeConfig(address, config);
     }
 
     public removeDevice(address: DeviceAddress): void {
@@ -382,7 +383,7 @@ export class TallyLifecycle {
 
                 // Dry-construct: runs checkConfig() in ctor, no port binding until init().
                 // Throws here if config is invalid, before the old consumer is touched.
-                const consumer = entry.factory(entry.config);
+                const consumer = entry.factory(entry.config ?? {});
 
                 if (this.orchestrator.hasConsumer(id)) {
                     this.logger.info(`Stopping consumer:`, id);

@@ -17,7 +17,6 @@ export interface NetworkConsumerConfig extends ConsumerConfig {
 export type NetworkConsumerEvents = ConsumerEvents & {
     connection: []; // When A client loads, subscribes or whatever.
     disconnection: []; // When A client loads, subscribes or whatever.
-    discovery: [id:string, outputs: any]
 }
 
 export abstract class AbstractNetworkConsumer<T extends NetworkConsumerEvents = NetworkConsumerEvents> extends AbstractConsumer<T> {
@@ -61,8 +60,10 @@ export abstract class AbstractNetworkConsumer<T extends NetworkConsumerEvents = 
         }
     }
 
-    abstract broadcastTally(): void;
+    // TODO: Move to globalBroadcastConsumer? Or change that to GlobalDeviceBroadcastConsumer and create a GlobalBroadcastConsumer interface? Not all consumers need to broadcast all tally.
+    abstract broadcastTally(): void; // Global Tally broadcast, not device specific.
 
+    // TODO: Move to some sort of NetworkConsumer class or interface? Not all consumers need to broadcast keep alive.
     abstract broadcastKeepAlive(): void;
 
     init(): void | Promise<void> {

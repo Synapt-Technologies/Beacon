@@ -1,13 +1,5 @@
 import { NavLink } from 'react-router-dom'
 
-interface SavebarItemProps {
-  to: string
-  icon: React.ReactNode
-  label: string
-  collapsed: boolean
-}
-
-
 export default function SidebarItem(
   { to, icon, label, collapsed }: { to: string, icon: React.ReactNode, label: string, collapsed: boolean }
 ) {

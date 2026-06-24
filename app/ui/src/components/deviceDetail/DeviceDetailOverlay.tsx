@@ -12,7 +12,7 @@ import DeviceAlerts from './DeviceAlerts'
 import { UITallyDevice } from '../../types/DeviceStates'
 import { ConnectionType, GlobalDeviceTools } from '../../../../src/tally/types/ConsumerStates'
 import type { GlobalTallySource } from '../../../../src/tally/types/ProducerStates'
-import { stateFromValue, type DeviceDisplayState } from '../../types/beacon'
+import { stateFromValue, type TallyState } from '../../types/beacon'
 import { DeviceEditModal } from '../devices/DeviceEditPanel'
 
 interface DeviceDetailOverlayProps {
@@ -22,10 +22,11 @@ interface DeviceDetailOverlayProps {
 }
 
 const CONNECTION_LABELS: Record<ConnectionType, string> = {
-    [ConnectionType.HARDWARE]: 'Hardware',
-    [ConnectionType.NETWORK]:  'Network',
-    [ConnectionType.WIRELESS]: 'Wireless',
-    [ConnectionType.VIRTUAL]:  'Virtual',
+    [ConnectionType.HARDWARE]:    'Hardware',
+    [ConnectionType.NETWORK]:     'Network',
+    [ConnectionType.WIRELESS]:    'Wireless',
+    [ConnectionType.VIRTUAL]:     'Virtual',
+    [ConnectionType.BEACON_MESH]: 'Beacon Mesh',
 }
 
 function formatTs(ms?: number): string { // TODO: move to shared util
@@ -41,7 +42,7 @@ function formatTs(ms?: number): string { // TODO: move to shared util
 export function DeviceDetailOverlay({ device, backPath, backLabel }: DeviceDetailOverlayProps) {
     const navigate = useNavigate()
     const location = useLocation()
-    const { producers, uiConfig, orchestratorConfig, patchDevice, renameDevice, removeDevice } = useBeacon()
+    const { producers, uiConfig, orchestratorConfig, patchDevice, updateDeviceRuntimeConfig, removeDevice } = useBeacon()
     const { states, deviceStates, systemConnected } = useTallyState()
     const disconnectState = stateFromValue(orchestratorConfig.state_on_disconnect ?? 0)
     const [patchOpen, setPatchOpen] = useState(false)
@@ -49,7 +50,7 @@ export function DeviceDetailOverlay({ device, backPath, backLabel }: DeviceDetai
 
     const basePath    = `${backPath}/${device.id.consumer}/${device.id.device}`
     const fsOpen      = location.pathname.endsWith('/fullscreen')
-    const stateStr: DeviceDisplayState = systemConnected
+    const stateStr: TallyState = systemConnected
         ? (deviceStates.get(GlobalDeviceTools.create(device.id.consumer, device.id.device)) ?? 'none')
         : disconnectState
     const deviceKey   = GlobalDeviceTools.create(device.id.consumer, device.id.device)
@@ -59,14 +60,15 @@ export function DeviceDetailOverlay({ device, backPath, backLabel }: DeviceDetai
         await patchDevice(device.id, patch)
     }
     
-    const handleSaveName = async (name: { short?: string; long: string }) => {
+    const handleRuntimeConfigUpdate = async (config: { name?: { short?: string; long: string }; brightness?: number; flip?: boolean }) => {
         setEditOpen(false)
-        await renameDevice(device.id, name)
+        await updateDeviceRuntimeConfig(device.id, config)
     }
 
     const handleRemove = async () => {
         setEditOpen(false)
         await removeDevice(device.id)
+        navigate(backPath)
     }
 
     return (
@@ -167,7 +169,7 @@ export function DeviceDetailOverlay({ device, backPath, backLabel }: DeviceDetai
                 <DeviceEditModal
                     device={device}
                     open={editOpen}
-                    onSave={name => handleSaveName(name)}
+                    onSave={config => handleRuntimeConfigUpdate(config)}
                     onRemove={() => handleRemove()}
                     onClose={() => setEditOpen(false)}
                 />

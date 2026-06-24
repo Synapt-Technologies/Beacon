@@ -13,55 +13,148 @@
 
     <!-- ── Header card ───────────────────────────────────────────────── -->
     <div class="header-card">
-      <span class="app-title">Beacon Satellite</span>
+      <div>
+        <h1 class="app-title" id="app-device-name">Beacon Satellite</h1>
+        <span class="app-subtitle" id="app-device-model">CYD Satellite - DIY</span>
+      </div>
       <div class="status-pills">
-
         <div class="status-pill" id="pill-wifi">
           <span class="pill-dot"></span>
           <span id="pill-wifi-text">Connecting…</span>
         </div>
-
         <div class="status-pill" id="pill-beacon">
           <span class="pill-dot"></span>
           <span id="pill-beacon-text">Offline</span>
         </div>
-
       </div>
     </div>
 
-    <!-- ── Network ─────────────────────────────────────────────────── -->
-    <div class="sec-lbl">Network</div>
-    <div class="s-card">
+    <!-- ── Brightness ─────────────────────────────────────────────────── -->
+    <div class="sec-lbl">Brightness</div>
+    <div class="s-card" id="brightness-card">
 
-      <!-- Text field -->
-      <div class="s-row" data-field="hostname" data-reboot="true">
+      <div class="s-row s-row--master">
         <div class="field-label">
-          <div class="field-name">Hostname</div>
-          <div class="field-sub">Device name on the network</div>
+          <div class="field-name">Master</div>
+          <div class="field-sub">Controlled by your Beacon Base</div>
         </div>
         <div class="field-control">
-          <span class="reboot-badge">Reboot</span>
-          <input class="s-input" type="text" id="hostname" value="beacon-satellite" placeholder="hostname">
+          <div class="master-track"><div class="master-fill" style="--fill:80%"></div></div>
+          <span class="slider-value">80%</span>
+        </div>
+        <div class="trim-mini-header">
+          <span class="trim-mini-lbl trim-mini-lbl--trim">Trim</span>
+          <span class="trim-mini-lbl trim-mini-lbl--eff">Output</span>
         </div>
       </div>
 
-      <!-- Dropdown field -->
-      <div class="s-row" data-field="wifiSsid" data-reboot="true">
+      <!-- Trim rows injected here by JS (renderTrimRows) -->
+      <div class="s-row s-row--trim" data-field="trim0">
+        <div class="field-label"><div class="field-name">Front Display</div></div>
+        <div class="field-control">
+          <input class="s-slider trim-slider" type="range" id="trim0" min="-50" max="50" step="1" value="0" data-master="80" data-default="0">
+          <input type="text" class="slider-value trim-val" id="trim0Val" value="+0%">
+          <span class="effective-val" id="trim0Eff">80%</span>
+        </div>
+      </div>
+
+      <div class="s-row s-row--trim" data-field="trim1">
+        <div class="field-label"><div class="field-name">Back Panel</div></div>
+        <div class="field-control">
+          <input class="s-slider trim-slider" type="range" id="trim1" min="-50" max="50" step="1" value="0" data-master="80" data-default="0">
+          <input type="text" class="slider-value trim-val" id="trim1Val" value="+0%">
+          <span class="effective-val" id="trim1Eff">80%</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ── Runtime (from Beacon Base, readonly) ───────────────────────── -->
+    <div class="sec-hdr">
+      <span class="sec-lbl">Runtime</span>
+      <span class="sec-from">Configured by Beacon Base</span>
+    </div>
+    <div class="s-card">
+
+      <div class="s-row s-row--ro">
         <div class="field-label">
-          <div class="field-name">WiFi Network</div>
-          <div class="field-sub">Network to connect to</div>
+          <div class="field-name">Short name</div>
+          <div class="field-sub">Shown in compact display mode</div>
         </div>
         <div class="field-control">
-          <span class="reboot-badge">Reboot</span>
-          <select class="s-select" id="wifiSsid">
-            <option value="">— Select —</option>
-            <option value="HomeNetwork">HomeNetwork</option>
-            <option value="OfficeWifi">OfficeWifi</option>
+          <input class="s-input" type="text" id="rt-short-name" value="CAM 1" readonly>
+        </div>
+      </div>
+
+      <div class="s-row s-row--ro">
+        <div class="field-label">
+          <div class="field-name">Long name</div>
+          <div class="field-sub">Shown in full display mode</div>
+        </div>
+        <div class="field-control">
+          <input class="s-input" type="text" id="rt-long-name" value="Camera 1" readonly>
+        </div>
+      </div>
+
+      <div class="s-row s-row--ro">
+        <div class="field-label">
+          <div class="field-name">State on disconnect</div>
+          <div class="field-sub">Display state when Base is unreachable</div>
+        </div>
+        <div class="field-control">
+          <select class="s-select" id="rt-state" tabindex="-1">
+            <option value="0">Off</option>
+            <option value="4">Danger</option>
+            <option value="8">Info</option>
+            <option value="12" selected>Warning</option>
+            <option value="16">Preview</option>
+            <option value="20">Program</option>
           </select>
         </div>
       </div>
 
-      <!-- Password field -->
+      <div class="s-row s-row--ro">
+        <div class="field-label">
+          <div class="field-name">Flip sides</div>
+          <div class="field-sub">Swap front and back display roles</div>
+        </div>
+        <div class="field-control">
+          <label class="toggle">
+            <input type="checkbox" id="rt-flip-sides">
+            <span class="toggle-track"><span class="toggle-thumb"></span></span>
+          </label>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ── Network ────────────────────────────────────────────────────── -->
+    <div class="sec-lbl">Network</div>
+    <div class="s-card">
+
+      <div class="s-row" data-field="wifiSsid" data-reboot="true">
+        <div class="field-label">
+          <div class="field-name">WiFi Network</div>
+          <div class="field-sub">Scan or enter manually</div>
+        </div>
+        <div class="field-control">
+          <span class="reboot-badge">Reboot</span>
+          <div class="wifi-combo" id="wifiCombo">
+            <div class="wifi-input-row">
+              <input class="s-input" type="text" id="wifiSsid"
+                     placeholder="Network name" autocomplete="off" spellcheck="false">
+              <button class="scan-btn" id="btn-scan" type="button" title="Scan for networks">
+                <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+                  <path d="M9 5.5A3.5 3.5 0 1 1 5.5 2c1.2 0 2.2.6 2.9 1.4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+                  <path d="M8 1v2.5H5.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </button>
+            </div>
+            <div class="scan-dropdown" id="scan-dropdown" hidden></div>
+          </div>
+        </div>
+      </div>
+
       <div class="s-row" data-field="wifiPassword" data-reboot="true">
         <div class="field-label">
           <div class="field-name">WiFi Password</div>
@@ -76,118 +169,105 @@
         </div>
       </div>
 
-    </div>
+      <div class="sub-sec-lbl">Access Point</div>
 
-    <!-- ── Telemetry ────────────────────────────────────────────────── -->
-    <div class="sec-lbl">Telemetry</div>
-    <div class="s-card">
-
-      <!-- Toggle -->
-      <div class="s-row" data-field="telemetryEnabled">
+      <!-- AP always enabled — fixed on, not configurable -->
+      <div class="s-row s-row--ro">
         <div class="field-label">
-          <div class="field-name">Enable telemetry</div>
-          <div class="field-sub">Broadcast status packets over RF</div>
+          <div class="field-name">AP Always Enabled</div>
+          <div class="field-sub">Access point is always active as a fallback</div>
         </div>
         <div class="field-control">
           <label class="toggle">
-            <input type="checkbox" id="telemetryEnabled" checked>
+            <input type="checkbox" checked>
             <span class="toggle-track"><span class="toggle-thumb"></span></span>
           </label>
         </div>
       </div>
 
-      <!-- Number slider -->
-      <div class="s-row" data-field="txInterval">
+      <!-- AP SSID — readonly, auto-generated -->
+      <div class="s-row s-row--ro">
         <div class="field-label">
-          <div class="field-name">Transmit interval</div>
-          <div class="field-sub">How often to send telemetry packets</div>
+          <div class="field-name">AP Network Name</div>
+          <div class="field-sub">Auto-generated from device name</div>
         </div>
         <div class="field-control">
-          <input class="s-slider" type="range" id="txInterval"
-                 min="1" max="60" step="1" value="10" data-unit="s">
-          <span class="slider-value" id="txIntervalVal">10s</span>
+          <input class="s-input" type="text" id="apSsid" readonly placeholder="—">
         </div>
       </div>
 
-      <!-- Radio group -->
-      <div class="s-row" data-field="txPower">
+      <div class="s-row" data-field="apPassword" data-reboot="true">
         <div class="field-label">
-          <div class="field-name">TX power</div>
-          <div class="field-sub">RF output power level</div>
+          <div class="field-name">AP Password</div>
+          <div class="field-sub">Leave blank for open network</div>
         </div>
         <div class="field-control">
-          <div class="radio-group" id="txPowerGroup">
-            <label class="radio-opt"><input type="radio" name="txPower" value="low"> Low</label>
-            <label class="radio-opt"><input type="radio" name="txPower" value="med" checked> Med</label>
-            <label class="radio-opt"><input type="radio" name="txPower" value="high"> High</label>
+          <span class="reboot-badge">Reboot</span>
+          <div class="password-wrap">
+            <input class="s-input" type="password" id="apPassword" placeholder="optional">
+            <button class="pw-toggle" type="button">Show</button>
           </div>
         </div>
       </div>
 
     </div>
 
-    <!-- ── Device ───────────────────────────────────────────────────── -->
-    <div class="sec-lbl">Device</div>
+    <!-- ── Beacon ─────────────────────────────────────────────────────── -->
+    <div class="sec-lbl">Beacon</div>
     <div class="s-card">
 
-      <!-- IP / host field -->
-      <div class="s-row" data-field="groundIp">
+      <div class="s-row" data-field="deviceName">
         <div class="field-label">
-          <div class="field-name">Ground station IP</div>
-          <div class="field-sub">Target address for telemetry uplink</div>
+          <div class="field-name">Device name</div>
+          <div class="field-sub">Identifies this satellite to the Base</div>
         </div>
         <div class="field-control">
-          <input class="s-input mono" type="text" id="groundIp"
-                 value="192.168.1.1" inputmode="decimal" placeholder="0.0.0.0">
+          <input class="s-input" type="text" id="deviceName" value="Satellite 1" placeholder="Device name">
         </div>
       </div>
 
-      <!-- Number field (no slider) -->
-      <div class="s-row" data-field="groundPort">
+      <div class="s-row" data-field="baseUrl">
         <div class="field-label">
-          <div class="field-name">Port</div>
-          <div class="field-sub">UDP port for telemetry</div>
+          <div class="field-name">Base station</div>
+          <div class="field-sub">IP address or hostname of the Beacon Base</div>
         </div>
         <div class="field-control">
-          <input class="s-input s-input--num mono" type="number" id="groundPort"
-                 min="1" max="65535" step="1" value="4242">
+          <input class="s-input mono" type="text" id="baseUrl" value="192.168.1.100" placeholder="0.0.0.0">
         </div>
       </div>
 
-      <!-- Textarea -->
-      <div class="s-row s-row--col" data-field="notes">
-        <div class="field-label">
-          <div class="field-name">Notes</div>
-          <div class="field-sub">Free-form configuration notes</div>
-        </div>
-        <textarea class="s-textarea" id="notes" rows="3" placeholder="Enter notes…"></textarea>
-      </div>
+      <details class="dev-section">
+        <summary class="dev-summary">Developer</summary>
 
-    </div>
-
-    <!-- ── Indicators ───────────────────────────────────────────────── -->
-    <div class="sec-lbl">Indicators</div>
-    <div class="s-card">
-
-      <!-- Color picker -->
-      <div class="s-row" data-field="ledColor">
-        <div class="field-label">
-          <div class="field-name">Status LED color</div>
-          <div class="field-sub">RGB color for the onboard LED</div>
-        </div>
-        <div class="field-control">
-          <div class="color-wrap">
-            <input class="s-color" type="color" id="ledColor" value="#E85D30">
-            <span class="color-hex" id="ledColorHex">#E85D30</span>
+        <div class="s-row" data-field="consumerId">
+          <div class="field-label">
+            <div class="field-name">Consumer ID</div>
+            <div class="field-sub">Assigned automatically on first connect</div>
+          </div>
+          <div class="field-control">
+            <input class="s-input mono" type="text" id="consumerId" value="a1b2c3" placeholder="not set">
+            <button class="clear-btn" type="button" data-clears="consumerId">Clear</button>
           </div>
         </div>
-      </div>
+
+        <div class="s-row" data-field="deviceId">
+          <div class="field-label">
+            <div class="field-name">Device ID</div>
+            <div class="field-sub">Assigned automatically on first connect</div>
+          </div>
+          <div class="field-control">
+            <input class="s-input mono" type="text" id="deviceId" value="d4e5f6" placeholder="not set">
+            <button class="clear-btn" type="button" data-clears="deviceId">Clear</button>
+          </div>
+        </div>
+
+      </details>
 
     </div>
 
   </main>
 
-  <!-- ── Savebar ─────────────────────────────────────────────────────── -->
+  <!-- ── Savebar ────────────────────────────────────────────────────────── -->
   <div class="savebar" id="savebar">
     <div class="savebar-info">
       <span class="savebar-msg">Unsaved changes</span>

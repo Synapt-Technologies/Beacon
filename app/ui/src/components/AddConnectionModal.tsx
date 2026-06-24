@@ -160,7 +160,7 @@ export function AddConnectionModal({ open, onClose }: AddConnectionModalProps) {
           </div>
 
           {error && (
-            <div style={{ fontSize: 11, color: 'var(--pgm)', padding: '6px 10px', background: 'color-mix(in srgb, var(--pgm) 10%, transparent)', borderRadius: 'var(--border-radius-md)' }}>
+            <div style={{ fontSize: 11, color: 'var(--color-text-danger)', padding: '6px 10px', background: 'color-mix(in srgb, var(--color-text-danger) 10%, transparent)', borderRadius: 'var(--border-radius-md)' }}>
               {error}
             </div>
           )}

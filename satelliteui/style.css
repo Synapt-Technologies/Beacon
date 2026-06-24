@@ -12,6 +12,7 @@
   --text-primary:   #e8e6de;
   --text-secondary: #b4b2a9;
   --text-tertiary:  #6b6a64;
+  --text-quartary:  #404040;
   --text-success:   #5dcaa5;
   --text-danger:    #E93838;
   --text-warning:   #D4930A;
@@ -53,10 +54,10 @@ button { cursor: pointer; }
 
 .header-card {
   display: flex;
-  align-items: center;
+  align-items: start;
+  justify-content: space-between;
   gap: 10px;
-  padding: 0 16px;
-  height: 52px;
+  padding: 10px 16px 14px;
   background: var(--bg-primary);
   border: 0.5px solid var(--border-t);
   border-radius: var(--radius-lg);
@@ -64,11 +65,18 @@ button { cursor: pointer; }
 }
 
 .app-title {
-  flex: 1;
-  font-size: 14px;
+  font-size: 30px;
   font-weight: 600;
-  color: var(--text-primary);
   letter-spacing: .01em;
+}
+.app-subtitle {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin: 0 0 0 2px;
+}
+
+.header-card .status-pills {
+  margin-top: 7px;
 }
 
 /* ─── Monospace utility ────────────────────────────────────────────────────── */
@@ -97,6 +105,31 @@ button { cursor: pointer; }
   transition: color .2s, background .2s, border-color .2s;
   white-space: nowrap;
   user-select: none;
+  position: relative;
+}
+
+.status-pill[data-tooltip]::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  top: calc(100% + 5px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg-secondary);
+  border: 0.5px solid var(--border-s);
+  border-radius: var(--radius-md);
+  padding: 4px 9px;
+  font-size: 11px;
+  font-family: var(--font-mono);
+  color: var(--text-secondary);
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .15s;
+  z-index: 50;
+}
+
+.status-pill[data-tooltip]:hover::after {
+  opacity: 1;
 }
 
 .status-pill.ok {
@@ -143,13 +176,43 @@ button { cursor: pointer; }
 
 /* ─── Section label ────────────────────────────────────────────────────────── */
 
+.sec-hdr {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
 .sec-lbl {
   font-size: 10px;
   font-weight: 600;
   color: var(--text-tertiary);
   text-transform: uppercase;
   letter-spacing: .07em;
-  margin-bottom: 8px;
+}
+
+.sec-hdr > .sec-lbl { margin-bottom: 0; }
+
+.sec-from {
+  font-size: 10px;
+  color: var(--acc);
+  letter-spacing: .02em;
+}
+
+/* Stand-alone sec-lbl (not inside sec-hdr) */
+.page > .sec-lbl { margin-bottom: 8px; }
+
+/* ─── Sub-section label (inside a card) ────────────────────────────────────── */
+
+.sub-sec-lbl {
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--text-quartary);
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  padding: 8px 14px 6px;
+  border-top: 0.5px solid var(--border-t);
+  margin-top: 2px;
 }
 
 /* ─── Settings card ────────────────────────────────────────────────────────── */
@@ -466,8 +529,87 @@ button { cursor: pointer; }
 
 .color-hex {
   font-size: 11px;
-  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-family: var(--font-mono);
   color: var(--text-tertiary);
+}
+
+/* ─── Scan button ──────────────────────────────────────────────────────────── */
+
+.scan-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 0.5px solid var(--border-t);
+  border-radius: var(--radius-md);
+  background: var(--bg-secondary);
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+  transition: color .1s, border-color .1s;
+}
+
+.scan-btn:hover:not(:disabled) {
+  color: var(--text-secondary);
+  border-color: var(--border-s);
+}
+
+.scan-btn:disabled { opacity: 0.5; cursor: default; }
+
+.scan-btn.scanning svg { animation: spin .7s linear infinite; }
+
+/* ─── WiFi combo ───────────────────────────────────────────────────────────── */
+
+.wifi-combo { position: relative; }
+
+.wifi-input-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.wifi-input-row .s-input { width: 150px; }
+
+.scan-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  min-width: 180px;
+  background: var(--bg-secondary);
+  border: 0.5px solid var(--border-s);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  z-index: 50;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.scan-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 7px 10px;
+  border: none;
+  background: none;
+  color: var(--text-primary);
+  text-align: left;
+  cursor: pointer;
+  font-size: 12px;
+  transition: background .1s;
+}
+
+.scan-item:hover { background: var(--border-t); }
+.scan-item + .scan-item { border-top: 0.5px solid var(--border-t); }
+.scan-ssid { font-family: var(--font-mono); }
+
+.scan-rssi {
+  font-size: 10px;
+  color: var(--text-tertiary);
+  font-family: var(--font-mono);
+  flex-shrink: 0;
+  margin-left: 8px;
 }
 
 /* ─── Savebar ──────────────────────────────────────────────────────────────── */
@@ -496,7 +638,7 @@ button { cursor: pointer; }
 .savebar.visible {
   opacity: 1;
   transform: translateY(0);
-  pointer-events: all;
+  pointer-events: auto;
 }
 
 .savebar-info {
@@ -531,6 +673,8 @@ button { cursor: pointer; }
 }
 
 .savebar-reboot.visible { display: flex; }
+
+.savebar.err .savebar-msg { color: var(--text-danger); }
 
 .savebar-btn {
   font-size: 12px;
@@ -569,6 +713,241 @@ button { cursor: pointer; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
 .spin { animation: spin .7s linear infinite; }
+
+/* ─── Brightness section ───────────────────────────────────────────────────── */
+
+.s-row--master {
+  background: var(--bg-secondary);
+  cursor: default;
+  position: relative;
+  padding-bottom: 15px;
+}
+
+.s-row--master .trim-mini-header {
+  position: absolute;
+  bottom: 3px;
+  right: 14px;
+}
+
+.master-track {
+  width: 130px;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--border-s);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.master-fill {
+  height: 100%;
+  border-radius: 3px;
+  background: var(--text-tertiary);
+  width: var(--fill, 0%);
+  transition: width .2s;
+}
+
+/* Trim slider – center-origin fill */
+.s-slider.trim-slider {
+  background: linear-gradient(
+    to right,
+    var(--border-s)  var(--fill-start, 50%),
+    var(--acc)       var(--fill-start, 50%),
+    var(--acc)       var(--fill-end, 50%),
+    var(--border-s)  var(--fill-end, 50%)
+  );
+}
+
+/* Per-row tree (M variant — rows are direct .s-card children, border-left stays at card edge) */
+.s-row--trim {
+  position: relative;
+  padding-left: 38px; /* 14px base + 24px tree indent */
+}
+
+.s-row--trim::before {
+  content: '';
+  position: absolute;
+  left: 26px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 12px;
+  height: 2px;
+  background: var(--text-quartary);
+}
+
+/* Vertical segment — full height on middle rows, half-height on last (└ shape) */
+.s-row--trim::after {
+  content: '';
+  position: absolute;
+  left: 26px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--text-quartary);
+}
+
+.s-row--trim:last-child::after {
+  bottom: 50%;
+}
+
+
+/* Tiny labels above or below the control area */
+.trim-mini-header {
+  display: flex;
+  gap: 8px;
+}
+
+.trim-mini-lbl {
+  font-size: 8px;
+  font-weight: 500;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+  opacity: 0.55;
+  flex-shrink: 0;
+}
+
+.trim-mini-lbl--trim {
+  min-width: 172px; /* slider 130 + gap 8 + val ~34 */
+  text-align: center;
+}
+
+.trim-mini-lbl--eff {
+  min-width: 46px;
+  text-align: right;
+  padding-left: 8px;
+  border-left: 0.5px solid var(--border-t);
+}
+
+/* Effective output value */
+.effective-val {
+  font-size: 12px;
+  font-weight: 500;
+  font-family: var(--font-mono);
+  color: var(--text-tertiary);
+  min-width: 46px;
+  text-align: right;
+  padding-left: 8px;
+  border-left: 0.5px solid var(--border-t);
+  flex-shrink: 0;
+}
+
+/* ─── Trim value input ─────────────────────────────────────────────────────── */
+
+input.trim-val {
+  background: none;
+  border: none;
+  border-bottom: 1px solid transparent;
+  padding: 0 0 1px;
+  outline: none;
+  cursor: text;
+  width: 42px;
+  transition: border-color .15s, color .15s;
+}
+
+input.trim-val:focus {
+  border-bottom-color: var(--acc);
+  color: var(--text-primary);
+}
+
+/* ─── Developer section ────────────────────────────────────────────────────── */
+
+.dev-section {
+  border-top: 0.5px solid var(--border-t);
+}
+
+.dev-summary {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-quartary);
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  padding: 10px 14px;
+  cursor: pointer;
+  user-select: none;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: color .15s;
+}
+
+.dev-summary::-webkit-details-marker { display: none; }
+
+.dev-summary::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: rotate(-45deg);
+  transition: transform .15s;
+  flex-shrink: 0;
+  margin-top: -2px;
+}
+
+.dev-section[open] .dev-summary::before {
+  transform: rotate(45deg);
+  margin-top: 0;
+  margin-bottom: -2px;
+}
+
+.dev-summary:hover { color: var(--text-tertiary); }
+
+/* ─── Clear button ──────────────────────────────────────────────────────────── */
+
+.clear-btn {
+  font-size: 10px;
+  font-weight: 500;
+  padding: 3px 8px;
+  border-radius: var(--radius-md);
+  border: 0.5px solid rgba(226,75,74,.35);
+  background: rgba(226,75,74,.08);
+  color: var(--danger);
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: background .1s;
+}
+
+.clear-btn:hover { background: rgba(226,75,74,.15); }
+
+/* ─── Read-only rows ───────────────────────────────────────────────────────── */
+
+.s-row--ro {
+  cursor: default;
+}
+
+/* Text-based inputs: sunken inset box, muted text, no interaction */
+.s-row--ro .s-input,
+.s-row--ro .s-select,
+.s-row--ro .s-textarea {
+  pointer-events: none;
+  background: var(--bg-tertiary);
+  border-color: var(--border-t);
+  color: var(--text-secondary);
+  -webkit-text-fill-color: var(--text-secondary);
+}
+
+/* Select: also hide the dropdown arrow */
+.s-row--ro .s-select {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+/* Toggle, radio, color: preserve visual state, block interaction */
+.s-row--ro .toggle,
+.s-row--ro .radio-group {
+  pointer-events: none;
+}
+
+.s-row--ro .s-color {
+  pointer-events: none;
+  border-color: transparent;
+}
+
+/* Hide password reveal button */
+.s-row--ro .pw-toggle {
+  display: none;
+}
 
 /* ─── Scrollbar ────────────────────────────────────────────────────────────── */
 

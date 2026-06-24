@@ -35,7 +35,7 @@ export type TallyProducerEvents = {
 }
 
 // TODO: Add an AbstractProducer that can be extended by an AbstractAlertProducer
-export abstract class AbstractTallyProducer<T extends TallyProducerEvents & Record<string, any[]> =TallyProducerEvents> extends EventEmitter<T> {
+export abstract class AbstractTallyProducer<T extends TallyProducerEvents & Record<string, unknown[]> =TallyProducerEvents> extends EventEmitter<T> {
 
     public readonly conType: string = "PROD";
     public readonly prodType: string = "SWTCHR";

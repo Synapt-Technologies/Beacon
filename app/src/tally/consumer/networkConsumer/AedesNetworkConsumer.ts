@@ -6,7 +6,7 @@ import { Aedes, type Client, type Subscription } from "aedes";
 import { createServer, Server } from "node:net";
 import { createServer as createHttpServer, type Server as HttpServer } from "node:http";
 import { WebSocketServer, createWebSocketStream } from "ws";
-import { type DeviceAddress, DeviceAlertState, DeviceAlertTarget, DeviceTallyState, type TallyDevice } from "../../types/ConsumerStates";
+import { ConnectionType, type DeviceAddress, DeviceAlertState, DeviceAlertTarget, DeviceTallyState, GlobalDeviceTools, type TallyDevice } from "../../types/ConsumerStates";
 
 export interface AedesConsumerInfo extends NetworkConsumerInfo {
     tcp_active: boolean;
@@ -18,6 +18,14 @@ export interface AedesConsumerConfig extends NetworkConsumerConfig {
     serve_tcp?: boolean;
     serve_ws?: boolean;
     ws_port?: number;
+}
+
+export interface DeviceDiscoveryPacket {
+    id:            string; // TODO: Device ID type with consumerid?
+    name?:         string;
+    model?:        string;
+    output_count?: number;
+    connection?:   ConnectionType;
 }
 
 
@@ -71,9 +79,24 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer implements IGl
             return this.logger.fatal('Error starting Aedes broker:', err);
         }
 
+        await new Promise<void>((resolve) => {
+            const persistence = (this.aedes as unknown as { persistence: { createRetainedStream(topic: string): NodeJS.ReadableStream; cleanRetained(topic: string, cb: () => void): void } }).persistence;
+            const stream = persistence.createRetainedStream('#');
+            const clears: Promise<void>[] = [];
+            stream.on('data', (packet: { topic: string }) => {
+                clears.push(new Promise<void>((res) =>
+                    persistence.cleanRetained(packet.topic, () => res())
+                ));
+            });
+            stream.on('end', async () => { await Promise.all(clears); resolve(); });
+            stream.on('error', () => resolve());
+        });
+        this.logger.debug('Cleared retained messages.');
+
         if (this.config.serve_tcp) {
             try {
                 this.server = createServer(this.aedes.handle);
+                this.server.on('connection', (socket) => socket.setNoDelay(true));
 
                 await new Promise<void>((resolve, reject) => {
                     this.server.listen(this.config.port, () => {
@@ -122,16 +145,27 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer implements IGl
             }
         }
 
-        this.aedes.on('subscribe', (subscriptions: Subscription[], client: Client) => {
+        this.aedes.on('subscribe', (subscriptions: Subscription[], _client: Client) => {
             this.logger.debug('Subscription:', subscriptions);
 
             // if (subscriptions.some(sub => sub.topic == 'tally' || sub.topic.startsWith('tally/') ))
             //     this.emit('connection'); // TODO: Device Discovery
         });
 
-        this.aedes.on('publish',  (packet, client) => {if (client) {
-            this.logger.debug('Message: MQTT Client', (client ? client.id : 'UNKNOWN ID'), 'has published message on', packet.topic);
-        }});
+        this.aedes.on('publish', (packet, client) => {
+            if (!client) return; // broker-internal messages
+
+            this.logger.debug('Message: MQTT Client', client.id, 'has published message on', packet.topic);
+
+            if (packet.topic === 'device/discovery') {
+                try {
+                    const discovery: DeviceDiscoveryPacket = JSON.parse(packet.payload.toString());
+                    this.onDeviceDiscovered(discovery);
+                } catch (err) {
+                    this.logger.warn(`Failed to parse discovery packet from client ${client.id}:`, err);
+                }
+            }
+        });
 
         this.aedes.on('clientReady', (client: Client) => {
             this.info.client_count++;
@@ -206,8 +240,23 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer implements IGl
         this.info.client_count = 0;
     }
 
+    protected onDeviceDiscovered(packet: DeviceDiscoveryPacket): void {
+        this.logger.info(`Device discovered via MQTT: ${packet.name} (${packet.id})`);
+
+        const device: TallyDevice = GlobalDeviceTools.defaultDevice({
+            id: { consumer: this.config.id, device: packet.id },
+            name: { 
+                long: packet.name ?? packet.model ?? packet.id 
+            },
+            model: packet.model,
+            connection: packet.connection ?? ConnectionType.NETWORK, // Discovered, but not yet patched
+        });
+
+        this._addDevice(device);
+    }
+
     public publishDeviceTally(device: TallyDevice): void {
-        this.sendTallyDevice(device);
+        this.sendDeviceTally(device);
     }
 
     broadcastTally(): void {
@@ -226,7 +275,7 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer implements IGl
             cmd: 'publish',
             qos: 1, // At least once, or more
             dup: false,
-            topic: 'tally/global',
+            topic: 'tally/global', 
             payload: Buffer.from(payload),
             retain: true
         }, () => {});
@@ -254,17 +303,54 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer implements IGl
 
     }
 
+    deleteDevice(address: DeviceAddress): void {
+        super.deleteDevice(address);
+        
 
-    protected sendTallyDevice(device: TallyDevice): void {
+        //Remove retained messages.
+        if (!this.aedes) {
+            this.logger.warn("Discarding Device Deletion: Attempted to send before initialization.");
+            return;
+        }
+
+        this.aedes.publish({
+            cmd: 'publish',
+            qos: 1,
+            dup: false,
+            topic: `tally/device/${address.consumer}/${address.device}`,
+            payload: Buffer.alloc(0), // Empty payload to clear retained message
+            retain: true
+        }, () => {});
+
+        this.aedes.publish({
+            cmd: 'publish',
+            qos: 1,
+            dup: false,
+            topic: `tally/device/${address.consumer}/${address.device}/config`,
+            payload: Buffer.alloc(0), // Empty payload to clear retained message
+            retain: true
+        }, () => {});
+
+        this.aedes.publish({
+            cmd: 'publish',
+            qos: 1,
+            dup: false,            
+            topic: `tally/device/${address.consumer}/${address.device}/fields`,
+            payload: Buffer.alloc(0), // Empty payload to clear retained message
+            retain: true
+        }, () => {});
+    }
+
+
+    protected sendDeviceTally(device: TallyDevice): void {
         if (!this.aedes) {
             this.logger.warn("Discarding Tally: Attempted to send before initialization.");
             return;
         }
 
         const payload = JSON.stringify({
-            state: DeviceTallyState[device.state],
-            ss: device.state,
-            name: device.name,
+            state:  DeviceTallyState[device.state],
+            ss:     device.state,
             moment: this.tallyState.moment
         });
         
@@ -274,8 +360,70 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer implements IGl
         {
             cmd: 'publish',
             qos: 1,
-            dup: false,
-            topic: `tally/device/${device.id.consumer}/${device.id.device}`,
+            dup: false, // TODO: topic becomes /device/x/x/tally?
+            topic: `tally/device/${device.id.consumer}/${device.id.device}`, // TODO: Add /tally?
+            payload: Buffer.from(payload),
+            retain: true
+        }, () => {});
+
+        this.logger.debug(`Sent payload to device:`, payload);
+       
+    }
+
+    // TODO Implement configurable/variable fields.
+    protected sendDeviceFields(device: TallyDevice): void {
+        if (!this.aedes) {
+            this.logger.warn("Discarding FIELDS: Attempted to send before initialization.");
+            return;
+        }
+
+        const payload = JSON.stringify({
+            "1": device.name,
+        });
+        
+        this.logger.debug(`Attempting to publish to MQTT for ${device.id.device}...`);
+        
+        this.aedes.publish(
+        {
+            cmd: 'publish',
+            qos: 1,
+            dup: false,  // TODO: topic becomes /device/x/x/fields?
+            topic: `tally/device/${device.id.consumer}/${device.id.device}/fields`,
+            payload: Buffer.from(payload),
+            retain: true
+        }, () => {});
+
+        this.logger.debug(`Sent payload to device:`, payload);
+       
+    }
+    
+    protected sendDeviceConfig(device: TallyDevice): void {
+        if (!this.aedes) {
+            this.logger.warn("Discarding CONFIG: Attempted to send before initialization.");
+            return;
+        }
+
+        //TODO Maybe use defaultDevice helper?
+
+        // TODO: Make flips sides boolean?
+        const payload = JSON.stringify({
+            brightness: device.brightness !== undefined ? (device.brightness * 255 / 100) : 255,
+            // brightness: 10,
+            name: device.name,
+            state_on_disconnect: this.disconnectState,
+            flip_sides: device.flip ? 1 : 0,
+            // flip_sides: true ? 1 : 0,
+            moment: Date.now()
+        });
+        
+        this.logger.debug(`Attempting to publish CONFIG over MQTT for ${device.id.device}...`);
+        
+        this.aedes.publish(
+        {
+            cmd: 'publish',
+            qos: 1,
+            dup: false, // TODO: topic becomes /device/x/x/config?
+            topic: `tally/device/${device.id.consumer}/${device.id.device}/config`,
             payload: Buffer.from(payload),
             retain: true
         }, () => {});
@@ -293,7 +441,7 @@ export class AedesNetworkConsumer extends AbstractNetworkConsumer implements IGl
         this.aedes.publish({
             cmd: 'publish',
             qos: 2, // High priority for alerts
-            dup: false,
+            dup: false,  // TODO: topic becomes /device/x/x/alert?
             topic: `tally/device/${address.consumer}/${address.device}/alert`,
             payload: Buffer.from(JSON.stringify({ type, target, time })),
             retain: false // Alerts are momentary, no retain

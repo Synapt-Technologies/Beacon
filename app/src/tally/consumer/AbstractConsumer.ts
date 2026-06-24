@@ -1,7 +1,8 @@
 import { EventEmitter } from "node:events";
 import { GlobalSourceTools, type GlobalTallySource, type TallyState } from "../types/ProducerStates";
 import { Logger } from "../../logging/Logger";
-import { type ConsumerId, type DeviceAddress, DeviceAlertState, DeviceAlertTarget, type DeviceName, DeviceTallyState, type TallyDevice } from "../types/ConsumerStates";
+import { type ConsumerId, type DeviceAddress, DeviceAlertState, DeviceAlertTarget, DeviceTallyState, type TallyDevice } from "../types/ConsumerStates";
+import type { DeviceRuntimeConfig } from "../types/DeviceTypes";
 import { ConsumerStore } from "../../database/ConsumerStore";
 import type { SystemInfo } from "../../types/SystemInfo";
 
@@ -27,10 +28,11 @@ export interface ConsumerConfig {
 export type ConsumerEvents = {
     device_update: [device: TallyDevice];
     device_removed: [address: DeviceAddress];
+    device_discovery: [device: TallyDevice];
 }
 
 // TODO: Maybe IConnection to force getId and get and setName and other shared ops like db?
-export abstract class AbstractConsumer<T extends ConsumerEvents & Record<string, any[]> = ConsumerEvents> extends EventEmitter<T> {
+export abstract class AbstractConsumer<T extends ConsumerEvents & Record<string, unknown[]> = ConsumerEvents> extends EventEmitter<T> {
     
     protected readonly conType: string = "CONS";
 
@@ -91,6 +93,7 @@ export abstract class AbstractConsumer<T extends ConsumerEvents & Record<string,
         preview: new Set<string>()
     };
 
+    // TODO Lot of duplucate code, maybe disconnect bool, or move all tally config building to orchestrator.
     protected baseState: DeviceTallyState = DeviceTallyState.NONE;
 
     setBaseState(state: DeviceTallyState): void {
@@ -99,6 +102,19 @@ export abstract class AbstractConsumer<T extends ConsumerEvents & Record<string,
             this.setTallyDevice(device);
         }
     }
+
+    protected disconnectState: DeviceTallyState = DeviceTallyState.NONE;
+
+    setDisconnectState(state: DeviceTallyState): void {
+        if (this.disconnectState == state) return;
+
+        this.disconnectState = state;
+        for (const device of this.devices.values()) {
+            this.sendDeviceConfig(device);
+        }
+
+    }
+
         
     protected checkConfig(config: ConsumerConfig) {
         if (!config.id || config.id == "")
@@ -126,29 +142,36 @@ export abstract class AbstractConsumer<T extends ConsumerEvents & Record<string,
         return this.devices.get(this.getDeviceKey(address)) || null;
     }
 
-    protected _addDevice(device: TallyDevice) {
+    protected _addDevice(device: TallyDevice, override: boolean = false) {
 
         device.id.consumer = this.config.id;
         const key = this.getDeviceKey(device.id);
+
+        if (this.devices.has(key) && !override) { return; }
 
         this.devices.set(key, device);
         this.info.device_count = this.devices.size;
         this.store.saveDevice(device);
         this.setTallyDevice(device);
+        this.sendDeviceConfig(device);
+        (this as EventEmitter<ConsumerEvents>).emit('device_discovery', device);
     }
-    setDeviceName(address: DeviceAddress, name: DeviceName): void {
+    setDeviceRuntimeConfig(address: DeviceAddress, config: Partial<DeviceRuntimeConfig>): void {
         const key = this.getDeviceKey(address);
-        
+
         const device = this.devices.get(key);
-        if (!device){
-            this.logger.warn(`Attempted to set name:`, name, `for unknown device at address:`, address)
+        if (!device) {
+            this.logger.warn(`Attempted to set runtime config for unknown device at address:`, address);
             return;
         }
-        
-        device.name = name;
+
+        if (config.name       !== undefined) device.name       = config.name;
+        if (config.brightness !== undefined) device.brightness = config.brightness;
+        if (config.flip       !== undefined) device.flip       = config.flip;
         this.store.saveDevice(device);
+        this.sendDeviceConfig(device);
         (this as EventEmitter<ConsumerEvents>).emit('device_update', device);
-        this.logger.debug(`Device ${key} renamed to: ${name}`);
+        this.logger.debug(`Device ${key} runtime config updated:`, config);
     }
     setDevicePatch(address: DeviceAddress, patch: Array<GlobalTallySource>): void{
         const key = this.getDeviceKey(address);
@@ -204,11 +227,15 @@ export abstract class AbstractConsumer<T extends ConsumerEvents & Record<string,
             device.state = newState;
             this.logger.debug(`Device ${this.getDeviceKey(device.id)} state changed to ${DeviceTallyState[device.state]}`);
             (this as EventEmitter<ConsumerEvents>).emit('device_update', device);
-            this.sendTallyDevice(device);
+
+            // TODO: sendDevice that each consumer implements, to make consumers that don't send device config easier?
+            this.sendDeviceTally(device);
+            this.sendDeviceConfig(device);
         }
     }
 
-    protected abstract sendTallyDevice(device: TallyDevice): void;
+    protected abstract sendDeviceTally(device: TallyDevice):  void;
+    protected          sendDeviceConfig(_device: TallyDevice): void {}; // TODO: Right place?
 
     consumeTally(state: TallyState): void {
         this.tallyState = state;

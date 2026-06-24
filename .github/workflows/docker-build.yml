@@ -2,7 +2,8 @@ name: Build Docker Image
 
 on:
   release:
-    types: [created, published]
+    types: [published]
+  workflow_dispatch:
 
 jobs:
   build:
@@ -23,10 +24,17 @@ jobs:
       - name: Resolve tags
         id: tags
         run: |
+          REPO=$(echo "ghcr.io/${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          TAG="${{ github.event.release.tag_name }}"
           if [ "${{ github.event.release.draft }}" = "true" ]; then
-            echo "tags=ghcr.io/${{ github.repository }}:draft" >> $GITHUB_OUTPUT
+            echo "tags=${REPO}:draft" >> $GITHUB_OUTPUT
           else
-            printf 'tags=ghcr.io/${{ github.repository }}:latest\nghcr.io/${{ github.repository }}:${{ github.event.release.tag_name }}\n' >> $GITHUB_OUTPUT
+            {
+              echo "tags<<EOF"
+              echo "${REPO}:latest"
+              [ -n "$TAG" ] && echo "${REPO}:${TAG}"
+              echo "EOF"
+            } >> $GITHUB_OUTPUT
           fi
       - uses: docker/build-push-action@v6
         with:

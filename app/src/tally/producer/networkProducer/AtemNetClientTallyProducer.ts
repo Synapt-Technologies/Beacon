@@ -5,10 +5,12 @@ import { Enums as AtemEnums } from "atem-connection";
 import { GlobalSourceTools, type ProducerModel, type SourceInfo, type SourceMap, type TallyState } from "../../types/ProducerStates";
 
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface AtemNetClientProducerConfig extends NetClientProducerConfig {
     // me: number[] | null; //TODO
 }
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 interface AtemNetClientProducerInfo extends NetClientProducerInfo {
 }
 export interface AtemNetClientProducerInfoInternal extends NetClientProducerInfo {
@@ -188,7 +190,7 @@ export class AtemNetClientTallyProducer extends AbstractNetClientTallyProducer {
     }
 
     protected _parseSources(): SourceMap {
-        let sources: SourceMap = new Map();
+        const sources: SourceMap = new Map();
 
         if (!this.info.state || !this.info.connected){
             return sources;

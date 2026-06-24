@@ -7,6 +7,9 @@ If you are compiling the image on windows, you must use WSL.
 
 
 ## TODO
+- [x] Docker Documentation!
+- [ ] Dev/prod mode for ui logging
+- [ ] Easier way to page through devices. Some sort of arrow keys in the navbar?
 - [x] !! PLATFORM NEED MANUAL RESTART ON UI CHANGE AFTER UPDATE !!
 - [x] Implement mqtt ws tally for devices
   - [ ] Add alerts
@@ -57,7 +60,7 @@ If you are compiling the image on windows, you must use WSL.
   - [x] Consumers don't own the tally process
   - [x] Consumer exports tally devices. 
   - [x] The orchestrator sets the tallystate 
-  - [x] The Consumer exposes sendTallyDevice (or similar)
+  - [x] The Consumer exposes sendDeviceTally (or similar)
   - [x] No ConsumeTally
   - [x] The orchestrator decides which devices to send
   - [x] GlobalConsumer gets all, non global only the devices mapped to their consumerId
@@ -66,8 +69,13 @@ If you are compiling the image on windows, you must use WSL.
     - [x] Aedes is the active consumer on that mqtt -> It assigns its ConsumerId + a DeviceId (mac based?)
     - [x] The device saves that and connects to the topic.
   - [x] The Orchestrator sends the relevant devices to the right consumers.
+  - [ ] Implement clear split between config, tally and alert.
+  - [ ] Add text alert type.
+  - [ ] Rename orchestrator and lifecycle. Logic and orchestrator, or coordinator?
+  - [ ] Move consumer responsibilities to orchestrator.
 - [ ] Add multi output devices!
 - [ ] Duplicate producer ID is just skipped on add.
 - [ ] Unify UI structure:
   - [ ] List page for devices, sources and connections
   - [ ] Tallyrow for devices and sources
+- [ ] Add device state on disconnect: When a device disconnects from beacon, not beacon from producer

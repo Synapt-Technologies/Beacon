@@ -70,7 +70,7 @@ export default class SystemInfoUtil {
             // Check GPIO pin config for newer versions.
 
             return HardwareVersion.V2;
-        } catch (e) {
+        } catch {
             return HardwareVersion.UNKNOWN;
         }
     }

@@ -72,6 +72,8 @@ export class AppCore {
         orchestrator.on("consumer_added",    syncState);
         orchestrator.on("consumer_removed",  syncState);
         orchestrator.on("producer_info",     syncState);
+        orchestrator.on("device_added",      syncState);
+        orchestrator.on("device_info",       syncState);
 
         syncState();
 
@@ -109,8 +111,8 @@ export class AppCore {
                 this.lifecycle.patchDevice(address, patch);
                 syncState();
             },
-            renameDevice: (address, name) => {
-                this.lifecycle.renameDevice(address, name);
+            updateDeviceRuntimeConfig: (address, config) => {
+                this.lifecycle.updateDeviceRuntimeConfig(address, config);
                 syncState();
             },
             removeDevice: (address) => {

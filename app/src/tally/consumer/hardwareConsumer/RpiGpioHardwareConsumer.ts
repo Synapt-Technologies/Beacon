@@ -3,8 +3,9 @@ import { ConnectionType, DeviceAlertState, DeviceTallyState, GlobalDeviceTools, 
 import { HARDWARE_VERSION_STRING, HardwareVersion } from "../../../types/SystemInfo";
 import type { Gpio } from 'pigpio';
 
-// TODO: check if this is the right GPIO library. Was rpi-gpio before, but it's not updated.
+// TODO: Populate this. Pinouts?
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface GpioConsumerConfig extends ConsumerConfig {
     // Pin mappings TBD
     // TODO move hw discovery to another class.
@@ -36,6 +37,8 @@ interface AlertPatternConfig {
     pattern: Array<DeviceTallyState | null>,
 }
 
+
+// TODO: Move to class, make it user configurable and broadcast it to devices (via consumer) to sync patterns.
 const ALERT_PATTERNS: Record<DeviceAlertState, AlertPatternConfig | null> = {
     [DeviceAlertState.IDENT]: {
         speedMs: 400,
@@ -165,7 +168,7 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
                             long: `Local ${i+1}`
                         },
                         connection: ConnectionType.HARDWARE,
-                        patch: new Array(),
+                        patch: [],
                         state: DeviceTallyState.NONE,
                     }
                     
@@ -219,7 +222,7 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
     }
     
     
-    protected sendTallyDevice(device: TallyDevice): void {
+    protected sendDeviceTally(device: TallyDevice): void {
         
         if (this.gpioMap.size <= 0){
             this.logger.warn("Discarding Tally: Attempted to send with an empty GPIO map. Probably not initialised.");
@@ -268,6 +271,8 @@ export class RpiGpioHardwareConsumer extends AbstractConsumer {
                 break;
                 case DeviceTallyState.DANGER: // TODO: Maybe different state? No PWM though, not sure if possible.
                 case DeviceTallyState.WARNING:
+                case DeviceTallyState.INFO:
+                case DeviceTallyState.LIGHT:
                 output.program.digitalWrite(1);
                 output.preview.digitalWrite(1);
                 break;

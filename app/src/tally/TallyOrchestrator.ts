@@ -24,7 +24,8 @@ export interface OrchestratorEvents {
     consumer_added: [consumer: ConsumerId];
     consumer_removed: [consumer: ConsumerId];
 
-    device_connected: [device: TallyDevice];
+    // TODO: Check if these types are correct.
+    device_added: [device: TallyDevice];
     device_info: [device: TallyDevice];
 }
 
@@ -65,11 +66,10 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
 
         this.logger.info(`Updated config:`, config);
 
-        let state_on_disconnect_change = false;
+        const state_on_disconnect_change =
+            config.state_on_disconnect !== undefined &&
+            config.state_on_disconnect !== this.config.state_on_disconnect;
 
-        if (config.state_on_disconnect != this.config.state_on_disconnect)
-            state_on_disconnect_change = true;
-        
 
 
         this.config = { ...this.config, ...config };
@@ -86,10 +86,14 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
                     consumer.setBaseState(this.config.state_on_disconnect);
                 }
             }
+
+            for (const consumer of this.consumers.values()) {
+                consumer.setDisconnectState(this.config.state_on_disconnect);
+            }
         }
     }
 
-    protected checkConfig(config: OrchestratorConfig){
+    protected checkConfig(_config: OrchestratorConfig){
 
     }
 
@@ -98,12 +102,18 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
         consumer.on('device_update', (device: TallyDevice) => {
             this._notifyBroadcasters(consumer.getId(), device);
         });
+        consumer.on('device_discovery', (device: TallyDevice) => {
+            this._notifyBroadcasters(consumer.getId(), device);
+            this.emit('device_added', device);
+        });
         this.emit('consumer_added', consumer.getId());
 
         
         if (this.disconnectedProducers.size !== 0) {
             consumer.setBaseState(this.config.state_on_disconnect);
         }
+
+        consumer.setDisconnectState(this.config.state_on_disconnect);
 
         this._parseGlobalTally();
     }

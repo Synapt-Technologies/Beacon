@@ -55,7 +55,7 @@ export class Logger {
         }
     }
 
-    private print(level: LogLevel, ...data: any[]) {
+    private print(level: LogLevel, ...data: unknown[]) {
 
         if (level < Logger.GlobalFileLevel && level < Logger.GlobalConsoleLevel) return;
 
@@ -72,8 +72,8 @@ export class Logger {
         }
     }
 
-    private parseData(data: any): string {
-        return data.map((item: any) => {
+    private parseData(data: unknown[]): string {
+        return data.map((item: unknown) => {
             if (item instanceof Error) return item.stack || item.message;
 
             if (typeof item === 'object' && item !== null) {
@@ -112,12 +112,12 @@ export class Logger {
         }
     }
               
-    public debug(...data: any[]) { this.print(LogLevel.DEBUG, ...data); }
-    public info(...data: any[])  { this.print(LogLevel.INFO,  ...data); }
-    public warn(...data: any[])  { this.print(LogLevel.WARN,  ...data); }
-    public error(...data: any[]) { this.print(LogLevel.ERROR, ...data); }
+    public debug(...data: unknown[]) { this.print(LogLevel.DEBUG, ...data); }
+    public info(...data: unknown[])  { this.print(LogLevel.INFO,  ...data); }
+    public warn(...data: unknown[])  { this.print(LogLevel.WARN,  ...data); }
+    public error(...data: unknown[]) { this.print(LogLevel.ERROR, ...data); }
 
-    public fatal(message: string, ...extraData: any[]): never {
+    public fatal(message: string, ...extraData: unknown[]): never {
         this.print(LogLevel.FATAL, message, ...extraData);
 
         const errorString = extraData.length > 0 

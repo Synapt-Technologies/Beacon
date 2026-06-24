@@ -1,9 +1,9 @@
-import type { DeviceDisplayState } from '../types/beacon'
+import type { TallyState } from '../types/beacon'
 
 interface TallyBlockProps {
   name: string
   sub?: string
-  state: DeviceDisplayState
+  state: TallyState
   height?: number
   nameFontSize?: number
 }
@@ -31,14 +31,17 @@ export function TallyBlock({ name, sub, state, height = 110, nameFontSize = 22 }
   )
 }
 
-const STATE_SUB: Record<DeviceDisplayState, string> = {
-  pgm:     'Program - on air',
-  pvw:     'Preview - standing by',
-  danger:  'Danger',
-  warning: 'Warning',
-  none:    'Idle - not active',
+// TODO: Probably remove.
+const STATE_SUB: Record<TallyState, string> = {
+  program:    'Program',
+  preview:    'Preview',
+  danger:     'Danger',
+  warning:    'Warning',
+  info:       'Info',
+  light:      'Light',
+  none:       'Idle',
 }
 
-export function stateSub(state: DeviceDisplayState) {
+export function stateSub(state: TallyState) {
   return STATE_SUB[state]
 }
