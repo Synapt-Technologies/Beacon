@@ -1,7 +1,7 @@
 import { EventEmitter } from "events";
 import { AbstractConsumer } from "./consumer/AbstractConsumer";
 import { isGlobalBroadcastConsumer } from "./consumer/IGlobalBroadcastConsumer";
-import { GlobalSourceTools, type ProducerId, type TallyState } from "./types/ProducerStates";
+import { GlobalSourceTools, TallyState, type ProducerId } from "./types/ProducerStates";
 import { AbstractTallyProducer, type ProducerInfo, ProducerStatus } from "./producer/tallyProducer/AbstractTallyProducer";
 import { type AlertSlotConfig, DEFAULT_ALERT_SLOTS, TallyState, type ConsumerId, type TallyDevice } from "./types/ConsumerStates";
 import { Logger } from "../logging/Logger";
@@ -27,6 +27,8 @@ export interface OrchestratorEvents {
     // TODO: Check if these types are correct.
     device_added: [device: TallyDevice];
     device_info: [device: TallyDevice];
+
+    //TODO: Add events for failed loading and logic (code)
 }
 
 export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
@@ -45,8 +47,10 @@ export class TallyOrchestrator extends EventEmitter<OrchestratorEvents> {
     private consumers: Map<ConsumerId, AbstractConsumer> = new Map();
 
     private producerTallyStates: Map<ProducerId, TallyState> = new Map();
+    
     private disconnectedProducers: Set<ProducerId> = new Set();
     private _connectGraceTimers: Map<ProducerId, ReturnType<typeof setTimeout>> = new Map();
+    
     private globalTallyState: TallyState = {
         preview: new Set(),
         program: new Set()
